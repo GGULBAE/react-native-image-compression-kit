@@ -262,6 +262,37 @@ Planned installation command:
 npm install react-native-image-compression-kit
 ```
 
+## Development Verification
+
+Run the JavaScript and TypeScript checks:
+
+```bash
+pnpm verify
+```
+
+`pnpm verify` runs type checking, unit tests, the TypeScript build, and the Android verification doctor.
+
+To run only the Android repository checks:
+
+```bash
+pnpm android:doctor
+```
+
+Android Codegen and native compilation require a React Native app build environment. React Native Codegen is run through the React Native app build, so point the verification scripts at an app's Android project:
+
+```bash
+RNICK_ANDROID_APP_DIR=/path/to/App/android pnpm android:codegen
+RNICK_ANDROID_APP_DIR=/path/to/App/android pnpm android:build
+```
+
+`pnpm android:codegen` runs `generateCodegenArtifactsFromSchema` in the app Android project. `pnpm android:build` runs `assembleDebug` by default. To use a different Gradle task:
+
+```bash
+RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:app:assembleDebug pnpm android:build
+```
+
+The executable Android checks require a Java runtime, Android SDK, and a Gradle wrapper or `gradle` command in the target app.
+
 ## Contributing
 
 The project is in its initial design phase. Issues and discussions about the proposed API, format priorities, platform behavior, metadata policy, and native implementation strategy are welcome once the repository is ready for public collaboration.

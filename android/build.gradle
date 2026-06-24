@@ -6,6 +6,7 @@ buildscript {
   repositories {
     google()
     mavenCentral()
+    gradlePluginPortal()
   }
 
   dependencies {
@@ -15,6 +16,7 @@ buildscript {
 }
 
 apply plugin: "com.android.library"
+apply plugin: "com.facebook.react"
 apply plugin: "org.jetbrains.kotlin.android"
 
 def safeExtGet(prop, fallback) {
@@ -30,7 +32,10 @@ android {
   }
 
   sourceSets {
-    main.java.srcDirs += "src/main/java"
+    main.java.srcDirs += [
+      "src/main/java",
+      "build/generated/source/codegen/java"
+    ]
   }
 }
 

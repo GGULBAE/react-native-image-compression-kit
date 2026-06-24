@@ -15,6 +15,7 @@
     "android",
     "ios",
     "lib",
+    "scripts",
     "src",
     "README.md",
     "LICENSE",
@@ -23,6 +24,10 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm android:doctor",
+    "android:doctor": "node scripts/android-verification.mjs doctor",
+    "android:codegen": "node scripts/android-verification.mjs codegen",
+    "android:build": "node scripts/android-verification.mjs build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
