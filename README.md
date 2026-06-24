@@ -28,9 +28,9 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This project is currently in the design and scaffolding phase. The API shown below is proposed and is not available on npm yet.
+This project is currently in the design and scaffolding phase. The TypeScript API contract and unit test foundation are being shaped, and the package is not available on npm yet.
 
-No JavaScript, TypeScript, Android, or iOS implementation is included at this stage.
+Native Android and iOS image compression implementations are not included at this stage.
 
 ## Why
 
@@ -217,7 +217,8 @@ This project is not intended to handle:
 ## Roadmap
 
 - [x] Repository and API design.
-- [ ] TypeScript public API.
+- [x] Initial TypeScript public API contract.
+- [x] Unit test foundation for API and validation.
 - [ ] Native module foundation.
 - [ ] JPEG, PNG, and WebP compression.
 - [ ] HEIC / HEIF input.
@@ -230,7 +231,7 @@ This project is not intended to handle:
 
 ## Installation
 
-This package has not been published to npm yet.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold, but no native image compression implementation.
 
 Planned installation command:
 

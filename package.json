@@ -1,0 +1,47 @@
+{
+  "name": "react-native-image-compression-kit",
+  "version": "0.0.0",
+  "description": "Native-first image compression and transcoding pipeline for React Native.",
+  "license": "MIT",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "react-native",
+    "image",
+    "compression",
+    "resize",
+    "transcode",
+    "webp",
+    "heic",
+    "avif"
+  ],
+  "peerDependencies": {
+    "react-native": ">=0.73"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
+  },
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": ">=18"
+  }
+}
