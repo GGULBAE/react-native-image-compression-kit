@@ -1,8 +1,12 @@
 export type ImageCompressionKitErrorCode =
   | 'ERR_INVALID_OPTIONS'
   | 'ERR_UNSUPPORTED_SOURCE'
+  | 'ERR_UNSUPPORTED_FORMAT'
   | 'ERR_NATIVE_MODULE_UNAVAILABLE'
   | 'ERR_NOT_IMPLEMENTED'
+  | 'ERR_FILE_ACCESS'
+  | 'ERR_DECODE_FAILED'
+  | 'ERR_ENCODE_FAILED'
   | 'ERR_NATIVE_OPERATION_FAILED';
 
 export class ImageCompressionKitError extends Error {
@@ -76,8 +80,12 @@ function isImageCompressionKitErrorCode(
   return (
     code === 'ERR_INVALID_OPTIONS' ||
     code === 'ERR_UNSUPPORTED_SOURCE' ||
+    code === 'ERR_UNSUPPORTED_FORMAT' ||
     code === 'ERR_NATIVE_MODULE_UNAVAILABLE' ||
     code === 'ERR_NOT_IMPLEMENTED' ||
+    code === 'ERR_FILE_ACCESS' ||
+    code === 'ERR_DECODE_FAILED' ||
+    code === 'ERR_ENCODE_FAILED' ||
     code === 'ERR_NATIVE_OPERATION_FAILED'
   );
 }

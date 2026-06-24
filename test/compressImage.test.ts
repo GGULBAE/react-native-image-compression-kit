@@ -190,6 +190,26 @@ describe('compressImage', () => {
       message: 'Image compression is not implemented in the native stub yet.',
     });
   });
+
+  it('preserves Android MVP native error codes for unsupported inputs', async () => {
+    const nativeModule = mockNativeModule({
+      compressImage: vi.fn().mockRejectedValue({
+        code: 'ERR_UNSUPPORTED_FORMAT',
+        message: 'Android JPEG MVP supports JPEG input only.',
+      }),
+    });
+    setNativeModuleForTesting(nativeModule);
+
+    await expect(
+      compressImage({
+        source: { uri: 'file:///tmp/input.png' },
+        output: { format: 'jpeg', quality: 80 },
+      })
+    ).rejects.toMatchObject({
+      code: 'ERR_UNSUPPORTED_FORMAT',
+      message: 'Android JPEG MVP supports JPEG input only.',
+    });
+  });
 });
 
 describe('getImageCompressionCapabilities', () => {

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Status: Planning" src="https://img.shields.io/badge/Status-Planning-blue" />
+  <img alt="Status: Android JPEG MVP" src="https://img.shields.io/badge/Status-Android%20JPEG%20MVP-blue" />
   <img alt="Platforms: Android | iOS" src="https://img.shields.io/badge/Platforms-Android%20%7C%20iOS-green" />
   <img alt="React Native" src="https://img.shields.io/badge/React%20Native-planned-61dafb" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-planned-3178c6" />
@@ -28,9 +28,31 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This project is currently in the design and native foundation phase. The TypeScript API contract, React Native Codegen spec, Android stub, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
+This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Native Android and iOS codec implementations are not included at this stage. The native stubs intentionally return `ERR_NOT_IMPLEMENTED` for image compression.
+Android includes a narrow JPEG quality compression MVP for `file://` JPEG inputs and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
+
+## Current Implementation Scope
+
+The current implementation is intentionally small:
+
+- Android only.
+- `file://` local URI input only.
+- JPEG input only.
+- JPEG output only.
+- Quality-based compression only.
+- Output file written to the Android app cache directory.
+- `CompressionResult` returns `uri`, `format`, `width`, `height`, `byteSize`, `originalByteSize`, and `compressionRatio`.
+
+The following remain planned and are not implemented in the MVP:
+
+- iOS compression.
+- `content://` URI support.
+- PNG, WebP, HEIC / HEIF, AVIF, and GIF processing.
+- Resize.
+- EXIF orientation correction.
+- Metadata preservation, safe stripping, or full stripping.
+- Target-size compression with `maxBytes`.
 
 ## Why
 
@@ -220,6 +242,7 @@ This project is not intended to handle:
 - [x] Initial TypeScript public API contract.
 - [x] Unit test foundation for API and validation.
 - [x] React Native Codegen and native module foundation.
+- [x] Android JPEG to JPEG quality compression MVP.
 - [ ] JPEG, PNG, and WebP compression.
 - [ ] HEIC / HEIF input.
 - [ ] AVIF support.
@@ -231,7 +254,7 @@ This project is not intended to handle:
 
 ## Installation
 
-This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and native module stubs, but no native image compression implementation.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and a narrow Android JPEG quality compression MVP. iOS compression and broader format support are not implemented yet.
 
 Planned installation command:
 
