@@ -28,9 +28,9 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This project is currently in the design and scaffolding phase. The TypeScript API contract and unit test foundation are being shaped, and the package is not available on npm yet.
+This project is currently in the design and native foundation phase. The TypeScript API contract, React Native Codegen spec, Android stub, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Native Android and iOS image compression implementations are not included at this stage.
+Native Android and iOS codec implementations are not included at this stage. The native stubs intentionally return `ERR_NOT_IMPLEMENTED` for image compression.
 
 ## Why
 
@@ -66,7 +66,7 @@ Any supported image in. A compressed image out, in your chosen supported format.
 
 ## Planned Features
 
-The following features are planned. They are not implemented yet.
+The following product features are planned. They are not fully implemented yet.
 
 - Automatic format detection.
 - Quality-based compression.
@@ -219,7 +219,7 @@ This project is not intended to handle:
 - [x] Repository and API design.
 - [x] Initial TypeScript public API contract.
 - [x] Unit test foundation for API and validation.
-- [ ] Native module foundation.
+- [x] React Native Codegen and native module foundation.
 - [ ] JPEG, PNG, and WebP compression.
 - [ ] HEIC / HEIF input.
 - [ ] AVIF support.
@@ -231,7 +231,7 @@ This project is not intended to handle:
 
 ## Installation
 
-This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold, but no native image compression implementation.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and native module stubs, but no native image compression implementation.
 
 Planned installation command:
 

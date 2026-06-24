@@ -1,4 +1,5 @@
 import { ImageCompressionKitError } from './errors';
+import type { Spec as NativeImageCompressionKitSpec } from './NativeImageCompressionKit';
 import type {
   CompressionResult,
   ImageCompressionCapabilities,
@@ -7,12 +8,18 @@ import type {
 
 export const NATIVE_MODULE_NAME = 'ImageCompressionKit';
 
-export interface NativeImageCompressionKitModule {
+export type NativeImageCompressionKitModule = NativeImageCompressionKitSpec;
+
+type NativeModuleContractCheck = {
   compressImage(
     options: NormalizedCompressionOptions
   ): Promise<CompressionResult>;
   getImageCompressionCapabilities(): Promise<ImageCompressionCapabilities>;
-}
+};
+
+const _nativeModuleContractCheck: NativeImageCompressionKitModule extends NativeModuleContractCheck
+  ? true
+  : never = true;
 
 type ReactNativeRuntime = {
   NativeModules?: Record<string, unknown>;
@@ -54,6 +61,12 @@ export function resetNativeModuleForTesting(): void {
 function resolveNativeModuleFromReactNative():
   | NativeImageCompressionKitModule
   | null {
+  const codegenModule = resolveNativeModuleFromCodegenSpec();
+
+  if (codegenModule) {
+    return codegenModule;
+  }
+
   const reactNative = loadReactNativeRuntime();
 
   const turboModule = reactNative?.TurboModuleRegistry?.get?.<
@@ -71,6 +84,24 @@ function resolveNativeModuleFromReactNative():
   }
 
   return null;
+}
+
+function resolveNativeModuleFromCodegenSpec():
+  | NativeImageCompressionKitModule
+  | null {
+  if (typeof require !== 'function') {
+    return null;
+  }
+
+  try {
+    const codegenSpec = require('./NativeImageCompressionKit') as {
+      default?: unknown;
+    };
+
+    return isNativeModule(codegenSpec.default) ? codegenSpec.default : null;
+  } catch {
+    return null;
+  }
 }
 
 function loadReactNativeRuntime(): ReactNativeRuntime | null {

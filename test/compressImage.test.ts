@@ -170,6 +170,26 @@ describe('compressImage', () => {
       message: 'Encoder rejected the selected output format.',
     });
   });
+
+  it('preserves native not-implemented errors from platform stubs', async () => {
+    const nativeModule = mockNativeModule({
+      compressImage: vi.fn().mockRejectedValue({
+        code: 'ERR_NOT_IMPLEMENTED',
+        message: 'Image compression is not implemented in the native stub yet.',
+      }),
+    });
+    setNativeModuleForTesting(nativeModule);
+
+    await expect(
+      compressImage({
+        source: { uri: 'file:///tmp/input.jpg' },
+        output: { format: 'jpeg', quality: 80 },
+      })
+    ).rejects.toMatchObject({
+      code: 'ERR_NOT_IMPLEMENTED',
+      message: 'Image compression is not implemented in the native stub yet.',
+    });
+  });
 });
 
 describe('getImageCompressionCapabilities', () => {

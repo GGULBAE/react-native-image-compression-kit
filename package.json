@@ -12,10 +12,14 @@
     }
   },
   "files": [
+    "android",
+    "ios",
     "lib",
     "src",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "react-native-image-compression-kit.podspec",
+    "react-native.config.js"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -35,6 +39,23 @@
   ],
   "peerDependencies": {
     "react-native": ">=0.73"
+  },
+  "codegenConfig": {
+    "name": "RNImageCompressionKitSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "outputDir": {
+      "ios": "ios/generated",
+      "android": "android/generated"
+    },
+    "android": {
+      "javaPackageName": "com.imagecompressionkit"
+    },
+    "ios": {
+      "modulesProvider": {
+        "ImageCompressionKit": "RCTImageCompressionKit"
+      }
+    }
   },
   "devDependencies": {
     "typescript": "^5.9.3",

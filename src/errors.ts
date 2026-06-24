@@ -2,6 +2,7 @@ export type ImageCompressionKitErrorCode =
   | 'ERR_INVALID_OPTIONS'
   | 'ERR_UNSUPPORTED_SOURCE'
   | 'ERR_NATIVE_MODULE_UNAVAILABLE'
+  | 'ERR_NOT_IMPLEMENTED'
   | 'ERR_NATIVE_OPERATION_FAILED';
 
 export class ImageCompressionKitError extends Error {
@@ -23,8 +24,16 @@ export class ImageCompressionKitError extends Error {
 }
 
 export function normalizeNativeError(error: unknown): Error {
-  if (error instanceof ImageCompressionKitError || error instanceof Error) {
+  if (error instanceof ImageCompressionKitError) {
     return error;
+  }
+
+  if (error instanceof Error) {
+    return new ImageCompressionKitError(
+      getNativeErrorCode(error),
+      error.message || 'Native image compression failed.',
+      { cause: error }
+    );
   }
 
   if (isRecord(error)) {
@@ -34,7 +43,7 @@ export function normalizeNativeError(error: unknown): Error {
         : 'Native image compression failed.';
 
     return new ImageCompressionKitError(
-      'ERR_NATIVE_OPERATION_FAILED',
+      getNativeErrorCode(error),
       message,
       { cause: error }
     );
@@ -49,4 +58,26 @@ export function normalizeNativeError(error: unknown): Error {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
+}
+
+function getNativeErrorCode(value: unknown): ImageCompressionKitErrorCode {
+  if (!isRecord(value) || typeof value.code !== 'string') {
+    return 'ERR_NATIVE_OPERATION_FAILED';
+  }
+
+  return isImageCompressionKitErrorCode(value.code)
+    ? value.code
+    : 'ERR_NATIVE_OPERATION_FAILED';
+}
+
+function isImageCompressionKitErrorCode(
+  code: string
+): code is ImageCompressionKitErrorCode {
+  return (
+    code === 'ERR_INVALID_OPTIONS' ||
+    code === 'ERR_UNSUPPORTED_SOURCE' ||
+    code === 'ERR_NATIVE_MODULE_UNAVAILABLE' ||
+    code === 'ERR_NOT_IMPLEMENTED' ||
+    code === 'ERR_NATIVE_OPERATION_FAILED'
+  );
 }

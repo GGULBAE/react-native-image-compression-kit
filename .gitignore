@@ -52,6 +52,7 @@ $RECYCLE.BIN/
 # Android
 android/.gradle/
 android/build/
+android/generated/
 android/app/build/
 android/local.properties
 android/**/local.properties
@@ -63,6 +64,7 @@ android/**/captures/
 # iOS
 ios/Pods/
 ios/build/
+ios/generated/
 ios/DerivedData/
 ios/*.xcworkspace/xcuserdata/
 ios/*.xcodeproj/xcuserdata/
