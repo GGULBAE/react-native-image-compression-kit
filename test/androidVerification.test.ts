@@ -105,11 +105,11 @@ describe('Android verification scripts', () => {
 
     expect(moduleSource).toContain('readMaxBytes(output)');
     expect(moduleSource).toContain('output.maxBytes must be a positive integer');
-    expect(moduleSource).toContain('didEncode = encodeBitmap(');
+    expect(moduleSource).toContain('didEncode = ImageCompressionOutput.encodeBitmap(');
     expect(moduleSource).toContain('maxBytes,');
     expect(moduleSource).toContain('copiedExifMetadata');
-    expect(moduleSource).toContain('encodeBitmapToTargetSize');
-    expect(moduleSource).toContain('bestWithinTargetQuality');
+    expect(combinedSource).toContain('encodeBitmapToTargetSize');
+    expect(combinedSource).toContain('bestWithinTargetQuality');
     expect(moduleSource).toContain('supportsTargetSizeCompression", true');
     expect(combinedSource).toContain(
       'supports output.maxBytes for JPEG and WebP output only'
@@ -164,7 +164,6 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('MetadataPolicy.STRIP');
     expect(combinedSource).toContain('MetadataPolicy.PRESERVE');
     expect(combinedSource).toContain('createCopiedExifMetadata');
-    expect(combinedSource).toContain('writeCopiedExifMetadata');
     expect(combinedSource).toContain('JpegExifMetadata.read');
     expect(combinedSource).toContain('JpegExifMetadata.write');
     expect(combinedSource).toContain('SAFE_EXIF_TAGS');
@@ -266,6 +265,9 @@ describe('Android verification scripts', () => {
       'outputFormatsCreateMatchingResultFormatAndFileExtensions'
     );
     expect(testSource).toContain(
+      'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile'
+    );
+    expect(testSource).toContain(
       'capabilitiesExposeJpegInputAndJpegPngWebpOutputsOnly'
     );
     expect(testSource).toContain('pngRejectsMaxBytesButWebpAndJpegAllowIt');
@@ -275,6 +277,12 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('OutputFormat.JPEG to ".jpg"');
     expect(testSource).toContain('OutputFormat.PNG to ".png"');
     expect(testSource).toContain('OutputFormat.WEBP to ".webp"');
+    expect(testSource).toContain('ImageCompressionOutput.encodeBitmap');
+    expect(testSource).toContain('BitmapFactory.decodeByteArray');
+    expect(testSource).toContain('assertPngSignature');
+    expect(testSource).toContain('assertWebpSignature');
+    expect(testSource).toContain('"RIFF"');
+    expect(testSource).toContain('"WEBP"');
     expect(testSource).toContain('Bitmap.CompressFormat.WEBP_LOSSY');
     expect(testSource).toContain('ImageCompressionOutput.MAX_BYTES_UNSUPPORTED_MESSAGE');
     expect(testSource).toContain('RobolectricTestRunner');

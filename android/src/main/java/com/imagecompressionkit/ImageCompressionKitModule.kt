@@ -14,7 +14,6 @@ import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 import java.io.File
 import java.io.FileInputStream
-import java.io.FileOutputStream
 import java.io.InputStream
 import kotlin.math.roundToInt
 
@@ -240,7 +239,7 @@ class ImageCompressionKitModule(
           null
         }
 
-        didEncode = encodeBitmap(
+        didEncode = ImageCompressionOutput.encodeBitmap(
           processedBitmap,
           outputFile,
           outputFormat,
@@ -817,153 +816,6 @@ class ImageCompressionKitModule(
         error
       )
     }
-
-  private fun encodeBitmap(
-    bitmap: Bitmap,
-    outputFile: File,
-    outputFormat: OutputFormat,
-    quality: Int,
-    maxBytes: Long?,
-    copiedExifMetadata: CopiedExifMetadata?
-  ): Boolean =
-    if (maxBytes == null) {
-      encodeBitmapAtQuality(
-        bitmap,
-        outputFile,
-        outputFormat,
-        quality,
-        copiedExifMetadata
-      )
-    } else {
-      encodeBitmapToTargetSize(
-        bitmap,
-        outputFile,
-        outputFormat,
-        quality,
-        maxBytes,
-        copiedExifMetadata
-      )
-    }
-
-  private fun encodeBitmapToTargetSize(
-    bitmap: Bitmap,
-    outputFile: File,
-    outputFormat: OutputFormat,
-    qualityCap: Int,
-    maxBytes: Long,
-    copiedExifMetadata: CopiedExifMetadata?
-  ): Boolean {
-    var currentQuality = qualityCap
-
-    if (
-      !encodeBitmapAtQuality(
-        bitmap,
-        outputFile,
-        outputFormat,
-        currentQuality,
-        copiedExifMetadata
-      )
-    ) {
-      return false
-    }
-
-    if (outputFile.length() <= maxBytes) {
-      return true
-    }
-
-    var lowestAboveTargetQuality = currentQuality
-    var lowestAboveTargetSize = outputFile.length()
-    var bestWithinTargetQuality: Int? = null
-    var low = MIN_QUALITY
-    var high = qualityCap - 1
-
-    while (low <= high) {
-      currentQuality = (low + high) / 2
-
-      if (
-        !encodeBitmapAtQuality(
-          bitmap,
-          outputFile,
-          outputFormat,
-          currentQuality,
-          copiedExifMetadata
-        )
-      ) {
-        return false
-      }
-
-      val byteSize = outputFile.length()
-
-      if (byteSize <= maxBytes) {
-        bestWithinTargetQuality = currentQuality
-        low = currentQuality + 1
-      } else {
-        if (byteSize < lowestAboveTargetSize) {
-          lowestAboveTargetQuality = currentQuality
-          lowestAboveTargetSize = byteSize
-        }
-        high = currentQuality - 1
-      }
-    }
-
-    val finalQuality = bestWithinTargetQuality ?: lowestAboveTargetQuality
-
-    return if (currentQuality == finalQuality) {
-      true
-    } else {
-      encodeBitmapAtQuality(
-        bitmap,
-        outputFile,
-        outputFormat,
-        finalQuality,
-        copiedExifMetadata
-      )
-    }
-  }
-
-  private fun encodeBitmapAtQuality(
-    bitmap: Bitmap,
-    outputFile: File,
-    outputFormat: OutputFormat,
-    quality: Int,
-    copiedExifMetadata: CopiedExifMetadata?
-  ): Boolean {
-    val encoded = FileOutputStream(outputFile).use { outputStream ->
-      bitmap.compress(
-        outputFormat.compressFormat,
-        outputFormat.compressionQuality(quality),
-        outputStream
-      )
-    }
-
-    if (!encoded) {
-      return false
-    }
-
-    if (outputFormat.supportsJpegExifMetadata) {
-      writeCopiedExifMetadata(copiedExifMetadata, outputFile)
-    }
-
-    return true
-  }
-
-  private fun writeCopiedExifMetadata(
-    copiedExifMetadata: CopiedExifMetadata?,
-    outputFile: File
-  ) {
-    if (copiedExifMetadata == null) {
-      return
-    }
-
-    try {
-      JpegExifMetadata.write(copiedExifMetadata, outputFile)
-    } catch (error: Exception) {
-      throw MetadataCopyException(
-        "Android JPEG MVP could not write preserved EXIF metadata.",
-        error
-      )
-    }
-  }
 
   private fun createCompressionResult(
     originalByteSize: Long,

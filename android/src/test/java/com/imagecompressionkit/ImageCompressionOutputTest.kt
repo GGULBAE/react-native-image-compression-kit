@@ -1,6 +1,7 @@
 package com.imagecompressionkit
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -11,6 +12,8 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -49,6 +52,59 @@ class ImageCompressionOutputTest {
       assertEquals(256L, result.originalByteSize)
       assertEquals(0.5, result.compressionRatio, 0.0001)
     }
+  }
+
+  @Test
+  fun encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile() {
+    val sampleJpegBytes = createSampleJpegBytes()
+    val bitmap = decodeSampleJpegBitmap(sampleJpegBytes)
+    val cases = listOf(
+      OutputFormat.JPEG,
+      OutputFormat.PNG,
+      OutputFormat.WEBP
+    )
+
+    cases.forEach { outputFormat ->
+      val outputFile = ImageCompressionOutput.createOutputFile(
+        cacheDir = temporaryFolder.root,
+        outputFormat = outputFormat
+      )
+
+      assertTrue(
+        ImageCompressionOutput.encodeBitmap(
+          bitmap = bitmap,
+          outputFile = outputFile,
+          outputFormat = outputFormat,
+          quality = 72,
+          maxBytes = null
+        )
+      )
+
+      val result = ImageCompressionOutput.createResultMetadata(
+        originalByteSize = sampleJpegBytes.size.toLong(),
+        outputFile = outputFile,
+        dimensions = CompressionOutputDimensions(
+          width = bitmap.width,
+          height = bitmap.height
+        ),
+        outputFormat = outputFormat
+      )
+      val outputBytes = outputFile.readBytes()
+
+      when (outputFormat) {
+        OutputFormat.JPEG -> assertJpegSignature(outputBytes)
+        OutputFormat.PNG -> assertPngSignature(outputBytes)
+        OutputFormat.WEBP -> assertWebpSignature(outputBytes)
+      }
+      assertEquals(outputFile.length(), result.byteSize)
+      assertEquals(
+        outputFile.length().toDouble() / sampleJpegBytes.size.toDouble(),
+        result.compressionRatio,
+        0.0001
+      )
+    }
+
+    bitmap.recycle()
   }
 
   @Test
@@ -158,5 +214,56 @@ class ImageCompressionOutputTest {
     assertFalse(capability.supportsAlpha)
     assertFalse(capability.supportsAnimation)
     assertTrue(capability.notes.isNotEmpty())
+  }
+
+  private fun createSampleJpegBytes(): ByteArray {
+    val bitmap = Bitmap.createBitmap(16, 12, Bitmap.Config.ARGB_8888)
+    bitmap.eraseColor(0xff336699.toInt())
+
+    val outputStream = ByteArrayOutputStream()
+    assertTrue(bitmap.compress(Bitmap.CompressFormat.JPEG, 90, outputStream))
+    bitmap.recycle()
+
+    val bytes = outputStream.toByteArray()
+    assertJpegSignature(bytes)
+    return bytes
+  }
+
+  private fun decodeSampleJpegBitmap(bytes: ByteArray): Bitmap {
+    val bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+
+    assertTrue(bitmap != null)
+    return bitmap!!
+  }
+
+  private fun assertJpegSignature(bytes: ByteArray) {
+    assertTrue(bytes.size >= 3)
+    assertEquals(0xff.toByte(), bytes[0])
+    assertEquals(0xd8.toByte(), bytes[1])
+    assertEquals(0xff.toByte(), bytes[2])
+  }
+
+  private fun assertPngSignature(bytes: ByteArray) {
+    val signature = byteArrayOf(
+      0x89.toByte(),
+      0x50.toByte(),
+      0x4e.toByte(),
+      0x47.toByte(),
+      0x0d.toByte(),
+      0x0a.toByte(),
+      0x1a.toByte(),
+      0x0a.toByte()
+    )
+
+    assertTrue(bytes.size >= signature.size)
+    signature.forEachIndexed { index, value ->
+      assertEquals(value, bytes[index])
+    }
+  }
+
+  private fun assertWebpSignature(bytes: ByteArray) {
+    assertTrue(bytes.size >= 12)
+    assertEquals("RIFF", String(bytes, 0, 4, StandardCharsets.US_ASCII))
+    assertEquals("WEBP", String(bytes, 8, 4, StandardCharsets.US_ASCII))
   }
 }
