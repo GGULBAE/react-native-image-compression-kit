@@ -3,14 +3,18 @@ package com.imagecompressionkit
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import com.facebook.react.bridge.Callback
 import com.facebook.react.bridge.CatalystInstance
 import com.facebook.react.bridge.JavaOnlyMap
+import com.facebook.react.bridge.JavaScriptContextHolder
 import com.facebook.react.bridge.JavaScriptModule
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.UIManager
 import com.facebook.react.bridge.WritableMap
+import com.facebook.react.turbomodule.core.interfaces.CallInvokerHolder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -206,6 +210,12 @@ class ImageCompressionKitModuleTest {
     override fun getCatalystInstance(): CatalystInstance =
       throw UnsupportedOperationException("CatalystInstance is not needed in module unit tests.")
 
+    override fun destroy() = Unit
+
+    override fun handleException(e: Exception) {
+      throw RuntimeException(e)
+    }
+
     override fun hasActiveCatalystInstance(): Boolean =
       false
 
@@ -217,6 +227,25 @@ class ImageCompressionKitModuleTest {
 
     override fun hasReactInstance(): Boolean =
       false
+
+    @Suppress("DEPRECATION")
+    override fun isBridgeless(): Boolean =
+      false
+
+    override fun getJavaScriptContextHolder(): JavaScriptContextHolder? =
+      null
+
+    override fun getJSCallInvokerHolder(): CallInvokerHolder? =
+      null
+
+    @Suppress("DEPRECATION")
+    override fun getFabricUIManager(): UIManager? =
+      null
+
+    override fun getSourceURL(): String? =
+      null
+
+    override fun registerSegment(segmentId: Int, path: String, callback: Callback) = Unit
   }
 
   private class RecordingPromise : Promise {
