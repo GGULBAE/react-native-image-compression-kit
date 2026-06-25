@@ -12,11 +12,13 @@ import {
   View,
 } from 'react-native';
 import {
+  METADATA_POLICIES,
   compressImage,
   getImageCompressionCapabilities,
   type CompressionOptions,
   type CompressionResult,
   type ImageCompressionCapabilities,
+  type MetadataPolicy,
   type ResizeMode,
 } from 'react-native-image-compression-kit';
 
@@ -42,9 +44,13 @@ export default function App(): React.JSX.Element {
   const [maxWidthText, setMaxWidthText] = useState('');
   const [maxHeightText, setMaxHeightText] = useState('');
   const [resizeMode, setResizeMode] = useState<ResizeMode>('contain');
+  const [metadataPolicy, setMetadataPolicy] =
+    useState<MetadataPolicy>('safe');
   const [capabilities, setCapabilities] =
     useState<ImageCompressionCapabilities | null>(null);
   const [result, setResult] = useState<CompressionResult | null>(null);
+  const [resultMetadataPolicy, setResultMetadataPolicy] =
+    useState<MetadataPolicy | null>(null);
   const [error, setError] = useState<ErrorState | null>(null);
   const [isLoadingSample, setIsLoadingSample] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
@@ -128,6 +134,7 @@ export default function App(): React.JSX.Element {
   const runCompression = useCallback(async () => {
     setIsCompressing(true);
     setResult(null);
+    setResultMetadataPolicy(null);
     setError(null);
 
     try {
@@ -143,6 +150,7 @@ export default function App(): React.JSX.Element {
       const compressionOptions: CompressionOptions = {
         source: { uri: sourceUri.trim() },
         output: outputOptions,
+        metadata: metadataPolicy,
       };
 
       if (resizeOptions) {
@@ -152,16 +160,18 @@ export default function App(): React.JSX.Element {
       const nextResult = await compressImage(compressionOptions);
 
       setResult(nextResult);
+      setResultMetadataPolicy(metadataPolicy);
     } catch (nativeError) {
       setError(toErrorState(nativeError));
     } finally {
       setIsCompressing(false);
     }
-  }, [maxBytes, quality, resizeOptions, sourceUri]);
+  }, [maxBytes, metadataPolicy, quality, resizeOptions, sourceUri]);
 
   const jpegCapability = capabilities?.formats.find(
     (capability) => capability.format === 'jpeg'
   );
+  const supportedMetadataPolicies = capabilities?.metadataPolicies ?? [];
   const canSubmit = sourceUri.trim().length > 0 && !isCompressing;
 
   return (
@@ -264,6 +274,28 @@ export default function App(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Metadata</Text>
+          <View style={styles.modeRow}>
+            {METADATA_POLICIES.map((policy) => {
+              const isSupported =
+                capabilities === null ||
+                supportedMetadataPolicies.includes(policy);
+
+              return (
+                <View key={policy} style={styles.modeButton}>
+                  <Button
+                    color={metadataPolicy === policy ? '#175cd3' : '#667085'}
+                    disabled={!isSupported}
+                    onPress={() => setMetadataPolicy(policy)}
+                    title={policy}
+                  />
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Native Capability</Text>
           <ResultLine
             label="platform"
@@ -277,12 +309,25 @@ export default function App(): React.JSX.Element {
             label="jpeg output"
             value={String(jpegCapability?.output ?? false)}
           />
+          <ResultLine label="selected metadata" value={metadataPolicy} />
+          <ResultLine
+            label="metadataPolicies"
+            value={
+              supportedMetadataPolicies.length > 0
+                ? supportedMetadataPolicies.join(', ')
+                : 'loading'
+            }
+          />
         </View>
 
         {result ? (
           <View style={[styles.section, styles.successSection]}>
             <Text style={styles.sectionTitle}>Result</Text>
             <ResultLine label="uri" value={result.uri} />
+            <ResultLine
+              label="metadata"
+              value={resultMetadataPolicy ?? metadataPolicy}
+            />
             <ResultLine label="width" value={String(result.width)} />
             <ResultLine label="height" value={String(result.height)} />
             <ResultLine label="byteSize" value={formatBytes(result.byteSize)} />

@@ -268,6 +268,7 @@ This project is not intended to handle:
 - [x] Android JPEG metadata `safe` privacy-filtered EXIF copy.
 - [x] Android JPEG metadata policy unit tests with real EXIF read/write.
 - [x] Example application.
+- [x] Example metadata policy selector and result summary.
 - [ ] JPEG, PNG, and WebP compression.
 - [ ] HEIC / HEIF input.
 - [ ] AVIF support.
@@ -322,10 +323,11 @@ compressImage({
     quality,
     maxBytes,
   },
+  metadata,
 });
 ```
 
-It displays the compressed output URI, final width and height, compressed byte size, original byte size, compression ratio, and native error code/message when the call fails.
+The example lets you choose `preserve`, `safe`, or `strip` metadata handling before compression. It also displays the current native `metadataPolicies` capability list, the selected metadata policy, the compressed output URI, final width and height, compressed byte size, original byte size, compression ratio, the metadata policy used for the latest result, and native error code/message when the call fails.
 
 Android Codegen and native build checks can also be run through the example app:
 
