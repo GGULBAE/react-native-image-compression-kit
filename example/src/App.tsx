@@ -19,6 +19,7 @@ import {
   type CompressionResult,
   type ImageCompressionCapabilities,
   type MetadataPolicy,
+  type OutputFormat,
   type ResizeMode,
 } from 'react-native-image-compression-kit';
 
@@ -32,6 +33,7 @@ type ExampleImageSourceModule = {
 };
 
 const DEFAULT_QUALITY = '72';
+const EXAMPLE_OUTPUT_FORMATS: OutputFormat[] = ['jpeg', 'png', 'webp'];
 const RESIZE_MODES: ResizeMode[] = ['contain', 'cover', 'stretch'];
 const SAMPLE_MODULE = NativeModules.ExampleImageSource as
   | ExampleImageSourceModule
@@ -41,6 +43,7 @@ export default function App(): React.JSX.Element {
   const [sourceUri, setSourceUri] = useState('');
   const [qualityText, setQualityText] = useState(DEFAULT_QUALITY);
   const [maxBytesText, setMaxBytesText] = useState('');
+  const [outputFormat, setOutputFormat] = useState<OutputFormat>('jpeg');
   const [maxWidthText, setMaxWidthText] = useState('');
   const [maxHeightText, setMaxHeightText] = useState('');
   const [resizeMode, setResizeMode] = useState<ResizeMode>('contain');
@@ -84,6 +87,7 @@ export default function App(): React.JSX.Element {
     () => parseOptionalPositiveInteger(maxBytesText),
     [maxBytesText]
   );
+  const supportsSelectedTargetSize = outputFormat !== 'png';
 
   const loadSample = useCallback(async () => {
     if (!SAMPLE_MODULE) {
@@ -139,11 +143,11 @@ export default function App(): React.JSX.Element {
 
     try {
       const outputOptions: CompressionOptions['output'] = {
-        format: 'jpeg',
+        format: outputFormat,
         quality: Number.parseInt(quality, 10),
       };
 
-      if (maxBytes !== undefined) {
+      if (maxBytes !== undefined && supportsSelectedTargetSize) {
         outputOptions.maxBytes = maxBytes;
       }
 
@@ -166,11 +170,23 @@ export default function App(): React.JSX.Element {
     } finally {
       setIsCompressing(false);
     }
-  }, [maxBytes, metadataPolicy, quality, resizeOptions, sourceUri]);
+  }, [
+    maxBytes,
+    metadataPolicy,
+    outputFormat,
+    quality,
+    resizeOptions,
+    sourceUri,
+    supportsSelectedTargetSize,
+  ]);
 
   const jpegCapability = capabilities?.formats.find(
     (capability) => capability.format === 'jpeg'
   );
+  const supportedOutputFormats =
+    capabilities?.formats
+      .filter((capability) => capability.output)
+      .map((capability) => capability.format) ?? [];
   const supportedMetadataPolicies = capabilities?.metadataPolicies ?? [];
   const canSubmit = sourceUri.trim().length > 0 && !isCompressing;
 
@@ -182,7 +198,7 @@ export default function App(): React.JSX.Element {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Image Compression Kit</Text>
-        <Text style={styles.subtitle}>Android JPEG MVP</Text>
+        <Text style={styles.subtitle}>Android JPEG Input MVP</Text>
 
         <View style={styles.section}>
           <Text style={styles.label}>Source URI</Text>
@@ -216,10 +232,14 @@ export default function App(): React.JSX.Element {
           <View style={styles.qualityField}>
             <Text style={styles.label}>Max bytes</Text>
             <TextInput
+              editable={supportsSelectedTargetSize}
               keyboardType="number-pad"
               onChangeText={setMaxBytesText}
-              placeholder="optional"
-              style={styles.input}
+              placeholder={supportsSelectedTargetSize ? 'optional' : 'jpeg/webp'}
+              style={[
+                styles.input,
+                !supportsSelectedTargetSize ? styles.disabledInput : null,
+              ]}
               value={maxBytesText}
             />
           </View>
@@ -233,6 +253,21 @@ export default function App(): React.JSX.Element {
                 title="Compress"
               />
             )}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Output</Text>
+          <View style={styles.modeRow}>
+            {EXAMPLE_OUTPUT_FORMATS.map((format) => (
+              <View key={format} style={styles.modeButton}>
+                <Button
+                  color={outputFormat === format ? '#175cd3' : '#667085'}
+                  onPress={() => setOutputFormat(format)}
+                  title={format}
+                />
+              </View>
+            ))}
           </View>
         </View>
 
@@ -309,6 +344,15 @@ export default function App(): React.JSX.Element {
             label="jpeg output"
             value={String(jpegCapability?.output ?? false)}
           />
+          <ResultLine label="selected output" value={outputFormat} />
+          <ResultLine
+            label="output formats"
+            value={
+              supportedOutputFormats.length > 0
+                ? supportedOutputFormats.join(', ')
+                : 'loading'
+            }
+          />
           <ResultLine label="selected metadata" value={metadataPolicy} />
           <ResultLine
             label="metadataPolicies"
@@ -324,6 +368,7 @@ export default function App(): React.JSX.Element {
           <View style={[styles.section, styles.successSection]}>
             <Text style={styles.sectionTitle}>Result</Text>
             <ResultLine label="uri" value={result.uri} />
+            <ResultLine label="format" value={result.format} />
             <ResultLine
               label="metadata"
               value={resultMetadataPolicy ?? metadataPolicy}
@@ -463,6 +508,10 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 10,
+  },
+  disabledInput: {
+    backgroundColor: '#f2f4f7',
+    color: '#667085',
   },
   uriInput: {
     minHeight: 92,

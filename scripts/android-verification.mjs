@@ -207,8 +207,18 @@ function checkAndroidNativeModule() {
     'Matrix',
     'resizeBitmap(orientedBitmap, resize)',
     'readMaxBytes(output)',
-    'encodeJpegToTargetSize',
+    'encodeBitmapToTargetSize',
     'supportsTargetSizeCompression", true',
+    'OutputFormat.fromValue',
+    'PNG_FORMAT',
+    'WEBP_FORMAT',
+    'Bitmap.CompressFormat.PNG',
+    'Bitmap.CompressFormat.WEBP_LOSSY',
+    'Bitmap.CompressFormat.WEBP',
+    'createPngOutputNotes',
+    'createWebpOutputNotes',
+    'putBoolean("output", outputFormat != null)',
+    'supports JPEG input with JPEG, PNG, and WebP output only',
     'readMetadataPolicy(options)',
     'MetadataPolicy.PRESERVE',
     'createCopiedExifMetadata',
@@ -242,10 +252,10 @@ function checkAndroidNativeModule() {
 
   return {
     ok: missing.length === 0 && hasUnitTestScript,
-    label: 'Android Kotlin module matches generated spec and JPEG MVP path',
+    label: 'Android Kotlin module matches generated spec and Android JPEG-input MVP path',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG decode/orient/resize/target-size/encode path plus metadata unit tests'
+        ? 'module extends generated spec and contains JPEG decode/orient/resize plus JPEG/PNG/WebP output encode path and metadata unit tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),

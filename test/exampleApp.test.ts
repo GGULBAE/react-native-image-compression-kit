@@ -10,6 +10,21 @@ function readProjectFile(filePath: string): string {
 }
 
 describe('example app', () => {
+  it('lets Android users select JPEG, PNG, or WebP output formats', () => {
+    const appSource = readProjectFile('example/src/App.tsx');
+
+    expect(appSource).toContain(
+      "const EXAMPLE_OUTPUT_FORMATS: OutputFormat[] = ['jpeg', 'png', 'webp'];"
+    );
+    expect(appSource).toContain("useState<OutputFormat>('jpeg')");
+    expect(appSource).toContain('format: outputFormat');
+    expect(appSource).toContain('supportsSelectedTargetSize');
+    expect(appSource).toContain('editable={supportsSelectedTargetSize}');
+    expect(appSource).toContain('label="selected output"');
+    expect(appSource).toContain('label="output formats"');
+    expect(appSource).toContain('label="format"');
+  });
+
   it('lets Android users select and inspect JPEG metadata policy behavior', () => {
     const appSource = readProjectFile('example/src/App.tsx');
 

@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Status: Android JPEG MVP" src="https://img.shields.io/badge/Status-Android%20JPEG%20MVP-blue" />
+  <img alt="Status: Android JPEG Input MVP" src="https://img.shields.io/badge/Status-Android%20JPEG%20Input%20MVP-blue" />
   <img alt="Platforms: Android | iOS" src="https://img.shields.io/badge/Platforms-Android%20%7C%20iOS-green" />
   <img alt="React Native" src="https://img.shields.io/badge/React%20Native-planned-61dafb" />
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-planned-3178c6" />
@@ -30,7 +30,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Android includes a JPEG quality and target-size compression MVP for `file://` and `content://` JPEG inputs, EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling, and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
+Android includes a JPEG-input compression MVP for `file://` and `content://` JPEG inputs, EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG output, and JPEG, PNG, or WebP output encoding. iOS compression and non-JPEG inputs are not implemented yet.
 
 ## Current Implementation Scope
 
@@ -39,18 +39,19 @@ The current implementation is intentionally small:
 - Android only.
 - `file://` and `content://` local URI input.
 - JPEG input only.
-- JPEG output only.
-- Quality-based compression and target-size compression with `maxBytes`.
-- EXIF orientation correction before resize and JPEG output.
+- JPEG, PNG, and WebP output.
+- Quality-based compression for JPEG and WebP output. PNG output ignores `quality`.
+- Target-size compression with `maxBytes` for JPEG and WebP output. PNG output rejects `maxBytes`.
+- EXIF orientation correction before resize and selected output encoding.
 - Optional resize with `maxWidth`, `maxHeight`, and `contain`, `cover`, or `stretch` mode.
-- Metadata `preserve`, privacy-filtered `safe`, and `strip` policies for JPEG re-encode output.
+- Metadata `preserve`, privacy-filtered `safe`, and `strip` policies for JPEG re-encode output. PNG and WebP output do not preserve source EXIF metadata.
 - Output file written to the Android app cache directory.
 - `CompressionResult` returns `uri`, `format`, final `width`, final `height`, `byteSize`, `originalByteSize`, and `compressionRatio`.
 
 The following remain planned and are not implemented in the MVP:
 
 - iOS compression.
-- PNG, WebP, HEIC / HEIF, AVIF, and GIF processing.
+- PNG, WebP, HEIC / HEIF, AVIF, and GIF input processing.
 - Metadata support for non-JPEG formats and iOS.
 
 ## Why
@@ -91,11 +92,11 @@ The following product features are planned or only partially implemented.
 
 - Automatic format detection.
 - Quality-based compression.
-- Target file size compression with `maxBytes`. Android JPEG MVP support is implemented.
-- Optional resize during compression. Android JPEG MVP support is implemented.
-- Output format selection.
-- Automatic EXIF orientation correction. Android JPEG MVP support is implemented.
-- Metadata preservation and stripping policies. Android JPEG MVP supports `preserve`, `safe`, and `strip` for JPEG output.
+- Target file size compression with `maxBytes`. Android JPEG-input MVP support is implemented for JPEG and WebP output.
+- Optional resize during compression. Android JPEG-input MVP support is implemented.
+- Output format selection. Android JPEG-input MVP supports JPEG, PNG, and WebP output.
+- Automatic EXIF orientation correction. Android JPEG-input MVP support is implemented.
+- Metadata preservation and stripping policies. Android JPEG-input MVP supports `preserve`, `safe`, and `strip` for JPEG output.
 - Alpha-channel handling.
 - Local URI input and output.
 - Compression statistics.
@@ -116,6 +117,8 @@ The table below describes planned input and output support. Actual availability 
 | HEIC / HEIF | Yes | Optional / later | Platform and codec dependent |
 | AVIF | Yes | Yes | Planned codec integration |
 | GIF | Yes | Later | Static first-frame support before animation preservation |
+
+Current Android MVP support is narrower than the planned table: JPEG input is implemented, and JPEG, PNG, and WebP output are implemented. PNG and WebP input remain planned.
 
 Animation preservation for GIF, animated WebP, and animated AVIF is not planned as an initial-version guarantee.
 
@@ -186,7 +189,7 @@ output: {
 }
 ```
 
-Android JPEG MVP resize supports `contain`, `cover`, and `stretch`. EXIF orientation is applied before resize, and the result `width` and `height` describe the final encoded image dimensions after orientation correction and resize.
+Android JPEG-input MVP resize supports `contain`, `cover`, and `stretch`. EXIF orientation is applied before resize, and the result `width` and `height` describe the final encoded image dimensions after orientation correction and resize.
 
 ### 3. Target-size compression
 
@@ -197,13 +200,13 @@ output: {
 }
 ```
 
-Android JPEG MVP target-size compression treats `quality` as the upper quality bound when both `quality` and `maxBytes` are provided. If `quality` is omitted, Android starts from the default quality. It searches for the highest JPEG quality that fits under `maxBytes`; if even the lowest quality cannot fit, it returns the smallest generated JPEG instead. `maxBytes` is not intended to guarantee an exact byte size for every source image, format, platform, or codec.
+Android JPEG-input MVP target-size compression treats `quality` as the upper quality bound when both `quality` and `maxBytes` are provided. If `quality` is omitted, Android starts from the default quality. It searches for the highest JPEG or WebP quality that fits under `maxBytes`; if even the lowest quality cannot fit, it returns the smallest generated output instead. PNG output does not support `maxBytes`. `maxBytes` is not intended to guarantee an exact byte size for every source image, format, platform, or codec.
 
 ### 4. Compression with format conversion
 
 ```ts
 output: {
-  format: 'avif',
+  format: 'webp',
   quality: 65,
 }
 ```
@@ -218,9 +221,9 @@ metadata: 'safe'
 metadata: 'strip'
 ```
 
-Android JPEG MVP currently supports `preserve`, `safe`, and `strip` for JPEG output. EXIF orientation is applied to pixels before encoding, so output orientation metadata is normalized instead of preserving the original rotation flag.
+Android JPEG-input MVP currently supports `preserve`, `safe`, and `strip` for JPEG output. EXIF orientation is applied to pixels before encoding, so output orientation metadata is normalized instead of preserving the original rotation flag. PNG and WebP output do not copy source EXIF metadata.
 
-`safe` is the default policy. In the Android JPEG MVP it copies a privacy-filtered EXIF allowlist, including common camera, date/time, exposure, lens, and color-space attributes. It excludes GPS/location, owner/serial identifiers, maker note, user comment, image-unique ID, XMP, and other broad free-form metadata.
+`safe` is the default policy. In the Android JPEG-input MVP it copies a privacy-filtered EXIF allowlist into JPEG output, including common camera, date/time, exposure, lens, and color-space attributes. It excludes GPS/location, owner/serial identifiers, maker note, user comment, image-unique ID, XMP, and other broad free-form metadata.
 
 `strip` removes metadata from the encoded output where possible through JPEG re-encode.
 
@@ -263,13 +266,15 @@ This project is not intended to handle:
 - [x] Android JPEG EXIF orientation correction.
 - [x] Android JPEG resize support.
 - [x] Android JPEG target-size compression.
+- [x] Android JPEG input to PNG and WebP output encoding.
 - [x] Android JPEG metadata `safe` / `strip` policy basics.
 - [x] Android JPEG metadata `preserve` EXIF copy.
 - [x] Android JPEG metadata `safe` privacy-filtered EXIF copy.
 - [x] Android JPEG metadata policy unit tests with real EXIF read/write.
 - [x] Example application.
 - [x] Example metadata policy selector and result summary.
-- [ ] JPEG, PNG, and WebP compression.
+- [x] Example output format selector for JPEG, PNG, and WebP.
+- [ ] PNG and WebP input support.
 - [ ] HEIC / HEIF input.
 - [ ] AVIF support.
 - [ ] Metadata support for non-JPEG formats and iOS.
@@ -278,7 +283,7 @@ This project is not intended to handle:
 
 ## Installation
 
-This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android JPEG quality and target-size compression MVP with EXIF orientation correction, optional resize, and metadata `preserve` / privacy-filtered `safe` / `strip` handling. iOS compression and broader format support are not implemented yet.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android JPEG-input MVP with EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG output. iOS compression and broader input format support are not implemented yet.
 
 Planned installation command:
 
@@ -288,7 +293,7 @@ npm install react-native-image-compression-kit
 
 ## Example Application
 
-The repository includes an Android React Native example app in `example/`. It links this local package through the pnpm workspace and exercises the Android JPEG MVP against a `file://` or `content://` source URI.
+The repository includes an Android React Native example app in `example/`. It links this local package through the pnpm workspace and exercises the Android JPEG-input MVP against a `file://` or `content://` source URI.
 
 Install dependencies from the repository root:
 
@@ -319,7 +324,7 @@ compressImage({
     mode,
   },
   output: {
-    format: 'jpeg',
+    format,
     quality,
     maxBytes,
   },
@@ -327,7 +332,7 @@ compressImage({
 });
 ```
 
-The example lets you choose `preserve`, `safe`, or `strip` metadata handling before compression. It also displays the current native `metadataPolicies` capability list, the selected metadata policy, the compressed output URI, final width and height, compressed byte size, original byte size, compression ratio, the metadata policy used for the latest result, and native error code/message when the call fails.
+The example lets you choose JPEG, PNG, or WebP output and `preserve`, `safe`, or `strip` metadata handling before compression. It displays the current native output format capability list, the current native `metadataPolicies` capability list, the selected output format, the selected metadata policy, the compressed output URI, result format, final width and height, compressed byte size, original byte size, compression ratio, the metadata policy used for the latest result, and native error code/message when the call fails.
 
 Android Codegen and native build checks can also be run through the example app:
 
@@ -354,7 +359,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app.
+`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, and WebP output paths.
 
 ## Development Verification
 

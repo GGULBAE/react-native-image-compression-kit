@@ -50,7 +50,8 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('OpenableColumns.SIZE');
     expect(moduleSource).toContain('BitmapFactory.decodeStream');
     expect(moduleSource).toContain('hasJpegHeader');
-    expect(moduleSource).toContain('createCompressionResult(originalByteSize');
+    expect(moduleSource).toContain('createCompressionResult(');
+    expect(moduleSource).toContain('outputFormat');
     expect(moduleSource).not.toContain('BitmapFactory.decodeFile');
   });
 
@@ -100,13 +101,40 @@ describe('Android verification scripts', () => {
 
     expect(moduleSource).toContain('readMaxBytes(output)');
     expect(moduleSource).toContain('output.maxBytes must be a positive integer');
-    expect(moduleSource).toContain('didEncode = encodeJpeg(');
+    expect(moduleSource).toContain('didEncode = encodeBitmap(');
     expect(moduleSource).toContain('maxBytes,');
     expect(moduleSource).toContain('copiedExifMetadata');
-    expect(moduleSource).toContain('encodeJpegToTargetSize');
+    expect(moduleSource).toContain('encodeBitmapToTargetSize');
     expect(moduleSource).toContain('bestWithinTargetQuality');
     expect(moduleSource).toContain('supportsTargetSizeCompression", true');
+    expect(moduleSource).toContain(
+      'supports output.maxBytes for JPEG and WebP output only'
+    );
     expect(moduleSource).not.toContain('does not implement target-size compression yet');
+  });
+
+  it('verifies the Android module implements PNG and WebP output encoding', () => {
+    const moduleSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
+    );
+
+    expect(moduleSource).toContain('OutputFormat.fromValue');
+    expect(moduleSource).toContain('PNG_FORMAT');
+    expect(moduleSource).toContain('WEBP_FORMAT');
+    expect(moduleSource).toContain('Bitmap.CompressFormat.PNG');
+    expect(moduleSource).toContain('Bitmap.CompressFormat.WEBP_LOSSY');
+    expect(moduleSource).toContain('Bitmap.CompressFormat.WEBP');
+    expect(moduleSource).toContain('createOutputFile(outputFormat)');
+    expect(moduleSource).toContain('outputFormat.fileExtension');
+    expect(moduleSource).toContain('putString("format", outputFormat.value)');
+    expect(moduleSource).toContain('createPngOutputNotes');
+    expect(moduleSource).toContain('createWebpOutputNotes');
+    expect(moduleSource).toContain('putBoolean("output", outputFormat != null)');
+    expect(moduleSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
+    expect(moduleSource).toContain(
+      'supports JPEG input with JPEG, PNG, and WebP output only'
+    );
+    expect(moduleSource).not.toContain('Android JPEG MVP only implements JPEG output.');
   });
 
   it('verifies the Android module handles JPEG metadata policies explicitly', () => {
