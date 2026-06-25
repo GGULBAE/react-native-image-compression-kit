@@ -192,6 +192,9 @@ function checkAndroidNativeModule() {
     'ExifInterface.TAG_ORIENTATION',
     'Matrix',
     'resizeBitmap(orientedBitmap, resize)',
+    'readMaxBytes(output)',
+    'encodeJpegToTargetSize',
+    'supportsTargetSizeCompression", true',
     'Bitmap.createScaledBitmap',
     'ResizeMode.COVER',
     'Bitmap.CompressFormat.JPEG',
@@ -202,7 +205,7 @@ function checkAndroidNativeModule() {
   return {
     ok: missing.length === 0,
     label: 'Android Kotlin module matches generated spec and JPEG MVP path',
-    detail: missing.length === 0 ? 'module extends generated spec and contains JPEG decode/orient/resize/encode path' : `missing snippets: ${missing.join(' | ')}`,
+    detail: missing.length === 0 ? 'module extends generated spec and contains JPEG decode/orient/resize/target-size/encode path' : `missing snippets: ${missing.join(' | ')}`,
   };
 }
 

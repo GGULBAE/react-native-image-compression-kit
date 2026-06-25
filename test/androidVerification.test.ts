@@ -77,4 +77,18 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('outputDimensions');
     expect(moduleSource).not.toContain('does not implement resize yet');
   });
+
+  it('verifies the Android module implements JPEG target-size compression', () => {
+    const moduleSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
+    );
+
+    expect(moduleSource).toContain('readMaxBytes(output)');
+    expect(moduleSource).toContain('output.maxBytes must be a positive integer');
+    expect(moduleSource).toContain('encodeJpeg(processedBitmap, outputFile, quality, maxBytes)');
+    expect(moduleSource).toContain('encodeJpegToTargetSize');
+    expect(moduleSource).toContain('bestWithinTargetQuality');
+    expect(moduleSource).toContain('supportsTargetSizeCompression", true');
+    expect(moduleSource).not.toContain('does not implement target-size compression yet');
+  });
 });

@@ -50,15 +50,6 @@ class ImageCompressionKitModule(
         return
       }
 
-      if (hasValue(output, "maxBytes")) {
-        reject(
-          promise,
-          ERR_NOT_IMPLEMENTED,
-          "Android JPEG MVP does not implement target-size compression yet."
-        )
-        return
-      }
-
       val format = if (hasValue(output, "format")) {
         output.getString("format")
       } else {
@@ -73,6 +64,18 @@ class ImageCompressionKitModule(
         return
       }
 
+      val maxBytes = try {
+        readMaxBytes(output)
+      } catch (error: InvalidOptionsException) {
+        reject(
+          promise,
+          ERR_INVALID_OPTIONS,
+          error.message ?: "Compression output.maxBytes is invalid.",
+          error
+        )
+        return
+      }
+      val quality = readQuality(output)
       val uri = if (hasValue(source, "uri")) {
         source.getString("uri")
       } else {
@@ -192,7 +195,7 @@ class ImageCompressionKitModule(
       val didEncode: Boolean
 
       try {
-        didEncode = encodeJpeg(processedBitmap, outputFile, readQuality(output))
+        didEncode = encodeJpeg(processedBitmap, outputFile, quality, maxBytes)
       } finally {
         if (processedBitmap !== orientedBitmap) {
           processedBitmap.recycle()
@@ -234,7 +237,7 @@ class ImageCompressionKitModule(
       putString("platform", "android")
       putArray("formats", createFormatCapabilities())
       putArray("metadataPolicies", createMetadataPolicies())
-      putBoolean("supportsTargetSizeCompression", false)
+      putBoolean("supportsTargetSizeCompression", true)
       putBoolean("supportsCancellation", false)
     }
 
@@ -281,7 +284,8 @@ class ImageCompressionKitModule(
       pushString("Android JPEG quality compression MVP supports file:// and content:// sources.")
       pushString("EXIF orientation is applied before resize and JPEG output.")
       pushString("Resize supports contain, cover, and stretch modes with maxWidth and maxHeight.")
-      pushString("Metadata policies and target-size compression are not implemented yet.")
+      pushString("Target-size compression supports maxBytes by adjusting JPEG quality.")
+      pushString("Metadata policies are not implemented yet.")
     }
 
   private fun hasValue(map: ReadableMap, key: String): Boolean =
@@ -300,6 +304,30 @@ class ImageCompressionKitModule(
     } else {
       DEFAULT_QUALITY
     }
+
+  private fun readMaxBytes(output: ReadableMap): Long? {
+    if (!hasValue(output, "maxBytes")) {
+      return null
+    }
+
+    val value = try {
+      output.getDouble("maxBytes")
+    } catch (error: Exception) {
+      throw InvalidOptionsException("Compression output.maxBytes must be a positive integer.", error)
+    }
+
+    if (
+      value.isNaN() ||
+      value.isInfinite() ||
+      value <= 0.0 ||
+      value > MAX_SAFE_INTEGER ||
+      value.toLong().toDouble() != value
+    ) {
+      throw InvalidOptionsException("Compression output.maxBytes must be a positive integer.")
+    }
+
+    return value.toLong()
+  }
 
   private fun readResizeOptions(resize: ReadableMap?): ResizeOptions? {
     if (resize == null) {
@@ -671,7 +699,71 @@ class ImageCompressionKitModule(
     )
   }
 
-  private fun encodeJpeg(bitmap: Bitmap, outputFile: File, quality: Int): Boolean =
+  private fun encodeJpeg(
+    bitmap: Bitmap,
+    outputFile: File,
+    quality: Int,
+    maxBytes: Long?
+  ): Boolean =
+    if (maxBytes == null) {
+      encodeJpegAtQuality(bitmap, outputFile, quality)
+    } else {
+      encodeJpegToTargetSize(bitmap, outputFile, quality, maxBytes)
+    }
+
+  private fun encodeJpegToTargetSize(
+    bitmap: Bitmap,
+    outputFile: File,
+    qualityCap: Int,
+    maxBytes: Long
+  ): Boolean {
+    var currentQuality = qualityCap
+
+    if (!encodeJpegAtQuality(bitmap, outputFile, currentQuality)) {
+      return false
+    }
+
+    if (outputFile.length() <= maxBytes) {
+      return true
+    }
+
+    var lowestAboveTargetQuality = currentQuality
+    var lowestAboveTargetSize = outputFile.length()
+    var bestWithinTargetQuality: Int? = null
+    var low = MIN_QUALITY
+    var high = qualityCap - 1
+
+    while (low <= high) {
+      currentQuality = (low + high) / 2
+
+      if (!encodeJpegAtQuality(bitmap, outputFile, currentQuality)) {
+        return false
+      }
+
+      val byteSize = outputFile.length()
+
+      if (byteSize <= maxBytes) {
+        bestWithinTargetQuality = currentQuality
+        low = currentQuality + 1
+      } else {
+        if (byteSize < lowestAboveTargetSize) {
+          lowestAboveTargetQuality = currentQuality
+          lowestAboveTargetSize = byteSize
+        }
+        high = currentQuality - 1
+      }
+    }
+
+    val finalQuality = bestWithinTargetQuality ?: lowestAboveTargetQuality
+
+    return if (currentQuality == finalQuality) {
+      true
+    } else {
+      encodeJpegAtQuality(bitmap, outputFile, finalQuality)
+    }
+  }
+
+  private fun encodeJpegAtQuality(bitmap: Bitmap, outputFile: File, quality: Int): Boolean =
     FileOutputStream(outputFile).use { outputStream ->
       bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
     }
@@ -773,6 +865,7 @@ class ImageCompressionKitModule(
     private const val DEFAULT_QUALITY = 80
     private const val MIN_QUALITY = 0
     private const val MAX_QUALITY = 100
+    private const val MAX_SAFE_INTEGER = 9007199254740991.0
     private const val STREAM_BUFFER_SIZE = 8 * 1024
     private const val JPEG_HEADER_SIZE = 3
     private const val RESIZE_MODE_CONTAIN = "contain"

@@ -38,6 +38,7 @@ const SAMPLE_MODULE = NativeModules.ExampleImageSource as
 export default function App(): React.JSX.Element {
   const [sourceUri, setSourceUri] = useState('');
   const [qualityText, setQualityText] = useState(DEFAULT_QUALITY);
+  const [maxBytesText, setMaxBytesText] = useState('');
   const [maxWidthText, setMaxWidthText] = useState('');
   const [maxHeightText, setMaxHeightText] = useState('');
   const [resizeMode, setResizeMode] = useState<ResizeMode>('contain');
@@ -72,6 +73,11 @@ export default function App(): React.JSX.Element {
       mode: resizeMode,
     };
   }, [maxHeightText, maxWidthText, resizeMode]);
+
+  const maxBytes = useMemo(
+    () => parseOptionalPositiveInteger(maxBytesText),
+    [maxBytesText]
+  );
 
   const loadSample = useCallback(async () => {
     if (!SAMPLE_MODULE) {
@@ -125,12 +131,18 @@ export default function App(): React.JSX.Element {
     setError(null);
 
     try {
+      const outputOptions: CompressionOptions['output'] = {
+        format: 'jpeg',
+        quality: Number.parseInt(quality, 10),
+      };
+
+      if (maxBytes !== undefined) {
+        outputOptions.maxBytes = maxBytes;
+      }
+
       const compressionOptions: CompressionOptions = {
         source: { uri: sourceUri.trim() },
-        output: {
-          format: 'jpeg',
-          quality: Number.parseInt(quality, 10),
-        },
+        output: outputOptions,
       };
 
       if (resizeOptions) {
@@ -145,7 +157,7 @@ export default function App(): React.JSX.Element {
     } finally {
       setIsCompressing(false);
     }
-  }, [quality, resizeOptions, sourceUri]);
+  }, [maxBytes, quality, resizeOptions, sourceUri]);
 
   const jpegCapability = capabilities?.formats.find(
     (capability) => capability.format === 'jpeg'
@@ -189,6 +201,16 @@ export default function App(): React.JSX.Element {
               onChangeText={setQualityText}
               style={styles.input}
               value={qualityText}
+            />
+          </View>
+          <View style={styles.qualityField}>
+            <Text style={styles.label}>Max bytes</Text>
+            <TextInput
+              keyboardType="number-pad"
+              onChangeText={setMaxBytesText}
+              placeholder="optional"
+              style={styles.input}
+              value={maxBytesText}
             />
           </View>
           <View style={styles.action}>
@@ -315,7 +337,7 @@ function parseOptionalPositiveInteger(value: string): number | undefined {
 
   const parsed = Number(trimmed);
 
-  if (!Number.isFinite(parsed) || parsed <= 0) {
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
     return undefined;
   }
 
@@ -403,16 +425,19 @@ const styles = StyleSheet.create({
   },
   row: {
     alignItems: 'flex-end',
+    flexWrap: 'wrap',
     flexDirection: 'row',
     gap: 12,
   },
   qualityField: {
     flex: 1,
     gap: 8,
+    minWidth: 112,
   },
   compactField: {
     flex: 1,
     gap: 8,
+    minWidth: 112,
   },
   modeRow: {
     flexDirection: 'row',

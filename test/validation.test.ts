@@ -121,6 +121,11 @@ describe('compressImage validation', () => {
       source: { uri: 'file:///tmp/input.jpg' },
       output: { format: 'webp', maxBytes: 0 },
     });
+
+    await expectInvalidOptions({
+      source: { uri: 'file:///tmp/input.jpg' },
+      output: { format: 'webp', maxBytes: 80.5 },
+    });
   });
 
   it('validates resize dimensions and mode', async () => {
