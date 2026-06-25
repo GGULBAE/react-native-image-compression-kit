@@ -335,7 +335,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies. `pnpm example:android` still requires a connected emulator/device.
+These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies. `pnpm example:android` still requires a connected emulator/device.
 
 ## Continuous Integration
 
@@ -352,7 +352,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Android JVM unit tests for native metadata policy behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app.
+`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app.
 
 ## Development Verification
 

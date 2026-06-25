@@ -194,6 +194,10 @@ describe('Android verification scripts', () => {
 
     expect(gradleSource).toContain('testImplementation "junit:junit:4.13.2"');
     expect(gradleSource).toContain('unitTests.returnDefaultValues = true');
+    expect(gradleSource).toContain('unitTests.includeAndroidResources = true');
+    expect(gradleSource).toContain(
+      'testImplementation "org.robolectric:robolectric:4.16.1"'
+    );
     expect(testSource).toContain(
       'safeMetadataCopiesAllowlistedExifAndFiltersSensitiveTags'
     );
@@ -202,6 +206,7 @@ describe('Android verification scripts', () => {
     );
     expect(testSource).toContain('nullMetadataLeavesOutputExifUntouchedForStripPolicy');
     expect(testSource).toContain('Base64.getMimeDecoder().decode(SAMPLE_JPEG_BASE64)');
+    expect(testSource).toContain('RobolectricTestRunner');
     expect(testSource).toContain('JpegExifMetadata.write(metadata, outputFile)');
     expect(testSource).toContain('ExifInterface.TAG_GPS_LATITUDE');
     expect(testSource).toContain('ExifInterface.ORIENTATION_NORMAL');

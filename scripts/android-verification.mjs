@@ -169,9 +169,11 @@ function checkAndroidGradleConfig() {
     'apply plugin: "org.jetbrains.kotlin.android"',
     'build/generated/source/codegen/java',
     'unitTests.returnDefaultValues = true',
+    'unitTests.includeAndroidResources = true',
     'implementation "com.facebook.react:react-android"',
     'implementation "androidx.exifinterface:exifinterface:1.4.2"',
     'testImplementation "junit:junit:4.13.2"',
+    'testImplementation "org.robolectric:robolectric:4.16.1"',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
 
@@ -230,6 +232,7 @@ function checkAndroidNativeModule() {
     'safeMetadataCopiesAllowlistedExifAndFiltersSensitiveTags',
     'preserveMetadataCopiesSensitiveExifButNormalizesOutputGeometry',
     'nullMetadataLeavesOutputExifUntouchedForStripPolicy',
+    'RobolectricTestRunner',
     'ERR_UNSUPPORTED_FORMAT',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
