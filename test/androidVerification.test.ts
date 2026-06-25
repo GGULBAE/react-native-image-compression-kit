@@ -200,7 +200,7 @@ describe('Android verification scripts', () => {
       'preserveMetadataCopiesSensitiveExifButNormalizesOutputGeometry'
     );
     expect(testSource).toContain('nullMetadataLeavesOutputExifUntouchedForStripPolicy');
-    expect(testSource).toContain('ImageIO.write(image, "jpg", file)');
+    expect(testSource).toContain('Base64.getMimeDecoder().decode(SAMPLE_JPEG_BASE64)');
     expect(testSource).toContain('JpegExifMetadata.write(metadata, outputFile)');
     expect(testSource).toContain('ExifInterface.TAG_GPS_LATITUDE');
     expect(testSource).toContain('ExifInterface.ORIENTATION_NORMAL');
