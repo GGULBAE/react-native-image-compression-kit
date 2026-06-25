@@ -39,13 +39,36 @@ describe('Android verification scripts', () => {
     expect(moduleSource).not.toContain('BitmapFactory.decodeFile');
   });
 
+  it('verifies the Android module applies EXIF orientation before resize', () => {
+    const gradleSource = readProjectFile('android/build.gradle');
+    const moduleSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
+    );
+
+    expect(gradleSource).toContain(
+      'androidx.exifinterface:exifinterface:1.4.2'
+    );
+    expect(moduleSource).toContain('readExifOrientation(inputSource)');
+    expect(moduleSource).toContain('ExifInterface.TAG_ORIENTATION');
+    expect(moduleSource).toContain(
+      'applyExifOrientation(bitmap, exifOrientation)'
+    );
+    expect(
+      moduleSource.indexOf('applyExifOrientation(bitmap, exifOrientation)')
+    ).toBeLessThan(moduleSource.indexOf('resizeBitmap(orientedBitmap, resize)'));
+    expect(moduleSource).toContain('Matrix');
+    expect(moduleSource).toContain('ExifInterface.ORIENTATION_ROTATE_90');
+    expect(moduleSource).toContain('ExifInterface.ORIENTATION_TRANSVERSE');
+    expect(moduleSource).toContain('ExifInterface.ORIENTATION_NORMAL');
+  });
+
   it('verifies the Android module implements JPEG resize modes', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
 
     expect(moduleSource).toContain('readResizeOptions');
-    expect(moduleSource).toContain('resizeBitmap(bitmap, resize)');
+    expect(moduleSource).toContain('resizeBitmap(orientedBitmap, resize)');
     expect(moduleSource).toContain('ResizeMode.CONTAIN');
     expect(moduleSource).toContain('ResizeMode.COVER');
     expect(moduleSource).toContain('ResizeMode.STRETCH');

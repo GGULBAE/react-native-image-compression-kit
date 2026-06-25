@@ -167,6 +167,7 @@ function checkAndroidGradleConfig() {
     'apply plugin: "org.jetbrains.kotlin.android"',
     'build/generated/source/codegen/java',
     'implementation "com.facebook.react:react-android"',
+    'implementation "androidx.exifinterface:exifinterface:1.4.2"',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
 
@@ -186,7 +187,11 @@ function checkAndroidNativeModule() {
     'BitmapFactory.decodeStream',
     'openInputStream(inputSource.uri)',
     'OpenableColumns.SIZE',
-    'resizeBitmap(bitmap, resize)',
+    'readExifOrientation(inputSource)',
+    'applyExifOrientation(bitmap, exifOrientation)',
+    'ExifInterface.TAG_ORIENTATION',
+    'Matrix',
+    'resizeBitmap(orientedBitmap, resize)',
     'Bitmap.createScaledBitmap',
     'ResizeMode.COVER',
     'Bitmap.CompressFormat.JPEG',
@@ -197,7 +202,7 @@ function checkAndroidNativeModule() {
   return {
     ok: missing.length === 0,
     label: 'Android Kotlin module matches generated spec and JPEG MVP path',
-    detail: missing.length === 0 ? 'module extends generated spec and contains JPEG decode/resize/encode path' : `missing snippets: ${missing.join(' | ')}`,
+    detail: missing.length === 0 ? 'module extends generated spec and contains JPEG decode/orient/resize/encode path' : `missing snippets: ${missing.join(' | ')}`,
   };
 }
 

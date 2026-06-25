@@ -2,8 +2,10 @@ package com.imagecompressionkit
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.exifinterface.media.ExifInterface
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -179,7 +181,9 @@ class ImageCompressionKitModule(
         return
       }
 
-      val processedBitmap = resizeBitmap(bitmap, resize)
+      val exifOrientation = readExifOrientation(inputSource)
+      val orientedBitmap = applyExifOrientation(bitmap, exifOrientation)
+      val processedBitmap = resizeBitmap(orientedBitmap, resize)
       val outputDimensions = ImageDimensions(
         width = processedBitmap.width,
         height = processedBitmap.height
@@ -190,8 +194,11 @@ class ImageCompressionKitModule(
       try {
         didEncode = encodeJpeg(processedBitmap, outputFile, readQuality(output))
       } finally {
-        if (processedBitmap !== bitmap) {
+        if (processedBitmap !== orientedBitmap) {
           processedBitmap.recycle()
+        }
+        if (orientedBitmap !== bitmap) {
+          orientedBitmap.recycle()
         }
         bitmap.recycle()
       }
@@ -272,6 +279,7 @@ class ImageCompressionKitModule(
   private fun createJpegMvpNotes(): WritableArray =
     Arguments.createArray().apply {
       pushString("Android JPEG quality compression MVP supports file:// and content:// sources.")
+      pushString("EXIF orientation is applied before resize and JPEG output.")
       pushString("Resize supports contain, cover, and stretch modes with maxWidth and maxHeight.")
       pushString("Metadata policies and target-size compression are not implemented yet.")
     }
@@ -477,6 +485,62 @@ class ImageCompressionKitModule(
     openInputStream(inputSource).buffered().use { inputStream ->
       BitmapFactory.decodeStream(inputStream)
     }
+
+  private fun readExifOrientation(inputSource: ImageInputSource): Int =
+    try {
+      openInputStream(inputSource).buffered().use { inputStream ->
+        ExifInterface(inputStream).getAttributeInt(
+          ExifInterface.TAG_ORIENTATION,
+          ExifInterface.ORIENTATION_NORMAL
+        )
+      }
+    } catch (_: Exception) {
+      ExifInterface.ORIENTATION_NORMAL
+    }
+
+  private fun applyExifOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
+    val matrix = createExifOrientationMatrix(orientation) ?: return bitmap
+
+    return Bitmap.createBitmap(
+      bitmap,
+      0,
+      0,
+      bitmap.width,
+      bitmap.height,
+      matrix,
+      true
+    )
+  }
+
+  private fun createExifOrientationMatrix(orientation: Int): Matrix? {
+    val matrix = Matrix()
+
+    when (orientation) {
+      ExifInterface.ORIENTATION_FLIP_HORIZONTAL ->
+        matrix.setScale(-1f, 1f)
+      ExifInterface.ORIENTATION_ROTATE_180 ->
+        matrix.setRotate(180f)
+      ExifInterface.ORIENTATION_FLIP_VERTICAL -> {
+        matrix.setRotate(180f)
+        matrix.postScale(-1f, 1f)
+      }
+      ExifInterface.ORIENTATION_TRANSPOSE -> {
+        matrix.setRotate(90f)
+        matrix.postScale(-1f, 1f)
+      }
+      ExifInterface.ORIENTATION_ROTATE_90 ->
+        matrix.setRotate(90f)
+      ExifInterface.ORIENTATION_TRANSVERSE -> {
+        matrix.setRotate(-90f)
+        matrix.postScale(-1f, 1f)
+      }
+      ExifInterface.ORIENTATION_ROTATE_270 ->
+        matrix.setRotate(-90f)
+      else -> return null
+    }
+
+    return matrix
+  }
 
   private fun resizeBitmap(bitmap: Bitmap, resize: ResizeOptions?): Bitmap {
     if (resize == null) {

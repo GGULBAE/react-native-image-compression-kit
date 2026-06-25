@@ -30,7 +30,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Android includes a JPEG quality compression MVP for `file://` and `content://` JPEG inputs, optional resize, and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
+Android includes a JPEG quality compression MVP for `file://` and `content://` JPEG inputs, EXIF orientation correction, optional resize, and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
 
 ## Current Implementation Scope
 
@@ -41,6 +41,7 @@ The current implementation is intentionally small:
 - JPEG input only.
 - JPEG output only.
 - Quality-based compression only.
+- EXIF orientation correction before resize and JPEG output.
 - Optional resize with `maxWidth`, `maxHeight`, and `contain`, `cover`, or `stretch` mode.
 - Output file written to the Android app cache directory.
 - `CompressionResult` returns `uri`, `format`, final `width`, final `height`, `byteSize`, `originalByteSize`, and `compressionRatio`.
@@ -49,7 +50,6 @@ The following remain planned and are not implemented in the MVP:
 
 - iOS compression.
 - PNG, WebP, HEIC / HEIF, AVIF, and GIF processing.
-- EXIF orientation correction.
 - Metadata preservation, safe stripping, or full stripping.
 - Target-size compression with `maxBytes`.
 
@@ -94,7 +94,7 @@ The following product features are planned or only partially implemented.
 - Target file size compression with `maxBytes`.
 - Optional resize during compression. Android JPEG MVP support is implemented.
 - Output format selection.
-- Automatic EXIF orientation correction.
+- Automatic EXIF orientation correction. Android JPEG MVP support is implemented.
 - Metadata preservation and stripping policies.
 - Alpha-channel handling.
 - Local URI input and output.
@@ -186,7 +186,7 @@ output: {
 }
 ```
 
-Android JPEG MVP resize supports `contain`, `cover`, and `stretch`. The result `width` and `height` describe the final encoded image dimensions after resize.
+Android JPEG MVP resize supports `contain`, `cover`, and `stretch`. EXIF orientation is applied before resize, and the result `width` and `height` describe the final encoded image dimensions after orientation correction and resize.
 
 ### 3. Target-size compression
 
@@ -258,6 +258,7 @@ This project is not intended to handle:
 - [x] Unit test foundation for API and validation.
 - [x] React Native Codegen and native module foundation.
 - [x] Android JPEG to JPEG quality compression MVP.
+- [x] Android JPEG EXIF orientation correction.
 - [x] Android JPEG resize support.
 - [x] Example application.
 - [ ] JPEG, PNG, and WebP compression.
@@ -270,7 +271,7 @@ This project is not intended to handle:
 
 ## Installation
 
-This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android JPEG quality compression MVP with optional resize. iOS compression and broader format support are not implemented yet.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android JPEG quality compression MVP with EXIF orientation correction and optional resize. iOS compression and broader format support are not implemented yet.
 
 Planned installation command:
 
