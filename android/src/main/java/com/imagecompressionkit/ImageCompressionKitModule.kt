@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.net.Uri
-import android.os.Build
 import android.provider.OpenableColumns
 import androidx.exifinterface.media.ExifInterface
 import com.facebook.react.bridge.Arguments
@@ -17,7 +16,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.util.UUID
 import kotlin.math.roundToInt
 
 class ImageCompressionKitModule(
@@ -96,11 +94,15 @@ class ImageCompressionKitModule(
         return
       }
 
-      if (maxBytes != null && !outputFormat.supportsTargetSizeCompression) {
+      val maxBytesValidationError = ImageCompressionOutput.maxBytesValidationError(
+        outputFormat,
+        maxBytes
+      )
+      if (maxBytesValidationError != null) {
         reject(
           promise,
           ERR_INVALID_OPTIONS,
-          "Android JPEG MVP supports output.maxBytes for JPEG and WebP output only."
+          maxBytesValidationError
         )
         return
       }
@@ -221,7 +223,10 @@ class ImageCompressionKitModule(
         width = processedBitmap.width,
         height = processedBitmap.height
       )
-      val outputFile = createOutputFile(outputFormat)
+      val outputFile = ImageCompressionOutput.createOutputFile(
+        reactContext.cacheDir,
+        outputFormat
+      )
       val didEncode: Boolean
 
       try {
@@ -311,34 +316,23 @@ class ImageCompressionKitModule(
 
   private fun createFormatCapabilities(): WritableArray =
     Arguments.createArray().apply {
-      FORMATS.forEach { format ->
+      ImageCompressionOutput.FORMAT_VALUES.forEach { format ->
         pushMap(createFormatCapability(format))
       }
     }
 
-  private fun createFormatCapability(format: String): WritableMap =
-    Arguments.createMap().apply {
-      val outputFormat = OutputFormat.fromValue(format)
-      val isJpeg = format == JPEG_FORMAT
+  private fun createFormatCapability(format: String): WritableMap {
+    val capability = ImageCompressionOutput.createFormatCapability(format)
 
-      putString("format", format)
-      putBoolean("input", isJpeg)
-      putBoolean("output", outputFormat != null)
-      putBoolean("supportsAlpha", false)
-      putBoolean("supportsAnimation", false)
-      putArray(
-        "notes",
-        if (isJpeg) {
-          createJpegMvpNotes()
-        } else if (outputFormat == OutputFormat.PNG) {
-          createPngOutputNotes()
-        } else if (outputFormat == OutputFormat.WEBP) {
-          createWebpOutputNotes()
-        } else {
-          createNotImplementedNotes()
-        }
-      )
+    return Arguments.createMap().apply {
+      putString("format", capability.format)
+      putBoolean("input", capability.input)
+      putBoolean("output", capability.output)
+      putBoolean("supportsAlpha", capability.supportsAlpha)
+      putBoolean("supportsAnimation", capability.supportsAnimation)
+      putArray("notes", createStringArray(capability.notes))
     }
+  }
 
   private fun createMetadataPolicies(): WritableArray =
     Arguments.createArray().apply {
@@ -347,37 +341,11 @@ class ImageCompressionKitModule(
       pushString(METADATA_POLICY_STRIP)
     }
 
-  private fun createNotImplementedNotes(): WritableArray =
+  private fun createStringArray(values: List<String>): WritableArray =
     Arguments.createArray().apply {
-      pushString("Native codec support has not been implemented yet.")
-    }
-
-  private fun createJpegMvpNotes(): WritableArray =
-    Arguments.createArray().apply {
-      pushString("Android JPEG quality compression MVP supports file:// and content:// sources.")
-      pushString("EXIF orientation is applied before resize and selected output encoding.")
-      pushString("Resize supports contain, cover, and stretch modes with maxWidth and maxHeight.")
-      pushString("Target-size compression supports maxBytes by adjusting JPEG quality.")
-      pushString("Metadata preserve copies supported source EXIF attributes into JPEG output.")
-      pushString("Metadata safe copies privacy-filtered source EXIF attributes.")
-      pushString("Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.")
-      pushString("Metadata preserve normalizes output EXIF orientation after pixels are transformed.")
-      pushString("Metadata strip re-encodes JPEG output without preserving source EXIF metadata.")
-    }
-
-  private fun createPngOutputNotes(): WritableArray =
-    Arguments.createArray().apply {
-      pushString("Android can encode decoded JPEG input to PNG output.")
-      pushString("PNG output ignores quality and does not support target-size maxBytes.")
-      pushString("Non-JPEG output does not preserve source EXIF metadata.")
-    }
-
-  private fun createWebpOutputNotes(): WritableArray =
-    Arguments.createArray().apply {
-      pushString("Android can encode decoded JPEG input to WebP output.")
-      pushString("WebP target-size compression supports maxBytes by adjusting WebP quality.")
-      pushString("Non-JPEG output does not preserve source EXIF metadata.")
-      pushString("Animated WebP input or output is not implemented.")
+      values.forEach { value ->
+        pushString(value)
+      }
     }
 
   private fun hasValue(map: ReadableMap, key: String): Boolean =
@@ -413,7 +381,7 @@ class ImageCompressionKitModule(
       )
     }
 
-    return OutputFormat.fromValue(value)
+    return ImageCompressionOutput.fromValue(value)
   }
 
   private fun readMetadataPolicy(options: ReadableMap): MetadataPolicy {
@@ -850,18 +818,6 @@ class ImageCompressionKitModule(
       )
     }
 
-  private fun createOutputFile(outputFormat: OutputFormat): File {
-    val outputDir = File(reactContext.cacheDir, OUTPUT_DIRECTORY_NAME)
-    if (!outputDir.exists()) {
-      outputDir.mkdirs()
-    }
-
-    return File(
-      outputDir,
-      "compressed-${System.currentTimeMillis()}-${UUID.randomUUID()}.${outputFormat.fileExtension}"
-    )
-  }
-
   private fun encodeBitmap(
     bitmap: Bitmap,
     outputFile: File,
@@ -1015,23 +971,24 @@ class ImageCompressionKitModule(
     dimensions: ImageDimensions,
     outputFormat: OutputFormat
   ): WritableMap {
-    val byteSize = outputFile.length()
+    val outputResult = ImageCompressionOutput.createResultMetadata(
+      originalByteSize = originalByteSize,
+      outputFile = outputFile,
+      dimensions = CompressionOutputDimensions(
+        width = dimensions.width,
+        height = dimensions.height
+      ),
+      outputFormat = outputFormat
+    )
 
     return Arguments.createMap().apply {
-      putString("uri", Uri.fromFile(outputFile).toString())
-      putString("format", outputFormat.value)
-      putInt("width", dimensions.width)
-      putInt("height", dimensions.height)
-      putDouble("byteSize", byteSize.toDouble())
-      putDouble("originalByteSize", originalByteSize.toDouble())
-      putDouble(
-        "compressionRatio",
-        if (originalByteSize > 0L) {
-          byteSize.toDouble() / originalByteSize.toDouble()
-        } else {
-          1.0
-        }
-      )
+      putString("uri", outputResult.uri)
+      putString("format", outputResult.format)
+      putInt("width", outputResult.width)
+      putInt("height", outputResult.height)
+      putDouble("byteSize", outputResult.byteSize.toDouble())
+      putDouble("originalByteSize", outputResult.originalByteSize.toDouble())
+      putDouble("compressionRatio", outputResult.compressionRatio)
     }
   }
 
@@ -1071,59 +1028,6 @@ class ImageCompressionKitModule(
     PRESERVE,
     SAFE,
     STRIP
-  }
-
-  private enum class OutputFormat(
-    val value: String,
-    val fileExtension: String,
-    val supportsTargetSizeCompression: Boolean,
-    val supportsJpegExifMetadata: Boolean
-  ) {
-    JPEG(
-      value = "jpeg",
-      fileExtension = "jpg",
-      supportsTargetSizeCompression = true,
-      supportsJpegExifMetadata = true
-    ),
-    PNG(
-      value = "png",
-      fileExtension = "png",
-      supportsTargetSizeCompression = false,
-      supportsJpegExifMetadata = false
-    ),
-    WEBP(
-      value = "webp",
-      fileExtension = "webp",
-      supportsTargetSizeCompression = true,
-      supportsJpegExifMetadata = false
-    );
-
-    val compressFormat: Bitmap.CompressFormat
-      get() = when (this) {
-        JPEG -> Bitmap.CompressFormat.JPEG
-        PNG -> Bitmap.CompressFormat.PNG
-        WEBP -> webpCompressFormat()
-      }
-
-    fun compressionQuality(quality: Int): Int =
-      if (this == PNG) {
-        100
-      } else {
-        quality
-      }
-
-    @Suppress("DEPRECATION")
-    private fun webpCompressFormat(): Bitmap.CompressFormat =
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-        Bitmap.CompressFormat.WEBP_LOSSY
-      } else {
-        Bitmap.CompressFormat.WEBP
-      }
-
-    companion object {
-      fun fromValue(value: String?): OutputFormat? =
-        values().firstOrNull { it.value == value }
-    }
   }
 
   private sealed class ImageInputSource {
@@ -1166,10 +1070,7 @@ class ImageCompressionKitModule(
     const val ERR_NATIVE_OPERATION_FAILED = "ERR_NATIVE_OPERATION_FAILED"
 
     private const val JPEG_FORMAT = "jpeg"
-    private const val PNG_FORMAT = "png"
-    private const val WEBP_FORMAT = "webp"
     private const val JPEG_MIME_TYPE = "image/jpeg"
-    private const val OUTPUT_DIRECTORY_NAME = "image-compression-kit"
     private const val DEFAULT_QUALITY = 80
     private const val MIN_QUALITY = 0
     private const val MAX_QUALITY = 100
@@ -1187,14 +1088,5 @@ class ImageCompressionKitModule(
     private val JPEG_SOI_SECOND_BYTE = 0xD8.toByte()
     private val JPEG_MARKER_PREFIX_BYTE = 0xFF.toByte()
 
-    private val FORMATS = arrayOf(
-      JPEG_FORMAT,
-      PNG_FORMAT,
-      WEBP_FORMAT,
-      "heic",
-      "heif",
-      "avif",
-      "gif"
-    )
   }
 }

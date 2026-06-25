@@ -15,9 +15,11 @@ const REQUIRED_FILES = [
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt',
+  'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt',
   'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt',
+  'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
 ];
 
 function main() {
@@ -191,11 +193,23 @@ function checkAndroidNativeModule() {
   const metadataContents = readText(
     'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt'
   );
-  const testContents = readText(
+  const outputContents = readText(
+    'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt'
+  );
+  const metadataTestContents = readText(
     'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt'
   );
+  const outputTestContents = readText(
+    'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt'
+  );
   const packageJson = readJson('package.json');
-  const contents = `${moduleContents}\n${metadataContents}\n${testContents}`;
+  const contents = [
+    moduleContents,
+    metadataContents,
+    outputContents,
+    metadataTestContents,
+    outputTestContents,
+  ].join('\n');
   const expectedSnippets = [
     'NativeImageCompressionKitSpec',
     'BitmapFactory.decodeStream',
@@ -209,15 +223,18 @@ function checkAndroidNativeModule() {
     'readMaxBytes(output)',
     'encodeBitmapToTargetSize',
     'supportsTargetSizeCompression", true',
+    'ImageCompressionOutput.createOutputFile',
+    'ImageCompressionOutput.createResultMetadata',
+    'ImageCompressionOutput.maxBytesValidationError',
     'OutputFormat.fromValue',
     'PNG_FORMAT',
     'WEBP_FORMAT',
     'Bitmap.CompressFormat.PNG',
     'Bitmap.CompressFormat.WEBP_LOSSY',
     'Bitmap.CompressFormat.WEBP',
-    'createPngOutputNotes',
-    'createWebpOutputNotes',
-    'putBoolean("output", outputFormat != null)',
+    'pngOutputNotes',
+    'webpOutputNotes',
+    'output = outputFormat != null',
     'supports JPEG input with JPEG, PNG, and WebP output only',
     'readMetadataPolicy(options)',
     'MetadataPolicy.PRESERVE',
@@ -242,6 +259,10 @@ function checkAndroidNativeModule() {
     'safeMetadataCopiesAllowlistedExifAndFiltersSensitiveTags',
     'preserveMetadataCopiesSensitiveExifButNormalizesOutputGeometry',
     'nullMetadataLeavesOutputExifUntouchedForStripPolicy',
+    'outputFormatsCreateMatchingResultFormatAndFileExtensions',
+    'capabilitiesExposeJpegInputAndJpegPngWebpOutputsOnly',
+    'pngRejectsMaxBytesButWebpAndJpegAllowIt',
+    'outputFormatsMapToAndroidCompressFormatsAndQualityRules',
     'RobolectricTestRunner',
     'ERR_UNSUPPORTED_FORMAT',
   ];
@@ -255,7 +276,7 @@ function checkAndroidNativeModule() {
     label: 'Android Kotlin module matches generated spec and Android JPEG-input MVP path',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG decode/orient/resize plus JPEG/PNG/WebP output encode path and metadata unit tests'
+        ? 'module extends generated spec and contains JPEG decode/orient/resize plus JPEG/PNG/WebP output encode path, metadata tests, and output format unit tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),

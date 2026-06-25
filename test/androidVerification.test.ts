@@ -98,6 +98,10 @@ describe('Android verification scripts', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
+    const outputSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt'
+    );
+    const combinedSource = `${moduleSource}\n${outputSource}`;
 
     expect(moduleSource).toContain('readMaxBytes(output)');
     expect(moduleSource).toContain('output.maxBytes must be a positive integer');
@@ -107,7 +111,7 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('encodeBitmapToTargetSize');
     expect(moduleSource).toContain('bestWithinTargetQuality');
     expect(moduleSource).toContain('supportsTargetSizeCompression", true');
-    expect(moduleSource).toContain(
+    expect(combinedSource).toContain(
       'supports output.maxBytes for JPEG and WebP output only'
     );
     expect(moduleSource).not.toContain('does not implement target-size compression yet');
@@ -117,24 +121,30 @@ describe('Android verification scripts', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
+    const outputSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt'
+    );
+    const combinedSource = `${moduleSource}\n${outputSource}`;
 
-    expect(moduleSource).toContain('OutputFormat.fromValue');
-    expect(moduleSource).toContain('PNG_FORMAT');
-    expect(moduleSource).toContain('WEBP_FORMAT');
-    expect(moduleSource).toContain('Bitmap.CompressFormat.PNG');
-    expect(moduleSource).toContain('Bitmap.CompressFormat.WEBP_LOSSY');
-    expect(moduleSource).toContain('Bitmap.CompressFormat.WEBP');
-    expect(moduleSource).toContain('createOutputFile(outputFormat)');
-    expect(moduleSource).toContain('outputFormat.fileExtension');
-    expect(moduleSource).toContain('putString("format", outputFormat.value)');
-    expect(moduleSource).toContain('createPngOutputNotes');
-    expect(moduleSource).toContain('createWebpOutputNotes');
-    expect(moduleSource).toContain('putBoolean("output", outputFormat != null)');
-    expect(moduleSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
-    expect(moduleSource).toContain(
+    expect(combinedSource).toContain('ImageCompressionOutput.createOutputFile');
+    expect(combinedSource).toContain('ImageCompressionOutput.createResultMetadata');
+    expect(combinedSource).toContain('ImageCompressionOutput.maxBytesValidationError');
+    expect(combinedSource).toContain('OutputFormat.fromValue');
+    expect(combinedSource).toContain('PNG_FORMAT');
+    expect(combinedSource).toContain('WEBP_FORMAT');
+    expect(combinedSource).toContain('Bitmap.CompressFormat.PNG');
+    expect(combinedSource).toContain('Bitmap.CompressFormat.WEBP_LOSSY');
+    expect(combinedSource).toContain('Bitmap.CompressFormat.WEBP');
+    expect(combinedSource).toContain('outputFormat.fileExtension');
+    expect(combinedSource).toContain('format = outputFormat.value');
+    expect(combinedSource).toContain('pngOutputNotes');
+    expect(combinedSource).toContain('webpOutputNotes');
+    expect(combinedSource).toContain('output = outputFormat != null');
+    expect(combinedSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
+    expect(combinedSource).toContain(
       'supports JPEG input with JPEG, PNG, and WebP output only'
     );
-    expect(moduleSource).not.toContain('Android JPEG MVP only implements JPEG output.');
+    expect(combinedSource).not.toContain('Android JPEG MVP only implements JPEG output.');
   });
 
   it('verifies the Android module handles JPEG metadata policies explicitly', () => {
@@ -144,7 +154,10 @@ describe('Android verification scripts', () => {
     const metadataSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt'
     );
-    const combinedSource = `${moduleSource}\n${metadataSource}`;
+    const outputSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt'
+    );
+    const combinedSource = `${moduleSource}\n${metadataSource}\n${outputSource}`;
 
     expect(combinedSource).toContain('readMetadataPolicy(options)');
     expect(combinedSource).toContain('MetadataPolicy.SAFE');
@@ -175,6 +188,10 @@ describe('Android verification scripts', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
+    const outputSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt'
+    );
+    const combinedSource = `${moduleSource}\n${outputSource}`;
     const safeExifTags = extractKotlinArray(metadataSource, 'SAFE_EXIF_TAGS');
     const preservedExifTags = extractKotlinArray(
       metadataSource,
@@ -206,10 +223,10 @@ describe('Android verification scripts', () => {
       expect(preservedExifTags).toContain(tag);
     });
 
-    expect(moduleSource).toContain(
+    expect(combinedSource).toContain(
       'Metadata safe copies privacy-filtered source EXIF attributes.'
     );
-    expect(moduleSource).toContain(
+    expect(combinedSource).toContain(
       'Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.'
     );
   });
@@ -238,5 +255,28 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('JpegExifMetadata.write(metadata, outputFile)');
     expect(testSource).toContain('ExifInterface.TAG_GPS_LATITUDE');
     expect(testSource).toContain('ExifInterface.ORIENTATION_NORMAL');
+  });
+
+  it('verifies the Android output format runtime unit test exists', () => {
+    const testSource = readProjectFile(
+      'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt'
+    );
+
+    expect(testSource).toContain(
+      'outputFormatsCreateMatchingResultFormatAndFileExtensions'
+    );
+    expect(testSource).toContain(
+      'capabilitiesExposeJpegInputAndJpegPngWebpOutputsOnly'
+    );
+    expect(testSource).toContain('pngRejectsMaxBytesButWebpAndJpegAllowIt');
+    expect(testSource).toContain(
+      'outputFormatsMapToAndroidCompressFormatsAndQualityRules'
+    );
+    expect(testSource).toContain('OutputFormat.JPEG to ".jpg"');
+    expect(testSource).toContain('OutputFormat.PNG to ".png"');
+    expect(testSource).toContain('OutputFormat.WEBP to ".webp"');
+    expect(testSource).toContain('Bitmap.CompressFormat.WEBP_LOSSY');
+    expect(testSource).toContain('ImageCompressionOutput.MAX_BYTES_UNSUPPORTED_MESSAGE');
+    expect(testSource).toContain('RobolectricTestRunner');
   });
 });

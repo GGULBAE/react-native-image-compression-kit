@@ -267,6 +267,7 @@ This project is not intended to handle:
 - [x] Android JPEG resize support.
 - [x] Android JPEG target-size compression.
 - [x] Android JPEG input to PNG and WebP output encoding.
+- [x] Android JPEG-input output format behavior JVM tests.
 - [x] Android JPEG metadata `safe` / `strip` policy basics.
 - [x] Android JPEG metadata `preserve` EXIF copy.
 - [x] Android JPEG metadata `safe` privacy-filtered EXIF copy.
@@ -342,7 +343,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies. `pnpm example:android` still requires a connected emulator/device.
+These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies and direct JPEG/PNG/WebP output format checks for result metadata, file extensions, capability reporting, and `maxBytes` support. `pnpm example:android` still requires a connected emulator/device.
 
 ## Continuous Integration
 
@@ -359,7 +360,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, and WebP output paths.
+`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior and JPEG/PNG/WebP output format behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, and WebP output paths.
 
 ## Development Verification
 
