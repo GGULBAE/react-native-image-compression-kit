@@ -3,6 +3,7 @@ package com.imagecompressionkit
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.provider.OpenableColumns
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -10,7 +11,9 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.InputStream
 import java.util.UUID
 
 class ImageCompressionKitModule(
@@ -78,26 +81,61 @@ class ImageCompressionKitModule(
         return
       }
 
-      val inputFile = fileFromLocalFileUri(uri)
-      if (inputFile == null) {
+      val inputSource = inputSourceFromUri(uri)
+      if (inputSource == null) {
         reject(
           promise,
           ERR_UNSUPPORTED_SOURCE,
-          "Android JPEG MVP supports file:// image URIs only."
+          "Android JPEG MVP supports file:// and content:// image URIs only."
         )
         return
       }
 
-      if (!inputFile.exists() || !inputFile.isFile || !inputFile.canRead()) {
+      val hasJpegHeader = try {
+        hasJpegHeader(inputSource)
+      } catch (error: SourceAccessException) {
         reject(
           promise,
           ERR_FILE_ACCESS,
-          "Android JPEG MVP could not read the source file."
+          error.message ?: "Android JPEG MVP could not read the source image URI.",
+          error
         )
         return
       }
 
-      val bounds = decodeBounds(inputFile)
+      if (!hasJpegHeader) {
+        reject(
+          promise,
+          ERR_UNSUPPORTED_FORMAT,
+          "Android JPEG MVP supports JPEG input only."
+        )
+        return
+      }
+
+      val originalByteSize = try {
+        readOriginalByteSize(inputSource)
+      } catch (error: SourceAccessException) {
+        reject(
+          promise,
+          ERR_FILE_ACCESS,
+          error.message ?: "Android JPEG MVP could not read the source image URI.",
+          error
+        )
+        return
+      }
+
+      val bounds = try {
+        decodeBounds(inputSource)
+      } catch (error: SourceAccessException) {
+        reject(
+          promise,
+          ERR_FILE_ACCESS,
+          error.message ?: "Android JPEG MVP could not read the source image URI.",
+          error
+        )
+        return
+      }
+
       if (bounds == null) {
         reject(
           promise,
@@ -107,7 +145,7 @@ class ImageCompressionKitModule(
         return
       }
 
-      if (bounds.mimeType != JPEG_MIME_TYPE) {
+      if (bounds.mimeType != null && bounds.mimeType != JPEG_MIME_TYPE) {
         reject(
           promise,
           ERR_UNSUPPORTED_FORMAT,
@@ -116,7 +154,18 @@ class ImageCompressionKitModule(
         return
       }
 
-      val bitmap = BitmapFactory.decodeFile(inputFile.absolutePath)
+      val bitmap = try {
+        decodeBitmap(inputSource)
+      } catch (error: SourceAccessException) {
+        reject(
+          promise,
+          ERR_FILE_ACCESS,
+          error.message ?: "Android JPEG MVP could not read the source image URI.",
+          error
+        )
+        return
+      }
+
       if (bitmap == null) {
         reject(
           promise,
@@ -140,7 +189,7 @@ class ImageCompressionKitModule(
         return
       }
 
-      promise.resolve(createCompressionResult(inputFile, outputFile, bounds))
+      promise.resolve(createCompressionResult(originalByteSize, outputFile, bounds))
     } catch (error: Exception) {
       reject(
         promise,
@@ -204,7 +253,7 @@ class ImageCompressionKitModule(
 
   private fun createJpegMvpNotes(): WritableArray =
     Arguments.createArray().apply {
-      pushString("Android JPEG quality compression MVP supports file:// sources.")
+      pushString("Android JPEG quality compression MVP supports file:// and content:// sources.")
       pushString("Resize, metadata policies, and target-size compression are not implemented yet.")
     }
 
@@ -225,22 +274,119 @@ class ImageCompressionKitModule(
       DEFAULT_QUALITY
     }
 
-  private fun fileFromLocalFileUri(uri: String): File? {
+  private fun inputSourceFromUri(uri: String): ImageInputSource? {
     val parsed = Uri.parse(uri)
-    if (parsed.scheme != "file") {
-      return null
-    }
 
-    val path = parsed.path ?: return null
-    return File(path)
+    return when (parsed.scheme?.lowercase()) {
+      "file" -> {
+        val path = parsed.path ?: return null
+        ImageInputSource.FileSource(parsed, File(path))
+      }
+      "content" -> ImageInputSource.ContentSource(parsed)
+      else -> null
+    }
   }
 
-  private fun decodeBounds(file: File): ImageBounds? {
+  private fun readOriginalByteSize(inputSource: ImageInputSource): Long =
+    when (inputSource) {
+      is ImageInputSource.FileSource -> {
+        val inputFile = inputSource.file
+
+        if (!inputFile.exists() || !inputFile.isFile || !inputFile.canRead()) {
+          throw SourceAccessException("Android JPEG MVP could not read the source file.")
+        }
+
+        inputFile.length()
+      }
+      is ImageInputSource.ContentSource ->
+        queryContentByteSize(inputSource.uri)
+          ?: queryContentAssetLength(inputSource.uri)
+          ?: countBytes(inputSource)
+    }
+
+  private fun queryContentByteSize(uri: Uri): Long? =
+    try {
+      reactContext.contentResolver.query(
+        uri,
+        arrayOf(OpenableColumns.SIZE),
+        null,
+        null,
+        null
+      )?.use { cursor ->
+        val sizeColumnIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+
+        if (
+          sizeColumnIndex >= 0 &&
+          cursor.moveToFirst() &&
+          !cursor.isNull(sizeColumnIndex)
+        ) {
+          val size = cursor.getLong(sizeColumnIndex)
+          if (size >= 0L) {
+            size
+          } else {
+            null
+          }
+        } else {
+          null
+        }
+      }
+    } catch (_: Exception) {
+      null
+    }
+
+  private fun queryContentAssetLength(uri: Uri): Long? =
+    try {
+      reactContext.contentResolver.openAssetFileDescriptor(uri, "r")?.use { descriptor ->
+        if (descriptor.length >= 0L) {
+          descriptor.length
+        } else {
+          null
+        }
+      }
+    } catch (_: Exception) {
+      null
+    }
+
+  private fun countBytes(inputSource: ImageInputSource): Long =
+    openInputStream(inputSource).use { inputStream ->
+      val buffer = ByteArray(STREAM_BUFFER_SIZE)
+      var totalBytes = 0L
+      var bytesRead = inputStream.read(buffer)
+
+      while (bytesRead != -1) {
+        totalBytes += bytesRead.toLong()
+        bytesRead = inputStream.read(buffer)
+      }
+
+      totalBytes
+    }
+
+  private fun hasJpegHeader(inputSource: ImageInputSource): Boolean =
+    openInputStream(inputSource).use { inputStream ->
+      val header = ByteArray(JPEG_HEADER_SIZE)
+      var bytesRead = 0
+
+      while (bytesRead < header.size) {
+        val nextRead = inputStream.read(header, bytesRead, header.size - bytesRead)
+        if (nextRead == -1) {
+          return@use false
+        }
+        bytesRead += nextRead
+      }
+
+      header[0] == JPEG_SOI_FIRST_BYTE &&
+        header[1] == JPEG_SOI_SECOND_BYTE &&
+        header[2] == JPEG_MARKER_PREFIX_BYTE
+    }
+
+  private fun decodeBounds(inputSource: ImageInputSource): ImageBounds? {
     val options = BitmapFactory.Options().apply {
       inJustDecodeBounds = true
     }
 
-    BitmapFactory.decodeFile(file.absolutePath, options)
+    openInputStream(inputSource).buffered().use { inputStream ->
+      BitmapFactory.decodeStream(inputStream, null, options)
+    }
 
     if (options.outWidth <= 0 || options.outHeight <= 0) {
       return null
@@ -252,6 +398,30 @@ class ImageCompressionKitModule(
       mimeType = options.outMimeType
     )
   }
+
+  private fun decodeBitmap(inputSource: ImageInputSource): Bitmap? =
+    openInputStream(inputSource).buffered().use { inputStream ->
+      BitmapFactory.decodeStream(inputStream)
+    }
+
+  private fun openInputStream(inputSource: ImageInputSource): InputStream =
+    try {
+      when (inputSource) {
+        is ImageInputSource.FileSource -> FileInputStream(inputSource.file)
+        is ImageInputSource.ContentSource ->
+          reactContext.contentResolver.openInputStream(inputSource.uri)
+            ?: throw SourceAccessException(
+              "Android JPEG MVP could not open the source content URI."
+            )
+      }
+    } catch (error: SourceAccessException) {
+      throw error
+    } catch (error: Exception) {
+      throw SourceAccessException(
+        "Android JPEG MVP could not read the source image URI.",
+        error
+      )
+    }
 
   private fun createOutputFile(): File {
     val outputDir = File(reactContext.cacheDir, OUTPUT_DIRECTORY_NAME)
@@ -271,11 +441,10 @@ class ImageCompressionKitModule(
     }
 
   private fun createCompressionResult(
-    inputFile: File,
+    originalByteSize: Long,
     outputFile: File,
     bounds: ImageBounds
   ): WritableMap {
-    val originalByteSize = inputFile.length()
     val byteSize = outputFile.length()
 
     return Arguments.createMap().apply {
@@ -311,6 +480,24 @@ class ImageCompressionKitModule(
     val mimeType: String?
   )
 
+  private sealed class ImageInputSource {
+    abstract val uri: Uri
+
+    data class FileSource(
+      override val uri: Uri,
+      val file: File
+    ) : ImageInputSource()
+
+    data class ContentSource(
+      override val uri: Uri
+    ) : ImageInputSource()
+  }
+
+  private class SourceAccessException(
+    message: String,
+    cause: Throwable? = null
+  ) : Exception(message, cause)
+
   companion object {
     const val NAME = "ImageCompressionKit"
     const val ERR_INVALID_OPTIONS = "ERR_INVALID_OPTIONS"
@@ -328,6 +515,12 @@ class ImageCompressionKitModule(
     private const val DEFAULT_QUALITY = 80
     private const val MIN_QUALITY = 0
     private const val MAX_QUALITY = 100
+    private const val STREAM_BUFFER_SIZE = 8 * 1024
+    private const val JPEG_HEADER_SIZE = 3
+
+    private val JPEG_SOI_FIRST_BYTE = 0xFF.toByte()
+    private val JPEG_SOI_SECOND_BYTE = 0xD8.toByte()
+    private val JPEG_MARKER_PREFIX_BYTE = 0xFF.toByte()
 
     private val FORMATS = arrayOf(
       "jpeg",

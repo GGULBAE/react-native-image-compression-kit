@@ -142,7 +142,7 @@ export default function App(): React.JSX.Element {
             autoCorrect={false}
             multiline
             onChangeText={setSourceUri}
-            placeholder="file:///data/user/0/..."
+            placeholder="file:///data/user/0/... or content://..."
             style={[styles.input, styles.uriInput]}
             value={sourceUri}
           />

@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import packageJson from '../package.json';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+function readProjectFile(filePath: string): string {
+  return readFileSync(path.join(ROOT, filePath), 'utf8');
+}
 
 describe('Android verification scripts', () => {
   it('exposes repository and app-backed Android verification commands', () => {
@@ -13,5 +22,20 @@ describe('Android verification scripts', () => {
       'node scripts/android-verification.mjs build'
     );
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
+  });
+
+  it('verifies the Android module supports file and content JPEG sources', () => {
+    const moduleSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
+    );
+
+    expect(moduleSource).toContain('"file" ->');
+    expect(moduleSource).toContain('"content" ->');
+    expect(moduleSource).toContain('reactContext.contentResolver.openInputStream');
+    expect(moduleSource).toContain('OpenableColumns.SIZE');
+    expect(moduleSource).toContain('BitmapFactory.decodeStream');
+    expect(moduleSource).toContain('hasJpegHeader');
+    expect(moduleSource).toContain('createCompressionResult(originalByteSize');
+    expect(moduleSource).not.toContain('BitmapFactory.decodeFile');
   });
 });

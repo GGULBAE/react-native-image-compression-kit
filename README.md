@@ -30,14 +30,14 @@ Format conversion is treated as part of the compression result. Developers choos
 
 This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Android includes a narrow JPEG quality compression MVP for `file://` JPEG inputs and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
+Android includes a narrow JPEG quality compression MVP for `file://` and `content://` JPEG inputs and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
 
 ## Current Implementation Scope
 
 The current implementation is intentionally small:
 
 - Android only.
-- `file://` local URI input only.
+- `file://` and `content://` local URI input.
 - JPEG input only.
 - JPEG output only.
 - Quality-based compression only.
@@ -47,7 +47,6 @@ The current implementation is intentionally small:
 The following remain planned and are not implemented in the MVP:
 
 - iOS compression.
-- `content://` URI support.
 - PNG, WebP, HEIC / HEIF, AVIF, and GIF processing.
 - Resize.
 - EXIF orientation correction.
@@ -264,7 +263,7 @@ npm install react-native-image-compression-kit
 
 ## Example Application
 
-The repository includes an Android React Native example app in `example/`. It links this local package through the pnpm workspace and exercises the Android JPEG MVP against a `file://` source URI.
+The repository includes an Android React Native example app in `example/`. It links this local package through the pnpm workspace and exercises the Android JPEG MVP against a `file://` or `content://` source URI.
 
 Install dependencies from the repository root:
 
@@ -284,7 +283,7 @@ In another terminal, run the Android app:
 pnpm example:android
 ```
 
-The example screen copies a bundled `sample.jpg` asset into the app cache and uses that cache file URI by default. You can also paste another local `file://` JPEG URI. The screen calls:
+The example screen copies a bundled `sample.jpg` asset into the app cache and uses that cache file URI by default. You can also paste another local `file://` or `content://` JPEG URI. The screen calls:
 
 ```ts
 compressImage({
@@ -306,6 +305,22 @@ pnpm example:build
 ```
 
 These commands require a Java runtime, Android SDK, and a connected emulator/device or otherwise valid Android build environment.
+
+## Continuous Integration
+
+GitHub Actions runs the repository checks and Android example build on pushes to `master` and pull requests. The workflow is defined in `.github/workflows/ci.yml`.
+
+The CI job uses Node.js 24, pnpm 11.7.0, Temurin JDK 21, Android SDK platform 36, Android build tools 36.0.0, and Android NDK 27.1.12297006. It enables pnpm and Gradle caching, then runs:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm verify
+pnpm example:typecheck
+pnpm example:codegen
+pnpm example:build
+```
+
+`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app.
 
 ## Development Verification
 

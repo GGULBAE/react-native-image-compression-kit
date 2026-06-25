@@ -183,7 +183,9 @@ function checkAndroidNativeModule() {
   );
   const expectedSnippets = [
     'NativeImageCompressionKitSpec',
-    'BitmapFactory.decodeFile',
+    'BitmapFactory.decodeStream',
+    'openInputStream(inputSource.uri)',
+    'OpenableColumns.SIZE',
     'Bitmap.CompressFormat.JPEG',
     'ERR_UNSUPPORTED_FORMAT',
   ];
