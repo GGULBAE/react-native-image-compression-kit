@@ -193,6 +193,7 @@ describe('Android verification scripts', () => {
     );
 
     expect(gradleSource).toContain('testImplementation "junit:junit:4.13.2"');
+    expect(gradleSource).toContain('unitTests.returnDefaultValues = true');
     expect(testSource).toContain(
       'safeMetadataCopiesAllowlistedExifAndFiltersSensitiveTags'
     );

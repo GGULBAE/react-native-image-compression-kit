@@ -31,6 +31,10 @@ android {
     minSdkVersion safeExtGet("minSdkVersion", 23)
   }
 
+  testOptions {
+    unitTests.returnDefaultValues = true
+  }
+
   sourceSets {
     main.java.srcDirs += [
       "src/main/java",

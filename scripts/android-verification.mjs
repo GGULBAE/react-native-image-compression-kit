@@ -168,6 +168,7 @@ function checkAndroidGradleConfig() {
     'apply plugin: "com.facebook.react"',
     'apply plugin: "org.jetbrains.kotlin.android"',
     'build/generated/source/codegen/java',
+    'unitTests.returnDefaultValues = true',
     'implementation "com.facebook.react:react-android"',
     'implementation "androidx.exifinterface:exifinterface:1.4.2"',
     'testImplementation "junit:junit:4.13.2"',
