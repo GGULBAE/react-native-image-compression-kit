@@ -20,6 +20,7 @@ const REQUIRED_FILES = [
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt',
   'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt',
   'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
+  'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
 ];
 
 function main() {
@@ -202,6 +203,9 @@ function checkAndroidNativeModule() {
   const outputTestContents = readText(
     'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt'
   );
+  const moduleTestContents = readText(
+    'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt'
+  );
   const packageJson = readJson('package.json');
   const contents = [
     moduleContents,
@@ -209,6 +213,7 @@ function checkAndroidNativeModule() {
     outputContents,
     metadataTestContents,
     outputTestContents,
+    moduleTestContents,
   ].join('\n');
   const expectedSnippets = [
     'NativeImageCompressionKitSpec',
@@ -266,6 +271,11 @@ function checkAndroidNativeModule() {
     'ImageCompressionOutput.encodeBitmap',
     'BitmapFactory.decodeByteArray',
     'GraphicsMode.Mode.NATIVE',
+    'compressImageCreatesJpegPngAndWebpOutputsWithExpectedResultMetadata',
+    'compressImageRejectsPngMaxBytesAtModuleBoundary',
+    'module.compressImage(',
+    'RecordingPromise',
+    'JavaOnlyMap.of',
     'assertPngSignature',
     'assertWebpSignature',
     '"RIFF"',
@@ -283,7 +293,7 @@ function checkAndroidNativeModule() {
     label: 'Android Kotlin module matches generated spec and Android JPEG-input MVP path',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG decode/orient/resize plus JPEG/PNG/WebP output encode path, metadata tests, and output format unit tests'
+        ? 'module extends generated spec and contains JPEG decode/orient/resize plus JPEG/PNG/WebP output encode path, metadata tests, output format tests, and module-level compression tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),

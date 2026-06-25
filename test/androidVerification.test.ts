@@ -288,4 +288,28 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('ImageCompressionOutput.MAX_BYTES_UNSUPPORTED_MESSAGE');
     expect(testSource).toContain('RobolectricTestRunner');
   });
+
+  it('verifies the Android module-level compression integration test exists', () => {
+    const testSource = readProjectFile(
+      'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt'
+    );
+
+    expect(testSource).toContain(
+      'compressImageCreatesJpegPngAndWebpOutputsWithExpectedResultMetadata'
+    );
+    expect(testSource).toContain('compressImageRejectsPngMaxBytesAtModuleBoundary');
+    expect(testSource).toContain('ImageCompressionKitModule(');
+    expect(testSource).toContain('module.compressImage(');
+    expect(testSource).toContain('JavaOnlyMap.of');
+    expect(testSource).toContain('RecordingPromise');
+    expect(testSource).toContain('Uri.fromFile(sourceFile).toString()');
+    expect(testSource).toContain('ImageCompressionKitModule.ERR_INVALID_OPTIONS');
+    expect(testSource).toContain('ImageCompressionOutput.MAX_BYTES_UNSUPPORTED_MESSAGE');
+    expect(testSource).toContain('GraphicsMode.Mode.NATIVE');
+    expect(testSource).toContain('assertJpegSignature');
+    expect(testSource).toContain('assertPngSignature');
+    expect(testSource).toContain('assertWebpSignature');
+    expect(testSource).toContain('"RIFF"');
+    expect(testSource).toContain('"WEBP"');
+  });
 });
