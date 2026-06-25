@@ -14,8 +14,10 @@ const REQUIRED_FILES = [
   'package.json',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
+  'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt',
+  'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt',
 ];
 
 function main() {
@@ -168,6 +170,7 @@ function checkAndroidGradleConfig() {
     'build/generated/source/codegen/java',
     'implementation "com.facebook.react:react-android"',
     'implementation "androidx.exifinterface:exifinterface:1.4.2"',
+    'testImplementation "junit:junit:4.13.2"',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
 
@@ -179,9 +182,17 @@ function checkAndroidGradleConfig() {
 }
 
 function checkAndroidNativeModule() {
-  const contents = readText(
+  const moduleContents = readText(
     'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
   );
+  const metadataContents = readText(
+    'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt'
+  );
+  const testContents = readText(
+    'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt'
+  );
+  const packageJson = readJson('package.json');
+  const contents = `${moduleContents}\n${metadataContents}\n${testContents}`;
   const expectedSnippets = [
     'NativeImageCompressionKitSpec',
     'BitmapFactory.decodeStream',
@@ -199,6 +210,8 @@ function checkAndroidNativeModule() {
     'MetadataPolicy.PRESERVE',
     'createCopiedExifMetadata',
     'writeCopiedExifMetadata',
+    'JpegExifMetadata.read',
+    'JpegExifMetadata.write',
     'SAFE_EXIF_TAGS',
     'PRESERVED_EXIF_TAGS',
     'ExifInterface.TAG_GPS_LATITUDE',
@@ -213,14 +226,26 @@ function checkAndroidNativeModule() {
     'Bitmap.createScaledBitmap',
     'ResizeMode.COVER',
     'Bitmap.CompressFormat.JPEG',
+    'safeMetadataCopiesAllowlistedExifAndFiltersSensitiveTags',
+    'preserveMetadataCopiesSensitiveExifButNormalizesOutputGeometry',
+    'nullMetadataLeavesOutputExifUntouchedForStripPolicy',
     'ERR_UNSUPPORTED_FORMAT',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
+  const hasUnitTestScript =
+    packageJson.scripts?.['example:android-unit-test'] ===
+    'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build';
 
   return {
-    ok: missing.length === 0,
+    ok: missing.length === 0 && hasUnitTestScript,
     label: 'Android Kotlin module matches generated spec and JPEG MVP path',
-    detail: missing.length === 0 ? 'module extends generated spec and contains JPEG decode/orient/resize/target-size/encode path' : `missing snippets: ${missing.join(' | ')}`,
+    detail:
+      missing.length === 0 && hasUnitTestScript
+        ? 'module extends generated spec and contains JPEG decode/orient/resize/target-size/encode path plus metadata unit tests'
+        : `missing snippets: ${[
+            ...missing,
+            ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),
+          ].join(' | ')}`,
   };
 }
 

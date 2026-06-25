@@ -266,6 +266,7 @@ This project is not intended to handle:
 - [x] Android JPEG metadata `safe` / `strip` policy basics.
 - [x] Android JPEG metadata `preserve` EXIF copy.
 - [x] Android JPEG metadata `safe` privacy-filtered EXIF copy.
+- [x] Android JPEG metadata policy unit tests with real EXIF read/write.
 - [x] Example application.
 - [ ] JPEG, PNG, and WebP compression.
 - [ ] HEIC / HEIF input.
@@ -330,10 +331,11 @@ Android Codegen and native build checks can also be run through the example app:
 
 ```bash
 pnpm example:codegen
+pnpm example:android-unit-test
 pnpm example:build
 ```
 
-These commands require a Java runtime, Android SDK, and a connected emulator/device or otherwise valid Android build environment.
+These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies. `pnpm example:android` still requires a connected emulator/device.
 
 ## Continuous Integration
 
@@ -346,10 +348,11 @@ pnpm install --frozen-lockfile
 pnpm verify
 pnpm example:typecheck
 pnpm example:codegen
+pnpm example:android-unit-test
 pnpm example:build
 ```
 
-`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app.
+`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Android JVM unit tests for native metadata policy behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app.
 
 ## Development Verification
 
@@ -372,7 +375,10 @@ Android Codegen and native compilation require a React Native app build environm
 ```bash
 RNICK_ANDROID_APP_DIR=/path/to/App/android pnpm android:codegen
 RNICK_ANDROID_APP_DIR=/path/to/App/android pnpm android:build
+RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build
 ```
+
+For the bundled example app, use `pnpm example:codegen`, `pnpm example:android-unit-test`, and `pnpm example:build`.
 
 `pnpm android:codegen` runs `generateCodegenArtifactsFromSchema` in the app Android project. `pnpm android:build` runs `assembleDebug` by default. To use a different Gradle task:
 

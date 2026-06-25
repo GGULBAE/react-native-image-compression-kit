@@ -47,4 +47,5 @@ repositories {
 dependencies {
   implementation "com.facebook.react:react-android"
   implementation "androidx.exifinterface:exifinterface:1.4.2"
+  testImplementation "junit:junit:4.13.2"
 }

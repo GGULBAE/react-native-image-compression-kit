@@ -12,7 +12,7 @@ function readProjectFile(filePath: string): string {
 
 function extractKotlinArray(source: string, arrayName: string): string {
   const match = source.match(
-    new RegExp(`private val ${arrayName} = arrayOf\\(([\\s\\S]*?)\\n    \\)`)
+    new RegExp(`(?:private\\s+)?val ${arrayName} = arrayOf\\(([\\s\\S]*?)\\n  \\)`)
   );
 
   if (!match) {
@@ -32,6 +32,9 @@ describe('Android verification scripts', () => {
     );
     expect(packageJson.scripts['android:build']).toBe(
       'node scripts/android-verification.mjs build'
+    );
+    expect(packageJson.scripts['example:android-unit-test']).toBe(
+      'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build'
     );
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
   });
@@ -110,34 +113,43 @@ describe('Android verification scripts', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
+    const metadataSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt'
+    );
+    const combinedSource = `${moduleSource}\n${metadataSource}`;
 
-    expect(moduleSource).toContain('readMetadataPolicy(options)');
-    expect(moduleSource).toContain('MetadataPolicy.SAFE');
-    expect(moduleSource).toContain('MetadataPolicy.STRIP');
-    expect(moduleSource).toContain('MetadataPolicy.PRESERVE');
-    expect(moduleSource).toContain('createCopiedExifMetadata');
-    expect(moduleSource).toContain('writeCopiedExifMetadata');
-    expect(moduleSource).toContain('SAFE_EXIF_TAGS');
-    expect(moduleSource).toContain('PRESERVED_EXIF_TAGS');
-    expect(moduleSource).toContain('outputExif.setAttribute(');
-    expect(moduleSource).toContain('ExifInterface.TAG_ORIENTATION');
-    expect(moduleSource).toContain('ExifInterface.ORIENTATION_NORMAL.toString()');
-    expect(moduleSource).toContain('ExifInterface.TAG_PIXEL_X_DIMENSION');
-    expect(moduleSource).toContain('ExifInterface.TAG_PIXEL_Y_DIMENSION');
-    expect(moduleSource).toContain('pushString(METADATA_POLICY_PRESERVE)');
-    expect(moduleSource).toContain('pushString(METADATA_POLICY_SAFE)');
-    expect(moduleSource).toContain('pushString(METADATA_POLICY_STRIP)');
-    expect(moduleSource).not.toContain('does not implement metadata preservation yet');
-    expect(moduleSource).toContain('without preserving source EXIF metadata');
+    expect(combinedSource).toContain('readMetadataPolicy(options)');
+    expect(combinedSource).toContain('MetadataPolicy.SAFE');
+    expect(combinedSource).toContain('MetadataPolicy.STRIP');
+    expect(combinedSource).toContain('MetadataPolicy.PRESERVE');
+    expect(combinedSource).toContain('createCopiedExifMetadata');
+    expect(combinedSource).toContain('writeCopiedExifMetadata');
+    expect(combinedSource).toContain('JpegExifMetadata.read');
+    expect(combinedSource).toContain('JpegExifMetadata.write');
+    expect(combinedSource).toContain('SAFE_EXIF_TAGS');
+    expect(combinedSource).toContain('PRESERVED_EXIF_TAGS');
+    expect(combinedSource).toContain('outputExif.setAttribute(');
+    expect(combinedSource).toContain('ExifInterface.TAG_ORIENTATION');
+    expect(combinedSource).toContain('ExifInterface.ORIENTATION_NORMAL.toString()');
+    expect(combinedSource).toContain('ExifInterface.TAG_PIXEL_X_DIMENSION');
+    expect(combinedSource).toContain('ExifInterface.TAG_PIXEL_Y_DIMENSION');
+    expect(combinedSource).toContain('pushString(METADATA_POLICY_PRESERVE)');
+    expect(combinedSource).toContain('pushString(METADATA_POLICY_SAFE)');
+    expect(combinedSource).toContain('pushString(METADATA_POLICY_STRIP)');
+    expect(combinedSource).not.toContain('does not implement metadata preservation yet');
+    expect(combinedSource).toContain('without preserving source EXIF metadata');
   });
 
   it('verifies the Android module uses a privacy-filtered safe metadata allowlist', () => {
+    const metadataSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt'
+    );
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
-    const safeExifTags = extractKotlinArray(moduleSource, 'SAFE_EXIF_TAGS');
+    const safeExifTags = extractKotlinArray(metadataSource, 'SAFE_EXIF_TAGS');
     const preservedExifTags = extractKotlinArray(
-      moduleSource,
+      metadataSource,
       'PRESERVED_EXIF_TAGS'
     );
 
@@ -172,5 +184,25 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain(
       'Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.'
     );
+  });
+
+  it('verifies the Android metadata policy runtime unit test exists', () => {
+    const gradleSource = readProjectFile('android/build.gradle');
+    const testSource = readProjectFile(
+      'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt'
+    );
+
+    expect(gradleSource).toContain('testImplementation "junit:junit:4.13.2"');
+    expect(testSource).toContain(
+      'safeMetadataCopiesAllowlistedExifAndFiltersSensitiveTags'
+    );
+    expect(testSource).toContain(
+      'preserveMetadataCopiesSensitiveExifButNormalizesOutputGeometry'
+    );
+    expect(testSource).toContain('nullMetadataLeavesOutputExifUntouchedForStripPolicy');
+    expect(testSource).toContain('ImageIO.write(image, "jpg", file)');
+    expect(testSource).toContain('JpegExifMetadata.write(metadata, outputFile)');
+    expect(testSource).toContain('ExifInterface.TAG_GPS_LATITUDE');
+    expect(testSource).toContain('ExifInterface.ORIENTATION_NORMAL');
   });
 });
