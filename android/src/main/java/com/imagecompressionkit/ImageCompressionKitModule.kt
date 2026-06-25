@@ -64,6 +64,26 @@ class ImageCompressionKitModule(
         return
       }
 
+      val metadataPolicy = try {
+        readMetadataPolicy(options)
+      } catch (error: InvalidOptionsException) {
+        reject(
+          promise,
+          ERR_INVALID_OPTIONS,
+          error.message ?: "Compression metadata policy is invalid.",
+          error
+        )
+        return
+      }
+      if (metadataPolicy == MetadataPolicy.PRESERVE) {
+        reject(
+          promise,
+          ERR_NOT_IMPLEMENTED,
+          "Android JPEG MVP does not implement metadata preservation yet. Use metadata: safe or strip."
+        )
+        return
+      }
+
       val maxBytes = try {
         readMaxBytes(output)
       } catch (error: InvalidOptionsException) {
@@ -269,9 +289,8 @@ class ImageCompressionKitModule(
 
   private fun createMetadataPolicies(): WritableArray =
     Arguments.createArray().apply {
-      pushString("preserve")
-      pushString("safe")
-      pushString("strip")
+      pushString(METADATA_POLICY_SAFE)
+      pushString(METADATA_POLICY_STRIP)
     }
 
   private fun createNotImplementedNotes(): WritableArray =
@@ -285,7 +304,8 @@ class ImageCompressionKitModule(
       pushString("EXIF orientation is applied before resize and JPEG output.")
       pushString("Resize supports contain, cover, and stretch modes with maxWidth and maxHeight.")
       pushString("Target-size compression supports maxBytes by adjusting JPEG quality.")
-      pushString("Metadata policies are not implemented yet.")
+      pushString("Metadata safe and strip re-encode JPEG output without preserving EXIF metadata.")
+      pushString("Metadata preserve is not implemented yet.")
     }
 
   private fun hasValue(map: ReadableMap, key: String): Boolean =
@@ -304,6 +324,30 @@ class ImageCompressionKitModule(
     } else {
       DEFAULT_QUALITY
     }
+
+  private fun readMetadataPolicy(options: ReadableMap): MetadataPolicy {
+    val value = if (hasValue(options, "metadata")) {
+      try {
+        options.getString("metadata")
+      } catch (error: Exception) {
+        throw InvalidOptionsException(
+          "Compression metadata must be one of: preserve, safe, strip.",
+          error
+        )
+      }
+    } else {
+      METADATA_POLICY_SAFE
+    }
+
+    return when (value) {
+      METADATA_POLICY_SAFE -> MetadataPolicy.SAFE
+      METADATA_POLICY_STRIP -> MetadataPolicy.STRIP
+      METADATA_POLICY_PRESERVE -> MetadataPolicy.PRESERVE
+      else -> throw InvalidOptionsException(
+        "Compression metadata must be one of: preserve, safe, strip."
+      )
+    }
+  }
 
   private fun readMaxBytes(output: ReadableMap): Long? {
     if (!hasValue(output, "maxBytes")) {
@@ -825,6 +869,12 @@ class ImageCompressionKitModule(
     STRETCH
   }
 
+  private enum class MetadataPolicy {
+    PRESERVE,
+    SAFE,
+    STRIP
+  }
+
   private sealed class ImageInputSource {
     abstract val uri: Uri
 
@@ -871,6 +921,9 @@ class ImageCompressionKitModule(
     private const val RESIZE_MODE_CONTAIN = "contain"
     private const val RESIZE_MODE_COVER = "cover"
     private const val RESIZE_MODE_STRETCH = "stretch"
+    private const val METADATA_POLICY_PRESERVE = "preserve"
+    private const val METADATA_POLICY_SAFE = "safe"
+    private const val METADATA_POLICY_STRIP = "strip"
 
     private val JPEG_SOI_FIRST_BYTE = 0xFF.toByte()
     private val JPEG_SOI_SECOND_BYTE = 0xD8.toByte()

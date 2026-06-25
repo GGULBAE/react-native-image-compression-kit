@@ -91,4 +91,20 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('supportsTargetSizeCompression", true');
     expect(moduleSource).not.toContain('does not implement target-size compression yet');
   });
+
+  it('verifies the Android module handles JPEG metadata policies explicitly', () => {
+    const moduleSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
+    );
+
+    expect(moduleSource).toContain('readMetadataPolicy(options)');
+    expect(moduleSource).toContain('MetadataPolicy.SAFE');
+    expect(moduleSource).toContain('MetadataPolicy.STRIP');
+    expect(moduleSource).toContain('MetadataPolicy.PRESERVE');
+    expect(moduleSource).toContain('does not implement metadata preservation yet');
+    expect(moduleSource).toContain('pushString(METADATA_POLICY_SAFE)');
+    expect(moduleSource).toContain('pushString(METADATA_POLICY_STRIP)');
+    expect(moduleSource).not.toContain('pushString(METADATA_POLICY_PRESERVE)');
+    expect(moduleSource).toContain('without preserving EXIF metadata');
+  });
 });

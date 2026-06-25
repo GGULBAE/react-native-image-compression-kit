@@ -30,7 +30,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Android includes a JPEG quality and target-size compression MVP for `file://` and `content://` JPEG inputs, EXIF orientation correction, optional resize, and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
+Android includes a JPEG quality and target-size compression MVP for `file://` and `content://` JPEG inputs, EXIF orientation correction, optional resize, metadata `safe` / `strip` basics, and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
 
 ## Current Implementation Scope
 
@@ -43,6 +43,7 @@ The current implementation is intentionally small:
 - Quality-based compression and target-size compression with `maxBytes`.
 - EXIF orientation correction before resize and JPEG output.
 - Optional resize with `maxWidth`, `maxHeight`, and `contain`, `cover`, or `stretch` mode.
+- Metadata `safe` and `strip` policies for JPEG re-encode output.
 - Output file written to the Android app cache directory.
 - `CompressionResult` returns `uri`, `format`, final `width`, final `height`, `byteSize`, `originalByteSize`, and `compressionRatio`.
 
@@ -50,7 +51,7 @@ The following remain planned and are not implemented in the MVP:
 
 - iOS compression.
 - PNG, WebP, HEIC / HEIF, AVIF, and GIF processing.
-- Metadata preservation, safe stripping, or full stripping.
+- Metadata preservation and full EXIF copy.
 
 ## Why
 
@@ -94,7 +95,7 @@ The following product features are planned or only partially implemented.
 - Optional resize during compression. Android JPEG MVP support is implemented.
 - Output format selection.
 - Automatic EXIF orientation correction. Android JPEG MVP support is implemented.
-- Metadata preservation and stripping policies.
+- Metadata preservation and stripping policies. Android JPEG MVP supports `safe` and `strip`; `preserve` remains planned.
 - Alpha-channel handling.
 - Local URI input and output.
 - Compression statistics.
@@ -217,11 +218,13 @@ metadata: 'safe'
 metadata: 'strip'
 ```
 
-`preserve` is planned to keep source metadata when the selected output format and platform support it.
+Android JPEG MVP currently supports `safe` and `strip` for JPEG output. Both policies re-encode the output JPEG without preserving source EXIF metadata. EXIF orientation is applied to pixels before encoding, so output orientation metadata is not preserved.
 
-`safe` is planned as the default privacy-aware policy. It should keep orientation and color-related information while removing location data and unnecessary personal metadata.
+`safe` is the default policy. In the Android JPEG MVP it behaves like `strip` because full safe metadata copying has not been implemented yet.
 
-`strip` is planned to remove metadata from the encoded output where possible.
+`strip` removes metadata from the encoded output where possible through JPEG re-encode.
+
+`preserve` is planned to keep source metadata when the selected output format and platform support it. Android JPEG MVP rejects `metadata: 'preserve'` with `ERR_NOT_IMPLEMENTED` until full metadata preservation is implemented.
 
 ## Design Principles
 
@@ -260,17 +263,18 @@ This project is not intended to handle:
 - [x] Android JPEG EXIF orientation correction.
 - [x] Android JPEG resize support.
 - [x] Android JPEG target-size compression.
+- [x] Android JPEG metadata `safe` / `strip` policy basics.
 - [x] Example application.
 - [ ] JPEG, PNG, and WebP compression.
 - [ ] HEIC / HEIF input.
 - [ ] AVIF support.
-- [ ] Metadata policies.
+- [ ] Metadata preservation.
 - [ ] Cancellation and progress.
 - [ ] Public npm release.
 
 ## Installation
 
-This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android JPEG quality and target-size compression MVP with EXIF orientation correction and optional resize. iOS compression and broader format support are not implemented yet.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android JPEG quality and target-size compression MVP with EXIF orientation correction, optional resize, and metadata `safe` / `strip` basics. iOS compression and broader format support are not implemented yet.
 
 Planned installation command:
 
