@@ -85,7 +85,9 @@ describe('Android verification scripts', () => {
 
     expect(moduleSource).toContain('readMaxBytes(output)');
     expect(moduleSource).toContain('output.maxBytes must be a positive integer');
-    expect(moduleSource).toContain('encodeJpeg(processedBitmap, outputFile, quality, maxBytes)');
+    expect(moduleSource).toContain('didEncode = encodeJpeg(');
+    expect(moduleSource).toContain('maxBytes,');
+    expect(moduleSource).toContain('preservedExifMetadata');
     expect(moduleSource).toContain('encodeJpegToTargetSize');
     expect(moduleSource).toContain('bestWithinTargetQuality');
     expect(moduleSource).toContain('supportsTargetSizeCompression", true');
@@ -101,10 +103,20 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('MetadataPolicy.SAFE');
     expect(moduleSource).toContain('MetadataPolicy.STRIP');
     expect(moduleSource).toContain('MetadataPolicy.PRESERVE');
-    expect(moduleSource).toContain('does not implement metadata preservation yet');
+    expect(moduleSource).toContain('createPreservedExifMetadata');
+    expect(moduleSource).toContain('writePreservedExifMetadata');
+    expect(moduleSource).toContain('PRESERVED_EXIF_TAGS');
+    expect(moduleSource).toContain('ExifInterface.TAG_GPS_LATITUDE');
+    expect(moduleSource).toContain('ExifInterface.TAG_GPS_LONGITUDE');
+    expect(moduleSource).toContain('outputExif.setAttribute(');
+    expect(moduleSource).toContain('ExifInterface.TAG_ORIENTATION');
+    expect(moduleSource).toContain('ExifInterface.ORIENTATION_NORMAL.toString()');
+    expect(moduleSource).toContain('ExifInterface.TAG_PIXEL_X_DIMENSION');
+    expect(moduleSource).toContain('ExifInterface.TAG_PIXEL_Y_DIMENSION');
+    expect(moduleSource).toContain('pushString(METADATA_POLICY_PRESERVE)');
     expect(moduleSource).toContain('pushString(METADATA_POLICY_SAFE)');
     expect(moduleSource).toContain('pushString(METADATA_POLICY_STRIP)');
-    expect(moduleSource).not.toContain('pushString(METADATA_POLICY_PRESERVE)');
-    expect(moduleSource).toContain('without preserving EXIF metadata');
+    expect(moduleSource).not.toContain('does not implement metadata preservation yet');
+    expect(moduleSource).toContain('without preserving source EXIF metadata');
   });
 });
