@@ -38,4 +38,20 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('createCompressionResult(originalByteSize');
     expect(moduleSource).not.toContain('BitmapFactory.decodeFile');
   });
+
+  it('verifies the Android module implements JPEG resize modes', () => {
+    const moduleSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
+    );
+
+    expect(moduleSource).toContain('readResizeOptions');
+    expect(moduleSource).toContain('resizeBitmap(bitmap, resize)');
+    expect(moduleSource).toContain('ResizeMode.CONTAIN');
+    expect(moduleSource).toContain('ResizeMode.COVER');
+    expect(moduleSource).toContain('ResizeMode.STRETCH');
+    expect(moduleSource).toContain('Bitmap.createScaledBitmap');
+    expect(moduleSource).toContain('centerCropBitmap');
+    expect(moduleSource).toContain('outputDimensions');
+    expect(moduleSource).not.toContain('does not implement resize yet');
+  });
 });

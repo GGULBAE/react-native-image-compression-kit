@@ -15,6 +15,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
 import java.util.UUID
+import kotlin.math.roundToInt
 
 class ImageCompressionKitModule(
   private val reactContext: ReactApplicationContext
@@ -35,11 +36,14 @@ class ImageCompressionKitModule(
         return
       }
 
-      if (hasValue(options, "resize")) {
+      val resize = try {
+        readResizeOptions(readMap(options, "resize"))
+      } catch (error: InvalidOptionsException) {
         reject(
           promise,
-          ERR_NOT_IMPLEMENTED,
-          "Android JPEG MVP does not implement resize yet."
+          ERR_INVALID_OPTIONS,
+          error.message ?: "Compression resize options are invalid.",
+          error
         )
         return
       }
@@ -175,10 +179,22 @@ class ImageCompressionKitModule(
         return
       }
 
-      val quality = readQuality(output)
+      val processedBitmap = resizeBitmap(bitmap, resize)
+      val outputDimensions = ImageDimensions(
+        width = processedBitmap.width,
+        height = processedBitmap.height
+      )
       val outputFile = createOutputFile()
-      val didEncode = encodeJpeg(bitmap, outputFile, quality)
-      bitmap.recycle()
+      val didEncode: Boolean
+
+      try {
+        didEncode = encodeJpeg(processedBitmap, outputFile, readQuality(output))
+      } finally {
+        if (processedBitmap !== bitmap) {
+          processedBitmap.recycle()
+        }
+        bitmap.recycle()
+      }
 
       if (!didEncode) {
         reject(
@@ -189,7 +205,9 @@ class ImageCompressionKitModule(
         return
       }
 
-      promise.resolve(createCompressionResult(originalByteSize, outputFile, bounds))
+      promise.resolve(
+        createCompressionResult(originalByteSize, outputFile, outputDimensions)
+      )
     } catch (error: Exception) {
       reject(
         promise,
@@ -254,7 +272,8 @@ class ImageCompressionKitModule(
   private fun createJpegMvpNotes(): WritableArray =
     Arguments.createArray().apply {
       pushString("Android JPEG quality compression MVP supports file:// and content:// sources.")
-      pushString("Resize, metadata policies, and target-size compression are not implemented yet.")
+      pushString("Resize supports contain, cover, and stretch modes with maxWidth and maxHeight.")
+      pushString("Metadata policies and target-size compression are not implemented yet.")
     }
 
   private fun hasValue(map: ReadableMap, key: String): Boolean =
@@ -273,6 +292,61 @@ class ImageCompressionKitModule(
     } else {
       DEFAULT_QUALITY
     }
+
+  private fun readResizeOptions(resize: ReadableMap?): ResizeOptions? {
+    if (resize == null) {
+      return null
+    }
+
+    val maxWidth = readOptionalPositiveInteger(resize, "maxWidth")
+    val maxHeight = readOptionalPositiveInteger(resize, "maxHeight")
+
+    if (maxWidth == null && maxHeight == null) {
+      throw InvalidOptionsException(
+        "Compression resize must include maxWidth, maxHeight, or both."
+      )
+    }
+
+    val modeValue = if (hasValue(resize, "mode")) {
+      resize.getString("mode")
+    } else {
+      RESIZE_MODE_CONTAIN
+    }
+
+    val mode = when (modeValue) {
+      RESIZE_MODE_CONTAIN -> ResizeMode.CONTAIN
+      RESIZE_MODE_COVER -> ResizeMode.COVER
+      RESIZE_MODE_STRETCH -> ResizeMode.STRETCH
+      else -> throw InvalidOptionsException(
+        "Compression resize.mode must be one of: contain, cover, stretch."
+      )
+    }
+
+    return ResizeOptions(maxWidth = maxWidth, maxHeight = maxHeight, mode = mode)
+  }
+
+  private fun readOptionalPositiveInteger(map: ReadableMap, key: String): Int? {
+    if (!hasValue(map, key)) {
+      return null
+    }
+
+    val value = try {
+      map.getDouble(key)
+    } catch (error: Exception) {
+      throw InvalidOptionsException("Compression resize.$key must be a positive integer.", error)
+    }
+
+    if (
+      value.isNaN() ||
+      value.isInfinite() ||
+      value <= 0.0 ||
+      value.toInt().toDouble() != value
+    ) {
+      throw InvalidOptionsException("Compression resize.$key must be a positive integer.")
+    }
+
+    return value.toInt()
+  }
 
   private fun inputSourceFromUri(uri: String): ImageInputSource? {
     val parsed = Uri.parse(uri)
@@ -404,6 +478,104 @@ class ImageCompressionKitModule(
       BitmapFactory.decodeStream(inputStream)
     }
 
+  private fun resizeBitmap(bitmap: Bitmap, resize: ResizeOptions?): Bitmap {
+    if (resize == null) {
+      return bitmap
+    }
+
+    return when (resize.mode) {
+      ResizeMode.CONTAIN -> resizeContain(bitmap, resize)
+      ResizeMode.COVER -> resizeCover(bitmap, resize)
+      ResizeMode.STRETCH -> resizeStretch(bitmap, resize)
+    }
+  }
+
+  private fun resizeContain(bitmap: Bitmap, resize: ResizeOptions): Bitmap {
+    val scale = minOf(
+      resize.maxWidth?.let { it.toDouble() / bitmap.width.toDouble() } ?: 1.0,
+      resize.maxHeight?.let { it.toDouble() / bitmap.height.toDouble() } ?: 1.0,
+      1.0
+    )
+
+    return createScaledBitmapIfNeeded(
+      bitmap,
+      scaledDimension(bitmap.width, scale),
+      scaledDimension(bitmap.height, scale)
+    )
+  }
+
+  private fun resizeCover(bitmap: Bitmap, resize: ResizeOptions): Bitmap {
+    val maxWidth = resize.maxWidth
+    val maxHeight = resize.maxHeight
+
+    if (maxWidth == null || maxHeight == null) {
+      return resizeContain(bitmap, resize)
+    }
+
+    val targetWidth = maxWidth.coerceAtMost(bitmap.width)
+    val targetHeight = maxHeight.coerceAtMost(bitmap.height)
+    val scale = minOf(
+      maxOf(
+        targetWidth.toDouble() / bitmap.width.toDouble(),
+        targetHeight.toDouble() / bitmap.height.toDouble()
+      ),
+      1.0
+    )
+    val scaled = createScaledBitmapIfNeeded(
+      bitmap,
+      scaledDimension(bitmap.width, scale),
+      scaledDimension(bitmap.height, scale)
+    )
+    val cropped = centerCropBitmap(
+      scaled,
+      targetWidth.coerceAtMost(scaled.width),
+      targetHeight.coerceAtMost(scaled.height)
+    )
+
+    if (cropped !== scaled && scaled !== bitmap) {
+      scaled.recycle()
+    }
+
+    return cropped
+  }
+
+  private fun resizeStretch(bitmap: Bitmap, resize: ResizeOptions): Bitmap {
+    val targetWidth = resize.maxWidth?.coerceAtMost(bitmap.width) ?: bitmap.width
+    val targetHeight = resize.maxHeight?.coerceAtMost(bitmap.height) ?: bitmap.height
+
+    return createScaledBitmapIfNeeded(bitmap, targetWidth, targetHeight)
+  }
+
+  private fun createScaledBitmapIfNeeded(
+    bitmap: Bitmap,
+    targetWidth: Int,
+    targetHeight: Int
+  ): Bitmap {
+    if (bitmap.width == targetWidth && bitmap.height == targetHeight) {
+      return bitmap
+    }
+
+    return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+  }
+
+  private fun centerCropBitmap(
+    bitmap: Bitmap,
+    targetWidth: Int,
+    targetHeight: Int
+  ): Bitmap {
+    if (bitmap.width == targetWidth && bitmap.height == targetHeight) {
+      return bitmap
+    }
+
+    val x = ((bitmap.width - targetWidth) / 2).coerceAtLeast(0)
+    val y = ((bitmap.height - targetHeight) / 2).coerceAtLeast(0)
+
+    return Bitmap.createBitmap(bitmap, x, y, targetWidth, targetHeight)
+  }
+
+  private fun scaledDimension(value: Int, scale: Double): Int =
+    (value.toDouble() * scale).roundToInt().coerceAtLeast(1)
+
   private fun openInputStream(inputSource: ImageInputSource): InputStream =
     try {
       when (inputSource) {
@@ -443,15 +615,15 @@ class ImageCompressionKitModule(
   private fun createCompressionResult(
     originalByteSize: Long,
     outputFile: File,
-    bounds: ImageBounds
+    dimensions: ImageDimensions
   ): WritableMap {
     val byteSize = outputFile.length()
 
     return Arguments.createMap().apply {
       putString("uri", Uri.fromFile(outputFile).toString())
       putString("format", JPEG_FORMAT)
-      putInt("width", bounds.width)
-      putInt("height", bounds.height)
+      putInt("width", dimensions.width)
+      putInt("height", dimensions.height)
       putDouble("byteSize", byteSize.toDouble())
       putDouble("originalByteSize", originalByteSize.toDouble())
       putDouble(
@@ -480,6 +652,23 @@ class ImageCompressionKitModule(
     val mimeType: String?
   )
 
+  private data class ImageDimensions(
+    val width: Int,
+    val height: Int
+  )
+
+  private data class ResizeOptions(
+    val maxWidth: Int?,
+    val maxHeight: Int?,
+    val mode: ResizeMode
+  )
+
+  private enum class ResizeMode {
+    CONTAIN,
+    COVER,
+    STRETCH
+  }
+
   private sealed class ImageInputSource {
     abstract val uri: Uri
 
@@ -494,6 +683,11 @@ class ImageCompressionKitModule(
   }
 
   private class SourceAccessException(
+    message: String,
+    cause: Throwable? = null
+  ) : Exception(message, cause)
+
+  private class InvalidOptionsException(
     message: String,
     cause: Throwable? = null
   ) : Exception(message, cause)
@@ -517,6 +711,9 @@ class ImageCompressionKitModule(
     private const val MAX_QUALITY = 100
     private const val STREAM_BUFFER_SIZE = 8 * 1024
     private const val JPEG_HEADER_SIZE = 3
+    private const val RESIZE_MODE_CONTAIN = "contain"
+    private const val RESIZE_MODE_COVER = "cover"
+    private const val RESIZE_MODE_STRETCH = "stretch"
 
     private val JPEG_SOI_FIRST_BYTE = 0xFF.toByte()
     private val JPEG_SOI_SECOND_BYTE = 0xD8.toByte()

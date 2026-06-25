@@ -14,8 +14,10 @@ import {
 import {
   compressImage,
   getImageCompressionCapabilities,
+  type CompressionOptions,
   type CompressionResult,
   type ImageCompressionCapabilities,
+  type ResizeMode,
 } from 'react-native-image-compression-kit';
 
 type ErrorState = {
@@ -28,6 +30,7 @@ type ExampleImageSourceModule = {
 };
 
 const DEFAULT_QUALITY = '72';
+const RESIZE_MODES: ResizeMode[] = ['contain', 'cover', 'stretch'];
 const SAMPLE_MODULE = NativeModules.ExampleImageSource as
   | ExampleImageSourceModule
   | undefined;
@@ -35,6 +38,9 @@ const SAMPLE_MODULE = NativeModules.ExampleImageSource as
 export default function App(): React.JSX.Element {
   const [sourceUri, setSourceUri] = useState('');
   const [qualityText, setQualityText] = useState(DEFAULT_QUALITY);
+  const [maxWidthText, setMaxWidthText] = useState('');
+  const [maxHeightText, setMaxHeightText] = useState('');
+  const [resizeMode, setResizeMode] = useState<ResizeMode>('contain');
   const [capabilities, setCapabilities] =
     useState<ImageCompressionCapabilities | null>(null);
   const [result, setResult] = useState<CompressionResult | null>(null);
@@ -51,6 +57,21 @@ export default function App(): React.JSX.Element {
 
     return String(Math.min(100, Math.max(0, parsed)));
   }, [qualityText]);
+
+  const resizeOptions = useMemo<CompressionOptions['resize']>(() => {
+    const maxWidth = parseOptionalPositiveInteger(maxWidthText);
+    const maxHeight = parseOptionalPositiveInteger(maxHeightText);
+
+    if (maxWidth === undefined && maxHeight === undefined) {
+      return undefined;
+    }
+
+    return {
+      ...(maxWidth !== undefined ? { maxWidth } : {}),
+      ...(maxHeight !== undefined ? { maxHeight } : {}),
+      mode: resizeMode,
+    };
+  }, [maxHeightText, maxWidthText, resizeMode]);
 
   const loadSample = useCallback(async () => {
     if (!SAMPLE_MODULE) {
@@ -104,13 +125,19 @@ export default function App(): React.JSX.Element {
     setError(null);
 
     try {
-      const nextResult = await compressImage({
+      const compressionOptions: CompressionOptions = {
         source: { uri: sourceUri.trim() },
         output: {
           format: 'jpeg',
           quality: Number.parseInt(quality, 10),
         },
-      });
+      };
+
+      if (resizeOptions) {
+        compressionOptions.resize = resizeOptions;
+      }
+
+      const nextResult = await compressImage(compressionOptions);
 
       setResult(nextResult);
     } catch (nativeError) {
@@ -118,7 +145,7 @@ export default function App(): React.JSX.Element {
     } finally {
       setIsCompressing(false);
     }
-  }, [quality, sourceUri]);
+  }, [quality, resizeOptions, sourceUri]);
 
   const jpegCapability = capabilities?.formats.find(
     (capability) => capability.format === 'jpeg'
@@ -178,6 +205,43 @@ export default function App(): React.JSX.Element {
         </View>
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Resize</Text>
+          <View style={styles.row}>
+            <View style={styles.compactField}>
+              <Text style={styles.label}>Max width</Text>
+              <TextInput
+                keyboardType="number-pad"
+                onChangeText={setMaxWidthText}
+                placeholder="optional"
+                style={styles.input}
+                value={maxWidthText}
+              />
+            </View>
+            <View style={styles.compactField}>
+              <Text style={styles.label}>Max height</Text>
+              <TextInput
+                keyboardType="number-pad"
+                onChangeText={setMaxHeightText}
+                placeholder="optional"
+                style={styles.input}
+                value={maxHeightText}
+              />
+            </View>
+          </View>
+          <View style={styles.modeRow}>
+            {RESIZE_MODES.map((mode) => (
+              <View key={mode} style={styles.modeButton}>
+                <Button
+                  color={resizeMode === mode ? '#175cd3' : '#667085'}
+                  onPress={() => setResizeMode(mode)}
+                  title={mode}
+                />
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={styles.sectionTitle}>Native Capability</Text>
           <ResultLine
             label="platform"
@@ -197,6 +261,8 @@ export default function App(): React.JSX.Element {
           <View style={[styles.section, styles.successSection]}>
             <Text style={styles.sectionTitle}>Result</Text>
             <ResultLine label="uri" value={result.uri} />
+            <ResultLine label="width" value={String(result.width)} />
+            <ResultLine label="height" value={String(result.height)} />
             <ResultLine label="byteSize" value={formatBytes(result.byteSize)} />
             <ResultLine
               label="originalByteSize"
@@ -234,6 +300,26 @@ function ResultLine({ label, value }: { label: string; value: string }) {
 
 function formatBytes(value: number): string {
   return `${value.toLocaleString()} B`;
+}
+
+function parseOptionalPositiveInteger(value: string): number | undefined {
+  const trimmed = value.trim();
+
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  if (!/^\d+$/.test(trimmed)) {
+    return undefined;
+  }
+
+  const parsed = Number(trimmed);
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return undefined;
+  }
+
+  return parsed;
 }
 
 function toErrorState(error: unknown): ErrorState {
@@ -323,6 +409,17 @@ const styles = StyleSheet.create({
   qualityField: {
     flex: 1,
     gap: 8,
+  },
+  compactField: {
+    flex: 1,
+    gap: 8,
+  },
+  modeRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  modeButton: {
+    flex: 1,
   },
   action: {
     minWidth: 120,

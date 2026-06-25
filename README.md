@@ -30,7 +30,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Android includes a narrow JPEG quality compression MVP for `file://` and `content://` JPEG inputs and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
+Android includes a JPEG quality compression MVP for `file://` and `content://` JPEG inputs, optional resize, and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
 
 ## Current Implementation Scope
 
@@ -41,14 +41,14 @@ The current implementation is intentionally small:
 - JPEG input only.
 - JPEG output only.
 - Quality-based compression only.
+- Optional resize with `maxWidth`, `maxHeight`, and `contain`, `cover`, or `stretch` mode.
 - Output file written to the Android app cache directory.
-- `CompressionResult` returns `uri`, `format`, `width`, `height`, `byteSize`, `originalByteSize`, and `compressionRatio`.
+- `CompressionResult` returns `uri`, `format`, final `width`, final `height`, `byteSize`, `originalByteSize`, and `compressionRatio`.
 
 The following remain planned and are not implemented in the MVP:
 
 - iOS compression.
 - PNG, WebP, HEIC / HEIF, AVIF, and GIF processing.
-- Resize.
 - EXIF orientation correction.
 - Metadata preservation, safe stripping, or full stripping.
 - Target-size compression with `maxBytes`.
@@ -87,12 +87,12 @@ Any supported image in. A compressed image out, in your chosen supported format.
 
 ## Planned Features
 
-The following product features are planned. They are not fully implemented yet.
+The following product features are planned or only partially implemented.
 
 - Automatic format detection.
 - Quality-based compression.
 - Target file size compression with `maxBytes`.
-- Optional resize during compression.
+- Optional resize during compression. Android JPEG MVP support is implemented.
 - Output format selection.
 - Automatic EXIF orientation correction.
 - Metadata preservation and stripping policies.
@@ -172,7 +172,23 @@ output: {
 }
 ```
 
-### 2. Target-size compression
+### 2. Compression with resize
+
+```ts
+resize: {
+  maxWidth: 2048,
+  maxHeight: 2048,
+  mode: 'contain',
+},
+output: {
+  format: 'jpeg',
+  quality: 80,
+}
+```
+
+Android JPEG MVP resize supports `contain`, `cover`, and `stretch`. The result `width` and `height` describe the final encoded image dimensions after resize.
+
+### 3. Target-size compression
 
 ```ts
 output: {
@@ -183,7 +199,7 @@ output: {
 
 `maxBytes` is planned as a target upper bound that the encoder will try to satisfy within practical limits. It is not intended to guarantee an exact byte size for every source image, format, platform, or codec.
 
-### 3. Compression with format conversion
+### 4. Compression with format conversion
 
 ```ts
 output: {
@@ -242,6 +258,7 @@ This project is not intended to handle:
 - [x] Unit test foundation for API and validation.
 - [x] React Native Codegen and native module foundation.
 - [x] Android JPEG to JPEG quality compression MVP.
+- [x] Android JPEG resize support.
 - [x] Example application.
 - [ ] JPEG, PNG, and WebP compression.
 - [ ] HEIC / HEIF input.
@@ -253,7 +270,7 @@ This project is not intended to handle:
 
 ## Installation
 
-This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and a narrow Android JPEG quality compression MVP. iOS compression and broader format support are not implemented yet.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android JPEG quality compression MVP with optional resize. iOS compression and broader format support are not implemented yet.
 
 Planned installation command:
 
@@ -288,6 +305,11 @@ The example screen copies a bundled `sample.jpg` asset into the app cache and us
 ```ts
 compressImage({
   source: { uri },
+  resize: {
+    maxWidth,
+    maxHeight,
+    mode,
+  },
   output: {
     format: 'jpeg',
     quality,
@@ -295,7 +317,7 @@ compressImage({
 });
 ```
 
-It displays the compressed output URI, compressed byte size, original byte size, compression ratio, and native error code/message when the call fails.
+It displays the compressed output URI, final width and height, compressed byte size, original byte size, compression ratio, and native error code/message when the call fails.
 
 Android Codegen and native build checks can also be run through the example app:
 

@@ -186,6 +186,9 @@ function checkAndroidNativeModule() {
     'BitmapFactory.decodeStream',
     'openInputStream(inputSource.uri)',
     'OpenableColumns.SIZE',
+    'resizeBitmap(bitmap, resize)',
+    'Bitmap.createScaledBitmap',
+    'ResizeMode.COVER',
     'Bitmap.CompressFormat.JPEG',
     'ERR_UNSUPPORTED_FORMAT',
   ];
@@ -194,7 +197,7 @@ function checkAndroidNativeModule() {
   return {
     ok: missing.length === 0,
     label: 'Android Kotlin module matches generated spec and JPEG MVP path',
-    detail: missing.length === 0 ? 'module extends generated spec and contains JPEG decode/encode path' : `missing snippets: ${missing.join(' | ')}`,
+    detail: missing.length === 0 ? 'module extends generated spec and contains JPEG decode/resize/encode path' : `missing snippets: ${missing.join(' | ')}`,
   };
 }
 
