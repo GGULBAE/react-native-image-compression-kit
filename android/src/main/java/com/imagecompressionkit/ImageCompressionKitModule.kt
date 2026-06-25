@@ -207,7 +207,7 @@ class ImageCompressionKitModule(
       val didEncode: Boolean
 
       try {
-        val preservedExifMetadata = createPreservedExifMetadata(
+        val copiedExifMetadata = createCopiedExifMetadata(
           metadataPolicy,
           inputSource,
           outputDimensions
@@ -218,13 +218,13 @@ class ImageCompressionKitModule(
           outputFile,
           quality,
           maxBytes,
-          preservedExifMetadata
+          copiedExifMetadata
         )
       } catch (error: MetadataCopyException) {
         reject(
           promise,
           ERR_ENCODE_FAILED,
-          error.message ?: "Android JPEG MVP could not preserve JPEG metadata.",
+          error.message ?: "Android JPEG MVP could not copy JPEG metadata.",
           error
         )
         return
@@ -318,8 +318,10 @@ class ImageCompressionKitModule(
       pushString("Resize supports contain, cover, and stretch modes with maxWidth and maxHeight.")
       pushString("Target-size compression supports maxBytes by adjusting JPEG quality.")
       pushString("Metadata preserve copies supported source EXIF attributes into JPEG output.")
+      pushString("Metadata safe copies privacy-filtered source EXIF attributes.")
+      pushString("Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.")
       pushString("Metadata preserve normalizes output EXIF orientation after pixels are transformed.")
-      pushString("Metadata safe and strip re-encode JPEG output without preserving source EXIF metadata.")
+      pushString("Metadata strip re-encodes JPEG output without preserving source EXIF metadata.")
     }
 
   private fun hasValue(map: ReadableMap, key: String): Boolean =
@@ -584,13 +586,15 @@ class ImageCompressionKitModule(
       ExifInterface.ORIENTATION_NORMAL
     }
 
-  private fun createPreservedExifMetadata(
+  private fun createCopiedExifMetadata(
     metadataPolicy: MetadataPolicy,
     inputSource: ImageInputSource,
     dimensions: ImageDimensions
-  ): PreservedExifMetadata? {
-    if (metadataPolicy != MetadataPolicy.PRESERVE) {
-      return null
+  ): CopiedExifMetadata? {
+    val exifTags = when (metadataPolicy) {
+      MetadataPolicy.PRESERVE -> PRESERVED_EXIF_TAGS
+      MetadataPolicy.SAFE -> SAFE_EXIF_TAGS
+      MetadataPolicy.STRIP -> return null
     }
 
     try {
@@ -598,7 +602,7 @@ class ImageCompressionKitModule(
         val sourceExif = ExifInterface(inputStream)
         val attributes = linkedMapOf<String, String>()
 
-        PRESERVED_EXIF_TAGS.forEach { tag ->
+        exifTags.forEach { tag ->
           val value = sourceExif.getAttribute(tag)
 
           if (value != null) {
@@ -606,7 +610,7 @@ class ImageCompressionKitModule(
           }
         }
 
-        return PreservedExifMetadata(
+        return CopiedExifMetadata(
           attributes = attributes,
           dimensions = dimensions
         )
@@ -797,17 +801,17 @@ class ImageCompressionKitModule(
     outputFile: File,
     quality: Int,
     maxBytes: Long?,
-    preservedExifMetadata: PreservedExifMetadata?
+    copiedExifMetadata: CopiedExifMetadata?
   ): Boolean =
     if (maxBytes == null) {
-      encodeJpegAtQuality(bitmap, outputFile, quality, preservedExifMetadata)
+      encodeJpegAtQuality(bitmap, outputFile, quality, copiedExifMetadata)
     } else {
       encodeJpegToTargetSize(
         bitmap,
         outputFile,
         quality,
         maxBytes,
-        preservedExifMetadata
+        copiedExifMetadata
       )
     }
 
@@ -816,7 +820,7 @@ class ImageCompressionKitModule(
     outputFile: File,
     qualityCap: Int,
     maxBytes: Long,
-    preservedExifMetadata: PreservedExifMetadata?
+    copiedExifMetadata: CopiedExifMetadata?
   ): Boolean {
     var currentQuality = qualityCap
 
@@ -825,7 +829,7 @@ class ImageCompressionKitModule(
         bitmap,
         outputFile,
         currentQuality,
-        preservedExifMetadata
+        copiedExifMetadata
       )
     ) {
       return false
@@ -849,7 +853,7 @@ class ImageCompressionKitModule(
           bitmap,
           outputFile,
           currentQuality,
-          preservedExifMetadata
+          copiedExifMetadata
         )
       ) {
         return false
@@ -878,7 +882,7 @@ class ImageCompressionKitModule(
         bitmap,
         outputFile,
         finalQuality,
-        preservedExifMetadata
+        copiedExifMetadata
       )
     }
   }
@@ -887,7 +891,7 @@ class ImageCompressionKitModule(
     bitmap: Bitmap,
     outputFile: File,
     quality: Int,
-    preservedExifMetadata: PreservedExifMetadata?
+    copiedExifMetadata: CopiedExifMetadata?
   ): Boolean {
     val encoded = FileOutputStream(outputFile).use { outputStream ->
       bitmap.compress(Bitmap.CompressFormat.JPEG, quality, outputStream)
@@ -897,23 +901,23 @@ class ImageCompressionKitModule(
       return false
     }
 
-    writePreservedExifMetadata(preservedExifMetadata, outputFile)
+    writeCopiedExifMetadata(copiedExifMetadata, outputFile)
 
     return true
   }
 
-  private fun writePreservedExifMetadata(
-    preservedExifMetadata: PreservedExifMetadata?,
+  private fun writeCopiedExifMetadata(
+    copiedExifMetadata: CopiedExifMetadata?,
     outputFile: File
   ) {
-    if (preservedExifMetadata == null) {
+    if (copiedExifMetadata == null) {
       return
     }
 
     try {
       val outputExif = ExifInterface(outputFile.absolutePath)
 
-      preservedExifMetadata.attributes.forEach { (tag, value) ->
+      copiedExifMetadata.attributes.forEach { (tag, value) ->
         outputExif.setAttribute(tag, value)
       }
 
@@ -923,19 +927,19 @@ class ImageCompressionKitModule(
       )
       outputExif.setAttribute(
         ExifInterface.TAG_IMAGE_WIDTH,
-        preservedExifMetadata.dimensions.width.toString()
+        copiedExifMetadata.dimensions.width.toString()
       )
       outputExif.setAttribute(
         ExifInterface.TAG_IMAGE_LENGTH,
-        preservedExifMetadata.dimensions.height.toString()
+        copiedExifMetadata.dimensions.height.toString()
       )
       outputExif.setAttribute(
         ExifInterface.TAG_PIXEL_X_DIMENSION,
-        preservedExifMetadata.dimensions.width.toString()
+        copiedExifMetadata.dimensions.width.toString()
       )
       outputExif.setAttribute(
         ExifInterface.TAG_PIXEL_Y_DIMENSION,
-        preservedExifMetadata.dimensions.height.toString()
+        copiedExifMetadata.dimensions.height.toString()
       )
       outputExif.saveAttributes()
     } catch (error: Exception) {
@@ -991,7 +995,7 @@ class ImageCompressionKitModule(
     val height: Int
   )
 
-  private data class PreservedExifMetadata(
+  private data class CopiedExifMetadata(
     val attributes: Map<String, String>,
     val dimensions: ImageDimensions
   )
@@ -1072,6 +1076,67 @@ class ImageCompressionKitModule(
     private val JPEG_SOI_FIRST_BYTE = 0xFF.toByte()
     private val JPEG_SOI_SECOND_BYTE = 0xD8.toByte()
     private val JPEG_MARKER_PREFIX_BYTE = 0xFF.toByte()
+
+    private val SAFE_EXIF_TAGS = arrayOf(
+      ExifInterface.TAG_APERTURE_VALUE,
+      ExifInterface.TAG_BRIGHTNESS_VALUE,
+      ExifInterface.TAG_CFA_PATTERN,
+      ExifInterface.TAG_COLOR_SPACE,
+      ExifInterface.TAG_COMPONENTS_CONFIGURATION,
+      ExifInterface.TAG_COMPRESSED_BITS_PER_PIXEL,
+      ExifInterface.TAG_CONTRAST,
+      ExifInterface.TAG_CUSTOM_RENDERED,
+      ExifInterface.TAG_DATETIME,
+      ExifInterface.TAG_DATETIME_DIGITIZED,
+      ExifInterface.TAG_DATETIME_ORIGINAL,
+      ExifInterface.TAG_DIGITAL_ZOOM_RATIO,
+      ExifInterface.TAG_EXIF_VERSION,
+      ExifInterface.TAG_EXPOSURE_BIAS_VALUE,
+      ExifInterface.TAG_EXPOSURE_INDEX,
+      ExifInterface.TAG_EXPOSURE_MODE,
+      ExifInterface.TAG_EXPOSURE_PROGRAM,
+      ExifInterface.TAG_EXPOSURE_TIME,
+      ExifInterface.TAG_F_NUMBER,
+      ExifInterface.TAG_FILE_SOURCE,
+      ExifInterface.TAG_FLASH,
+      ExifInterface.TAG_FLASHPIX_VERSION,
+      ExifInterface.TAG_FOCAL_LENGTH,
+      ExifInterface.TAG_FOCAL_LENGTH_IN_35MM_FILM,
+      ExifInterface.TAG_FOCAL_PLANE_RESOLUTION_UNIT,
+      ExifInterface.TAG_FOCAL_PLANE_X_RESOLUTION,
+      ExifInterface.TAG_FOCAL_PLANE_Y_RESOLUTION,
+      ExifInterface.TAG_GAIN_CONTROL,
+      ExifInterface.TAG_GAMMA,
+      ExifInterface.TAG_ISO_SPEED,
+      ExifInterface.TAG_ISO_SPEED_LATITUDE_YYY,
+      ExifInterface.TAG_ISO_SPEED_LATITUDE_ZZZ,
+      ExifInterface.TAG_LENS_MAKE,
+      ExifInterface.TAG_LENS_MODEL,
+      ExifInterface.TAG_LENS_SPECIFICATION,
+      ExifInterface.TAG_LIGHT_SOURCE,
+      ExifInterface.TAG_MAKE,
+      ExifInterface.TAG_MAX_APERTURE_VALUE,
+      ExifInterface.TAG_METERING_MODE,
+      ExifInterface.TAG_MODEL,
+      ExifInterface.TAG_OFFSET_TIME,
+      ExifInterface.TAG_OFFSET_TIME_DIGITIZED,
+      ExifInterface.TAG_OFFSET_TIME_ORIGINAL,
+      ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY,
+      ExifInterface.TAG_RECOMMENDED_EXPOSURE_INDEX,
+      ExifInterface.TAG_SATURATION,
+      ExifInterface.TAG_SCENE_CAPTURE_TYPE,
+      ExifInterface.TAG_SCENE_TYPE,
+      ExifInterface.TAG_SENSING_METHOD,
+      ExifInterface.TAG_SENSITIVITY_TYPE,
+      ExifInterface.TAG_SHARPNESS,
+      ExifInterface.TAG_SHUTTER_SPEED_VALUE,
+      ExifInterface.TAG_SOFTWARE,
+      ExifInterface.TAG_STANDARD_OUTPUT_SENSITIVITY,
+      ExifInterface.TAG_SUBSEC_TIME,
+      ExifInterface.TAG_SUBSEC_TIME_DIGITIZED,
+      ExifInterface.TAG_SUBSEC_TIME_ORIGINAL,
+      ExifInterface.TAG_WHITE_BALANCE
+    )
 
     private val PRESERVED_EXIF_TAGS = arrayOf(
       ExifInterface.TAG_ARTIST,
@@ -1170,6 +1235,7 @@ class ImageCompressionKitModule(
       ExifInterface.TAG_SENSITIVITY_TYPE,
       ExifInterface.TAG_SHARPNESS,
       ExifInterface.TAG_SHUTTER_SPEED_VALUE,
+      ExifInterface.TAG_SOFTWARE,
       ExifInterface.TAG_SPATIAL_FREQUENCY_RESPONSE,
       ExifInterface.TAG_SPECTRAL_SENSITIVITY,
       ExifInterface.TAG_STANDARD_OUTPUT_SENSITIVITY,
