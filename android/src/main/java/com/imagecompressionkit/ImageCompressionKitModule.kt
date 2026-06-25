@@ -18,7 +18,9 @@ import java.io.InputStream
 import kotlin.math.roundToInt
 
 class ImageCompressionKitModule(
-  private val reactContext: ReactApplicationContext
+  private val reactContext: ReactApplicationContext,
+  private val writableMapFactory: () -> WritableMap = { Arguments.createMap() },
+  private val writableArrayFactory: () -> WritableArray = { Arguments.createArray() }
 ) : NativeImageCompressionKitSpec(reactContext) {
   override fun getName(): String = NAME
 
@@ -305,7 +307,7 @@ class ImageCompressionKitModule(
   }
 
   private fun createStubCapabilities(): WritableMap =
-    Arguments.createMap().apply {
+    writableMapFactory().apply {
       putString("platform", "android")
       putArray("formats", createFormatCapabilities())
       putArray("metadataPolicies", createMetadataPolicies())
@@ -314,7 +316,7 @@ class ImageCompressionKitModule(
     }
 
   private fun createFormatCapabilities(): WritableArray =
-    Arguments.createArray().apply {
+    writableArrayFactory().apply {
       ImageCompressionOutput.FORMAT_VALUES.forEach { format ->
         pushMap(createFormatCapability(format))
       }
@@ -323,7 +325,7 @@ class ImageCompressionKitModule(
   private fun createFormatCapability(format: String): WritableMap {
     val capability = ImageCompressionOutput.createFormatCapability(format)
 
-    return Arguments.createMap().apply {
+    return writableMapFactory().apply {
       putString("format", capability.format)
       putBoolean("input", capability.input)
       putBoolean("output", capability.output)
@@ -334,14 +336,14 @@ class ImageCompressionKitModule(
   }
 
   private fun createMetadataPolicies(): WritableArray =
-    Arguments.createArray().apply {
+    writableArrayFactory().apply {
       pushString(METADATA_POLICY_PRESERVE)
       pushString(METADATA_POLICY_SAFE)
       pushString(METADATA_POLICY_STRIP)
     }
 
   private fun createStringArray(values: List<String>): WritableArray =
-    Arguments.createArray().apply {
+    writableArrayFactory().apply {
       values.forEach { value ->
         pushString(value)
       }
@@ -833,7 +835,7 @@ class ImageCompressionKitModule(
       outputFormat = outputFormat
     )
 
-    return Arguments.createMap().apply {
+    return writableMapFactory().apply {
       putString("uri", outputResult.uri)
       putString("format", outputResult.format)
       putInt("width", outputResult.width)

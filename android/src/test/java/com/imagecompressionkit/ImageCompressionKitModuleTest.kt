@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import com.facebook.react.bridge.Callback
 import com.facebook.react.bridge.CatalystInstance
+import com.facebook.react.bridge.JavaOnlyArray
 import com.facebook.react.bridge.JavaOnlyMap
 import com.facebook.react.bridge.JavaScriptContextHolder
 import com.facebook.react.bridge.JavaScriptModule
@@ -110,7 +111,9 @@ class ImageCompressionKitModuleTest {
 
   private fun createModule(): ImageCompressionKitModule =
     ImageCompressionKitModule(
-      TestReactApplicationContext(RuntimeEnvironment.getApplication())
+      reactContext = TestReactApplicationContext(RuntimeEnvironment.getApplication()),
+      writableMapFactory = { JavaOnlyMap() },
+      writableArrayFactory = { JavaOnlyArray() }
     )
 
   private fun compressionOptions(
