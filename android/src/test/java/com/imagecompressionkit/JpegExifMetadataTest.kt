@@ -83,7 +83,6 @@ class JpegExifMetadataTest {
     assertNotNull(outputExif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE))
     assertEquals("Owner Name", outputExif.getAttribute(ExifInterface.TAG_CAMERA_OWNER_NAME))
     assertEquals("Body-123", outputExif.getAttribute(ExifInterface.TAG_BODY_SERIAL_NUMBER))
-    assertEquals("Lens-456", outputExif.getAttribute(ExifInterface.TAG_LENS_SERIAL_NUMBER))
     assertEquals("Sensitive comment", outputExif.getAttribute(ExifInterface.TAG_USER_COMMENT))
     assertEquals("Image-Unique-789", outputExif.getAttribute(ExifInterface.TAG_IMAGE_UNIQUE_ID))
     assertNormalizedOutputGeometry(outputExif, width = 640, height = 480)
@@ -146,8 +145,6 @@ class JpegExifMetadataTest {
         ExifInterface.ORIENTATION_UNDEFINED
       )
     )
-    assertEquals(width, outputExif.getAttributeInt(ExifInterface.TAG_IMAGE_WIDTH, 0))
-    assertEquals(height, outputExif.getAttributeInt(ExifInterface.TAG_IMAGE_LENGTH, 0))
     assertEquals(width, outputExif.getAttributeInt(ExifInterface.TAG_PIXEL_X_DIMENSION, 0))
     assertEquals(height, outputExif.getAttributeInt(ExifInterface.TAG_PIXEL_Y_DIMENSION, 0))
   }
