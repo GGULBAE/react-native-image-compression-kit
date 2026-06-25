@@ -279,6 +279,7 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('OutputFormat.WEBP to ".webp"');
     expect(testSource).toContain('ImageCompressionOutput.encodeBitmap');
     expect(testSource).toContain('BitmapFactory.decodeByteArray');
+    expect(testSource).toContain('GraphicsMode.Mode.NATIVE');
     expect(testSource).toContain('assertPngSignature');
     expect(testSource).toContain('assertWebpSignature');
     expect(testSource).toContain('"RIFF"');

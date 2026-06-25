@@ -265,6 +265,7 @@ function checkAndroidNativeModule() {
     'outputFormatsMapToAndroidCompressFormatsAndQualityRules',
     'ImageCompressionOutput.encodeBitmap',
     'BitmapFactory.decodeByteArray',
+    'GraphicsMode.Mode.NATIVE',
     'assertPngSignature',
     'assertWebpSignature',
     '"RIFF"',

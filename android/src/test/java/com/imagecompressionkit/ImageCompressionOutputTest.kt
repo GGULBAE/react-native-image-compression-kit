@@ -12,6 +12,7 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 
@@ -55,6 +56,7 @@ class ImageCompressionOutputTest {
   }
 
   @Test
+  @GraphicsMode(GraphicsMode.Mode.NATIVE)
   fun encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile() {
     val sampleJpegBytes = createSampleJpegBytes()
     val bitmap = decodeSampleJpegBitmap(sampleJpegBytes)
