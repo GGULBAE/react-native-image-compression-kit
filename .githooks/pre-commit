@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+set -eu
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "pre-commit: pnpm is required to run repository verification." >&2
+  exit 1
+fi
+
+echo "pre-commit: checking staged whitespace"
+git diff --cached --check
+
+echo "pre-commit: running pnpm verify"
+pnpm verify
+
+echo "pre-commit: running pnpm example:typecheck"
+pnpm example:typecheck

@@ -375,6 +375,16 @@ RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:app:assemb
 
 The executable Android checks require a Java runtime, Android SDK, and a Gradle wrapper or `gradle` command in the target app.
 
+### Local Commit Hook
+
+Install the repository git hooks once per clone:
+
+```bash
+pnpm hooks:install
+```
+
+The `pre-commit` hook runs `git diff --cached --check`, `pnpm verify`, and `pnpm example:typecheck`. Commits should only be created after these checks pass. After each completed development task, keep `README.md` aligned with the current implementation status before committing.
+
 ## Contributing
 
 The project is in its initial design phase. Issues and discussions about the proposed API, format priorities, platform behavior, metadata policy, and native implementation strategy are welcome once the repository is ready for public collaboration.

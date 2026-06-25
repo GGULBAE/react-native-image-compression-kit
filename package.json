@@ -29,6 +29,7 @@
     "example:codegen": "RNICK_ANDROID_APP_DIR=example/android pnpm android:codegen",
     "example:start": "pnpm --filter image-compression-kit-example start",
     "example:typecheck": "pnpm --filter image-compression-kit-example typecheck",
+    "hooks:install": "node scripts/install-git-hooks.mjs",
     "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm android:doctor",
     "android:doctor": "node scripts/android-verification.mjs doctor",
     "android:codegen": "node scripts/android-verification.mjs codegen",
