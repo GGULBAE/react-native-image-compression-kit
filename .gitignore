@@ -61,6 +61,13 @@ android/**/*.jks
 android/**/google-services.json
 android/**/captures/
 
+example/android/.gradle/
+example/android/build/
+example/android/app/build/
+example/android/local.properties
+example/android/**/local.properties
+example/android/**/captures/
+
 # iOS
 ios/Pods/
 ios/build/

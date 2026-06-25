@@ -24,6 +24,11 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "example:android": "pnpm --filter image-compression-kit-example android",
+    "example:build": "RNICK_ANDROID_APP_DIR=example/android pnpm android:build",
+    "example:codegen": "RNICK_ANDROID_APP_DIR=example/android pnpm android:codegen",
+    "example:start": "pnpm --filter image-compression-kit-example start",
+    "example:typecheck": "pnpm --filter image-compression-kit-example typecheck",
     "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm android:doctor",
     "android:doctor": "node scripts/android-verification.mjs doctor",
     "android:codegen": "node scripts/android-verification.mjs codegen",

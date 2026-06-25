@@ -28,7 +28,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
+This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
 Android includes a narrow JPEG quality compression MVP for `file://` JPEG inputs and JPEG output. iOS compression and non-JPEG codecs are not implemented yet.
 
@@ -243,13 +243,13 @@ This project is not intended to handle:
 - [x] Unit test foundation for API and validation.
 - [x] React Native Codegen and native module foundation.
 - [x] Android JPEG to JPEG quality compression MVP.
+- [x] Example application.
 - [ ] JPEG, PNG, and WebP compression.
 - [ ] HEIC / HEIF input.
 - [ ] AVIF support.
 - [ ] Target-size compression.
 - [ ] Metadata policies.
 - [ ] Cancellation and progress.
-- [ ] Example application.
 - [ ] Public npm release.
 
 ## Installation
@@ -261,6 +261,51 @@ Planned installation command:
 ```bash
 npm install react-native-image-compression-kit
 ```
+
+## Example Application
+
+The repository includes an Android React Native example app in `example/`. It links this local package through the pnpm workspace and exercises the Android JPEG MVP against a `file://` source URI.
+
+Install dependencies from the repository root:
+
+```bash
+pnpm install
+```
+
+Start Metro:
+
+```bash
+pnpm example:start
+```
+
+In another terminal, run the Android app:
+
+```bash
+pnpm example:android
+```
+
+The example screen copies a bundled `sample.jpg` asset into the app cache and uses that cache file URI by default. You can also paste another local `file://` JPEG URI. The screen calls:
+
+```ts
+compressImage({
+  source: { uri },
+  output: {
+    format: 'jpeg',
+    quality,
+  },
+});
+```
+
+It displays the compressed output URI, compressed byte size, original byte size, compression ratio, and native error code/message when the call fails.
+
+Android Codegen and native build checks can also be run through the example app:
+
+```bash
+pnpm example:codegen
+pnpm example:build
+```
+
+These commands require a Java runtime, Android SDK, and a connected emulator/device or otherwise valid Android build environment.
 
 ## Development Verification
 

@@ -7,9 +7,6 @@ module.exports = {
           'import com.imagecompressionkit.ImageCompressionKitPackage;',
         packageInstance: 'new ImageCompressionKitPackage()',
       },
-      ios: {
-        podspecPath: './react-native-image-compression-kit.podspec',
-      },
     },
   },
 };
