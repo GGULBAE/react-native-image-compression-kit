@@ -301,6 +301,12 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain(
       'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif'
     );
+    expect(testSource).toContain(
+      'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata'
+    );
+    expect(testSource).toContain(
+      'compressImageFallsBackWhenMaxBytesIsTooSmallAndReportsConsistentMetadata'
+    );
     expect(testSource).toContain('ImageCompressionKitModule(');
     expect(testSource).toContain('module.compressImage(');
     expect(testSource).toContain('JavaOnlyMap.of');
@@ -315,6 +321,12 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('assertNormalizedOutputExif');
     expect(testSource).toContain('ExifInterface.ORIENTATION_NORMAL');
     expect(testSource).toContain('ExifInterface.TAG_PIXEL_X_DIMENSION');
+    expect(testSource).toContain('createPatternJpegFile');
+    expect(testSource).toContain('calculateAchievableTargetBytes');
+    expect(testSource).toContain('assertResultMetadataMatchesFile');
+    expect(testSource).toContain('OutputFormat.JPEG');
+    expect(testSource).toContain('OutputFormat.WEBP');
+    expect(testSource).toContain('"maxBytes"');
     expect(testSource).toContain('ImageCompressionKitModule.ERR_INVALID_OPTIONS');
     expect(testSource).toContain('ImageCompressionOutput.MAX_BYTES_UNSUPPORTED_MESSAGE');
     expect(testSource).toContain('GraphicsMode.Mode.NATIVE');

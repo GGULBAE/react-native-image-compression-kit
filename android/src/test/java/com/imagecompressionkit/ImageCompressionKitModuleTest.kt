@@ -2,6 +2,7 @@ package com.imagecompressionkit
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.exifinterface.media.ExifInterface
 import com.facebook.react.bridge.Callback
@@ -176,6 +177,101 @@ class ImageCompressionKitModuleTest {
     }
   }
 
+  @Test
+  fun compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata() {
+    val module = createModule()
+    val sourceFile = createPatternJpegFile(width = 96, height = 64)
+    val cases = listOf(
+      TargetSizeCase(
+        format = "jpeg",
+        outputFormat = OutputFormat.JPEG,
+        assertSignature = ::assertJpegSignature
+      ),
+      TargetSizeCase(
+        format = "webp",
+        outputFormat = OutputFormat.WEBP,
+        assertSignature = ::assertWebpSignature
+      )
+    )
+
+    cases.forEach { case ->
+      val maxBytes = calculateAchievableTargetBytes(sourceFile, case.outputFormat)
+      val promise = RecordingPromise()
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of(
+            "format",
+            case.format,
+            "quality",
+            90,
+            "maxBytes",
+            maxBytes
+          )
+        ),
+        promise
+      )
+
+      val result = promise.resolvedMap()
+      val outputFile = result.outputFile()
+
+      case.assertSignature(outputFile.readBytes())
+      assertTrue(outputFile.length() <= maxBytes)
+      assertEquals(case.format, result.getString("format"))
+      assertEquals(96, result.getInt("width"))
+      assertEquals(64, result.getInt("height"))
+      assertResultMetadataMatchesFile(result, outputFile, sourceFile)
+    }
+  }
+
+  @Test
+  fun compressImageFallsBackWhenMaxBytesIsTooSmallAndReportsConsistentMetadata() {
+    val module = createModule()
+    val sourceFile = createPatternJpegFile(width = 96, height = 64)
+    val cases = listOf(
+      TargetSizeCase(
+        format = "jpeg",
+        outputFormat = OutputFormat.JPEG,
+        assertSignature = ::assertJpegSignature
+      ),
+      TargetSizeCase(
+        format = "webp",
+        outputFormat = OutputFormat.WEBP,
+        assertSignature = ::assertWebpSignature
+      )
+    )
+
+    cases.forEach { case ->
+      val promise = RecordingPromise()
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of(
+            "format",
+            case.format,
+            "quality",
+            80,
+            "maxBytes",
+            1
+          )
+        ),
+        promise
+      )
+
+      val result = promise.resolvedMap()
+      val outputFile = result.outputFile()
+
+      case.assertSignature(outputFile.readBytes())
+      assertTrue(outputFile.length() > 1)
+      assertEquals(case.format, result.getString("format"))
+      assertEquals(96, result.getInt("width"))
+      assertEquals(64, result.getInt("height"))
+      assertResultMetadataMatchesFile(result, outputFile, sourceFile)
+    }
+  }
+
   private fun createModule(): ImageCompressionKitModule =
     ImageCompressionKitModule(
       reactContext = TestReactApplicationContext(RuntimeEnvironment.getApplication()),
@@ -263,6 +359,77 @@ class ImageCompressionKitModuleTest {
     return file
   }
 
+  private fun createPatternJpegFile(width: Int, height: Int): File {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+
+    for (y in 0 until height) {
+      for (x in 0 until width) {
+        val red = (x * 37 + y * 17) and 0xff
+        val green = (x * 11 + y * 53) and 0xff
+        val blue = (x * 23 + y * 29 + (x * y)) and 0xff
+        val color = 0xff000000.toInt() or (red shl 16) or (green shl 8) or blue
+
+        bitmap.setPixel(x, y, color)
+      }
+    }
+
+    val outputStream = ByteArrayOutputStream()
+    assertTrue(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream))
+    bitmap.recycle()
+
+    val bytes = outputStream.toByteArray()
+    assertJpegSignature(bytes)
+
+    return temporaryFolder.newFile("pattern-${System.nanoTime()}.jpg").apply {
+      writeBytes(bytes)
+      assertTrue(length() > 0)
+    }
+  }
+
+  private fun calculateAchievableTargetBytes(
+    sourceFile: File,
+    outputFormat: OutputFormat
+  ): Long {
+    val bitmap = BitmapFactory.decodeFile(sourceFile.absolutePath)
+
+    assertNotNull(bitmap)
+
+    try {
+      val lowQualitySize = encodedSizeAtQuality(bitmap, outputFormat, quality = 35)
+      val highQualitySize = encodedSizeAtQuality(bitmap, outputFormat, quality = 90)
+      val targetBytes = lowQualitySize + ((highQualitySize - lowQualitySize) / 2)
+
+      assertTrue(highQualitySize > targetBytes)
+      assertTrue(targetBytes >= lowQualitySize)
+
+      return targetBytes
+    } finally {
+      bitmap.recycle()
+    }
+  }
+
+  private fun encodedSizeAtQuality(
+    bitmap: Bitmap,
+    outputFormat: OutputFormat,
+    quality: Int
+  ): Long {
+    val outputFile = temporaryFolder.newFile(
+      "target-${outputFormat.value}-$quality-${System.nanoTime()}.${outputFormat.fileExtension}"
+    )
+
+    assertTrue(
+      ImageCompressionOutput.encodeBitmap(
+        bitmap = bitmap,
+        outputFile = outputFile,
+        outputFormat = outputFormat,
+        quality = quality,
+        maxBytes = null
+      )
+    )
+
+    return outputFile.length()
+  }
+
   private fun RecordingPromise.resolvedMap(): ReadableMap {
     assertNull(rejectionCode)
     assertNotNull(resolvedValue)
@@ -278,6 +445,20 @@ class ImageCompressionKitModuleTest {
       assertTrue(it.exists())
       assertTrue(it.length() > 0)
     }
+  }
+
+  private fun assertResultMetadataMatchesFile(
+    result: ReadableMap,
+    outputFile: File,
+    sourceFile: File
+  ) {
+    assertEquals(outputFile.length().toDouble(), result.getDouble("byteSize"), 0.0001)
+    assertEquals(sourceFile.length().toDouble(), result.getDouble("originalByteSize"), 0.0001)
+    assertEquals(
+      outputFile.length().toDouble() / sourceFile.length().toDouble(),
+      result.getDouble("compressionRatio"),
+      0.0001
+    )
   }
 
   private fun assertJpegSignature(bytes: ByteArray) {
@@ -333,6 +514,12 @@ class ImageCompressionKitModuleTest {
     val resize: JavaOnlyMap,
     val expectedWidth: Int,
     val expectedHeight: Int
+  )
+
+  private data class TargetSizeCase(
+    val format: String,
+    val outputFormat: OutputFormat,
+    val assertSignature: (ByteArray) -> Unit
   )
 
   private class TestReactApplicationContext(context: Context) : ReactApplicationContext(context) {
