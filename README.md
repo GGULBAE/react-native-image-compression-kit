@@ -135,6 +135,30 @@ Android platform documentation lists [HEIF decode support on Android 8.0+](https
 
 Runtime capabilities currently expose HEIC / HEIF with `input=true` and `output=false`, plus notes that describe the Android 8.0+ platform decode condition, the API 28+ `ImageDecoder` route, the API 26-27 guarded `BitmapFactory` fallback, and the unsupported output state. CI validates the version-gated structure and rejection boundaries, but it does not run real HEIC / HEIF codec sample decoding yet because that requires codec-backed Android runtime coverage beyond the current Robolectric structure tests.
 
+## HEIC / HEIF Codec Sample Validation Strategy
+
+This repository does not currently commit binary HEIC / HEIF samples. The fixture path is:
+
+- Create a repo-owned tiny RGB source image, such as a 16x12 PNG pattern with no user-photo content.
+- Generate two still-image fixtures from that source: `sample.heic` and `sample.heif`.
+- Prefer `heif-enc` from libheif for reproducible local generation, for example `heif-enc --quality 80 source.png -o sample.heic` and `heif-enc --quality 80 source.png -o sample.heif`.
+- Commit generated fixtures only after recording the source image, generation command, byte size, dimensions, and license/provenance in a fixture manifest.
+- Store committed fixtures under `android/src/test/assets/heic-heif/` so future Android runtime tests can load them without depending on network access.
+
+Current automated coverage is intentionally narrower than real codec validation. `pnpm verify`, `pnpm example:android-unit-test`, and GitHub Actions validate the HEIC / HEIF MIME and extension routing, SDK gates, capability notes, and corrupt-candidate rejection boundaries. They do not prove that a device codec can decode a valid HEIC / HEIF sample because the current CI job does not boot an emulator or run instrumentation tests.
+
+Manual codec validation should use a codec-backed Android device or emulator on API 28+ first, because that exercises the `ImageDecoder` route. After installing the example app, copy a fixture into the app-private files directory and paste the resulting file URI into the example screen:
+
+```bash
+pnpm example:android
+adb shell run-as com.imagecompressionkit.example mkdir -p files/rnick-codec
+adb shell run-as com.imagecompressionkit.example sh -c 'cat > files/rnick-codec/sample.heic' < android/src/test/assets/heic-heif/sample.heic
+```
+
+Then use `file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic` as the source URI and verify JPEG, PNG, and WebP outputs. Repeat with `sample.heif`. API 26-27 should be checked separately for the guarded `BitmapFactory` fallback because emulator/device codec availability can differ from API 28+.
+
+A future automated codec job should be added only after fixtures are committed. It should run as a separate emulator or instrumentation workflow, start with API 28+ HEIC / HEIF sample-to-JPEG assertions, and remain separate from the lightweight JVM CI until runtime stability and execution time are known.
+
 ## Proposed API
 
 The API below is proposed and is not available in a published package yet.
@@ -288,6 +312,7 @@ This project is not intended to handle:
 - [x] Android PNG/WebP input resize, target-size, and metadata no-copy regression JVM tests.
 - [x] Android AVIF unsupported input and HEIC/HEIF SDK-gated decode-boundary JVM tests.
 - [x] Android HEIC/HEIF input decode path and capability notes.
+- [x] Android HEIC/HEIF real codec sample validation strategy.
 - [x] Android GIF static first-frame input support.
 - [x] Android GIF input module-level JVM tests for file/content URI, resize, target-size, and metadata no-copy behavior.
 - [x] Android JPEG-input resize/orientation module-level JVM tests.
@@ -300,6 +325,7 @@ This project is not intended to handle:
 - [x] Example metadata policy selector and result summary.
 - [x] Example output format selector for JPEG, PNG, and WebP.
 - [x] Android HEIC / HEIF input.
+- [ ] Android HEIC / HEIF real codec fixture and emulator/instrumentation validation.
 - [ ] AVIF support.
 - [ ] Metadata support for non-JPEG formats and iOS.
 - [ ] Cancellation and progress.
@@ -337,7 +363,7 @@ In another terminal, run the Android app:
 pnpm example:android
 ```
 
-The example screen copies a bundled `sample.jpg` asset into the app cache and uses that cache file URI by default. You can also paste another local `file://` or `content://` JPEG, PNG, WebP, or GIF URI. The screen calls:
+The example screen copies a bundled `sample.jpg` asset into the app cache and uses that cache file URI by default. You can also paste another local `file://` or `content://` JPEG, PNG, WebP, GIF, HEIC, or HEIF URI. The screen calls:
 
 ```ts
 compressImage({

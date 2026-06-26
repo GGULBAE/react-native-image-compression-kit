@@ -39,6 +39,35 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
   });
 
+  it('documents the HEIC and HEIF real codec sample validation strategy', () => {
+    const readmeSource = readProjectFile('README.md');
+    const verificationSource = readProjectFile('scripts/android-verification.mjs');
+
+    expect(readmeSource).toContain('## HEIC / HEIF Codec Sample Validation Strategy');
+    expect(readmeSource).toContain(
+      'This repository does not currently commit binary HEIC / HEIF samples.'
+    );
+    expect(readmeSource).toContain('Create a repo-owned tiny RGB source image');
+    expect(readmeSource).toContain(
+      'Generate two still-image fixtures from that source: `sample.heic` and `sample.heif`.'
+    );
+    expect(readmeSource).toContain('heif-enc --quality 80 source.png -o sample.heic');
+    expect(readmeSource).toContain('android/src/test/assets/heic-heif/');
+    expect(readmeSource).toContain(
+      'They do not prove that a device codec can decode a valid HEIC / HEIF sample'
+    );
+    expect(readmeSource).toContain(
+      'Manual codec validation should use a codec-backed Android device or emulator on API 28+ first'
+    );
+    expect(readmeSource).toContain(
+      'file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic'
+    );
+    expect(readmeSource).toContain(
+      'A future automated codec job should be added only after fixtures are committed.'
+    );
+    expect(verificationSource).toContain('checkHeicHeifCodecSampleStrategy');
+  });
+
   it('verifies the Android module supports file and content JPEG, PNG, WebP, GIF, HEIC, and HEIF sources', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'

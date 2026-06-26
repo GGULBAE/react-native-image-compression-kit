@@ -49,6 +49,7 @@ function runDoctor() {
     checkSpecFile(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
+    checkHeicHeifCodecSampleStrategy(),
   ];
 
   const envReport = collectEnvironmentReport();
@@ -389,6 +390,32 @@ function checkAndroidNativeModule() {
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),
           ].join(' | ')}`,
+  };
+}
+
+function checkHeicHeifCodecSampleStrategy() {
+  const contents = readText('README.md');
+  const expectedSnippets = [
+    '## HEIC / HEIF Codec Sample Validation Strategy',
+    'This repository does not currently commit binary HEIC / HEIF samples.',
+    'Create a repo-owned tiny RGB source image',
+    'Generate two still-image fixtures from that source: `sample.heic` and `sample.heif`.',
+    'heif-enc --quality 80 source.png -o sample.heic',
+    'android/src/test/assets/heic-heif/',
+    'They do not prove that a device codec can decode a valid HEIC / HEIF sample',
+    'Manual codec validation should use a codec-backed Android device or emulator on API 28+ first',
+    'file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic',
+    'A future automated codec job should be added only after fixtures are committed.',
+  ];
+  const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
+
+  return {
+    ok: missing.length === 0,
+    label: 'README documents HEIC/HEIF codec sample validation strategy',
+    detail:
+      missing.length === 0
+        ? 'fixture generation, manual codec validation, and future emulator CI boundaries are documented'
+        : `missing snippets: ${missing.join(' | ')}`,
   };
 }
 
