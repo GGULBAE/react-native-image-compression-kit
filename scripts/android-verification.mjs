@@ -19,6 +19,7 @@ const REQUIRED_FILES = [
   'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt',
+  'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
   'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt',
   'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
   'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
@@ -26,6 +27,7 @@ const REQUIRED_FILES = [
   'android/src/test/assets/heic-heif/sample.heic',
   'android/src/test/assets/heic-heif/sample.heif',
   'android/src/test/assets/heic-heif/manifest.json',
+  '.github/workflows/android-instrumentation.yml',
   'scripts/generate-heic-heif-fixtures.mjs',
 ];
 
@@ -57,6 +59,7 @@ function runDoctor() {
     checkAndroidNativeModule(),
     checkHeicHeifCodecSampleStrategy(),
     checkHeicHeifFixtures(),
+    checkHeicHeifInstrumentationValidation(),
   ];
 
   const envReport = collectEnvironmentReport();
@@ -179,12 +182,18 @@ function checkAndroidGradleConfig() {
     'apply plugin: "com.facebook.react"',
     'apply plugin: "org.jetbrains.kotlin.android"',
     'build/generated/source/codegen/java',
+    'testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"',
+    'androidTest.assets.srcDirs += ["src/test/assets"]',
     'unitTests.returnDefaultValues = true',
     'unitTests.includeAndroidResources = true',
     'implementation "com.facebook.react:react-android"',
     'implementation "androidx.exifinterface:exifinterface:1.4.2"',
     'testImplementation "junit:junit:4.13.2"',
     'testImplementation "org.robolectric:robolectric:4.16.1"',
+    'androidTestImplementation "junit:junit:4.13.2"',
+    'androidTestImplementation "androidx.test:core:1.6.1"',
+    'androidTestImplementation "androidx.test:runner:1.6.2"',
+    'androidTestImplementation "androidx.test.ext:junit:1.2.1"',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
 
@@ -414,10 +423,13 @@ function checkHeicHeifCodecSampleStrategy() {
     'heif-enc --quality 80 source.png -o sample.heic',
     'Generated fixtures are committed because they are tiny',
     'android/src/test/assets/heic-heif/',
-    'They verify the fixture files and metadata, but they do not prove that a device codec can decode a valid HEIC / HEIF sample',
-    'Manual codec validation should use a codec-backed Android device or emulator on API 28+ first',
+    'They verify the fixture files and metadata, but they do not boot an emulator.',
+    'A separate Android Instrumentation workflow boots an API 35 Google APIs emulator',
+    '`pnpm example:android-instrumentation`',
+    'committed `sample.heic` and `sample.heif` fixtures through the API 28+ `ImageDecoder` route',
+    'Manual codec validation beyond CI should use a codec-backed Android device or emulator',
     'file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic',
-    'A future automated codec job should use the committed fixtures.',
+    'API 26-27 should still be checked separately for the guarded `BitmapFactory` fallback',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
 
@@ -426,8 +438,51 @@ function checkHeicHeifCodecSampleStrategy() {
     label: 'README documents HEIC/HEIF codec sample validation strategy',
     detail:
       missing.length === 0
-        ? 'fixture generation, manual codec validation, and future emulator CI boundaries are documented'
+        ? 'fixture generation, instrumentation codec validation, and manual codec boundaries are documented'
         : `missing snippets: ${missing.join(' | ')}`,
+  };
+}
+
+function checkHeicHeifInstrumentationValidation() {
+  const packageJson = readJson('package.json');
+  const gradleContents = readText('android/build.gradle');
+  const testContents = readText(
+    'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt'
+  );
+  const workflowContents = readText('.github/workflows/android-instrumentation.yml');
+  const readmeContents = readText('README.md');
+  const checks = [
+    packageJson.scripts?.['example:android-instrumentation'] ===
+      'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:connectedDebugAndroidTest pnpm android:build',
+    gradleContents.includes('testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"'),
+    gradleContents.includes('androidTest.assets.srcDirs += ["src/test/assets"]'),
+    gradleContents.includes('androidTestImplementation "androidx.test.ext:junit:1.2.1"'),
+    testContents.includes('compressesCommittedHeicAndHeifSamplesToJpegPngAndWebp'),
+    testContents.includes('Build.VERSION.SDK_INT >= Build.VERSION_CODES.P'),
+    testContents.includes('heic-heif/sample.heic'),
+    testContents.includes('heic-heif/sample.heif'),
+    testContents.includes('ImageCompressionKitModule('),
+    testContents.includes('JavaOnlyMap.of'),
+    testContents.includes('OutputCase("jpeg", ::assertJpegSignature)'),
+    testContents.includes('OutputCase("png", ::assertPngSignature)'),
+    testContents.includes('OutputCase("webp", ::assertWebpSignature)'),
+    testContents.includes('assertBitmapDimensions(outputFile, width = 16, height = 12)'),
+    workflowContents.includes('name: Android Instrumentation'),
+    workflowContents.includes('reactivecircus/android-emulator-runner@v2'),
+    workflowContents.includes('api-level: 35'),
+    workflowContents.includes('target: google_apis'),
+    workflowContents.includes('script: pnpm example:android-instrumentation'),
+    readmeContents.includes('Android Instrumentation workflow'),
+    readmeContents.includes('pnpm example:android-instrumentation'),
+    readmeContents.includes('API 35 Google APIs emulator'),
+  ];
+
+  return {
+    ok: checks.every(Boolean),
+    label: 'HEIC/HEIF emulator instrumentation validation is wired',
+    detail: checks.every(Boolean)
+      ? 'androidTest assets, API 28+ HEIC/HEIF sample assertions, package script, workflow, and README are present'
+      : 'expected androidTest setup, package script, workflow snippets, or README documentation are missing/mismatched',
   };
 }
 

@@ -133,7 +133,7 @@ Android platform documentation lists [HEIF decode support on Android 8.0+](https
 - Reject HEIC / HEIF inputs with `ERR_UNSUPPORTED_FORMAT` below Android 8.0.
 - Keep HEIC / HEIF output unsupported unless a later goal explicitly designs it.
 
-Runtime capabilities currently expose HEIC / HEIF with `input=true` and `output=false`, plus notes that describe the Android 8.0+ platform decode condition, the API 28+ `ImageDecoder` route, the API 26-27 guarded `BitmapFactory` fallback, and the unsupported output state. CI validates the version-gated structure and rejection boundaries, but it does not run real HEIC / HEIF codec sample decoding yet because that requires codec-backed Android runtime coverage beyond the current Robolectric structure tests.
+Runtime capabilities currently expose HEIC / HEIF with `input=true` and `output=false`, plus notes that describe the Android 8.0+ platform decode condition, the API 28+ `ImageDecoder` route, the API 26-27 guarded `BitmapFactory` fallback, and the unsupported output state. The main CI validates the version-gated structure and rejection boundaries, and the separate Android Instrumentation workflow validates committed HEIC / HEIF sample decoding on an API 35 emulator.
 
 ## HEIC / HEIF Codec Sample Validation Strategy
 
@@ -147,9 +147,11 @@ This repository now commits tiny HEIC / HEIF samples generated from the repo-own
 - Store committed fixtures under `android/src/test/assets/heic-heif/` so Android runtime tests can load them without depending on network access.
 - When regenerating with a different `libheif` / `heif-enc` version, update byte size, SHA-256, generator version, dimensions, generation command, and license/provenance in the manifest.
 
-Current automated coverage is intentionally narrower than real codec validation. `pnpm verify`, `pnpm example:android-unit-test`, and GitHub Actions validate the HEIC / HEIF MIME and extension routing, SDK gates, capability notes, corrupt-candidate rejection boundaries, and committed fixture metadata. They verify the fixture files and metadata, but they do not prove that a device codec can decode a valid HEIC / HEIF sample because the current CI job does not boot an emulator or run instrumentation tests.
+Current lightweight coverage is intentionally narrower than real codec validation. `pnpm verify`, `pnpm example:android-unit-test`, and the main GitHub Actions CI validate the HEIC / HEIF MIME and extension routing, SDK gates, capability notes, corrupt-candidate rejection boundaries, and committed fixture metadata. They verify the fixture files and metadata, but they do not boot an emulator.
 
-Manual codec validation should use a codec-backed Android device or emulator on API 28+ first, because that exercises the `ImageDecoder` route. After installing the example app, copy a fixture into the app-private files directory and paste the resulting file URI into the example screen:
+A separate Android Instrumentation workflow boots an API 35 Google APIs emulator and runs `pnpm example:android-instrumentation`. That task executes `:react-native-image-compression-kit:connectedDebugAndroidTest` and validates the committed `sample.heic` and `sample.heif` fixtures through the API 28+ `ImageDecoder` route, asserting JPEG, PNG, and WebP output success with 16x12 result dimensions and byte-signature checks.
+
+Manual codec validation beyond CI should use a codec-backed Android device or emulator on API 28+ first, because that also exercises the `ImageDecoder` route through the example app. After installing the example app, copy a fixture into the app-private files directory and paste the resulting file URI into the example screen:
 
 ```bash
 pnpm example:android
@@ -157,9 +159,7 @@ adb shell run-as com.imagecompressionkit.example mkdir -p files/rnick-codec
 adb shell run-as com.imagecompressionkit.example sh -c 'cat > files/rnick-codec/sample.heic' < android/src/test/assets/heic-heif/sample.heic
 ```
 
-Then use `file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic` as the source URI and verify JPEG, PNG, and WebP outputs. Repeat with `sample.heif`. API 26-27 should be checked separately for the guarded `BitmapFactory` fallback because emulator/device codec availability can differ from API 28+.
-
-A future automated codec job should use the committed fixtures. It should run as a separate emulator or instrumentation workflow, start with API 28+ HEIC / HEIF sample-to-JPEG assertions, and remain separate from the lightweight JVM CI until runtime stability and execution time are known.
+Then use `file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic` as the source URI and verify JPEG, PNG, and WebP outputs. Repeat with `sample.heif`. API 26-27 should still be checked separately for the guarded `BitmapFactory` fallback because emulator/device codec availability can differ from API 28+.
 
 ## Proposed API
 
@@ -328,7 +328,7 @@ This project is not intended to handle:
 - [x] Example metadata policy selector and result summary.
 - [x] Example output format selector for JPEG, PNG, and WebP.
 - [x] Android HEIC / HEIF input.
-- [ ] Android HEIC / HEIF emulator/instrumentation validation.
+- [x] Android HEIC / HEIF emulator/instrumentation validation.
 - [ ] AVIF support.
 - [ ] Metadata support for non-JPEG formats and iOS.
 - [ ] Cancellation and progress.
@@ -392,14 +392,15 @@ Android Codegen and native build checks can also be run through the example app:
 ```bash
 pnpm example:codegen
 pnpm example:android-unit-test
+pnpm example:android-instrumentation
 pnpm example:build
 ```
 
-These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, unsupported AVIF input boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF capability notes, corrupt supported-format decode failures, PNG/WebP/GIF input, GIF static first-frame decoding, PNG/WebP/GIF input resize modes, PNG/WebP/GIF input target-size `maxBytes`, PNG/WebP/GIF metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm android:doctor` also validates the HEIC/HEIF source and committed sample fixture manifest, byte sizes, and SHA-256 hashes. `pnpm example:android` still requires a connected emulator/device.
+These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, unsupported AVIF input boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF capability notes, corrupt supported-format decode failures, PNG/WebP/GIF input, GIF static first-frame decoding, PNG/WebP/GIF input resize modes, PNG/WebP/GIF input target-size `maxBytes`, PNG/WebP/GIF metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android-instrumentation` requires a connected API 28+ emulator or device and runs the committed HEIC/HEIF sample-to-JPEG/PNG/WebP instrumentation test. `pnpm android:doctor` also validates the HEIC/HEIF source and committed sample fixture manifest, byte sizes, SHA-256 hashes, and instrumentation wiring. `pnpm example:android` still requires a connected emulator/device.
 
 ## Continuous Integration
 
-GitHub Actions runs the repository checks and Android example build on pushes to `master` and pull requests. The workflow is defined in `.github/workflows/ci.yml`.
+GitHub Actions runs the repository checks and Android example build on pushes to `master` and pull requests. The lightweight workflow is defined in `.github/workflows/ci.yml`.
 
 The CI job uses Node.js 24, pnpm 11.7.0, Temurin JDK 21, Android SDK platform 36, Android build tools 36.0.0, and Android NDK 27.1.12297006. It enables pnpm and Gradle caching, then runs:
 
@@ -413,6 +414,8 @@ pnpm example:build
 ```
 
 `pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP/GIF input and JPEG/PNG/WebP output format and byte-signature behavior, and module-level `compressImage` file URI, content URI, unsupported AVIF input rejection, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF capability-note structure, corrupt supported-format decode failure, GIF static first-frame decoding, PNG/WebP/GIF input resize, EXIF orientation, target-size, and metadata no-copy integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, WebP, GIF, HEIC, and HEIF input paths and JPEG, PNG, and WebP output paths.
+
+The separate `.github/workflows/android-instrumentation.yml` workflow boots an API 35 Google APIs emulator and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC and HEIF fixtures decode on the Android `ImageDecoder` path and can be compressed to JPEG, PNG, and WebP. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
 
 ## Development Verification
 
@@ -439,6 +442,7 @@ RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:react-nati
 ```
 
 For the bundled example app, use `pnpm example:codegen`, `pnpm example:android-unit-test`, and `pnpm example:build`.
+Use `pnpm example:android-instrumentation` only when an API 28+ emulator or device is connected.
 
 `pnpm android:codegen` runs `generateCodegenArtifactsFromSchema` in the app Android project. `pnpm android:build` runs `assembleDebug` by default. To use a different Gradle task:
 

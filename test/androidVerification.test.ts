@@ -55,6 +55,9 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts['example:android-unit-test']).toBe(
       'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build'
     );
+    expect(packageJson.scripts['example:android-instrumentation']).toBe(
+      'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:connectedDebugAndroidTest pnpm android:build'
+    );
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
   });
 
@@ -78,18 +81,64 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('Generated fixtures are committed because they are tiny');
     expect(readmeSource).toContain('android/src/test/assets/heic-heif/');
     expect(readmeSource).toContain(
-      'They verify the fixture files and metadata, but they do not prove that a device codec can decode a valid HEIC / HEIF sample'
+      'They verify the fixture files and metadata, but they do not boot an emulator.'
     );
     expect(readmeSource).toContain(
-      'Manual codec validation should use a codec-backed Android device or emulator on API 28+ first'
+      'A separate Android Instrumentation workflow boots an API 35 Google APIs emulator'
+    );
+    expect(readmeSource).toContain('`pnpm example:android-instrumentation`');
+    expect(readmeSource).toContain(
+      'committed `sample.heic` and `sample.heif` fixtures through the API 28+ `ImageDecoder` route'
+    );
+    expect(readmeSource).toContain(
+      'Manual codec validation beyond CI should use a codec-backed Android device or emulator'
     );
     expect(readmeSource).toContain(
       'file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic'
     );
     expect(readmeSource).toContain(
-      'A future automated codec job should use the committed fixtures.'
+      'API 26-27 should still be checked separately for the guarded `BitmapFactory` fallback'
     );
     expect(verificationSource).toContain('checkHeicHeifCodecSampleStrategy');
+  });
+
+  it('wires HEIC and HEIF emulator instrumentation validation', () => {
+    const gradleSource = readProjectFile('android/build.gradle');
+    const instrumentationSource = readProjectFile(
+      'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt'
+    );
+    const workflowSource = readProjectFile('.github/workflows/android-instrumentation.yml');
+    const verificationSource = readProjectFile('scripts/android-verification.mjs');
+
+    expect(gradleSource).toContain(
+      'testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"'
+    );
+    expect(gradleSource).toContain('androidTest.assets.srcDirs += ["src/test/assets"]');
+    expect(gradleSource).toContain(
+      'androidTestImplementation "androidx.test.ext:junit:1.2.1"'
+    );
+    expect(instrumentationSource).toContain(
+      'compressesCommittedHeicAndHeifSamplesToJpegPngAndWebp'
+    );
+    expect(instrumentationSource).toContain(
+      'Build.VERSION.SDK_INT >= Build.VERSION_CODES.P'
+    );
+    expect(instrumentationSource).toContain('heic-heif/sample.heic');
+    expect(instrumentationSource).toContain('heic-heif/sample.heif');
+    expect(instrumentationSource).toContain('ImageCompressionKitModule(');
+    expect(instrumentationSource).toContain('JavaOnlyMap.of');
+    expect(instrumentationSource).toContain('OutputCase("jpeg", ::assertJpegSignature)');
+    expect(instrumentationSource).toContain('OutputCase("png", ::assertPngSignature)');
+    expect(instrumentationSource).toContain('OutputCase("webp", ::assertWebpSignature)');
+    expect(instrumentationSource).toContain(
+      'assertBitmapDimensions(outputFile, width = 16, height = 12)'
+    );
+    expect(workflowSource).toContain('name: Android Instrumentation');
+    expect(workflowSource).toContain('reactivecircus/android-emulator-runner@v2');
+    expect(workflowSource).toContain('api-level: 35');
+    expect(workflowSource).toContain('target: google_apis');
+    expect(workflowSource).toContain('script: pnpm example:android-instrumentation');
+    expect(verificationSource).toContain('checkHeicHeifInstrumentationValidation');
   });
 
   it('defines the HEIC and HEIF source fixture manifest and committed samples', () => {

@@ -29,6 +29,7 @@ android {
 
   defaultConfig {
     minSdkVersion safeExtGet("minSdkVersion", 23)
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
   }
 
   testOptions {
@@ -41,6 +42,7 @@ android {
       "src/main/java",
       "build/generated/source/codegen/java"
     ]
+    androidTest.assets.srcDirs += ["src/test/assets"]
   }
 }
 
@@ -54,4 +56,8 @@ dependencies {
   implementation "androidx.exifinterface:exifinterface:1.4.2"
   testImplementation "junit:junit:4.13.2"
   testImplementation "org.robolectric:robolectric:4.16.1"
+  androidTestImplementation "junit:junit:4.13.2"
+  androidTestImplementation "androidx.test:core:1.6.1"
+  androidTestImplementation "androidx.test:runner:1.6.2"
+  androidTestImplementation "androidx.test.ext:junit:1.2.1"
 }

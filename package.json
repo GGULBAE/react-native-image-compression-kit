@@ -27,6 +27,7 @@
     "example:android": "pnpm --filter image-compression-kit-example android",
     "example:build": "RNICK_ANDROID_APP_DIR=example/android pnpm android:build",
     "example:codegen": "RNICK_ANDROID_APP_DIR=example/android pnpm android:codegen",
+    "example:android-instrumentation": "RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:connectedDebugAndroidTest pnpm android:build",
     "example:android-unit-test": "RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build",
     "example:start": "pnpm --filter image-compression-kit-example start",
     "example:typecheck": "pnpm --filter image-compression-kit-example typecheck",
