@@ -220,6 +220,10 @@ function checkAndroidNativeModule() {
     'BitmapFactory.decodeStream',
     'openInputStream(inputSource.uri)',
     'OpenableColumns.SIZE',
+    'InputFormat.fromMimeType(bounds.mimeType)',
+    'mimeType = "image/jpeg"',
+    'mimeType = "image/png"',
+    'mimeType = "image/webp"',
     'readExifOrientation(inputSource)',
     'applyExifOrientation(bitmap, exifOrientation)',
     'ExifInterface.TAG_ORIENTATION',
@@ -237,10 +241,10 @@ function checkAndroidNativeModule() {
     'Bitmap.CompressFormat.PNG',
     'Bitmap.CompressFormat.WEBP_LOSSY',
     'Bitmap.CompressFormat.WEBP',
-    'pngOutputNotes',
-    'webpOutputNotes',
+    'pngFormatNotes',
+    'webpFormatNotes',
     'output = outputFormat != null',
-    'supports JPEG input with JPEG, PNG, and WebP output only',
+    'supports JPEG, PNG, and WebP input with JPEG, PNG, and WebP output only',
     'readMetadataPolicy(options)',
     'MetadataPolicy.PRESERVE',
     'createCopiedExifMetadata',
@@ -251,7 +255,7 @@ function checkAndroidNativeModule() {
     'ExifInterface.TAG_GPS_LATITUDE',
     'ExifInterface.TAG_CAMERA_OWNER_NAME',
     'ExifInterface.TAG_MAKER_NOTE',
-    'Metadata safe copies privacy-filtered source EXIF attributes.',
+    'Metadata safe copies privacy-filtered JPEG source EXIF attributes.',
     'outputExif.setAttribute(',
     'ExifInterface.TAG_ORIENTATION',
     'pushString(METADATA_POLICY_SAFE)',
@@ -265,7 +269,7 @@ function checkAndroidNativeModule() {
     'nullMetadataLeavesOutputExifUntouchedForStripPolicy',
     'outputFormatsCreateMatchingResultFormatAndFileExtensions',
     'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile',
-    'capabilitiesExposeJpegInputAndJpegPngWebpOutputsOnly',
+    'capabilitiesExposeJpegPngWebpInputsAndOutputsOnly',
     'pngRejectsMaxBytesButWebpAndJpegAllowIt',
     'outputFormatsMapToAndroidCompressFormatsAndQualityRules',
     'ImageCompressionOutput.encodeBitmap',
@@ -276,6 +280,7 @@ function checkAndroidNativeModule() {
     'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif',
     'compressImageReadsContentUriJpegLikeFileUriAndReportsMetadata',
     'compressImageRejectsUnreadableContentUriAtModuleBoundary',
+    'compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs',
     'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata',
     'compressImageFallsBackWhenMaxBytesIsTooSmallAndReportsConsistentMetadata',
     'module.compressImage(',
@@ -286,6 +291,9 @@ function checkAndroidNativeModule() {
     'ByteArrayInputStream',
     'sourceUri = contentUri.toString()',
     'assertResultMetadataMatchesBytes',
+    'createEncodedImageFile',
+    'SourceFormatCase',
+    'assertNoCopiedExifMetadata',
     'ImageCompressionKitModule.ERR_FILE_ACCESS',
     'ExifInterface.ORIENTATION_ROTATE_90',
     'resizeOptions(',
@@ -316,10 +324,10 @@ function checkAndroidNativeModule() {
 
   return {
     ok: missing.length === 0 && hasUnitTestScript,
-    label: 'Android Kotlin module matches generated spec and Android JPEG-input MVP path',
+    label: 'Android Kotlin module matches generated spec and Android image MVP path',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG decode/orient/resize plus JPEG/PNG/WebP output encode path, metadata tests, output format tests, and module-level compression, content URI, resize, orientation, and target-size tests'
+        ? 'module extends generated spec and contains JPEG/PNG/WebP decode, JPEG orient/metadata, resize, JPEG/PNG/WebP output encode path, and module-level file/content URI tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),

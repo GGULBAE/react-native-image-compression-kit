@@ -280,7 +280,96 @@ class ImageCompressionKitModuleTest {
 
     assertNull(promise.resolvedValue)
     assertEquals(ImageCompressionKitModule.ERR_FILE_ACCESS, promise.rejectionCode)
-    assertEquals("Android JPEG MVP could not read the source image URI.", promise.rejectionMessage)
+    assertEquals("Android MVP could not read the source image URI.", promise.rejectionMessage)
+  }
+
+  @Test
+  fun compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs() {
+    val reactContext = createReactContext()
+    val module = createModule(reactContext)
+    val sourceCases = listOf(
+      SourceFormatCase(
+        format = OutputFormat.PNG,
+        sourceFile = createEncodedImageFile(OutputFormat.PNG, width = 22, height = 14)
+      ),
+      SourceFormatCase(
+        format = OutputFormat.WEBP,
+        sourceFile = createEncodedImageFile(OutputFormat.WEBP, width = 22, height = 14)
+      )
+    )
+    val outputCases = listOf(
+      "jpeg" to ::assertJpegSignature,
+      "png" to ::assertPngSignature,
+      "webp" to ::assertWebpSignature
+    )
+
+    sourceCases.forEach { sourceCase ->
+      val sourceBytes = sourceCase.sourceFile.readBytes()
+      val contentUri = Uri.parse(
+        "content://image-compression-kit/${sourceCase.format.value}-${System.nanoTime()}"
+      )
+
+      registerContentInputStream(reactContext, contentUri, sourceBytes)
+
+      outputCases.forEach { (outputFormat, assertSignature) ->
+        val filePromise = RecordingPromise()
+        val contentPromise = RecordingPromise()
+
+        module.compressImage(
+          compressionOptions(
+            sourceFile = sourceCase.sourceFile,
+            output = JavaOnlyMap.of(
+              "format",
+              outputFormat,
+              "quality",
+              74
+            ),
+            metadata = "preserve"
+          ),
+          filePromise
+        )
+        module.compressImage(
+          compressionOptions(
+            sourceUri = contentUri.toString(),
+            output = JavaOnlyMap.of(
+              "format",
+              outputFormat,
+              "quality",
+              74
+            ),
+            metadata = "preserve"
+          ),
+          contentPromise
+        )
+
+        val fileResult = filePromise.resolvedMap()
+        val fileOutput = fileResult.outputFile()
+        val contentResult = contentPromise.resolvedMap()
+        val contentOutput = contentResult.outputFile()
+
+        assertSignature(fileOutput.readBytes())
+        assertSignature(contentOutput.readBytes())
+        assertEquals(outputFormat, fileResult.getString("format"))
+        assertEquals(outputFormat, contentResult.getString("format"))
+        assertEquals(22, fileResult.getInt("width"))
+        assertEquals(14, fileResult.getInt("height"))
+        assertEquals(fileResult.getInt("width"), contentResult.getInt("width"))
+        assertEquals(fileResult.getInt("height"), contentResult.getInt("height"))
+        assertResultMetadataMatchesFile(fileResult, fileOutput, sourceCase.sourceFile)
+        assertResultMetadataMatchesBytes(contentResult, contentOutput, sourceBytes.size.toLong())
+        assertEquals(fileResult.getDouble("byteSize"), contentResult.getDouble("byteSize"), 0.0001)
+        assertEquals(
+          fileResult.getDouble("compressionRatio"),
+          contentResult.getDouble("compressionRatio"),
+          0.0001
+        )
+
+        if (outputFormat == "jpeg") {
+          assertNoCopiedExifMetadata(fileOutput)
+          assertNoCopiedExifMetadata(contentOutput)
+        }
+      }
+    }
   }
 
   @Test
@@ -496,6 +585,56 @@ class ImageCompressionKitModuleTest {
   }
 
   private fun createPatternJpegFile(width: Int, height: Int): File {
+    val bitmap = createPatternBitmap(width, height)
+    val outputStream = ByteArrayOutputStream()
+
+    assertTrue(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream))
+    bitmap.recycle()
+
+    val bytes = outputStream.toByteArray()
+
+    assertJpegSignature(bytes)
+
+    return temporaryFolder.newFile("pattern-${System.nanoTime()}.jpg").apply {
+      writeBytes(bytes)
+      assertTrue(length() > 0)
+    }
+  }
+
+  private fun createEncodedImageFile(
+    outputFormat: OutputFormat,
+    width: Int,
+    height: Int
+  ): File {
+    val bitmap = createPatternBitmap(width, height)
+    val outputStream = ByteArrayOutputStream()
+
+    assertTrue(
+      bitmap.compress(
+        outputFormat.compressFormat,
+        outputFormat.compressionQuality(90),
+        outputStream
+      )
+    )
+    bitmap.recycle()
+
+    val bytes = outputStream.toByteArray()
+
+    when (outputFormat) {
+      OutputFormat.JPEG -> assertJpegSignature(bytes)
+      OutputFormat.PNG -> assertPngSignature(bytes)
+      OutputFormat.WEBP -> assertWebpSignature(bytes)
+    }
+
+    return temporaryFolder.newFile(
+      "${outputFormat.value}-${System.nanoTime()}.${outputFormat.fileExtension}"
+    ).apply {
+      writeBytes(bytes)
+      assertTrue(length() > 0)
+    }
+  }
+
+  private fun createPatternBitmap(width: Int, height: Int): Bitmap {
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
 
     for (y in 0 until height) {
@@ -509,17 +648,7 @@ class ImageCompressionKitModuleTest {
       }
     }
 
-    val outputStream = ByteArrayOutputStream()
-    assertTrue(bitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream))
-    bitmap.recycle()
-
-    val bytes = outputStream.toByteArray()
-    assertJpegSignature(bytes)
-
-    return temporaryFolder.newFile("pattern-${System.nanoTime()}.jpg").apply {
-      writeBytes(bytes)
-      assertTrue(length() > 0)
-    }
+    return bitmap
   }
 
   private fun calculateAchievableTargetBytes(
@@ -654,6 +783,20 @@ class ImageCompressionKitModuleTest {
     assertEquals(height, outputExif.getAttributeInt(ExifInterface.TAG_PIXEL_Y_DIMENSION, 0))
   }
 
+  private fun assertNoCopiedExifMetadata(outputFile: File) {
+    val outputExif = ExifInterface(outputFile.absolutePath)
+
+    assertNull(outputExif.getAttribute(ExifInterface.TAG_PIXEL_X_DIMENSION))
+    assertNull(outputExif.getAttribute(ExifInterface.TAG_PIXEL_Y_DIMENSION))
+    assertEquals(
+      ExifInterface.ORIENTATION_UNDEFINED,
+      outputExif.getAttributeInt(
+        ExifInterface.TAG_ORIENTATION,
+        ExifInterface.ORIENTATION_UNDEFINED
+      )
+    )
+  }
+
   private data class ResizeCase(
     val resize: JavaOnlyMap,
     val expectedWidth: Int,
@@ -664,6 +807,11 @@ class ImageCompressionKitModuleTest {
     val format: String,
     val outputFormat: OutputFormat,
     val assertSignature: (ByteArray) -> Unit
+  )
+
+  private data class SourceFormatCase(
+    val format: OutputFormat,
+    val sourceFile: File
   )
 
   private class TestReactApplicationContext(context: Context) : ReactApplicationContext(context) {

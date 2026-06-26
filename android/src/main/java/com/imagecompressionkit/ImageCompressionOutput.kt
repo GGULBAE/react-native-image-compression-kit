@@ -86,7 +86,7 @@ internal enum class OutputFormat(
 
 internal object ImageCompressionOutput {
   const val MAX_BYTES_UNSUPPORTED_MESSAGE =
-    "Android JPEG MVP supports output.maxBytes for JPEG and WebP output only."
+    "Android MVP supports output.maxBytes for JPEG and WebP output only."
 
   val FORMAT_VALUES = arrayOf(
     JPEG_FORMAT,
@@ -175,18 +175,18 @@ internal object ImageCompressionOutput {
 
   fun createFormatCapability(format: String): CompressionFormatCapability {
     val outputFormat = OutputFormat.fromValue(format)
-    val isJpegInput = format == JPEG_FORMAT
+    val isSupportedInput = outputFormat != null
 
     return CompressionFormatCapability(
       format = format,
-      input = isJpegInput,
+      input = isSupportedInput,
       output = outputFormat != null,
       supportsAlpha = false,
       supportsAnimation = false,
-      notes = when {
-        isJpegInput -> jpegInputNotes()
-        outputFormat == OutputFormat.PNG -> pngOutputNotes()
-        outputFormat == OutputFormat.WEBP -> webpOutputNotes()
+      notes = when (outputFormat) {
+        OutputFormat.JPEG -> jpegFormatNotes()
+        OutputFormat.PNG -> pngFormatNotes()
+        OutputFormat.WEBP -> webpFormatNotes()
         else -> notImplementedNotes()
       }
     )
@@ -305,35 +305,38 @@ internal object ImageCompressionOutput {
       JpegExifMetadata.write(copiedExifMetadata, outputFile)
     } catch (error: Exception) {
       throw IllegalStateException(
-        "Android JPEG MVP could not write preserved EXIF metadata.",
+        "Android MVP could not write preserved EXIF metadata.",
         error
       )
     }
   }
 
-  private fun jpegInputNotes(): List<String> =
+  private fun jpegFormatNotes(): List<String> =
     listOf(
-      "Android JPEG quality compression MVP supports file:// and content:// sources.",
+      "Android MVP supports JPEG file:// and content:// sources.",
       "EXIF orientation is applied before resize and selected output encoding.",
       "Resize supports contain, cover, and stretch modes with maxWidth and maxHeight.",
       "Target-size compression supports maxBytes by adjusting JPEG quality.",
-      "Metadata preserve copies supported source EXIF attributes into JPEG output.",
-      "Metadata safe copies privacy-filtered source EXIF attributes.",
+      "Metadata preserve copies supported JPEG source EXIF attributes into JPEG output.",
+      "Metadata safe copies privacy-filtered JPEG source EXIF attributes.",
       "Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.",
       "Metadata preserve normalizes output EXIF orientation after pixels are transformed.",
-      "Metadata strip re-encodes JPEG output without preserving source EXIF metadata."
+      "Metadata strip re-encodes JPEG output without preserving source metadata.",
+      "PNG and WebP sources are decoded without copying EXIF metadata."
     )
 
-  private fun pngOutputNotes(): List<String> =
+  private fun pngFormatNotes(): List<String> =
     listOf(
-      "Android can encode decoded JPEG input to PNG output.",
+      "Android MVP supports PNG file:// and content:// sources.",
+      "Android can encode decoded JPEG, PNG, or WebP input to PNG output.",
       "PNG output ignores quality and does not support target-size maxBytes.",
       "Non-JPEG output does not preserve source EXIF metadata."
     )
 
-  private fun webpOutputNotes(): List<String> =
+  private fun webpFormatNotes(): List<String> =
     listOf(
-      "Android can encode decoded JPEG input to WebP output.",
+      "Android MVP supports WebP file:// and content:// sources.",
+      "Android can encode decoded JPEG, PNG, or WebP input to WebP output.",
       "WebP target-size compression supports maxBytes by adjusting WebP quality.",
       "Non-JPEG output does not preserve source EXIF metadata.",
       "Animated WebP input or output is not implemented."

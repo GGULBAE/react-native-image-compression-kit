@@ -19,6 +19,7 @@ describe('example app', () => {
     expect(appSource).toContain("useState<OutputFormat>('jpeg')");
     expect(appSource).toContain('format: outputFormat');
     expect(appSource).toContain('supportsSelectedTargetSize');
+    expect(appSource).toContain('Android Image MVP');
     expect(appSource).toContain('editable={supportsSelectedTargetSize}');
     expect(appSource).toContain('label="selected output"');
     expect(appSource).toContain('label="output formats"');

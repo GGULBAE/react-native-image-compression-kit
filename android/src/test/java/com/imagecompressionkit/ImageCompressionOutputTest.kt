@@ -110,7 +110,7 @@ class ImageCompressionOutputTest {
   }
 
   @Test
-  fun capabilitiesExposeJpegInputAndJpegPngWebpOutputsOnly() {
+  fun capabilitiesExposeJpegPngWebpInputsAndOutputsOnly() {
     val capabilities = ImageCompressionOutput.FORMAT_VALUES.associateWith {
       ImageCompressionOutput.createFormatCapability(it)
     }
@@ -127,13 +127,18 @@ class ImageCompressionOutputTest {
     )
     assertCapability(
       capability = capabilities.getValue("png"),
-      input = false,
+      input = true,
       output = true
     )
     assertCapability(
       capability = capabilities.getValue("webp"),
-      input = false,
+      input = true,
       output = true
+    )
+    assertTrue(
+      capabilities.getValue("jpeg").notes.any {
+        it == "PNG and WebP sources are decoded without copying EXIF metadata."
+      }
     )
     assertCapability(
       capability = capabilities.getValue("heic"),
@@ -157,7 +162,17 @@ class ImageCompressionOutputTest {
     )
     assertTrue(
       capabilities.getValue("png").notes.any {
+        it == "Android MVP supports PNG file:// and content:// sources."
+      }
+    )
+    assertTrue(
+      capabilities.getValue("png").notes.any {
         it == "PNG output ignores quality and does not support target-size maxBytes."
+      }
+    )
+    assertTrue(
+      capabilities.getValue("webp").notes.any {
+        it == "Android MVP supports WebP file:// and content:// sources."
       }
     )
     assertTrue(

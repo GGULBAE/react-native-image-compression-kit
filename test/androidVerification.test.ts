@@ -39,7 +39,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
   });
 
-  it('verifies the Android module supports file and content JPEG sources', () => {
+  it('verifies the Android module supports file and content JPEG, PNG, and WebP sources', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
@@ -49,7 +49,13 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('reactContext.contentResolver.openInputStream');
     expect(moduleSource).toContain('OpenableColumns.SIZE');
     expect(moduleSource).toContain('BitmapFactory.decodeStream');
-    expect(moduleSource).toContain('hasJpegHeader');
+    expect(moduleSource).toContain('InputFormat.fromMimeType(bounds.mimeType)');
+    expect(moduleSource).toContain('mimeType = "image/jpeg"');
+    expect(moduleSource).toContain('mimeType = "image/png"');
+    expect(moduleSource).toContain('mimeType = "image/webp"');
+    expect(moduleSource).toContain(
+      'Android MVP supports JPEG, PNG, and WebP input only.'
+    );
     expect(moduleSource).toContain('createCompressionResult(');
     expect(moduleSource).toContain('outputFormat');
     expect(moduleSource).not.toContain('BitmapFactory.decodeFile');
@@ -137,14 +143,14 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('Bitmap.CompressFormat.WEBP');
     expect(combinedSource).toContain('outputFormat.fileExtension');
     expect(combinedSource).toContain('format = outputFormat.value');
-    expect(combinedSource).toContain('pngOutputNotes');
-    expect(combinedSource).toContain('webpOutputNotes');
+    expect(combinedSource).toContain('pngFormatNotes');
+    expect(combinedSource).toContain('webpFormatNotes');
     expect(combinedSource).toContain('output = outputFormat != null');
     expect(combinedSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
     expect(combinedSource).toContain(
-      'supports JPEG input with JPEG, PNG, and WebP output only'
+      'supports JPEG, PNG, and WebP input with JPEG, PNG, and WebP output only'
     );
-    expect(combinedSource).not.toContain('Android JPEG MVP only implements JPEG output.');
+    expect(combinedSource).not.toContain('PNG and WebP input remain planned.');
   });
 
   it('verifies the Android module handles JPEG metadata policies explicitly', () => {
@@ -177,7 +183,10 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('pushString(METADATA_POLICY_SAFE)');
     expect(combinedSource).toContain('pushString(METADATA_POLICY_STRIP)');
     expect(combinedSource).not.toContain('does not implement metadata preservation yet');
-    expect(combinedSource).toContain('without preserving source EXIF metadata');
+    expect(combinedSource).toContain('without preserving source metadata');
+    expect(combinedSource).toContain(
+      'PNG and WebP sources are decoded without copying EXIF metadata.'
+    );
   });
 
   it('verifies the Android module uses a privacy-filtered safe metadata allowlist', () => {
@@ -223,7 +232,7 @@ describe('Android verification scripts', () => {
     });
 
     expect(combinedSource).toContain(
-      'Metadata safe copies privacy-filtered source EXIF attributes.'
+      'Metadata safe copies privacy-filtered JPEG source EXIF attributes.'
     );
     expect(combinedSource).toContain(
       'Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.'
@@ -268,7 +277,7 @@ describe('Android verification scripts', () => {
       'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile'
     );
     expect(testSource).toContain(
-      'capabilitiesExposeJpegInputAndJpegPngWebpOutputsOnly'
+      'capabilitiesExposeJpegPngWebpInputsAndOutputsOnly'
     );
     expect(testSource).toContain('pngRejectsMaxBytesButWebpAndJpegAllowIt');
     expect(testSource).toContain(
@@ -308,6 +317,9 @@ describe('Android verification scripts', () => {
       'compressImageRejectsUnreadableContentUriAtModuleBoundary'
     );
     expect(testSource).toContain(
+      'compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs'
+    );
+    expect(testSource).toContain(
       'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata'
     );
     expect(testSource).toContain(
@@ -323,6 +335,9 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('ByteArrayInputStream');
     expect(testSource).toContain('sourceUri = contentUri.toString()');
     expect(testSource).toContain('assertResultMetadataMatchesBytes');
+    expect(testSource).toContain('createEncodedImageFile');
+    expect(testSource).toContain('SourceFormatCase');
+    expect(testSource).toContain('assertNoCopiedExifMetadata');
     expect(testSource).toContain('ImageCompressionKitModule.ERR_FILE_ACCESS');
     expect(testSource).toContain('ExifInterface.ORIENTATION_ROTATE_90');
     expect(testSource).toContain('resizeOptions(');

@@ -198,7 +198,7 @@ export default function App(): React.JSX.Element {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Image Compression Kit</Text>
-        <Text style={styles.subtitle}>Android JPEG Input MVP</Text>
+        <Text style={styles.subtitle}>Android Image MVP</Text>
 
         <View style={styles.section}>
           <Text style={styles.label}>Source URI</Text>

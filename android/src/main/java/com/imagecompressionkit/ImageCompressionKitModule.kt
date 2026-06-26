@@ -66,7 +66,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_NOT_IMPLEMENTED,
-          "Android JPEG MVP supports JPEG input with JPEG, PNG, and WebP output only."
+          "Android MVP supports JPEG, PNG, and WebP input with JPEG, PNG, and WebP output only."
         )
         return
       }
@@ -128,28 +128,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_UNSUPPORTED_SOURCE,
-          "Android JPEG MVP supports file:// and content:// image URIs only."
-        )
-        return
-      }
-
-      val hasJpegHeader = try {
-        hasJpegHeader(inputSource)
-      } catch (error: SourceAccessException) {
-        reject(
-          promise,
-          ERR_FILE_ACCESS,
-          error.message ?: "Android JPEG MVP could not read the source image URI.",
-          error
-        )
-        return
-      }
-
-      if (!hasJpegHeader) {
-        reject(
-          promise,
-          ERR_UNSUPPORTED_FORMAT,
-          "Android JPEG MVP supports JPEG input only."
+          "Android MVP supports file:// and content:// image URIs only."
         )
         return
       }
@@ -160,7 +139,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_FILE_ACCESS,
-          error.message ?: "Android JPEG MVP could not read the source image URI.",
+          error.message ?: "Android MVP could not read the source image URI.",
           error
         )
         return
@@ -172,7 +151,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_FILE_ACCESS,
-          error.message ?: "Android JPEG MVP could not read the source image URI.",
+          error.message ?: "Android MVP could not read the source image URI.",
           error
         )
         return
@@ -182,16 +161,17 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_DECODE_FAILED,
-          "Android JPEG MVP could not decode the source image."
+          "Android MVP could not decode the source image."
         )
         return
       }
 
-      if (bounds.mimeType != null && bounds.mimeType != JPEG_MIME_TYPE) {
+      val inputFormat = InputFormat.fromMimeType(bounds.mimeType)
+      if (inputFormat == null) {
         reject(
           promise,
           ERR_UNSUPPORTED_FORMAT,
-          "Android JPEG MVP supports JPEG input only."
+          "Android MVP supports JPEG, PNG, and WebP input only."
         )
         return
       }
@@ -202,7 +182,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_FILE_ACCESS,
-          error.message ?: "Android JPEG MVP could not read the source image URI.",
+          error.message ?: "Android MVP could not read the source image URI.",
           error
         )
         return
@@ -212,12 +192,16 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_DECODE_FAILED,
-          "Android JPEG MVP could not decode the source image."
+          "Android MVP could not decode the source image."
         )
         return
       }
 
-      val exifOrientation = readExifOrientation(inputSource)
+      val exifOrientation = if (inputFormat.supportsJpegExifMetadata) {
+        readExifOrientation(inputSource)
+      } else {
+        ExifInterface.ORIENTATION_NORMAL
+      }
       val orientedBitmap = applyExifOrientation(bitmap, exifOrientation)
       val processedBitmap = resizeBitmap(orientedBitmap, resize)
       val outputDimensions = ImageDimensions(
@@ -231,7 +215,10 @@ class ImageCompressionKitModule(
       val didEncode: Boolean
 
       try {
-        val copiedExifMetadata = if (outputFormat.supportsJpegExifMetadata) {
+        val copiedExifMetadata = if (
+          inputFormat.supportsJpegExifMetadata &&
+          outputFormat.supportsJpegExifMetadata
+        ) {
           createCopiedExifMetadata(
             metadataPolicy,
             inputSource,
@@ -253,7 +240,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_ENCODE_FAILED,
-          error.message ?: "Android JPEG MVP could not copy JPEG metadata.",
+          error.message ?: "Android MVP could not copy JPEG metadata.",
           error
         )
         return
@@ -261,7 +248,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_ENCODE_FAILED,
-          error.message ?: "Android JPEG MVP could not encode the selected output format.",
+          error.message ?: "Android MVP could not encode the selected output format.",
           error
         )
         return
@@ -279,7 +266,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_ENCODE_FAILED,
-          "Android JPEG MVP could not encode the selected output format."
+          "Android MVP could not encode the selected output format."
         )
         return
       }
@@ -296,7 +283,7 @@ class ImageCompressionKitModule(
       reject(
         promise,
         ERR_NATIVE_OPERATION_FAILED,
-        "Android JPEG MVP compression failed.",
+        "Android MVP compression failed.",
         error
       )
     }
@@ -507,7 +494,7 @@ class ImageCompressionKitModule(
         val inputFile = inputSource.file
 
         if (!inputFile.exists() || !inputFile.isFile || !inputFile.canRead()) {
-          throw SourceAccessException("Android JPEG MVP could not read the source file.")
+          throw SourceAccessException("Android MVP could not read the source file.")
         }
 
         inputFile.length()
@@ -575,24 +562,6 @@ class ImageCompressionKitModule(
       totalBytes
     }
 
-  private fun hasJpegHeader(inputSource: ImageInputSource): Boolean =
-    openInputStream(inputSource).use { inputStream ->
-      val header = ByteArray(JPEG_HEADER_SIZE)
-      var bytesRead = 0
-
-      while (bytesRead < header.size) {
-        val nextRead = inputStream.read(header, bytesRead, header.size - bytesRead)
-        if (nextRead == -1) {
-          return@use false
-        }
-        bytesRead += nextRead
-      }
-
-      header[0] == JPEG_SOI_FIRST_BYTE &&
-        header[1] == JPEG_SOI_SECOND_BYTE &&
-        header[2] == JPEG_MARKER_PREFIX_BYTE
-    }
-
   private fun decodeBounds(inputSource: ImageInputSource): ImageBounds? {
     val options = BitmapFactory.Options().apply {
       inJustDecodeBounds = true
@@ -652,7 +621,7 @@ class ImageCompressionKitModule(
       }
     } catch (error: Exception) {
       throw MetadataCopyException(
-        "Android JPEG MVP could not read source EXIF metadata.",
+        "Android MVP could not read source EXIF metadata.",
         error
       )
     }
@@ -807,14 +776,14 @@ class ImageCompressionKitModule(
         is ImageInputSource.ContentSource ->
           reactContext.contentResolver.openInputStream(inputSource.uri)
             ?: throw SourceAccessException(
-              "Android JPEG MVP could not open the source content URI."
+              "Android MVP could not open the source content URI."
             )
       }
     } catch (error: SourceAccessException) {
       throw error
     } catch (error: Exception) {
       throw SourceAccessException(
-        "Android JPEG MVP could not read the source image URI.",
+        "Android MVP could not read the source image URI.",
         error
       )
     }
@@ -884,6 +853,29 @@ class ImageCompressionKitModule(
     STRIP
   }
 
+  private enum class InputFormat(
+    val mimeType: String,
+    val supportsJpegExifMetadata: Boolean
+  ) {
+    JPEG(
+      mimeType = "image/jpeg",
+      supportsJpegExifMetadata = true
+    ),
+    PNG(
+      mimeType = "image/png",
+      supportsJpegExifMetadata = false
+    ),
+    WEBP(
+      mimeType = "image/webp",
+      supportsJpegExifMetadata = false
+    );
+
+    companion object {
+      fun fromMimeType(mimeType: String?): InputFormat? =
+        values().firstOrNull { it.mimeType == mimeType }
+    }
+  }
+
   private sealed class ImageInputSource {
     abstract val uri: Uri
 
@@ -923,24 +915,16 @@ class ImageCompressionKitModule(
     const val ERR_ENCODE_FAILED = "ERR_ENCODE_FAILED"
     const val ERR_NATIVE_OPERATION_FAILED = "ERR_NATIVE_OPERATION_FAILED"
 
-    private const val JPEG_FORMAT = "jpeg"
-    private const val JPEG_MIME_TYPE = "image/jpeg"
     private const val DEFAULT_QUALITY = 80
     private const val MIN_QUALITY = 0
     private const val MAX_QUALITY = 100
     private const val MAX_SAFE_INTEGER = 9007199254740991.0
     private const val STREAM_BUFFER_SIZE = 8 * 1024
-    private const val JPEG_HEADER_SIZE = 3
     private const val RESIZE_MODE_CONTAIN = "contain"
     private const val RESIZE_MODE_COVER = "cover"
     private const val RESIZE_MODE_STRETCH = "stretch"
     private const val METADATA_POLICY_PRESERVE = "preserve"
     private const val METADATA_POLICY_SAFE = "safe"
     private const val METADATA_POLICY_STRIP = "strip"
-
-    private val JPEG_SOI_FIRST_BYTE = 0xFF.toByte()
-    private val JPEG_SOI_SECOND_BYTE = 0xD8.toByte()
-    private val JPEG_MARKER_PREFIX_BYTE = 0xFF.toByte()
-
   }
 }
