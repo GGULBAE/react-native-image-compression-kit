@@ -39,7 +39,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
   });
 
-  it('verifies the Android module supports file and content JPEG, PNG, and WebP sources', () => {
+  it('verifies the Android module supports file and content JPEG, PNG, WebP, and GIF sources', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
@@ -62,7 +62,7 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('mimeType = "image/avif"');
     expect(moduleSource).toContain('mimeType = "image/gif"');
     expect(moduleSource).toContain(
-      'Android MVP supports JPEG, PNG, and WebP input only.'
+      'Android MVP supports JPEG, PNG, WebP, and GIF input only.'
     );
     expect(moduleSource).toContain('createCompressionResult(');
     expect(moduleSource).toContain('outputFormat');
@@ -153,10 +153,12 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('format = outputFormat.value');
     expect(combinedSource).toContain('pngFormatNotes');
     expect(combinedSource).toContain('webpFormatNotes');
+    expect(combinedSource).toContain('gifFormatNotes');
+    expect(combinedSource).toContain('SUPPORTED_INPUT_FORMATS');
     expect(combinedSource).toContain('output = outputFormat != null');
     expect(combinedSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
     expect(combinedSource).toContain(
-      'supports JPEG, PNG, and WebP input with JPEG, PNG, and WebP output only'
+      'supports JPEG, PNG, WebP, and GIF input with JPEG, PNG, and WebP output only'
     );
     expect(combinedSource).not.toContain('PNG and WebP input remain planned.');
   });
@@ -193,8 +195,13 @@ describe('Android verification scripts', () => {
     expect(combinedSource).not.toContain('does not implement metadata preservation yet');
     expect(combinedSource).toContain('without preserving source metadata');
     expect(combinedSource).toContain(
-      'PNG and WebP sources are decoded without copying EXIF metadata.'
+      'PNG, WebP, and GIF sources are decoded without copying EXIF metadata.'
     );
+    expect(combinedSource).toContain(
+      'Android MVP decodes GIF file:// and content:// sources as a static first frame.'
+    );
+    expect(combinedSource).toContain('Animated GIF preservation is not implemented.');
+    expect(combinedSource).toContain('GIF output is not implemented.');
   });
 
   it('verifies the Android module uses a privacy-filtered safe metadata allowlist', () => {
@@ -285,7 +292,7 @@ describe('Android verification scripts', () => {
       'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile'
     );
     expect(testSource).toContain(
-      'capabilitiesExposeJpegPngWebpInputsAndOutputsOnly'
+      'capabilitiesExposeJpegPngWebpGifInputsAndJpegPngWebpOutputsOnly'
     );
     expect(testSource).toContain('pngRejectsMaxBytesButWebpAndJpegAllowIt');
     expect(testSource).toContain(
@@ -334,6 +341,14 @@ describe('Android verification scripts', () => {
       'compressImageSeparatesUnsupportedFormatFromDecodeFailure'
     );
     expect(testSource).toContain(
+      'compressImageAcceptsGifFileAndContentSourcesAsStaticFirstFrameWithAllImplementedOutputs'
+    );
+    expect(testSource).toContain('compressImageResizesGifSourceAcrossModes');
+    expect(testSource).toContain(
+      'compressImageHonorsJpegAndWebpMaxBytesForGifSource'
+    );
+    expect(testSource).toContain('compressImageIgnoresMetadataPoliciesForGifSource');
+    expect(testSource).toContain(
       'compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs'
     );
     expect(testSource).toContain(
@@ -364,6 +379,10 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('UnsupportedSourceCase');
     expect(testSource).toContain('TestMimeTypeContentProvider');
     expect(testSource).toContain('ShadowContentResolver.registerProviderInternal');
+    expect(testSource).toContain('createAnimatedGifFile');
+    expect(testSource).toContain('SAMPLE_ANIMATED_GIF_BASE64');
+    expect(testSource).toContain('Base64.getMimeDecoder().decode');
+    expect(testSource).toContain('assertTopLeftPixelNear');
     expect(testSource).toContain('createEncodedImageFile');
     expect(testSource).toContain('SourceFormatCase');
     expect(testSource).toContain('assertNoCopiedExifMetadata');
@@ -393,6 +412,7 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('assertJpegSignature');
     expect(testSource).toContain('assertPngSignature');
     expect(testSource).toContain('assertWebpSignature');
+    expect(testSource).toContain('assertGifSignature');
     expect(testSource).toContain('"RIFF"');
     expect(testSource).toContain('"WEBP"');
   });

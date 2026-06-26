@@ -39,7 +39,9 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.util.Base64
 import java.util.function.Supplier
+import kotlin.math.abs
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -293,8 +295,7 @@ class ImageCompressionKitModuleTest {
     val unsupportedCases = listOf(
       UnsupportedSourceCase(fileExtension = "heic", mimeType = "image/heic"),
       UnsupportedSourceCase(fileExtension = "heif", mimeType = "image/heif"),
-      UnsupportedSourceCase(fileExtension = "avif", mimeType = "image/avif"),
-      UnsupportedSourceCase(fileExtension = "gif", mimeType = "image/gif")
+      UnsupportedSourceCase(fileExtension = "avif", mimeType = "image/avif")
     )
 
     unsupportedCases.forEach { unsupportedCase ->
@@ -325,8 +326,7 @@ class ImageCompressionKitModuleTest {
     val unsupportedCases = listOf(
       UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/heic"),
       UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/heif"),
-      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/avif"),
-      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/gif")
+      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/avif")
     )
 
     unsupportedCases.forEach { unsupportedCase ->
@@ -361,6 +361,7 @@ class ImageCompressionKitModuleTest {
     val module = createModule()
     val unsupportedPromise = RecordingPromise()
     val decodeFailurePromise = RecordingPromise()
+    val gifDecodeFailurePromise = RecordingPromise()
 
     module.compressImage(
       compressionOptions(
@@ -386,9 +387,244 @@ class ImageCompressionKitModuleTest {
       ),
       decodeFailurePromise
     )
+    module.compressImage(
+      compressionOptions(
+        sourceFile = createInvalidImageFile("gif"),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      gifDecodeFailurePromise
+    )
 
     assertUnsupportedFormatRejected(unsupportedPromise)
     assertDecodeFailedRejected(decodeFailurePromise)
+    assertDecodeFailedRejected(gifDecodeFailurePromise)
+  }
+
+  @Test
+  fun compressImageAcceptsGifFileAndContentSourcesAsStaticFirstFrameWithAllImplementedOutputs() {
+    val reactContext = createReactContext()
+    val module = createModule(reactContext)
+    val sourceFile = createAnimatedGifFile()
+    val sourceBytes = sourceFile.readBytes()
+    val contentUri = Uri.parse("content://image-compression-kit/gif-${System.nanoTime()}.gif")
+    val outputCases = listOf(
+      "jpeg" to ::assertJpegSignature,
+      "png" to ::assertPngSignature,
+      "webp" to ::assertWebpSignature
+    )
+
+    registerContentInputStream(reactContext, contentUri, sourceBytes)
+    registerContentMimeType(contentUri, "image/gif")
+
+    outputCases.forEach { (outputFormat, assertSignature) ->
+      val filePromise = RecordingPromise()
+      val contentPromise = RecordingPromise()
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of(
+            "format",
+            outputFormat,
+            "quality",
+            74
+          ),
+          metadata = "preserve"
+        ),
+        filePromise
+      )
+      module.compressImage(
+        compressionOptions(
+          sourceUri = contentUri.toString(),
+          output = JavaOnlyMap.of(
+            "format",
+            outputFormat,
+            "quality",
+            74
+          ),
+          metadata = "preserve"
+        ),
+        contentPromise
+      )
+
+      val fileResult = filePromise.resolvedMap()
+      val fileOutput = fileResult.outputFile()
+      val contentResult = contentPromise.resolvedMap()
+      val contentOutput = contentResult.outputFile()
+
+      assertSignature(fileOutput.readBytes())
+      assertSignature(contentOutput.readBytes())
+      assertEquals(outputFormat, fileResult.getString("format"))
+      assertEquals(outputFormat, contentResult.getString("format"))
+      assertEquals(40, fileResult.getInt("width"))
+      assertEquals(20, fileResult.getInt("height"))
+      assertEquals(fileResult.getInt("width"), contentResult.getInt("width"))
+      assertEquals(fileResult.getInt("height"), contentResult.getInt("height"))
+      assertResultMetadataMatchesFile(fileResult, fileOutput, sourceFile)
+      assertResultMetadataMatchesBytes(contentResult, contentOutput, sourceBytes.size.toLong())
+
+      if (outputFormat == "png") {
+        assertTopLeftPixelNear(fileOutput, expectedColor = 0xff336699.toInt())
+        assertTopLeftPixelNear(contentOutput, expectedColor = 0xff336699.toInt())
+      }
+      if (outputFormat == "jpeg") {
+        assertNoCopiedExifMetadata(fileOutput)
+        assertNoCopiedExifMetadata(contentOutput)
+      }
+    }
+  }
+
+  @Test
+  fun compressImageResizesGifSourceAcrossModes() {
+    val module = createModule()
+    val sourceFile = createAnimatedGifFile()
+    val resizeCases = listOf(
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "contain",
+          maxWidth = 16,
+          maxHeight = 10
+        ),
+        expectedWidth = 16,
+        expectedHeight = 8
+      ),
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "cover",
+          maxWidth = 16,
+          maxHeight = 10
+        ),
+        expectedWidth = 16,
+        expectedHeight = 10
+      ),
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "stretch",
+          maxWidth = 16
+        ),
+        expectedWidth = 16,
+        expectedHeight = 20
+      )
+    )
+
+    resizeCases.forEach { resizeCase ->
+      val promise = RecordingPromise()
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of(
+            "format",
+            "png",
+            "quality",
+            82
+          ),
+          resize = resizeCase.resize
+        ),
+        promise
+      )
+
+      val result = promise.resolvedMap()
+      val outputFile = result.outputFile()
+
+      assertPngSignature(outputFile.readBytes())
+      assertEquals("png", result.getString("format"))
+      assertEquals(resizeCase.expectedWidth, result.getInt("width"))
+      assertEquals(resizeCase.expectedHeight, result.getInt("height"))
+      assertResultMetadataMatchesFile(result, outputFile, sourceFile)
+    }
+  }
+
+  @Test
+  fun compressImageHonorsJpegAndWebpMaxBytesForGifSource() {
+    val module = createModule()
+    val sourceFile = createAnimatedGifFile()
+    val outputCases = listOf(
+      TargetSizeCase(
+        format = "jpeg",
+        outputFormat = OutputFormat.JPEG,
+        assertSignature = ::assertJpegSignature
+      ),
+      TargetSizeCase(
+        format = "webp",
+        outputFormat = OutputFormat.WEBP,
+        assertSignature = ::assertWebpSignature
+      )
+    )
+
+    outputCases.forEach { outputCase ->
+      val maxBytes = calculateAchievableTargetBytes(sourceFile, outputCase.outputFormat)
+      val promise = RecordingPromise()
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of(
+            "format",
+            outputCase.format,
+            "quality",
+            90,
+            "maxBytes",
+            maxBytes
+          ),
+          metadata = "preserve"
+        ),
+        promise
+      )
+
+      val result = promise.resolvedMap()
+      val outputFile = result.outputFile()
+
+      outputCase.assertSignature(outputFile.readBytes())
+      assertTrue(outputFile.length() <= maxBytes)
+      assertEquals(outputCase.format, result.getString("format"))
+      assertEquals(40, result.getInt("width"))
+      assertEquals(20, result.getInt("height"))
+      assertResultMetadataMatchesFile(result, outputFile, sourceFile)
+      if (outputCase.outputFormat == OutputFormat.JPEG) {
+        assertNoCopiedExifMetadata(outputFile)
+      }
+    }
+  }
+
+  @Test
+  fun compressImageIgnoresMetadataPoliciesForGifSource() {
+    val module = createModule()
+    val sourceFile = createAnimatedGifFile()
+    val metadataPolicies = listOf("preserve", "safe", "strip")
+
+    metadataPolicies.forEach { metadataPolicy ->
+      val promise = RecordingPromise()
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of(
+            "format",
+            "jpeg",
+            "quality",
+            80
+          ),
+          metadata = metadataPolicy
+        ),
+        promise
+      )
+
+      val result = promise.resolvedMap()
+      val outputFile = result.outputFile()
+
+      assertJpegSignature(outputFile.readBytes())
+      assertEquals("jpeg", result.getString("format"))
+      assertEquals(40, result.getInt("width"))
+      assertEquals(20, result.getInt("height"))
+      assertResultMetadataMatchesFile(result, outputFile, sourceFile)
+      assertNoCopiedExifMetadata(outputFile)
+    }
   }
 
   @Test
@@ -911,6 +1147,17 @@ class ImageCompressionKitModuleTest {
   private fun invalidImageBytes(): ByteArray =
     "not an image".toByteArray(StandardCharsets.US_ASCII)
 
+  private fun createAnimatedGifFile(): File {
+    val bytes = Base64.getMimeDecoder().decode(SAMPLE_ANIMATED_GIF_BASE64)
+
+    assertGifSignature(bytes)
+
+    return temporaryFolder.newFile("animated-${System.nanoTime()}.gif").apply {
+      writeBytes(bytes)
+      assertTrue(length() > 0)
+    }
+  }
+
   private fun createEncodedImageFile(
     outputFormat: OutputFormat,
     width: Int,
@@ -1075,6 +1322,41 @@ class ImageCompressionKitModuleTest {
     assertEquals("WEBP", String(bytes, 8, 4, StandardCharsets.US_ASCII))
   }
 
+  private fun assertGifSignature(bytes: ByteArray) {
+    assertTrue(bytes.size >= 6)
+    assertEquals("GIF89a", String(bytes, 0, 6, StandardCharsets.US_ASCII))
+  }
+
+  private fun assertTopLeftPixelNear(
+    outputFile: File,
+    expectedColor: Int
+  ) {
+    val bitmap = BitmapFactory.decodeFile(outputFile.absolutePath)
+
+    assertNotNull(bitmap)
+
+    try {
+      val actualColor = bitmap.getPixel(0, 0)
+
+      assertColorChannelNear(expectedColor, actualColor, shift = 16)
+      assertColorChannelNear(expectedColor, actualColor, shift = 8)
+      assertColorChannelNear(expectedColor, actualColor, shift = 0)
+    } finally {
+      bitmap.recycle()
+    }
+  }
+
+  private fun assertColorChannelNear(
+    expectedColor: Int,
+    actualColor: Int,
+    shift: Int
+  ) {
+    val expectedChannel = (expectedColor shr shift) and 0xff
+    val actualChannel = (actualColor shr shift) and 0xff
+
+    assertTrue(abs(expectedChannel - actualChannel) <= 2)
+  }
+
   private fun assertNormalizedOutputExif(
     outputFile: File,
     width: Int,
@@ -1110,7 +1392,7 @@ class ImageCompressionKitModuleTest {
   private fun assertUnsupportedFormatRejected(promise: RecordingPromise) {
     assertNull(promise.resolvedValue)
     assertEquals(ImageCompressionKitModule.ERR_UNSUPPORTED_FORMAT, promise.rejectionCode)
-    assertEquals("Android MVP supports JPEG, PNG, and WebP input only.", promise.rejectionMessage)
+    assertEquals("Android MVP supports JPEG, PNG, WebP, and GIF input only.", promise.rejectionMessage)
   }
 
   private fun assertDecodeFailedRejected(promise: RecordingPromise) {
@@ -1185,6 +1467,12 @@ class ImageCompressionKitModuleTest {
         mimeTypes[uri] = mimeType
       }
     }
+  }
+
+  companion object {
+    private val SAMPLE_ANIMATED_GIF_BASE64 = """
+      R0lGODlhKAAUAPAAADNmmf///yH5BAAKAAAALAAAAAAoABQAAAL/BAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQIECAAAECBAgQxCBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABAgUAIfkEAAoAAAAsAAAAACgAFAAAAv9MmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDBhwoQJEyZMmDDEYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmTJgwYcKECRMmBQA7
+    """.trimIndent()
   }
 
   private class TestReactApplicationContext(context: Context) : ReactApplicationContext(context) {

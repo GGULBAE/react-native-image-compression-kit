@@ -175,7 +175,7 @@ internal object ImageCompressionOutput {
 
   fun createFormatCapability(format: String): CompressionFormatCapability {
     val outputFormat = OutputFormat.fromValue(format)
-    val isSupportedInput = outputFormat != null
+    val isSupportedInput = format in SUPPORTED_INPUT_FORMATS
 
     return CompressionFormatCapability(
       format = format,
@@ -187,6 +187,7 @@ internal object ImageCompressionOutput {
         OutputFormat.JPEG -> jpegFormatNotes()
         OutputFormat.PNG -> pngFormatNotes()
         OutputFormat.WEBP -> webpFormatNotes()
+        null -> if (format == GIF_FORMAT) gifFormatNotes() else notImplementedNotes()
         else -> notImplementedNotes()
       }
     )
@@ -322,13 +323,13 @@ internal object ImageCompressionOutput {
       "Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.",
       "Metadata preserve normalizes output EXIF orientation after pixels are transformed.",
       "Metadata strip re-encodes JPEG output without preserving source metadata.",
-      "PNG and WebP sources are decoded without copying EXIF metadata."
+      "PNG, WebP, and GIF sources are decoded without copying EXIF metadata."
     )
 
   private fun pngFormatNotes(): List<String> =
     listOf(
       "Android MVP supports PNG file:// and content:// sources.",
-      "Android can encode decoded JPEG, PNG, or WebP input to PNG output.",
+      "Android can encode decoded JPEG, PNG, WebP, or GIF input to PNG output.",
       "PNG output ignores quality and does not support target-size maxBytes.",
       "Non-JPEG output does not preserve source EXIF metadata."
     )
@@ -336,15 +337,31 @@ internal object ImageCompressionOutput {
   private fun webpFormatNotes(): List<String> =
     listOf(
       "Android MVP supports WebP file:// and content:// sources.",
-      "Android can encode decoded JPEG, PNG, or WebP input to WebP output.",
+      "Android can encode decoded JPEG, PNG, WebP, or GIF input to WebP output.",
       "WebP target-size compression supports maxBytes by adjusting WebP quality.",
       "Non-JPEG output does not preserve source EXIF metadata.",
       "Animated WebP input or output is not implemented."
     )
 
+  private fun gifFormatNotes(): List<String> =
+    listOf(
+      "Android MVP decodes GIF file:// and content:// sources as a static first frame.",
+      "Animated GIF preservation is not implemented.",
+      "GIF output is not implemented.",
+      "GIF sources are decoded without copying EXIF metadata."
+    )
+
+  private val SUPPORTED_INPUT_FORMATS = setOf(
+    JPEG_FORMAT,
+    PNG_FORMAT,
+    WEBP_FORMAT,
+    GIF_FORMAT
+  )
+
   private const val JPEG_FORMAT = "jpeg"
   private const val PNG_FORMAT = "png"
   private const val WEBP_FORMAT = "webp"
+  private const val GIF_FORMAT = "gif"
   private const val OUTPUT_DIRECTORY_NAME = "image-compression-kit"
   private const val MIN_QUALITY = 0
 }

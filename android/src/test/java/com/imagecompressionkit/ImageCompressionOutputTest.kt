@@ -110,7 +110,7 @@ class ImageCompressionOutputTest {
   }
 
   @Test
-  fun capabilitiesExposeJpegPngWebpInputsAndOutputsOnly() {
+  fun capabilitiesExposeJpegPngWebpGifInputsAndJpegPngWebpOutputsOnly() {
     val capabilities = ImageCompressionOutput.FORMAT_VALUES.associateWith {
       ImageCompressionOutput.createFormatCapability(it)
     }
@@ -137,7 +137,7 @@ class ImageCompressionOutputTest {
     )
     assertTrue(
       capabilities.getValue("jpeg").notes.any {
-        it == "PNG and WebP sources are decoded without copying EXIF metadata."
+        it == "PNG, WebP, and GIF sources are decoded without copying EXIF metadata."
       }
     )
     assertCapability(
@@ -157,8 +157,23 @@ class ImageCompressionOutputTest {
     )
     assertCapability(
       capability = capabilities.getValue("gif"),
-      input = false,
+      input = true,
       output = false
+    )
+    assertTrue(
+      capabilities.getValue("gif").notes.any {
+        it == "Android MVP decodes GIF file:// and content:// sources as a static first frame."
+      }
+    )
+    assertTrue(
+      capabilities.getValue("gif").notes.any {
+        it == "Animated GIF preservation is not implemented."
+      }
+    )
+    assertTrue(
+      capabilities.getValue("gif").notes.any {
+        it == "GIF output is not implemented."
+      }
     )
     assertTrue(
       capabilities.getValue("png").notes.any {

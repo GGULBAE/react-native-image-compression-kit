@@ -195,7 +195,7 @@ describe('compressImage', () => {
     const nativeModule = mockNativeModule({
       compressImage: vi.fn().mockRejectedValue({
         code: 'ERR_UNSUPPORTED_FORMAT',
-        message: 'Android MVP supports JPEG, PNG, and WebP input only.',
+        message: 'Android MVP supports JPEG, PNG, WebP, and GIF input only.',
       }),
     });
     setNativeModuleForTesting(nativeModule);
@@ -207,7 +207,7 @@ describe('compressImage', () => {
       })
     ).rejects.toMatchObject({
       code: 'ERR_UNSUPPORTED_FORMAT',
-      message: 'Android MVP supports JPEG, PNG, and WebP input only.',
+      message: 'Android MVP supports JPEG, PNG, WebP, and GIF input only.',
     });
   });
 });

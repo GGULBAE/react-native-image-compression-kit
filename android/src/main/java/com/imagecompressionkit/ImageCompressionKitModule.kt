@@ -66,7 +66,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_NOT_IMPLEMENTED,
-          "Android MVP supports JPEG, PNG, and WebP input with JPEG, PNG, and WebP output only."
+          "Android MVP supports JPEG, PNG, WebP, and GIF input with JPEG, PNG, and WebP output only."
         )
         return
       }
@@ -150,7 +150,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_UNSUPPORTED_FORMAT,
-          "Android MVP supports JPEG, PNG, and WebP input only."
+          "Android MVP supports JPEG, PNG, WebP, and GIF input only."
         )
         return
       }
@@ -181,7 +181,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_UNSUPPORTED_FORMAT,
-          "Android MVP supports JPEG, PNG, and WebP input only."
+          "Android MVP supports JPEG, PNG, WebP, and GIF input only."
         )
         return
       }
@@ -907,6 +907,10 @@ class ImageCompressionKitModule(
     WEBP(
       mimeType = "image/webp",
       supportsJpegExifMetadata = false
+    ),
+    GIF(
+      mimeType = "image/gif",
+      supportsJpegExifMetadata = false
     );
 
     companion object {
@@ -934,11 +938,6 @@ class ImageCompressionKitModule(
       mimeType = "image/avif",
       mimeTypeAliases = emptySet(),
       fileExtensions = setOf("avif")
-    ),
-    GIF(
-      mimeType = "image/gif",
-      mimeTypeAliases = emptySet(),
-      fileExtensions = setOf("gif")
     );
 
     companion object {
