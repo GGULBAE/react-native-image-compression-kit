@@ -293,8 +293,6 @@ class ImageCompressionKitModuleTest {
   fun compressImageRejectsUnsupportedImageFileExtensionsAtModuleBoundary() {
     val module = createModule()
     val unsupportedCases = listOf(
-      UnsupportedSourceCase(fileExtension = "heic", mimeType = "image/heic"),
-      UnsupportedSourceCase(fileExtension = "heif", mimeType = "image/heif"),
       UnsupportedSourceCase(fileExtension = "avif", mimeType = "image/avif")
     )
 
@@ -324,8 +322,6 @@ class ImageCompressionKitModuleTest {
     val reactContext = createReactContext()
     val module = createModule(reactContext)
     val unsupportedCases = listOf(
-      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/heic"),
-      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/heif"),
       UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/avif")
     )
 
@@ -357,11 +353,86 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
+  fun compressImageTreatsHeicAndHeifSourcesAsDecodeCandidatesOnSupportedSdk() {
+    val reactContext = createReactContext()
+    val module = createModule(reactContext)
+    val cases = listOf(
+      UnsupportedSourceCase(fileExtension = "heic", mimeType = "image/heic"),
+      UnsupportedSourceCase(fileExtension = "heif", mimeType = "image/heif")
+    )
+
+    cases.forEach { sourceCase ->
+      val filePromise = RecordingPromise()
+      val contentPromise = RecordingPromise()
+      val contentUri = Uri.parse(
+        "content://image-compression-kit-heif-${System.nanoTime()}/source.${sourceCase.fileExtension}"
+      )
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = createInvalidImageFile(sourceCase.fileExtension),
+          output = JavaOnlyMap.of(
+            "format",
+            "jpeg",
+            "quality",
+            72
+          )
+        ),
+        filePromise
+      )
+      registerContentInputStream(reactContext, contentUri, invalidImageBytes())
+      registerContentMimeType(contentUri, sourceCase.mimeType)
+      module.compressImage(
+        compressionOptions(
+          sourceUri = contentUri.toString(),
+          output = JavaOnlyMap.of(
+            "format",
+            "jpeg",
+            "quality",
+            72
+          )
+        ),
+        contentPromise
+      )
+
+      assertDecodeFailedRejected(filePromise)
+      assertDecodeFailedRejected(contentPromise)
+    }
+  }
+
+  @Test
+  @Config(sdk = [25])
+  fun compressImageRejectsHeicAndHeifBeforeAndroidO() {
+    val module = createModule()
+    val cases = listOf("heic", "heif")
+
+    cases.forEach { fileExtension ->
+      val promise = RecordingPromise()
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = createInvalidImageFile(fileExtension),
+          output = JavaOnlyMap.of(
+            "format",
+            "jpeg",
+            "quality",
+            72
+          )
+        ),
+        promise
+      )
+
+      assertHeicHeifSdkUnsupportedRejected(promise)
+    }
+  }
+
+  @Test
   fun compressImageSeparatesUnsupportedFormatFromDecodeFailure() {
     val module = createModule()
     val unsupportedPromise = RecordingPromise()
     val decodeFailurePromise = RecordingPromise()
     val gifDecodeFailurePromise = RecordingPromise()
+    val heicDecodeFailurePromise = RecordingPromise()
 
     module.compressImage(
       compressionOptions(
@@ -399,10 +470,23 @@ class ImageCompressionKitModuleTest {
       ),
       gifDecodeFailurePromise
     )
+    module.compressImage(
+      compressionOptions(
+        sourceFile = createInvalidImageFile("heic"),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      heicDecodeFailurePromise
+    )
 
     assertUnsupportedFormatRejected(unsupportedPromise)
     assertDecodeFailedRejected(decodeFailurePromise)
     assertDecodeFailedRejected(gifDecodeFailurePromise)
+    assertDecodeFailedRejected(heicDecodeFailurePromise)
   }
 
   @Test
@@ -1394,7 +1478,19 @@ class ImageCompressionKitModuleTest {
   private fun assertUnsupportedFormatRejected(promise: RecordingPromise) {
     assertNull(promise.resolvedValue)
     assertEquals(ImageCompressionKitModule.ERR_UNSUPPORTED_FORMAT, promise.rejectionCode)
-    assertEquals("Android MVP supports JPEG, PNG, WebP, and GIF input only.", promise.rejectionMessage)
+    assertEquals(
+      "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input only.",
+      promise.rejectionMessage
+    )
+  }
+
+  private fun assertHeicHeifSdkUnsupportedRejected(promise: RecordingPromise) {
+    assertNull(promise.resolvedValue)
+    assertEquals(ImageCompressionKitModule.ERR_UNSUPPORTED_FORMAT, promise.rejectionCode)
+    assertEquals(
+      "Android HEIC/HEIF input requires Android 8.0+ platform decoder support.",
+      promise.rejectionMessage
+    )
   }
 
   private fun assertDecodeFailedRejected(promise: RecordingPromise) {

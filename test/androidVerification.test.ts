@@ -39,7 +39,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
   });
 
-  it('verifies the Android module supports file and content JPEG, PNG, WebP, and GIF sources', () => {
+  it('verifies the Android module supports file and content JPEG, PNG, WebP, GIF, HEIC, and HEIF sources', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
@@ -49,11 +49,20 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('reactContext.contentResolver.openInputStream');
     expect(moduleSource).toContain('OpenableColumns.SIZE');
     expect(moduleSource).toContain('BitmapFactory.decodeStream');
-    expect(moduleSource).toContain('InputFormat.fromMimeType(bounds.mimeType)');
+    expect(moduleSource).toContain('ImageDecoder.decodeBitmap');
+    expect(moduleSource).toContain('createImageDecoderSource(inputSource)');
+    expect(moduleSource).toContain('decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE');
+    expect(moduleSource).toContain('InputFormat.fromMimeType(bounds?.mimeType) ?: inputFormatHint');
+    expect(moduleSource).toContain('readInputFormatHint(inputSource)');
     expect(moduleSource).toContain('readUnsupportedInputMimeTypeHint(inputSource)');
     expect(moduleSource).toContain('queryContentMimeType(inputSource.uri)');
     expect(moduleSource).toContain('UnsupportedInputFormat.fromMimeType(contentMimeType)');
     expect(moduleSource).toContain('UnsupportedInputFormat.fromFileExtension(fileExtension)');
+    expect(moduleSource).toContain('InputFormat.fromFileExtension(fileExtension)');
+    expect(moduleSource).toContain('Build.VERSION.SDK_INT >= Build.VERSION_CODES.P');
+    expect(moduleSource).toContain('Build.VERSION.SDK_INT >= Build.VERSION_CODES.O');
+    expect(moduleSource).toContain('decodeHeicHeifBitmapWithImageDecoder');
+    expect(moduleSource).toContain('decodeBitmapFactory(inputSource)');
     expect(moduleSource).toContain('mimeType = "image/jpeg"');
     expect(moduleSource).toContain('mimeType = "image/png"');
     expect(moduleSource).toContain('mimeType = "image/webp"');
@@ -62,7 +71,7 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('mimeType = "image/avif"');
     expect(moduleSource).toContain('mimeType = "image/gif"');
     expect(moduleSource).toContain(
-      'Android MVP supports JPEG, PNG, WebP, and GIF input only.'
+      'Android MVP supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input only.'
     );
     expect(moduleSource).toContain('createCompressionResult(');
     expect(moduleSource).toContain('outputFormat');
@@ -161,7 +170,7 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('output = outputFormat != null');
     expect(combinedSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
     expect(combinedSource).toContain(
-      'supports JPEG, PNG, WebP, and GIF input with JPEG, PNG, and WebP output only'
+      'supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input with JPEG, PNG, and WebP output only'
     );
     expect(combinedSource).not.toContain('PNG and WebP input remain planned.');
   });
@@ -198,18 +207,21 @@ describe('Android verification scripts', () => {
     expect(combinedSource).not.toContain('does not implement metadata preservation yet');
     expect(combinedSource).toContain('without preserving source metadata');
     expect(combinedSource).toContain(
-      'PNG, WebP, and GIF sources are decoded without copying EXIF metadata.'
+      'PNG, WebP, GIF, HEIC, and HEIF sources are decoded without copying EXIF metadata.'
     );
     expect(combinedSource).toContain('heicHeifFormatNotes("HEIC")');
     expect(combinedSource).toContain('heicHeifFormatNotes("HEIF")');
     expect(combinedSource).toContain(
-      '$formatLabel input is currently disabled and rejected with ERR_UNSUPPORTED_FORMAT.'
+      '$formatLabel input is supported on Android 8.0+ when device HEIF decode codecs are present.'
     );
     expect(combinedSource).toContain(
-      'Android platform HEIF decode support is available on Android 8.0+ when device codecs are present.'
+      'Android API 28+ uses ImageDecoder for $formatLabel input.'
     );
     expect(combinedSource).toContain(
-      'Planned Android route: use ImageDecoder on API 28+ and evaluate BitmapFactory fallback on API 26-27.'
+      'Android API 26-27 attempts a guarded BitmapFactory HEIF decode fallback.'
+    );
+    expect(combinedSource).toContain(
+      '$formatLabel inputs are decoded without copying EXIF metadata.'
     );
     expect(combinedSource).toContain('$formatLabel output is not implemented.');
     expect(combinedSource).toContain(
@@ -307,7 +319,7 @@ describe('Android verification scripts', () => {
       'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile'
     );
     expect(testSource).toContain(
-      'capabilitiesExposeJpegPngWebpGifInputsAndJpegPngWebpOutputsOnly'
+      'capabilitiesExposeJpegPngWebpGifHeicHeifInputsAndJpegPngWebpOutputsOnly'
     );
     expect(testSource).toContain('assertHeicHeifCapabilityNotes');
     expect(testSource).toContain('pngRejectsMaxBytesButWebpAndJpegAllowIt');
@@ -353,6 +365,10 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain(
       'compressImageRejectsUnsupportedContentMimeTypesAtModuleBoundary'
     );
+    expect(testSource).toContain(
+      'compressImageTreatsHeicAndHeifSourcesAsDecodeCandidatesOnSupportedSdk'
+    );
+    expect(testSource).toContain('compressImageRejectsHeicAndHeifBeforeAndroidO');
     expect(testSource).toContain(
       'compressImageSeparatesUnsupportedFormatFromDecodeFailure'
     );

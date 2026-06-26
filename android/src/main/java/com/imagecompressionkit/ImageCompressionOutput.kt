@@ -202,9 +202,10 @@ internal object ImageCompressionOutput {
 
   private fun heicHeifFormatNotes(formatLabel: String): List<String> =
     listOf(
-      "$formatLabel input is currently disabled and rejected with ERR_UNSUPPORTED_FORMAT.",
-      "Android platform HEIF decode support is available on Android 8.0+ when device codecs are present.",
-      "Planned Android route: use ImageDecoder on API 28+ and evaluate BitmapFactory fallback on API 26-27.",
+      "$formatLabel input is supported on Android 8.0+ when device HEIF decode codecs are present.",
+      "Android API 28+ uses ImageDecoder for $formatLabel input.",
+      "Android API 26-27 attempts a guarded BitmapFactory HEIF decode fallback.",
+      "$formatLabel inputs are decoded without copying EXIF metadata.",
       "$formatLabel output is not implemented."
     )
 
@@ -335,7 +336,7 @@ internal object ImageCompressionOutput {
       "Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.",
       "Metadata preserve normalizes output EXIF orientation after pixels are transformed.",
       "Metadata strip re-encodes JPEG output without preserving source metadata.",
-      "PNG, WebP, and GIF sources are decoded without copying EXIF metadata."
+      "PNG, WebP, GIF, HEIC, and HEIF sources are decoded without copying EXIF metadata."
     )
 
   private fun pngFormatNotes(): List<String> =
@@ -367,6 +368,8 @@ internal object ImageCompressionOutput {
     JPEG_FORMAT,
     PNG_FORMAT,
     WEBP_FORMAT,
+    HEIC_FORMAT,
+    HEIF_FORMAT,
     GIF_FORMAT
   )
 

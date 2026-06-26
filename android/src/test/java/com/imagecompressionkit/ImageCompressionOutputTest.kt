@@ -110,7 +110,7 @@ class ImageCompressionOutputTest {
   }
 
   @Test
-  fun capabilitiesExposeJpegPngWebpGifInputsAndJpegPngWebpOutputsOnly() {
+  fun capabilitiesExposeJpegPngWebpGifHeicHeifInputsAndJpegPngWebpOutputsOnly() {
     val capabilities = ImageCompressionOutput.FORMAT_VALUES.associateWith {
       ImageCompressionOutput.createFormatCapability(it)
     }
@@ -137,12 +137,12 @@ class ImageCompressionOutputTest {
     )
     assertTrue(
       capabilities.getValue("jpeg").notes.any {
-        it == "PNG, WebP, and GIF sources are decoded without copying EXIF metadata."
+        it == "PNG, WebP, GIF, HEIC, and HEIF sources are decoded without copying EXIF metadata."
       }
     )
     assertCapability(
       capability = capabilities.getValue("heic"),
-      input = false,
+      input = true,
       output = false
     )
     assertHeicHeifCapabilityNotes(
@@ -151,7 +151,7 @@ class ImageCompressionOutputTest {
     )
     assertCapability(
       capability = capabilities.getValue("heif"),
-      input = false,
+      input = true,
       output = false
     )
     assertHeicHeifCapabilityNotes(
@@ -262,17 +262,22 @@ class ImageCompressionOutputTest {
   ) {
     assertTrue(
       capability.notes.any {
-        it == "$formatLabel input is currently disabled and rejected with ERR_UNSUPPORTED_FORMAT."
+        it == "$formatLabel input is supported on Android 8.0+ when device HEIF decode codecs are present."
       }
     )
     assertTrue(
       capability.notes.any {
-        it == "Android platform HEIF decode support is available on Android 8.0+ when device codecs are present."
+        it == "Android API 28+ uses ImageDecoder for $formatLabel input."
       }
     )
     assertTrue(
       capability.notes.any {
-        it == "Planned Android route: use ImageDecoder on API 28+ and evaluate BitmapFactory fallback on API 26-27."
+        it == "Android API 26-27 attempts a guarded BitmapFactory HEIF decode fallback."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "$formatLabel inputs are decoded without copying EXIF metadata."
       }
     )
     assertTrue(
