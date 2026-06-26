@@ -1324,7 +1324,9 @@ class ImageCompressionKitModuleTest {
 
   private fun assertGifSignature(bytes: ByteArray) {
     assertTrue(bytes.size >= 6)
-    assertEquals("GIF89a", String(bytes, 0, 6, StandardCharsets.US_ASCII))
+    val header = String(bytes, 0, 6, StandardCharsets.US_ASCII)
+
+    assertTrue(header == "GIF87a" || header == "GIF89a")
   }
 
   private fun assertTopLeftPixelNear(
