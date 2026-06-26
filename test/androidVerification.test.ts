@@ -341,7 +341,7 @@ describe('Android verification scripts', () => {
       'compressImageSeparatesUnsupportedFormatFromDecodeFailure'
     );
     expect(testSource).toContain(
-      'compressImageAcceptsGifFileAndContentSourcesAsStaticFirstFrameWithAllImplementedOutputs'
+      'compressImageAcceptsGifFileAndContentSourcesAsStaticFrameWithAllImplementedOutputs'
     );
     expect(testSource).toContain('compressImageResizesGifSourceAcrossModes');
     expect(testSource).toContain(
@@ -379,8 +379,8 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('UnsupportedSourceCase');
     expect(testSource).toContain('TestMimeTypeContentProvider');
     expect(testSource).toContain('ShadowContentResolver.registerProviderInternal');
-    expect(testSource).toContain('createAnimatedGifFile');
-    expect(testSource).toContain('SAMPLE_ANIMATED_GIF_BASE64');
+    expect(testSource).toContain('createSampleGifFile');
+    expect(testSource).toContain('SAMPLE_GIF_BASE64');
     expect(testSource).toContain('Base64.getMimeDecoder().decode');
     expect(testSource).toContain('assertTopLeftPixelNear');
     expect(testSource).toContain('createEncodedImageFile');

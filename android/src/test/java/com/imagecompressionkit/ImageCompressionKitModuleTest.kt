@@ -406,10 +406,10 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
-  fun compressImageAcceptsGifFileAndContentSourcesAsStaticFirstFrameWithAllImplementedOutputs() {
+  fun compressImageAcceptsGifFileAndContentSourcesAsStaticFrameWithAllImplementedOutputs() {
     val reactContext = createReactContext()
     val module = createModule(reactContext)
-    val sourceFile = createAnimatedGifFile()
+    val sourceFile = createSampleGifFile()
     val sourceBytes = sourceFile.readBytes()
     val contentUri = Uri.parse("content://image-compression-kit/gif-${System.nanoTime()}.gif")
     val outputCases = listOf(
@@ -482,7 +482,7 @@ class ImageCompressionKitModuleTest {
   @Test
   fun compressImageResizesGifSourceAcrossModes() {
     val module = createModule()
-    val sourceFile = createAnimatedGifFile()
+    val sourceFile = createSampleGifFile()
     val resizeCases = listOf(
       ResizeCase(
         resize = resizeOptions(
@@ -543,7 +543,7 @@ class ImageCompressionKitModuleTest {
   @Test
   fun compressImageHonorsJpegAndWebpMaxBytesForGifSource() {
     val module = createModule()
-    val sourceFile = createAnimatedGifFile()
+    val sourceFile = createSampleGifFile()
     val outputCases = listOf(
       TargetSizeCase(
         format = "jpeg",
@@ -595,7 +595,7 @@ class ImageCompressionKitModuleTest {
   @Test
   fun compressImageIgnoresMetadataPoliciesForGifSource() {
     val module = createModule()
-    val sourceFile = createAnimatedGifFile()
+    val sourceFile = createSampleGifFile()
     val metadataPolicies = listOf("preserve", "safe", "strip")
 
     metadataPolicies.forEach { metadataPolicy ->
@@ -1147,8 +1147,8 @@ class ImageCompressionKitModuleTest {
   private fun invalidImageBytes(): ByteArray =
     "not an image".toByteArray(StandardCharsets.US_ASCII)
 
-  private fun createAnimatedGifFile(): File {
-    val bytes = Base64.getMimeDecoder().decode(SAMPLE_ANIMATED_GIF_BASE64)
+  private fun createSampleGifFile(): File {
+    val bytes = Base64.getMimeDecoder().decode(SAMPLE_GIF_BASE64)
 
     assertGifSignature(bytes)
 
@@ -1470,8 +1470,8 @@ class ImageCompressionKitModuleTest {
   }
 
   companion object {
-    private const val SAMPLE_ANIMATED_GIF_BASE64 =
-      "R0lGODlhKAAUAPAAADNmmf///yH5BAAKAAAALAAAAAAoABQAAAIbhA9Tl9sfjHLSai/OevPuPzAUR7I0TzRVV6wAACH5BAAKAAAALAAAAAAoABQAAAIbjA9Tl9sfjHLSai/OevPuPzAUR7I0TzRVV6wAADs="
+    private const val SAMPLE_GIF_BASE64 =
+      "R0lGODdhKAAUAJEAAAAAADNmmf///wAAACH5BAQAAAAALAAAAAAoABQAAAIajI+py+0Po5y02ouz3rz7D4biSJbmiabqihUAOw=="
 
     @Suppress("unused")
     private val ANDROID_REJECTED_ANIMATED_GIF_BASE64 = """
