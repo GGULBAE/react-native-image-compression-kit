@@ -137,13 +137,15 @@ Runtime capabilities currently expose HEIC / HEIF with `input=true` and `output=
 
 ## HEIC / HEIF Codec Sample Validation Strategy
 
-This repository does not currently commit binary HEIC / HEIF samples. The fixture path is:
+This repository does not currently commit binary HEIC / HEIF samples. It does commit the tiny source PNG and manifest used to generate them. The fixture path is:
 
-- Create a repo-owned tiny RGB source image, such as a 16x12 PNG pattern with no user-photo content.
-- Generate two still-image fixtures from that source: `sample.heic` and `sample.heif`.
-- Prefer `heif-enc` from libheif for reproducible local generation, for example `heif-enc --quality 80 source.png -o sample.heic` and `heif-enc --quality 80 source.png -o sample.heif`.
-- Commit generated fixtures only after recording the source image, generation command, byte size, dimensions, and license/provenance in a fixture manifest.
-- Store committed fixtures under `android/src/test/assets/heic-heif/` so future Android runtime tests can load them without depending on network access.
+- Use `android/src/test/assets/heic-heif/source.png`, a repo-owned 16x12 RGB PNG pattern with no user-photo content.
+- Track source provenance and future generated output metadata in `android/src/test/assets/heic-heif/manifest.json`.
+- Validate the source image, manifest fields, and generated fixture plan with `pnpm fixtures:heic-heif:check`.
+- Generate local draft fixtures with `pnpm fixtures:heic-heif`, which uses `heif-enc --quality 80 source.png -o generated/sample.heic` and `heif-enc --quality 80 source.png -o generated/sample.heif`.
+- Keep generated HEIC / HEIF files under `android/src/test/assets/heic-heif/generated/`, which is ignored by Git for now.
+- Commit generated fixtures only after recording their byte size, SHA-256, dimensions, generation command, and license/provenance in the manifest.
+- Store future committed fixtures under `android/src/test/assets/heic-heif/` so Android runtime tests can load them without depending on network access.
 
 Current automated coverage is intentionally narrower than real codec validation. `pnpm verify`, `pnpm example:android-unit-test`, and GitHub Actions validate the HEIC / HEIF MIME and extension routing, SDK gates, capability notes, and corrupt-candidate rejection boundaries. They do not prove that a device codec can decode a valid HEIC / HEIF sample because the current CI job does not boot an emulator or run instrumentation tests.
 
@@ -313,6 +315,7 @@ This project is not intended to handle:
 - [x] Android AVIF unsupported input and HEIC/HEIF SDK-gated decode-boundary JVM tests.
 - [x] Android HEIC/HEIF input decode path and capability notes.
 - [x] Android HEIC/HEIF real codec sample validation strategy.
+- [x] Android HEIC/HEIF source fixture manifest and `heif-enc` generation script draft.
 - [x] Android GIF static first-frame input support.
 - [x] Android GIF input module-level JVM tests for file/content URI, resize, target-size, and metadata no-copy behavior.
 - [x] Android JPEG-input resize/orientation module-level JVM tests.
@@ -392,7 +395,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, unsupported AVIF input boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF capability notes, corrupt supported-format decode failures, PNG/WebP/GIF input, GIF static first-frame decoding, PNG/WebP/GIF input resize modes, PNG/WebP/GIF input target-size `maxBytes`, PNG/WebP/GIF metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android` still requires a connected emulator/device.
+These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, unsupported AVIF input boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF capability notes, corrupt supported-format decode failures, PNG/WebP/GIF input, GIF static first-frame decoding, PNG/WebP/GIF input resize modes, PNG/WebP/GIF input target-size `maxBytes`, PNG/WebP/GIF metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm android:doctor` also validates the HEIC/HEIF source fixture manifest and generation-script contract. `pnpm example:android` still requires a connected emulator/device.
 
 ## Continuous Integration
 

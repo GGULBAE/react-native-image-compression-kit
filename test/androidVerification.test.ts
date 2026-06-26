@@ -2,12 +2,31 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import packageJson from '../package.json';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 function readProjectFile(filePath: string): string {
   return readFileSync(path.join(ROOT, filePath), 'utf8');
+}
+
+function readProjectBinary(filePath: string): Buffer {
+  return readFileSync(path.join(ROOT, filePath));
+}
+
+function sha256(bytes: Buffer): string {
+  return createHash('sha256').update(bytes).digest('hex');
+}
+
+function readPngDimensions(bytes: Buffer): { width: number; height: number } {
+  expect(bytes.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+  expect(bytes.subarray(12, 16).toString('ascii')).toBe('IHDR');
+
+  return {
+    width: bytes.readUInt32BE(16),
+    height: bytes.readUInt32BE(20),
+  };
 }
 
 function extractKotlinArray(source: string, arrayName: string): string {
@@ -47,11 +66,16 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       'This repository does not currently commit binary HEIC / HEIF samples.'
     );
-    expect(readmeSource).toContain('Create a repo-owned tiny RGB source image');
     expect(readmeSource).toContain(
-      'Generate two still-image fixtures from that source: `sample.heic` and `sample.heif`.'
+      'It does commit the tiny source PNG and manifest used to generate them.'
     );
-    expect(readmeSource).toContain('heif-enc --quality 80 source.png -o sample.heic');
+    expect(readmeSource).toContain('Use `android/src/test/assets/heic-heif/source.png`');
+    expect(readmeSource).toContain('`android/src/test/assets/heic-heif/manifest.json`');
+    expect(readmeSource).toContain('`pnpm fixtures:heic-heif:check`');
+    expect(readmeSource).toContain('`pnpm fixtures:heic-heif`');
+    expect(readmeSource).toContain(
+      'heif-enc --quality 80 source.png -o generated/sample.heic'
+    );
     expect(readmeSource).toContain('android/src/test/assets/heic-heif/');
     expect(readmeSource).toContain(
       'They do not prove that a device codec can decode a valid HEIC / HEIF sample'
@@ -66,6 +90,66 @@ describe('Android verification scripts', () => {
       'A future automated codec job should be added only after fixtures are committed.'
     );
     expect(verificationSource).toContain('checkHeicHeifCodecSampleStrategy');
+  });
+
+  it('defines the HEIC and HEIF source fixture manifest and generator draft', () => {
+    const manifest = JSON.parse(
+      readProjectFile('android/src/test/assets/heic-heif/manifest.json')
+    );
+    const sourceBytes = readProjectBinary(manifest.source.path);
+    const sourceDimensions = readPngDimensions(sourceBytes);
+    const generatorSource = readProjectFile('scripts/generate-heic-heif-fixtures.mjs');
+    const gitignoreSource = readProjectFile('.gitignore');
+
+    expect(packageJson.scripts['fixtures:heic-heif']).toBe(
+      'node scripts/generate-heic-heif-fixtures.mjs'
+    );
+    expect(packageJson.scripts['fixtures:heic-heif:check']).toBe(
+      'node scripts/generate-heic-heif-fixtures.mjs --check'
+    );
+    expect(manifest.schemaVersion).toBe(1);
+    expect(manifest.source).toMatchObject({
+      path: 'android/src/test/assets/heic-heif/source.png',
+      format: 'png',
+      byteSize: sourceBytes.length,
+      sha256: sha256(sourceBytes),
+      dimensions: sourceDimensions,
+    });
+    expect(manifest.source.provenance).toMatchObject({
+      owner: 'react-native-image-compression-kit',
+      license: 'MIT',
+    });
+    expect(manifest.generatedFixtures.map((fixture: { format: string }) => fixture.format)).toEqual([
+      'heic',
+      'heif',
+    ]);
+    manifest.generatedFixtures.forEach(
+      (fixture: {
+        format: string;
+        sourcePath: string;
+        targetPath: string;
+        futureCommitPath: string;
+        generationCommand: string;
+        byteSize: null;
+        sha256: null;
+      }) => {
+        expect(fixture.sourcePath).toBe(manifest.source.path);
+        expect(fixture.targetPath).toContain('/generated/sample.');
+        expect(fixture.futureCommitPath).toContain(`/sample.${fixture.format}`);
+        expect(fixture.generationCommand).toContain(
+          `heif-enc --quality 80 source.png -o generated/sample.${fixture.format}`
+        );
+        expect(fixture.byteSize).toBeNull();
+        expect(fixture.sha256).toBeNull();
+      }
+    );
+    expect(generatorSource).toContain('heif-enc');
+    expect(generatorSource).toContain('CHECK_ONLY');
+    expect(generatorSource).toContain('readPngDimensions');
+    expect(generatorSource).toContain(
+      'byteSize and sha256 must stay null until binary fixtures are committed'
+    );
+    expect(gitignoreSource).toContain('android/src/test/assets/heic-heif/generated/');
   });
 
   it('verifies the Android module supports file and content JPEG, PNG, WebP, GIF, HEIC, and HEIF sources', () => {

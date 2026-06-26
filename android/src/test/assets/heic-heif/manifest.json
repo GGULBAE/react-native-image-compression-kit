@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "description": "Tiny repo-owned HEIC/HEIF fixture source and generation plan for Android codec validation.",
+  "source": {
+    "path": "android/src/test/assets/heic-heif/source.png",
+    "format": "png",
+    "dimensions": {
+      "width": 16,
+      "height": 12
+    },
+    "byteSize": 656,
+    "sha256": "8ed5eb6353017474d82ec38008aaa8265838d61a287e38845e380bf314136574",
+    "provenance": {
+      "owner": "react-native-image-compression-kit",
+      "license": "MIT",
+      "description": "Deterministic RGB pattern generated for codec testing; contains no user-photo content."
+    }
+  },
+  "generatedFixtures": [
+    {
+      "format": "heic",
+      "targetPath": "android/src/test/assets/heic-heif/generated/sample.heic",
+      "futureCommitPath": "android/src/test/assets/heic-heif/sample.heic",
+      "generationCommand": "heif-enc --quality 80 source.png -o generated/sample.heic",
+      "quality": 80,
+      "dimensions": {
+        "width": 16,
+        "height": 12
+      },
+      "sourcePath": "android/src/test/assets/heic-heif/source.png",
+      "byteSize": null,
+      "sha256": null,
+      "provenance": {
+        "generator": "libheif heif-enc",
+        "source": "repo-owned source.png",
+        "status": "generated fixture is intentionally not committed yet"
+      }
+    },
+    {
+      "format": "heif",
+      "targetPath": "android/src/test/assets/heic-heif/generated/sample.heif",
+      "futureCommitPath": "android/src/test/assets/heic-heif/sample.heif",
+      "generationCommand": "heif-enc --quality 80 source.png -o generated/sample.heif",
+      "quality": 80,
+      "dimensions": {
+        "width": 16,
+        "height": 12
+      },
+      "sourcePath": "android/src/test/assets/heic-heif/source.png",
+      "byteSize": null,
+      "sha256": null,
+      "provenance": {
+        "generator": "libheif heif-enc",
+        "source": "repo-owned source.png",
+        "status": "generated fixture is intentionally not committed yet"
+      }
+    }
+  ],
+  "validation": {
+    "checkCommand": "pnpm fixtures:heic-heif:check",
+    "generationCommand": "pnpm fixtures:heic-heif",
+    "runtimeStatus": "manual device/emulator validation until HEIC/HEIF binaries and instrumentation tests are added"
+  }
+}

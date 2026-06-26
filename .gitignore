@@ -95,3 +95,6 @@ DerivedData/
 *.apk
 *.aab
 *.xcarchive
+
+# Generated codec fixtures
+android/src/test/assets/heic-heif/generated/
