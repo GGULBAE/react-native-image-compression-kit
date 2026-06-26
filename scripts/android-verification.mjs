@@ -23,6 +23,8 @@ const REQUIRED_FILES = [
   'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
   'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
   'android/src/test/assets/heic-heif/source.png',
+  'android/src/test/assets/heic-heif/sample.heic',
+  'android/src/test/assets/heic-heif/sample.heif',
   'android/src/test/assets/heic-heif/manifest.json',
   'scripts/generate-heic-heif-fixtures.mjs',
 ];
@@ -54,7 +56,7 @@ function runDoctor() {
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
     checkHeicHeifCodecSampleStrategy(),
-    checkHeicHeifFixtureDraft(),
+    checkHeicHeifFixtures(),
   ];
 
   const envReport = collectEnvironmentReport();
@@ -402,18 +404,20 @@ function checkHeicHeifCodecSampleStrategy() {
   const contents = readText('README.md');
   const expectedSnippets = [
     '## HEIC / HEIF Codec Sample Validation Strategy',
-    'This repository does not currently commit binary HEIC / HEIF samples.',
-    'It does commit the tiny source PNG and manifest used to generate them.',
+    'This repository now commits tiny HEIC / HEIF samples generated from the repo-owned PNG source.',
     'Use `android/src/test/assets/heic-heif/source.png`',
+    'Track source and generated output metadata',
     '`android/src/test/assets/heic-heif/manifest.json`',
+    'committed sample files',
     '`pnpm fixtures:heic-heif:check`',
     '`pnpm fixtures:heic-heif`',
-    'heif-enc --quality 80 source.png -o generated/sample.heic',
+    'heif-enc --quality 80 source.png -o sample.heic',
+    'Generated fixtures are committed because they are tiny',
     'android/src/test/assets/heic-heif/',
-    'They do not prove that a device codec can decode a valid HEIC / HEIF sample',
+    'They verify the fixture files and metadata, but they do not prove that a device codec can decode a valid HEIC / HEIF sample',
     'Manual codec validation should use a codec-backed Android device or emulator on API 28+ first',
     'file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic',
-    'A future automated codec job should be added only after fixtures are committed.',
+    'A future automated codec job should use the committed fixtures.',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
 
@@ -427,7 +431,7 @@ function checkHeicHeifCodecSampleStrategy() {
   };
 }
 
-function checkHeicHeifFixtureDraft() {
+function checkHeicHeifFixtures() {
   const manifest = readJson('android/src/test/assets/heic-heif/manifest.json');
   const packageJson = readJson('package.json');
   const scriptContents = readText('scripts/generate-heic-heif-fixtures.mjs');
@@ -438,8 +442,37 @@ function checkHeicHeifFixtureDraft() {
   const sourceHash = sourceBytes ? sha256(sourceBytes) : null;
   const generatedFixtures = manifest.generatedFixtures ?? [];
   const expectedFormats = generatedFixtures.map((fixture) => fixture.format).sort().join(',');
+  const fixtureChecks = generatedFixtures.map((fixture) => {
+    const expectedFileName = `sample.${fixture.format}`;
+    const expectedTargetPath = `android/src/test/assets/heic-heif/${expectedFileName}`;
+    const targetPath = typeof fixture.targetPath === 'string' ? fixture.targetPath : '';
+    const targetExists = targetPath.length > 0 && existsSync(path.join(ROOT, targetPath));
+    const targetBytes = targetExists ? readBinary(targetPath) : null;
+    const targetSha256 = targetBytes ? sha256(targetBytes) : null;
+
+    return [
+      fixture.sourcePath === sourcePath,
+      targetPath === expectedTargetPath,
+      typeof fixture.byteSize === 'number',
+      fixture.byteSize === targetBytes?.length,
+      typeof fixture.sha256 === 'string',
+      fixture.sha256 === targetSha256,
+      fixture.dimensions?.width === sourceDimensions?.width,
+      fixture.dimensions?.height === sourceDimensions?.height,
+      fixture.provenance?.generator === 'libheif heif-enc',
+      fixture.provenance?.generatorVersion === '1.23.0',
+      fixture.provenance?.source === 'repo-owned source.png',
+      fixture.provenance?.license === 'MIT',
+      fixture.provenance?.status === 'committed fixture generated from repo-owned source',
+      typeof fixture.generationCommand === 'string' &&
+        fixture.generationCommand.includes(
+          `heif-enc --quality 80 source.png -o ${expectedFileName}`
+        ),
+    ].every(Boolean);
+  });
   const checks = [
     manifest.schemaVersion === 1,
+    manifest.description?.includes('committed samples'),
     source?.format === 'png',
     sourcePath === 'android/src/test/assets/heic-heif/source.png',
     source?.byteSize === sourceBytes?.length,
@@ -449,12 +482,8 @@ function checkHeicHeifFixtureDraft() {
     source?.provenance?.owner === 'react-native-image-compression-kit',
     typeof source?.provenance?.license === 'string',
     expectedFormats === 'heic,heif',
-    generatedFixtures.every((fixture) => fixture.sourcePath === sourcePath),
-    generatedFixtures.every((fixture) => fixture.byteSize === null && fixture.sha256 === null),
-    generatedFixtures.every((fixture) =>
-      typeof fixture.generationCommand === 'string' &&
-      fixture.generationCommand.includes('heif-enc --quality 80 source.png -o generated/sample.')
-    ),
+    fixtureChecks.length === 2,
+    fixtureChecks.every(Boolean),
     packageJson.scripts?.['fixtures:heic-heif'] ===
       'node scripts/generate-heic-heif-fixtures.mjs',
     packageJson.scripts?.['fixtures:heic-heif:check'] ===
@@ -462,16 +491,17 @@ function checkHeicHeifFixtureDraft() {
     scriptContents.includes('heif-enc'),
     scriptContents.includes('CHECK_ONLY'),
     scriptContents.includes('readPngDimensions'),
-    scriptContents.includes('byteSize and sha256 must stay null until binary fixtures are committed'),
+    scriptContents.includes('validateCommittedFixture'),
+    scriptContents.includes('byteSize must be recorded for committed binary fixtures'),
   ];
 
   return {
     ok: checks.every(Boolean),
-    label: 'HEIC/HEIF fixture manifest and generator draft are consistent',
+    label: 'HEIC/HEIF fixture manifest and committed samples are consistent',
     detail:
       checks.every(Boolean)
-        ? 'source PNG hash/dimensions, generated fixture plan, package scripts, and generator checks are consistent'
-        : 'expected source PNG metadata, manifest fields, package scripts, or generator snippets are missing/mismatched',
+        ? 'source PNG metadata, committed fixture hashes, package scripts, and generator checks are consistent'
+        : 'expected source PNG metadata, committed fixture metadata, package scripts, or generator snippets are missing/mismatched',
   };
 }
 

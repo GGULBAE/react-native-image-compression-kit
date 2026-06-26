@@ -13,7 +13,9 @@ const CHECK_ONLY = process.argv.includes('--check');
 function main() {
   const manifest = readJson(MANIFEST_PATH);
   const source = validateSource(manifest.source);
-  validateGeneratedFixturePlan(manifest, source);
+  validateGeneratedFixturePlan(manifest, source, {
+    requireCommittedFixtures: CHECK_ONLY,
+  });
 
   if (CHECK_ONLY) {
     console.log(
@@ -80,7 +82,11 @@ function validateSource(source) {
   };
 }
 
-function validateGeneratedFixturePlan(manifest, source) {
+function validateGeneratedFixturePlan(
+  manifest,
+  source,
+  options = { requireCommittedFixtures: false }
+) {
   if (manifest.schemaVersion !== 1) {
     fail(`schemaVersion must be 1, got ${manifest.schemaVersion}`);
   }
@@ -96,14 +102,15 @@ function validateGeneratedFixturePlan(manifest, source) {
   manifest.generatedFixtures.forEach((fixture) => {
     requireString(fixture.format, 'generatedFixtures[].format');
     requireString(fixture.targetPath, `${fixture.format}.targetPath`);
-    requireString(fixture.futureCommitPath, `${fixture.format}.futureCommitPath`);
     requireString(fixture.generationCommand, `${fixture.format}.generationCommand`);
     requireString(fixture.sourcePath, `${fixture.format}.sourcePath`);
     requireNumber(fixture.quality, `${fixture.format}.quality`);
     requireNumber(fixture.dimensions?.width, `${fixture.format}.dimensions.width`);
     requireNumber(fixture.dimensions?.height, `${fixture.format}.dimensions.height`);
     requireString(fixture.provenance?.generator, `${fixture.format}.provenance.generator`);
+    requireString(fixture.provenance?.generatorVersion, `${fixture.format}.provenance.generatorVersion`);
     requireString(fixture.provenance?.source, `${fixture.format}.provenance.source`);
+    requireString(fixture.provenance?.license, `${fixture.format}.provenance.license`);
     requireString(fixture.provenance?.status, `${fixture.format}.provenance.status`);
 
     const expectedFileName = `sample.${fixture.format}`;
@@ -111,11 +118,8 @@ function validateGeneratedFixturePlan(manifest, source) {
     if (fixture.sourcePath !== source.path) {
       fail(`${fixture.format}.sourcePath must match source.path`);
     }
-    if (!fixture.targetPath.endsWith(`/generated/${expectedFileName}`)) {
-      fail(`${fixture.format}.targetPath must end with /generated/${expectedFileName}`);
-    }
-    if (!fixture.futureCommitPath.endsWith(`/${expectedFileName}`)) {
-      fail(`${fixture.format}.futureCommitPath must end with /${expectedFileName}`);
+    if (!fixture.targetPath.endsWith(`/${expectedFileName}`)) {
+      fail(`${fixture.format}.targetPath must end with /${expectedFileName}`);
     }
     if (
       fixture.dimensions.width !== source.width ||
@@ -123,17 +127,40 @@ function validateGeneratedFixturePlan(manifest, source) {
     ) {
       fail(`${fixture.format}.dimensions must match source dimensions`);
     }
-    if (fixture.byteSize !== null || fixture.sha256 !== null) {
-      fail(`${fixture.format}.byteSize and sha256 must stay null until binary fixtures are committed`);
+    if (typeof fixture.byteSize !== 'number' || !Number.isFinite(fixture.byteSize)) {
+      fail(`${fixture.format}.byteSize must be recorded for committed binary fixtures`);
     }
-    if (!fixture.generationCommand.includes(`source.png -o generated/${expectedFileName}`)) {
-      fail(`${fixture.format}.generationCommand must write generated/${expectedFileName}`);
+    if (typeof fixture.sha256 !== 'string' || fixture.sha256.length === 0) {
+      fail(`${fixture.format}.sha256 must be recorded for committed binary fixtures`);
+    }
+    if (options.requireCommittedFixtures) {
+      validateCommittedFixture(fixture);
+    }
+    if (!fixture.generationCommand.includes(`source.png -o ${expectedFileName}`)) {
+      fail(`${fixture.format}.generationCommand must write ${expectedFileName}`);
     }
   });
 
   requireString(manifest.validation?.checkCommand, 'validation.checkCommand');
   requireString(manifest.validation?.generationCommand, 'validation.generationCommand');
   requireString(manifest.validation?.runtimeStatus, 'validation.runtimeStatus');
+}
+
+function validateCommittedFixture(fixture) {
+  const bytes = readFileSync(resolveRepoPath(fixture.targetPath));
+  const actualByteSize = bytes.length;
+  const actualSha256 = hash(bytes);
+
+  if (actualByteSize !== fixture.byteSize) {
+    fail(
+      `${fixture.format}.byteSize mismatch: manifest ${fixture.byteSize}, actual ${actualByteSize}`
+    );
+  }
+  if (actualSha256 !== fixture.sha256) {
+    fail(
+      `${fixture.format}.sha256 mismatch: manifest ${fixture.sha256}, actual ${actualSha256}`
+    );
+  }
 }
 
 function generateFixture(fixture, source, encoder) {
@@ -159,10 +186,17 @@ function generateFixture(fixture, source, encoder) {
 
   const bytes = readFileSync(targetPath);
   const byteSize = statSync(targetPath).size;
+  const sha256 = hash(bytes);
 
   console.log(
-    `${fixture.targetPath}: ${byteSize} bytes sha256=${hash(bytes)}`
+    `${fixture.targetPath}: ${byteSize} bytes sha256=${sha256}`
   );
+
+  if (byteSize !== fixture.byteSize || sha256 !== fixture.sha256) {
+    fail(
+      `${fixture.format} generated output differs from manifest; update byteSize, sha256, and provenance before committing`
+    );
+  }
 }
 
 function readJson(filePath) {

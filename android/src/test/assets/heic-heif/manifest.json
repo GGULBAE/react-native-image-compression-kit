@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Tiny repo-owned HEIC/HEIF fixture source and generation plan for Android codec validation.",
+  "description": "Tiny repo-owned HEIC/HEIF fixture source and committed samples for Android codec validation.",
   "source": {
     "path": "android/src/test/assets/heic-heif/source.png",
     "format": "png",
@@ -19,46 +19,48 @@
   "generatedFixtures": [
     {
       "format": "heic",
-      "targetPath": "android/src/test/assets/heic-heif/generated/sample.heic",
-      "futureCommitPath": "android/src/test/assets/heic-heif/sample.heic",
-      "generationCommand": "heif-enc --quality 80 source.png -o generated/sample.heic",
+      "targetPath": "android/src/test/assets/heic-heif/sample.heic",
+      "generationCommand": "heif-enc --quality 80 source.png -o sample.heic",
       "quality": 80,
       "dimensions": {
         "width": 16,
         "height": 12
       },
       "sourcePath": "android/src/test/assets/heic-heif/source.png",
-      "byteSize": null,
-      "sha256": null,
+      "byteSize": 780,
+      "sha256": "41ac46077f9265637ac8d69732aafd17d6d00fb7d44a9cf452048147498d1d4a",
       "provenance": {
         "generator": "libheif heif-enc",
+        "generatorVersion": "1.23.0",
         "source": "repo-owned source.png",
-        "status": "generated fixture is intentionally not committed yet"
+        "license": "MIT",
+        "status": "committed fixture generated from repo-owned source"
       }
     },
     {
       "format": "heif",
-      "targetPath": "android/src/test/assets/heic-heif/generated/sample.heif",
-      "futureCommitPath": "android/src/test/assets/heic-heif/sample.heif",
-      "generationCommand": "heif-enc --quality 80 source.png -o generated/sample.heif",
+      "targetPath": "android/src/test/assets/heic-heif/sample.heif",
+      "generationCommand": "heif-enc --quality 80 source.png -o sample.heif",
       "quality": 80,
       "dimensions": {
         "width": 16,
         "height": 12
       },
       "sourcePath": "android/src/test/assets/heic-heif/source.png",
-      "byteSize": null,
-      "sha256": null,
+      "byteSize": 780,
+      "sha256": "41ac46077f9265637ac8d69732aafd17d6d00fb7d44a9cf452048147498d1d4a",
       "provenance": {
         "generator": "libheif heif-enc",
+        "generatorVersion": "1.23.0",
         "source": "repo-owned source.png",
-        "status": "generated fixture is intentionally not committed yet"
+        "license": "MIT",
+        "status": "committed fixture generated from repo-owned source"
       }
     }
   ],
   "validation": {
     "checkCommand": "pnpm fixtures:heic-heif:check",
     "generationCommand": "pnpm fixtures:heic-heif",
-    "runtimeStatus": "manual device/emulator validation until HEIC/HEIF binaries and instrumentation tests are added"
+    "runtimeStatus": "binary fixtures are committed; manual device/emulator validation until instrumentation tests are added"
   }
 }
