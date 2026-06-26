@@ -221,9 +221,17 @@ function checkAndroidNativeModule() {
     'openInputStream(inputSource.uri)',
     'OpenableColumns.SIZE',
     'InputFormat.fromMimeType(bounds.mimeType)',
+    'readUnsupportedInputMimeTypeHint(inputSource)',
+    'queryContentMimeType(inputSource.uri)',
+    'UnsupportedInputFormat.fromMimeType(contentMimeType)',
+    'UnsupportedInputFormat.fromFileExtension(fileExtension)',
     'mimeType = "image/jpeg"',
     'mimeType = "image/png"',
     'mimeType = "image/webp"',
+    'mimeType = "image/heic"',
+    'mimeType = "image/heif"',
+    'mimeType = "image/avif"',
+    'mimeType = "image/gif"',
     'readExifOrientation(inputSource)',
     'applyExifOrientation(bitmap, exifOrientation)',
     'ExifInterface.TAG_ORIENTATION',
@@ -280,6 +288,9 @@ function checkAndroidNativeModule() {
     'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif',
     'compressImageReadsContentUriJpegLikeFileUriAndReportsMetadata',
     'compressImageRejectsUnreadableContentUriAtModuleBoundary',
+    'compressImageRejectsUnsupportedImageFileExtensionsAtModuleBoundary',
+    'compressImageRejectsUnsupportedContentMimeTypesAtModuleBoundary',
+    'compressImageSeparatesUnsupportedFormatFromDecodeFailure',
     'compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs',
     'compressImageResizesPngAndWebpSourcesAcrossModes',
     'compressImageHonorsJpegAndWebpMaxBytesForPngAndWebpSources',
@@ -294,6 +305,9 @@ function checkAndroidNativeModule() {
     'ByteArrayInputStream',
     'sourceUri = contentUri.toString()',
     'assertResultMetadataMatchesBytes',
+    'UnsupportedSourceCase',
+    'TestMimeTypeContentProvider',
+    'ShadowContentResolver.registerProviderInternal',
     'createEncodedImageFile',
     'SourceFormatCase',
     'assertNoCopiedExifMetadata',
@@ -320,6 +334,8 @@ function checkAndroidNativeModule() {
     '"WEBP"',
     'RobolectricTestRunner',
     'ERR_UNSUPPORTED_FORMAT',
+    'ImageCompressionKitModule.ERR_DECODE_FAILED',
+    'Android MVP could not decode the source image.',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
   const hasUnitTestScript =
@@ -331,7 +347,7 @@ function checkAndroidNativeModule() {
     label: 'Android Kotlin module matches generated spec and Android image MVP path',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG/PNG/WebP decode, JPEG orient/metadata, resize, target-size, JPEG/PNG/WebP output encode path, and module-level file/content URI tests'
+        ? 'module extends generated spec and contains JPEG/PNG/WebP decode, unsupported input error boundaries, JPEG orient/metadata, resize, target-size, JPEG/PNG/WebP output encode path, and module-level file/content URI tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),

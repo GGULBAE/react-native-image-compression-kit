@@ -1,6 +1,9 @@
 package com.imagecompressionkit
 
 import android.content.Context
+import android.content.ContentProvider
+import android.content.ContentValues
+import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -31,6 +34,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import org.robolectric.shadows.ShadowContentResolver
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -281,6 +285,110 @@ class ImageCompressionKitModuleTest {
     assertNull(promise.resolvedValue)
     assertEquals(ImageCompressionKitModule.ERR_FILE_ACCESS, promise.rejectionCode)
     assertEquals("Android MVP could not read the source image URI.", promise.rejectionMessage)
+  }
+
+  @Test
+  fun compressImageRejectsUnsupportedImageFileExtensionsAtModuleBoundary() {
+    val module = createModule()
+    val unsupportedCases = listOf(
+      UnsupportedSourceCase(fileExtension = "heic", mimeType = "image/heic"),
+      UnsupportedSourceCase(fileExtension = "heif", mimeType = "image/heif"),
+      UnsupportedSourceCase(fileExtension = "avif", mimeType = "image/avif"),
+      UnsupportedSourceCase(fileExtension = "gif", mimeType = "image/gif")
+    )
+
+    unsupportedCases.forEach { unsupportedCase ->
+      val promise = RecordingPromise()
+      val sourceFile = createInvalidImageFile(unsupportedCase.fileExtension)
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of(
+            "format",
+            "jpeg",
+            "quality",
+            72
+          )
+        ),
+        promise
+      )
+
+      assertUnsupportedFormatRejected(promise)
+    }
+  }
+
+  @Test
+  fun compressImageRejectsUnsupportedContentMimeTypesAtModuleBoundary() {
+    val reactContext = createReactContext()
+    val module = createModule(reactContext)
+    val unsupportedCases = listOf(
+      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/heic"),
+      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/heif"),
+      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/avif"),
+      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/gif")
+    )
+
+    unsupportedCases.forEach { unsupportedCase ->
+      val authority = "image-compression-kit-mime-${System.nanoTime()}"
+      val contentUri = Uri.parse(
+        "content://$authority/source-${System.nanoTime()}.${unsupportedCase.fileExtension}"
+      )
+      val promise = RecordingPromise()
+
+      registerContentInputStream(reactContext, contentUri, invalidImageBytes())
+      registerContentMimeType(contentUri, unsupportedCase.mimeType)
+
+      module.compressImage(
+        compressionOptions(
+          sourceUri = contentUri.toString(),
+          output = JavaOnlyMap.of(
+            "format",
+            "jpeg",
+            "quality",
+            72
+          )
+        ),
+        promise
+      )
+
+      assertUnsupportedFormatRejected(promise)
+    }
+  }
+
+  @Test
+  fun compressImageSeparatesUnsupportedFormatFromDecodeFailure() {
+    val module = createModule()
+    val unsupportedPromise = RecordingPromise()
+    val decodeFailurePromise = RecordingPromise()
+
+    module.compressImage(
+      compressionOptions(
+        sourceFile = createInvalidImageFile("avif"),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      unsupportedPromise
+    )
+    module.compressImage(
+      compressionOptions(
+        sourceFile = createInvalidImageFile("jpg"),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      decodeFailurePromise
+    )
+
+    assertUnsupportedFormatRejected(unsupportedPromise)
+    assertDecodeFailedRejected(decodeFailurePromise)
   }
 
   @Test
@@ -708,6 +816,17 @@ class ImageCompressionKitModuleTest {
     )
   }
 
+  private fun registerContentMimeType(
+    contentUri: Uri,
+    mimeType: String
+  ) {
+    TestMimeTypeContentProvider.register(contentUri, mimeType)
+    ShadowContentResolver.registerProviderInternal(
+      contentUri.authority ?: error("Content URI authority is required."),
+      TestMimeTypeContentProvider()
+    )
+  }
+
   private fun resizeOptions(
     mode: String,
     maxWidth: Int? = null,
@@ -782,6 +901,15 @@ class ImageCompressionKitModuleTest {
       assertTrue(length() > 0)
     }
   }
+
+  private fun createInvalidImageFile(fileExtension: String): File =
+    temporaryFolder.newFile("invalid-${System.nanoTime()}.$fileExtension").apply {
+      writeBytes(invalidImageBytes())
+      assertTrue(length() > 0)
+    }
+
+  private fun invalidImageBytes(): ByteArray =
+    "not an image".toByteArray(StandardCharsets.US_ASCII)
 
   private fun createEncodedImageFile(
     outputFormat: OutputFormat,
@@ -979,6 +1107,18 @@ class ImageCompressionKitModuleTest {
     )
   }
 
+  private fun assertUnsupportedFormatRejected(promise: RecordingPromise) {
+    assertNull(promise.resolvedValue)
+    assertEquals(ImageCompressionKitModule.ERR_UNSUPPORTED_FORMAT, promise.rejectionCode)
+    assertEquals("Android MVP supports JPEG, PNG, and WebP input only.", promise.rejectionMessage)
+  }
+
+  private fun assertDecodeFailedRejected(promise: RecordingPromise) {
+    assertNull(promise.resolvedValue)
+    assertEquals(ImageCompressionKitModule.ERR_DECODE_FAILED, promise.rejectionCode)
+    assertEquals("Android MVP could not decode the source image.", promise.rejectionMessage)
+  }
+
   private data class ResizeCase(
     val resize: JavaOnlyMap,
     val expectedWidth: Int,
@@ -995,6 +1135,57 @@ class ImageCompressionKitModuleTest {
     val format: OutputFormat,
     val sourceFile: File
   )
+
+  private data class UnsupportedSourceCase(
+    val fileExtension: String,
+    val mimeType: String
+  )
+
+  private class TestMimeTypeContentProvider : ContentProvider() {
+    override fun onCreate(): Boolean =
+      true
+
+    override fun query(
+      uri: Uri,
+      projection: Array<out String>?,
+      selection: String?,
+      selectionArgs: Array<out String>?,
+      sortOrder: String?
+    ): Cursor? =
+      null
+
+    override fun getType(uri: Uri): String? =
+      mimeTypes[uri]
+
+    override fun insert(uri: Uri, values: ContentValues?): Uri? =
+      null
+
+    override fun delete(
+      uri: Uri,
+      selection: String?,
+      selectionArgs: Array<out String>?
+    ): Int =
+      0
+
+    override fun update(
+      uri: Uri,
+      values: ContentValues?,
+      selection: String?,
+      selectionArgs: Array<out String>?
+    ): Int =
+      0
+
+    companion object {
+      private val mimeTypes = mutableMapOf<Uri, String>()
+
+      fun register(
+        uri: Uri,
+        mimeType: String
+      ) {
+        mimeTypes[uri] = mimeType
+      }
+    }
+  }
 
   private class TestReactApplicationContext(context: Context) : ReactApplicationContext(context) {
     override fun <T : JavaScriptModule> getJSModule(jsInterface: Class<T>): T =

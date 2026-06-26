@@ -30,7 +30,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Android includes an image compression MVP for `file://` and `content://` JPEG, PNG, and WebP inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. iOS compression and broader input format support are not implemented yet.
+Android includes an image compression MVP for `file://` and `content://` JPEG, PNG, and WebP inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. HEIC / HEIF, AVIF, and GIF inputs are not implemented yet and are rejected with `ERR_UNSUPPORTED_FORMAT` when Android can identify them from the source MIME type or file extension. iOS compression and broader input format support are not implemented yet.
 
 ## Current Implementation Scope
 
@@ -119,7 +119,7 @@ The table below describes planned input and output support. Actual availability 
 | AVIF | Yes | Yes | Planned codec integration |
 | GIF | Yes | Later | Static first-frame support before animation preservation |
 
-Current Android MVP support is narrower than the planned table: JPEG, PNG, and WebP input are implemented, and JPEG, PNG, and WebP output are implemented. HEIC / HEIF, AVIF, GIF, and animated WebP support remain planned.
+Current Android MVP support is narrower than the planned table: JPEG, PNG, and WebP input are implemented, and JPEG, PNG, and WebP output are implemented. HEIC / HEIF, AVIF, GIF, and animated WebP support remain planned. Known HEIC / HEIF, AVIF, and GIF input MIME types and file extensions are rejected as `ERR_UNSUPPORTED_FORMAT`; corrupt supported-format inputs continue to reject as `ERR_DECODE_FAILED`.
 
 Animation preservation for GIF, animated WebP, and animated AVIF is not planned as an initial-version guarantee.
 
@@ -274,6 +274,7 @@ This project is not intended to handle:
 - [x] Android `content://` JPEG source module-level JVM tests.
 - [x] Android PNG/WebP input module-level JVM tests.
 - [x] Android PNG/WebP input resize, target-size, and metadata no-copy regression JVM tests.
+- [x] Android unsupported HEIC/HEIF/AVIF/GIF input error-boundary JVM tests.
 - [x] Android JPEG-input resize/orientation module-level JVM tests.
 - [x] Android JPEG/WebP target-size module-level JVM tests.
 - [x] Android JPEG metadata `safe` / `strip` policy basics.
@@ -291,7 +292,7 @@ This project is not intended to handle:
 
 ## Installation
 
-This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android image MVP with JPEG/PNG/WebP input, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. iOS compression and broader input format support are not implemented yet.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android image MVP with JPEG/PNG/WebP input, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, unsupported HEIC/HEIF/AVIF/GIF input error boundaries, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. iOS compression and broader input format support are not implemented yet.
 
 Planned installation command:
 
@@ -350,7 +351,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, PNG/WebP input, PNG/WebP input resize modes, PNG/WebP input target-size `maxBytes`, PNG/WebP metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android` still requires a connected emulator/device.
+These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, unsupported HEIC/HEIF/AVIF/GIF input error boundaries, corrupt supported-format decode failures, PNG/WebP input, PNG/WebP input resize modes, PNG/WebP input target-size `maxBytes`, PNG/WebP metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android` still requires a connected emulator/device.
 
 ## Continuous Integration
 
@@ -367,7 +368,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP input/output format and byte-signature behavior, and module-level `compressImage` file URI, content URI, PNG/WebP input resize, EXIF orientation, target-size, and metadata no-copy integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, and WebP input/output paths.
+`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP input/output format and byte-signature behavior, and module-level `compressImage` file URI, content URI, unsupported HEIC/HEIF/AVIF/GIF input rejection, corrupt supported-format decode failure, PNG/WebP input resize, EXIF orientation, target-size, and metadata no-copy integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, and WebP input/output paths.
 
 ## Development Verification
 

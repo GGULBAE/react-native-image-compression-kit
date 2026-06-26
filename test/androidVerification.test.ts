@@ -50,9 +50,17 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('OpenableColumns.SIZE');
     expect(moduleSource).toContain('BitmapFactory.decodeStream');
     expect(moduleSource).toContain('InputFormat.fromMimeType(bounds.mimeType)');
+    expect(moduleSource).toContain('readUnsupportedInputMimeTypeHint(inputSource)');
+    expect(moduleSource).toContain('queryContentMimeType(inputSource.uri)');
+    expect(moduleSource).toContain('UnsupportedInputFormat.fromMimeType(contentMimeType)');
+    expect(moduleSource).toContain('UnsupportedInputFormat.fromFileExtension(fileExtension)');
     expect(moduleSource).toContain('mimeType = "image/jpeg"');
     expect(moduleSource).toContain('mimeType = "image/png"');
     expect(moduleSource).toContain('mimeType = "image/webp"');
+    expect(moduleSource).toContain('mimeType = "image/heic"');
+    expect(moduleSource).toContain('mimeType = "image/heif"');
+    expect(moduleSource).toContain('mimeType = "image/avif"');
+    expect(moduleSource).toContain('mimeType = "image/gif"');
     expect(moduleSource).toContain(
       'Android MVP supports JPEG, PNG, and WebP input only.'
     );
@@ -317,6 +325,15 @@ describe('Android verification scripts', () => {
       'compressImageRejectsUnreadableContentUriAtModuleBoundary'
     );
     expect(testSource).toContain(
+      'compressImageRejectsUnsupportedImageFileExtensionsAtModuleBoundary'
+    );
+    expect(testSource).toContain(
+      'compressImageRejectsUnsupportedContentMimeTypesAtModuleBoundary'
+    );
+    expect(testSource).toContain(
+      'compressImageSeparatesUnsupportedFormatFromDecodeFailure'
+    );
+    expect(testSource).toContain(
       'compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs'
     );
     expect(testSource).toContain(
@@ -344,6 +361,9 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('ByteArrayInputStream');
     expect(testSource).toContain('sourceUri = contentUri.toString()');
     expect(testSource).toContain('assertResultMetadataMatchesBytes');
+    expect(testSource).toContain('UnsupportedSourceCase');
+    expect(testSource).toContain('TestMimeTypeContentProvider');
+    expect(testSource).toContain('ShadowContentResolver.registerProviderInternal');
     expect(testSource).toContain('createEncodedImageFile');
     expect(testSource).toContain('SourceFormatCase');
     expect(testSource).toContain('assertNoCopiedExifMetadata');
@@ -366,6 +386,9 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('"maxBytes"');
     expect(testSource).toContain('ImageCompressionKitModule.ERR_INVALID_OPTIONS');
     expect(testSource).toContain('ImageCompressionOutput.MAX_BYTES_UNSUPPORTED_MESSAGE');
+    expect(testSource).toContain('ImageCompressionKitModule.ERR_DECODE_FAILED');
+    expect(testSource).toContain('Android MVP could not decode the source image.');
+    expect(testSource).toContain('ERR_UNSUPPORTED_FORMAT');
     expect(testSource).toContain('GraphicsMode.Mode.NATIVE');
     expect(testSource).toContain('assertJpegSignature');
     expect(testSource).toContain('assertPngSignature');

@@ -144,6 +144,16 @@ class ImageCompressionKitModule(
         )
         return
       }
+      val unsupportedInputMimeTypeHint = readUnsupportedInputMimeTypeHint(inputSource)
+
+      if (unsupportedInputMimeTypeHint != null) {
+        reject(
+          promise,
+          ERR_UNSUPPORTED_FORMAT,
+          "Android MVP supports JPEG, PNG, and WebP input only."
+        )
+        return
+      }
 
       val bounds = try {
         decodeBounds(inputSource)
@@ -587,6 +597,35 @@ class ImageCompressionKitModule(
       BitmapFactory.decodeStream(inputStream)
     }
 
+  private fun readUnsupportedInputMimeTypeHint(inputSource: ImageInputSource): String? {
+    val contentMimeType = when (inputSource) {
+      is ImageInputSource.FileSource -> null
+      is ImageInputSource.ContentSource -> queryContentMimeType(inputSource.uri)
+    }
+
+    UnsupportedInputFormat.fromMimeType(contentMimeType)?.mimeType?.let { mimeType ->
+      return mimeType
+    }
+    if (InputFormat.fromMimeType(contentMimeType) != null) {
+      return null
+    }
+
+    val fileExtension = when (inputSource) {
+      is ImageInputSource.FileSource -> inputSource.file.extension
+      is ImageInputSource.ContentSource ->
+        inputSource.uri.lastPathSegment?.substringAfterLast('.', "")
+    }
+
+    return UnsupportedInputFormat.fromFileExtension(fileExtension)?.mimeType
+  }
+
+  private fun queryContentMimeType(uri: Uri): String? =
+    try {
+      reactContext.contentResolver.getType(uri)
+    } catch (_: Exception) {
+      null
+    }
+
   private fun readExifOrientation(inputSource: ImageInputSource): Int =
     try {
       openInputStream(inputSource).buffered().use { inputStream ->
@@ -873,6 +912,50 @@ class ImageCompressionKitModule(
     companion object {
       fun fromMimeType(mimeType: String?): InputFormat? =
         values().firstOrNull { it.mimeType == mimeType }
+    }
+  }
+
+  private enum class UnsupportedInputFormat(
+    val mimeType: String,
+    val mimeTypeAliases: Set<String>,
+    val fileExtensions: Set<String>
+  ) {
+    HEIC(
+      mimeType = "image/heic",
+      mimeTypeAliases = setOf("image/heic-sequence"),
+      fileExtensions = setOf("heic")
+    ),
+    HEIF(
+      mimeType = "image/heif",
+      mimeTypeAliases = setOf("image/heif-sequence"),
+      fileExtensions = setOf("heif")
+    ),
+    AVIF(
+      mimeType = "image/avif",
+      mimeTypeAliases = emptySet(),
+      fileExtensions = setOf("avif")
+    ),
+    GIF(
+      mimeType = "image/gif",
+      mimeTypeAliases = emptySet(),
+      fileExtensions = setOf("gif")
+    );
+
+    companion object {
+      fun fromMimeType(mimeType: String?): UnsupportedInputFormat? {
+        val normalizedMimeType = mimeType?.trim()?.lowercase() ?: return null
+
+        return values().firstOrNull {
+          it.mimeType == normalizedMimeType || normalizedMimeType in it.mimeTypeAliases
+        }
+      }
+
+      fun fromFileExtension(fileExtension: String?): UnsupportedInputFormat? {
+        val normalizedFileExtension = fileExtension?.trim()?.trimStart('.')?.lowercase()
+          ?: return null
+
+        return values().firstOrNull { normalizedFileExtension in it.fileExtensions }
+      }
     }
   }
 
