@@ -154,7 +154,10 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('pngFormatNotes');
     expect(combinedSource).toContain('webpFormatNotes');
     expect(combinedSource).toContain('gifFormatNotes');
+    expect(combinedSource).toContain('heicHeifFormatNotes');
     expect(combinedSource).toContain('SUPPORTED_INPUT_FORMATS');
+    expect(combinedSource).toContain('HEIC_FORMAT');
+    expect(combinedSource).toContain('HEIF_FORMAT');
     expect(combinedSource).toContain('output = outputFormat != null');
     expect(combinedSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
     expect(combinedSource).toContain(
@@ -197,6 +200,18 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain(
       'PNG, WebP, and GIF sources are decoded without copying EXIF metadata.'
     );
+    expect(combinedSource).toContain('heicHeifFormatNotes("HEIC")');
+    expect(combinedSource).toContain('heicHeifFormatNotes("HEIF")');
+    expect(combinedSource).toContain(
+      '$formatLabel input is currently disabled and rejected with ERR_UNSUPPORTED_FORMAT.'
+    );
+    expect(combinedSource).toContain(
+      'Android platform HEIF decode support is available on Android 8.0+ when device codecs are present.'
+    );
+    expect(combinedSource).toContain(
+      'Planned Android route: use ImageDecoder on API 28+ and evaluate BitmapFactory fallback on API 26-27.'
+    );
+    expect(combinedSource).toContain('$formatLabel output is not implemented.');
     expect(combinedSource).toContain(
       'Android MVP decodes GIF file:// and content:// sources as a static first frame.'
     );
@@ -294,6 +309,7 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain(
       'capabilitiesExposeJpegPngWebpGifInputsAndJpegPngWebpOutputsOnly'
     );
+    expect(testSource).toContain('assertHeicHeifCapabilityNotes');
     expect(testSource).toContain('pngRejectsMaxBytesButWebpAndJpegAllowIt');
     expect(testSource).toContain(
       'outputFormatsMapToAndroidCompressFormatsAndQualityRules'

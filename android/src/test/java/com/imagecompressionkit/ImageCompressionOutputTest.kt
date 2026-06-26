@@ -145,10 +145,18 @@ class ImageCompressionOutputTest {
       input = false,
       output = false
     )
+    assertHeicHeifCapabilityNotes(
+      capability = capabilities.getValue("heic"),
+      formatLabel = "HEIC"
+    )
     assertCapability(
       capability = capabilities.getValue("heif"),
       input = false,
       output = false
+    )
+    assertHeicHeifCapabilityNotes(
+      capability = capabilities.getValue("heif"),
+      formatLabel = "HEIF"
     )
     assertCapability(
       capability = capabilities.getValue("avif"),
@@ -246,6 +254,32 @@ class ImageCompressionOutputTest {
     assertFalse(capability.supportsAlpha)
     assertFalse(capability.supportsAnimation)
     assertTrue(capability.notes.isNotEmpty())
+  }
+
+  private fun assertHeicHeifCapabilityNotes(
+    capability: CompressionFormatCapability,
+    formatLabel: String
+  ) {
+    assertTrue(
+      capability.notes.any {
+        it == "$formatLabel input is currently disabled and rejected with ERR_UNSUPPORTED_FORMAT."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "Android platform HEIF decode support is available on Android 8.0+ when device codecs are present."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "Planned Android route: use ImageDecoder on API 28+ and evaluate BitmapFactory fallback on API 26-27."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "$formatLabel output is not implemented."
+      }
+    )
   }
 
   private fun createSampleJpegBytes(): ByteArray {

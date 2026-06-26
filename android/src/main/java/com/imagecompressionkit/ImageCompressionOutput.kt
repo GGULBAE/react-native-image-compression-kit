@@ -92,10 +92,10 @@ internal object ImageCompressionOutput {
     JPEG_FORMAT,
     PNG_FORMAT,
     WEBP_FORMAT,
-    "heic",
-    "heif",
+    HEIC_FORMAT,
+    HEIF_FORMAT,
     "avif",
-    "gif"
+    GIF_FORMAT
   )
 
   fun fromValue(value: String?): OutputFormat? =
@@ -187,13 +187,26 @@ internal object ImageCompressionOutput {
         OutputFormat.JPEG -> jpegFormatNotes()
         OutputFormat.PNG -> pngFormatNotes()
         OutputFormat.WEBP -> webpFormatNotes()
-        null -> if (format == GIF_FORMAT) gifFormatNotes() else notImplementedNotes()
+        null -> when (format) {
+          HEIC_FORMAT -> heicHeifFormatNotes("HEIC")
+          HEIF_FORMAT -> heicHeifFormatNotes("HEIF")
+          GIF_FORMAT -> gifFormatNotes()
+          else -> notImplementedNotes()
+        }
       }
     )
   }
 
   private fun notImplementedNotes(): List<String> =
     listOf("Native codec support has not been implemented yet.")
+
+  private fun heicHeifFormatNotes(formatLabel: String): List<String> =
+    listOf(
+      "$formatLabel input is currently disabled and rejected with ERR_UNSUPPORTED_FORMAT.",
+      "Android platform HEIF decode support is available on Android 8.0+ when device codecs are present.",
+      "Planned Android route: use ImageDecoder on API 28+ and evaluate BitmapFactory fallback on API 26-27.",
+      "$formatLabel output is not implemented."
+    )
 
   private fun encodeBitmapToTargetSize(
     bitmap: Bitmap,
@@ -360,6 +373,8 @@ internal object ImageCompressionOutput {
   private const val JPEG_FORMAT = "jpeg"
   private const val PNG_FORMAT = "png"
   private const val WEBP_FORMAT = "webp"
+  private const val HEIC_FORMAT = "heic"
+  private const val HEIF_FORMAT = "heif"
   private const val GIF_FORMAT = "gif"
   private const val OUTPUT_DIRECTORY_NAME = "image-compression-kit"
   private const val MIN_QUALITY = 0
