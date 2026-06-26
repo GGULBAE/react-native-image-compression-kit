@@ -188,7 +188,6 @@ internal object ImageCompressionOutput {
         OutputFormat.PNG -> pngFormatNotes()
         OutputFormat.WEBP -> webpFormatNotes()
         null -> if (format == GIF_FORMAT) gifFormatNotes() else notImplementedNotes()
-        else -> notImplementedNotes()
       }
     )
   }
