@@ -281,6 +281,9 @@ function checkAndroidNativeModule() {
     'compressImageReadsContentUriJpegLikeFileUriAndReportsMetadata',
     'compressImageRejectsUnreadableContentUriAtModuleBoundary',
     'compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs',
+    'compressImageResizesPngAndWebpSourcesAcrossModes',
+    'compressImageHonorsJpegAndWebpMaxBytesForPngAndWebpSources',
+    'compressImageIgnoresMetadataPoliciesForPngAndWebpSources',
     'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata',
     'compressImageFallsBackWhenMaxBytesIsTooSmallAndReportsConsistentMetadata',
     'module.compressImage(',
@@ -294,6 +297,7 @@ function checkAndroidNativeModule() {
     'createEncodedImageFile',
     'SourceFormatCase',
     'assertNoCopiedExifMetadata',
+    'metadataPolicies = listOf("preserve", "safe", "strip")',
     'ImageCompressionKitModule.ERR_FILE_ACCESS',
     'ExifInterface.ORIENTATION_ROTATE_90',
     'resizeOptions(',
@@ -327,7 +331,7 @@ function checkAndroidNativeModule() {
     label: 'Android Kotlin module matches generated spec and Android image MVP path',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG/PNG/WebP decode, JPEG orient/metadata, resize, JPEG/PNG/WebP output encode path, and module-level file/content URI tests'
+        ? 'module extends generated spec and contains JPEG/PNG/WebP decode, JPEG orient/metadata, resize, target-size, JPEG/PNG/WebP output encode path, and module-level file/content URI tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),

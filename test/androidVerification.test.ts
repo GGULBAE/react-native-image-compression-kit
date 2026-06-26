@@ -320,6 +320,15 @@ describe('Android verification scripts', () => {
       'compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs'
     );
     expect(testSource).toContain(
+      'compressImageResizesPngAndWebpSourcesAcrossModes'
+    );
+    expect(testSource).toContain(
+      'compressImageHonorsJpegAndWebpMaxBytesForPngAndWebpSources'
+    );
+    expect(testSource).toContain(
+      'compressImageIgnoresMetadataPoliciesForPngAndWebpSources'
+    );
+    expect(testSource).toContain(
       'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata'
     );
     expect(testSource).toContain(
@@ -338,6 +347,7 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('createEncodedImageFile');
     expect(testSource).toContain('SourceFormatCase');
     expect(testSource).toContain('assertNoCopiedExifMetadata');
+    expect(testSource).toContain('metadataPolicies = listOf("preserve", "safe", "strip")');
     expect(testSource).toContain('ImageCompressionKitModule.ERR_FILE_ACCESS');
     expect(testSource).toContain('ExifInterface.ORIENTATION_ROTATE_90');
     expect(testSource).toContain('resizeOptions(');

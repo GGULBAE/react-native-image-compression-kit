@@ -373,6 +373,188 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
+  fun compressImageResizesPngAndWebpSourcesAcrossModes() {
+    val module = createModule()
+    val sourceCases = listOf(
+      SourceFormatCase(
+        format = OutputFormat.PNG,
+        sourceFile = createEncodedImageFile(OutputFormat.PNG, width = 40, height = 20)
+      ),
+      SourceFormatCase(
+        format = OutputFormat.WEBP,
+        sourceFile = createEncodedImageFile(OutputFormat.WEBP, width = 40, height = 20)
+      )
+    )
+    val resizeCases = listOf(
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "contain",
+          maxWidth = 16,
+          maxHeight = 10
+        ),
+        expectedWidth = 16,
+        expectedHeight = 8
+      ),
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "cover",
+          maxWidth = 16,
+          maxHeight = 10
+        ),
+        expectedWidth = 16,
+        expectedHeight = 10
+      ),
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "stretch",
+          maxWidth = 16
+        ),
+        expectedWidth = 16,
+        expectedHeight = 20
+      )
+    )
+
+    sourceCases.forEach { sourceCase ->
+      resizeCases.forEach { resizeCase ->
+        val promise = RecordingPromise()
+
+        module.compressImage(
+          compressionOptions(
+            sourceFile = sourceCase.sourceFile,
+            output = JavaOnlyMap.of(
+              "format",
+              "jpeg",
+              "quality",
+              82
+            ),
+            resize = resizeCase.resize
+          ),
+          promise
+        )
+
+        val result = promise.resolvedMap()
+        val outputFile = result.outputFile()
+
+        assertJpegSignature(outputFile.readBytes())
+        assertEquals("jpeg", result.getString("format"))
+        assertEquals(resizeCase.expectedWidth, result.getInt("width"))
+        assertEquals(resizeCase.expectedHeight, result.getInt("height"))
+        assertResultMetadataMatchesFile(result, outputFile, sourceCase.sourceFile)
+        assertNoCopiedExifMetadata(outputFile)
+      }
+    }
+  }
+
+  @Test
+  fun compressImageHonorsJpegAndWebpMaxBytesForPngAndWebpSources() {
+    val module = createModule()
+    val sourceCases = listOf(
+      SourceFormatCase(
+        format = OutputFormat.PNG,
+        sourceFile = createEncodedImageFile(OutputFormat.PNG, width = 96, height = 64)
+      ),
+      SourceFormatCase(
+        format = OutputFormat.WEBP,
+        sourceFile = createEncodedImageFile(OutputFormat.WEBP, width = 96, height = 64)
+      )
+    )
+    val outputCases = listOf(
+      TargetSizeCase(
+        format = "jpeg",
+        outputFormat = OutputFormat.JPEG,
+        assertSignature = ::assertJpegSignature
+      ),
+      TargetSizeCase(
+        format = "webp",
+        outputFormat = OutputFormat.WEBP,
+        assertSignature = ::assertWebpSignature
+      )
+    )
+
+    sourceCases.forEach { sourceCase ->
+      outputCases.forEach { outputCase ->
+        val maxBytes = calculateAchievableTargetBytes(sourceCase.sourceFile, outputCase.outputFormat)
+        val promise = RecordingPromise()
+
+        module.compressImage(
+          compressionOptions(
+            sourceFile = sourceCase.sourceFile,
+            output = JavaOnlyMap.of(
+              "format",
+              outputCase.format,
+              "quality",
+              90,
+              "maxBytes",
+              maxBytes
+            ),
+            metadata = "preserve"
+          ),
+          promise
+        )
+
+        val result = promise.resolvedMap()
+        val outputFile = result.outputFile()
+
+        outputCase.assertSignature(outputFile.readBytes())
+        assertTrue(outputFile.length() <= maxBytes)
+        assertEquals(outputCase.format, result.getString("format"))
+        assertEquals(96, result.getInt("width"))
+        assertEquals(64, result.getInt("height"))
+        assertResultMetadataMatchesFile(result, outputFile, sourceCase.sourceFile)
+        if (outputCase.outputFormat == OutputFormat.JPEG) {
+          assertNoCopiedExifMetadata(outputFile)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun compressImageIgnoresMetadataPoliciesForPngAndWebpSources() {
+    val module = createModule()
+    val sourceCases = listOf(
+      SourceFormatCase(
+        format = OutputFormat.PNG,
+        sourceFile = createEncodedImageFile(OutputFormat.PNG, width = 24, height = 16)
+      ),
+      SourceFormatCase(
+        format = OutputFormat.WEBP,
+        sourceFile = createEncodedImageFile(OutputFormat.WEBP, width = 24, height = 16)
+      )
+    )
+    val metadataPolicies = listOf("preserve", "safe", "strip")
+
+    sourceCases.forEach { sourceCase ->
+      metadataPolicies.forEach { metadataPolicy ->
+        val promise = RecordingPromise()
+
+        module.compressImage(
+          compressionOptions(
+            sourceFile = sourceCase.sourceFile,
+            output = JavaOnlyMap.of(
+              "format",
+              "jpeg",
+              "quality",
+              80
+            ),
+            metadata = metadataPolicy
+          ),
+          promise
+        )
+
+        val result = promise.resolvedMap()
+        val outputFile = result.outputFile()
+
+        assertJpegSignature(outputFile.readBytes())
+        assertEquals("jpeg", result.getString("format"))
+        assertEquals(24, result.getInt("width"))
+        assertEquals(16, result.getInt("height"))
+        assertResultMetadataMatchesFile(result, outputFile, sourceCase.sourceFile)
+        assertNoCopiedExifMetadata(outputFile)
+      }
+    }
+  }
+
+  @Test
   fun compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata() {
     val module = createModule()
     val sourceFile = createPatternJpegFile(width = 96, height = 64)
