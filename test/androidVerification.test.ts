@@ -302,6 +302,12 @@ describe('Android verification scripts', () => {
       'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif'
     );
     expect(testSource).toContain(
+      'compressImageReadsContentUriJpegLikeFileUriAndReportsMetadata'
+    );
+    expect(testSource).toContain(
+      'compressImageRejectsUnreadableContentUriAtModuleBoundary'
+    );
+    expect(testSource).toContain(
       'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata'
     );
     expect(testSource).toContain(
@@ -312,6 +318,12 @@ describe('Android verification scripts', () => {
     expect(testSource).toContain('JavaOnlyMap.of');
     expect(testSource).toContain('RecordingPromise');
     expect(testSource).toContain('Uri.fromFile(sourceFile).toString()');
+    expect(testSource).toContain('org.robolectric.Shadows.shadowOf');
+    expect(testSource).toContain('registerInputStreamSupplier');
+    expect(testSource).toContain('ByteArrayInputStream');
+    expect(testSource).toContain('sourceUri = contentUri.toString()');
+    expect(testSource).toContain('assertResultMetadataMatchesBytes');
+    expect(testSource).toContain('ImageCompressionKitModule.ERR_FILE_ACCESS');
     expect(testSource).toContain('ExifInterface.ORIENTATION_ROTATE_90');
     expect(testSource).toContain('resizeOptions(');
     expect(testSource).toContain('mode = "contain"');

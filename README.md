@@ -269,6 +269,7 @@ This project is not intended to handle:
 - [x] Android JPEG input to PNG and WebP output encoding.
 - [x] Android JPEG-input output format behavior and byte signature JVM tests.
 - [x] Android JPEG-input module-level compression integration JVM tests.
+- [x] Android `content://` JPEG source module-level JVM tests.
 - [x] Android JPEG-input resize/orientation module-level JVM tests.
 - [x] Android JPEG/WebP target-size module-level JVM tests.
 - [x] Android JPEG metadata `safe` / `strip` policy basics.
@@ -346,7 +347,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android` still requires a connected emulator/device.
+These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android` still requires a connected emulator/device.
 
 ## Continuous Integration
 
@@ -363,7 +364,7 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP output format and byte-signature behavior, and module-level `compressImage` file URI, resize, EXIF orientation, and target-size integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, and WebP output paths.
+`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP output format and byte-signature behavior, and module-level `compressImage` file URI, content URI, resize, EXIF orientation, and target-size integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, and WebP output paths.
 
 ## Development Verification
 

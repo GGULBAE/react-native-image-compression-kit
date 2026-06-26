@@ -28,11 +28,14 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.util.function.Supplier
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -178,6 +181,109 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
+  fun compressImageReadsContentUriJpegLikeFileUriAndReportsMetadata() {
+    val reactContext = createReactContext()
+    val module = createModule(reactContext)
+    val sourceFile = createOrientedJpegFile(
+      width = 32,
+      height = 20,
+      orientation = ExifInterface.ORIENTATION_ROTATE_90
+    )
+    val sourceBytes = sourceFile.readBytes()
+    val contentUri = Uri.parse("content://image-compression-kit/source-${System.nanoTime()}.jpg")
+    val filePromise = RecordingPromise()
+    val contentPromise = RecordingPromise()
+
+    registerContentInputStream(reactContext, contentUri, sourceBytes)
+
+    module.compressImage(
+      compressionOptions(
+        sourceFile = sourceFile,
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          82
+        ),
+        metadata = "safe"
+      ),
+      filePromise
+    )
+    module.compressImage(
+      compressionOptions(
+        sourceUri = contentUri.toString(),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          82
+        ),
+        metadata = "safe"
+      ),
+      contentPromise
+    )
+
+    val fileResult = filePromise.resolvedMap()
+    val fileOutput = fileResult.outputFile()
+    val contentResult = contentPromise.resolvedMap()
+    val contentOutput = contentResult.outputFile()
+
+    assertJpegSignature(contentOutput.readBytes())
+    assertEquals("jpeg", contentResult.getString("format"))
+    assertEquals(20, contentResult.getInt("width"))
+    assertEquals(32, contentResult.getInt("height"))
+    assertResultMetadataMatchesFile(fileResult, fileOutput, sourceFile)
+    assertResultMetadataMatchesBytes(contentResult, contentOutput, sourceBytes.size.toLong())
+    assertEquals(fileResult.getString("format"), contentResult.getString("format"))
+    assertEquals(fileResult.getInt("width"), contentResult.getInt("width"))
+    assertEquals(fileResult.getInt("height"), contentResult.getInt("height"))
+    assertEquals(fileResult.getDouble("byteSize"), contentResult.getDouble("byteSize"), 0.0001)
+    assertEquals(
+      fileResult.getDouble("originalByteSize"),
+      contentResult.getDouble("originalByteSize"),
+      0.0001
+    )
+    assertEquals(
+      fileResult.getDouble("compressionRatio"),
+      contentResult.getDouble("compressionRatio"),
+      0.0001
+    )
+    assertNormalizedOutputExif(contentOutput, 20, 32)
+  }
+
+  @Test
+  fun compressImageRejectsUnreadableContentUriAtModuleBoundary() {
+    val reactContext = createReactContext()
+    val module = createModule(reactContext)
+    val contentUri = Uri.parse("content://image-compression-kit/missing-${System.nanoTime()}.jpg")
+    val promise = RecordingPromise()
+
+    shadowOf(reactContext.contentResolver).registerInputStreamSupplier(
+      contentUri,
+      Supplier {
+        throw IllegalStateException("Missing test content URI stream.")
+      }
+    )
+
+    module.compressImage(
+      compressionOptions(
+        sourceUri = contentUri.toString(),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      promise
+    )
+
+    assertNull(promise.resolvedValue)
+    assertEquals(ImageCompressionKitModule.ERR_FILE_ACCESS, promise.rejectionCode)
+    assertEquals("Android JPEG MVP could not read the source image URI.", promise.rejectionMessage)
+  }
+
+  @Test
   fun compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata() {
     val module = createModule()
     val sourceFile = createPatternJpegFile(width = 96, height = 64)
@@ -272,9 +378,14 @@ class ImageCompressionKitModuleTest {
     }
   }
 
-  private fun createModule(): ImageCompressionKitModule =
+  private fun createReactContext(): TestReactApplicationContext =
+    TestReactApplicationContext(RuntimeEnvironment.getApplication())
+
+  private fun createModule(
+    reactContext: ReactApplicationContext = createReactContext()
+  ): ImageCompressionKitModule =
     ImageCompressionKitModule(
-      reactContext = TestReactApplicationContext(RuntimeEnvironment.getApplication()),
+      reactContext = reactContext,
       writableMapFactory = { JavaOnlyMap() },
       writableArrayFactory = { JavaOnlyArray() }
     )
@@ -285,9 +396,23 @@ class ImageCompressionKitModuleTest {
     resize: JavaOnlyMap? = null,
     metadata: String = "strip"
   ): JavaOnlyMap {
+    return compressionOptions(
+      sourceUri = Uri.fromFile(sourceFile).toString(),
+      output = output,
+      resize = resize,
+      metadata = metadata
+    )
+  }
+
+  private fun compressionOptions(
+    sourceUri: String,
+    output: JavaOnlyMap,
+    resize: JavaOnlyMap? = null,
+    metadata: String = "strip"
+  ): JavaOnlyMap {
     val options = JavaOnlyMap.of(
       "source",
-      JavaOnlyMap.of("uri", Uri.fromFile(sourceFile).toString()),
+      JavaOnlyMap.of("uri", sourceUri),
       "output",
       output,
       "metadata",
@@ -299,6 +424,17 @@ class ImageCompressionKitModuleTest {
     }
 
     return options
+  }
+
+  private fun registerContentInputStream(
+    reactContext: ReactApplicationContext,
+    contentUri: Uri,
+    bytes: ByteArray
+  ) {
+    shadowOf(reactContext.contentResolver).registerInputStreamSupplier(
+      contentUri,
+      Supplier { ByteArrayInputStream(bytes) }
+    )
   }
 
   private fun resizeOptions(
@@ -452,10 +588,18 @@ class ImageCompressionKitModuleTest {
     outputFile: File,
     sourceFile: File
   ) {
+    assertResultMetadataMatchesBytes(result, outputFile, sourceFile.length())
+  }
+
+  private fun assertResultMetadataMatchesBytes(
+    result: ReadableMap,
+    outputFile: File,
+    originalByteSize: Long
+  ) {
     assertEquals(outputFile.length().toDouble(), result.getDouble("byteSize"), 0.0001)
-    assertEquals(sourceFile.length().toDouble(), result.getDouble("originalByteSize"), 0.0001)
+    assertEquals(originalByteSize.toDouble(), result.getDouble("originalByteSize"), 0.0001)
     assertEquals(
-      outputFile.length().toDouble() / sourceFile.length().toDouble(),
+      outputFile.length().toDouble() / originalByteSize.toDouble(),
       result.getDouble("compressionRatio"),
       0.0001
     )
