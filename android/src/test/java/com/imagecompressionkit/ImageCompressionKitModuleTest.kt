@@ -3,6 +3,7 @@ package com.imagecompressionkit
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import androidx.exifinterface.media.ExifInterface
 import com.facebook.react.bridge.Callback
 import com.facebook.react.bridge.CatalystInstance
 import com.facebook.react.bridge.JavaOnlyArray
@@ -109,6 +110,72 @@ class ImageCompressionKitModuleTest {
     assertEquals(ImageCompressionOutput.MAX_BYTES_UNSUPPORTED_MESSAGE, promise.rejectionMessage)
   }
 
+  @Test
+  fun compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif() {
+    val module = createModule()
+    val sourceFile = createOrientedJpegFile(
+      width = 40,
+      height = 20,
+      orientation = ExifInterface.ORIENTATION_ROTATE_90
+    )
+    val cases = listOf(
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "contain",
+          maxWidth = 16,
+          maxHeight = 10
+        ),
+        expectedWidth = 5,
+        expectedHeight = 10
+      ),
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "cover",
+          maxWidth = 16,
+          maxHeight = 10
+        ),
+        expectedWidth = 16,
+        expectedHeight = 10
+      ),
+      ResizeCase(
+        resize = resizeOptions(
+          mode = "stretch",
+          maxWidth = 16
+        ),
+        expectedWidth = 16,
+        expectedHeight = 40
+      )
+    )
+
+    cases.forEach { case ->
+      val promise = RecordingPromise()
+
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of(
+            "format",
+            "jpeg",
+            "quality",
+            82
+          ),
+          resize = case.resize,
+          metadata = "safe"
+        ),
+        promise
+      )
+
+      val result = promise.resolvedMap()
+      val outputFile = result.outputFile()
+
+      assertJpegSignature(outputFile.readBytes())
+      assertEquals("jpeg", result.getString("format"))
+      assertEquals(case.expectedWidth, result.getInt("width"))
+      assertEquals(case.expectedHeight, result.getInt("height"))
+      assertNormalizedOutputExif(outputFile, case.expectedWidth, case.expectedHeight)
+    }
+  }
+
   private fun createModule(): ImageCompressionKitModule =
     ImageCompressionKitModule(
       reactContext = TestReactApplicationContext(RuntimeEnvironment.getApplication()),
@@ -118,19 +185,48 @@ class ImageCompressionKitModuleTest {
 
   private fun compressionOptions(
     sourceFile: File,
-    output: JavaOnlyMap
-  ): JavaOnlyMap =
-    JavaOnlyMap.of(
+    output: JavaOnlyMap,
+    resize: JavaOnlyMap? = null,
+    metadata: String = "strip"
+  ): JavaOnlyMap {
+    val options = JavaOnlyMap.of(
       "source",
       JavaOnlyMap.of("uri", Uri.fromFile(sourceFile).toString()),
       "output",
       output,
       "metadata",
-      "strip"
+      metadata
     )
 
-  private fun createSampleJpegFile(): File {
-    val bitmap = Bitmap.createBitmap(16, 12, Bitmap.Config.ARGB_8888)
+    if (resize != null) {
+      options.putMap("resize", resize)
+    }
+
+    return options
+  }
+
+  private fun resizeOptions(
+    mode: String,
+    maxWidth: Int? = null,
+    maxHeight: Int? = null
+  ): JavaOnlyMap {
+    val resize = JavaOnlyMap.of("mode", mode)
+
+    if (maxWidth != null) {
+      resize.putInt("maxWidth", maxWidth)
+    }
+    if (maxHeight != null) {
+      resize.putInt("maxHeight", maxHeight)
+    }
+
+    return resize
+  }
+
+  private fun createSampleJpegFile(
+    width: Int = 16,
+    height: Int = 12
+  ): File {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     bitmap.eraseColor(0xff336699.toInt())
 
     val outputStream = ByteArrayOutputStream()
@@ -144,6 +240,27 @@ class ImageCompressionKitModuleTest {
       writeBytes(bytes)
       assertTrue(length() > 0)
     }
+  }
+
+  private fun createOrientedJpegFile(
+    width: Int,
+    height: Int,
+    orientation: Int
+  ): File {
+    val file = createSampleJpegFile(width = width, height = height)
+    val exif = ExifInterface(file.absolutePath)
+
+    exif.setAttribute(ExifInterface.TAG_ORIENTATION, orientation.toString())
+    exif.saveAttributes()
+    assertEquals(
+      orientation,
+      ExifInterface(file.absolutePath).getAttributeInt(
+        ExifInterface.TAG_ORIENTATION,
+        ExifInterface.ORIENTATION_UNDEFINED
+      )
+    )
+
+    return file
   }
 
   private fun RecordingPromise.resolvedMap(): ReadableMap {
@@ -193,6 +310,30 @@ class ImageCompressionKitModuleTest {
     assertEquals("RIFF", String(bytes, 0, 4, StandardCharsets.US_ASCII))
     assertEquals("WEBP", String(bytes, 8, 4, StandardCharsets.US_ASCII))
   }
+
+  private fun assertNormalizedOutputExif(
+    outputFile: File,
+    width: Int,
+    height: Int
+  ) {
+    val outputExif = ExifInterface(outputFile.absolutePath)
+
+    assertEquals(
+      ExifInterface.ORIENTATION_NORMAL,
+      outputExif.getAttributeInt(
+        ExifInterface.TAG_ORIENTATION,
+        ExifInterface.ORIENTATION_UNDEFINED
+      )
+    )
+    assertEquals(width, outputExif.getAttributeInt(ExifInterface.TAG_PIXEL_X_DIMENSION, 0))
+    assertEquals(height, outputExif.getAttributeInt(ExifInterface.TAG_PIXEL_Y_DIMENSION, 0))
+  }
+
+  private data class ResizeCase(
+    val resize: JavaOnlyMap,
+    val expectedWidth: Int,
+    val expectedHeight: Int
+  )
 
   private class TestReactApplicationContext(context: Context) : ReactApplicationContext(context) {
     override fun <T : JavaScriptModule> getJSModule(jsInterface: Class<T>): T =

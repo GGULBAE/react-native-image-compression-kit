@@ -273,9 +273,19 @@ function checkAndroidNativeModule() {
     'GraphicsMode.Mode.NATIVE',
     'compressImageCreatesJpegPngAndWebpOutputsWithExpectedResultMetadata',
     'compressImageRejectsPngMaxBytesAtModuleBoundary',
+    'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif',
     'module.compressImage(',
     'RecordingPromise',
     'JavaOnlyMap.of',
+    'ExifInterface.ORIENTATION_ROTATE_90',
+    'resizeOptions(',
+    'mode = "contain"',
+    'mode = "cover"',
+    'mode = "stretch"',
+    'metadata = "safe"',
+    'assertNormalizedOutputExif',
+    'ExifInterface.ORIENTATION_NORMAL',
+    'ExifInterface.TAG_PIXEL_X_DIMENSION',
     'assertPngSignature',
     'assertWebpSignature',
     '"RIFF"',
@@ -293,7 +303,7 @@ function checkAndroidNativeModule() {
     label: 'Android Kotlin module matches generated spec and Android JPEG-input MVP path',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG decode/orient/resize plus JPEG/PNG/WebP output encode path, metadata tests, output format tests, and module-level compression tests'
+        ? 'module extends generated spec and contains JPEG decode/orient/resize plus JPEG/PNG/WebP output encode path, metadata tests, output format tests, and module-level compression, resize, and orientation tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),
