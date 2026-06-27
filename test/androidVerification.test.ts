@@ -84,11 +84,14 @@ describe('Android verification scripts', () => {
       expect(packageJson.keywords).toContain(keyword);
     }
 
-    expect(readmeSource).toContain('initial `0.1.0` public release');
+    expect(readmeSource).toContain(
+      'initial `0.1.0` public release is distributed under'
+    );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
     );
-    expect(readmeSource).toContain('After the first npm release:');
+    expect(readmeSource).toContain('Install from npm:');
+    expect(readmeSource).toContain('- [x] Public npm release.');
   });
 
   it('exposes repository and app-backed Android verification commands', () => {
@@ -253,7 +256,7 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain('## Release Dry Run Checklist');
     expect(readmeSource).toContain(
-      'Actual npm publishing is intentionally outside the current release checklist.'
+      'Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist.'
     );
     expect(readmeSource).toContain('pnpm release:dry-run');
     expect(readmeSource).toContain('pnpm verify');
@@ -270,8 +273,10 @@ describe('Android verification scripts', () => {
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.1.0');
-    expect(releaseSource).toContain('## v0.1.0 Draft');
-    expect(releaseSource).toContain('Status: draft; not tagged and not published.');
+    expect(releaseSource).toContain('## v0.1.0');
+    expect(releaseSource).toContain(
+      'This release note describes the first public package release'
+    );
     expect(releaseSource).toContain('Android MVP only');
     expect(releaseSource).toContain('file://` and `content://');
     expect(releaseSource).toContain(
@@ -298,16 +303,34 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'Actual npm publish remains a separate manual step'
     );
+    expect(releaseSource).toContain('### Pre-publish Checklist');
     expect(releaseSource).toContain('git status --short --branch');
     expect(releaseSource).toContain('pnpm release:dry-run');
     expect(releaseSource).toContain('GitHub Actions CI success');
     expect(releaseSource).toContain('git tag -a v0.1.0 -m "v0.1.0"');
     expect(releaseSource).toContain('git push origin v0.1.0');
-    expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.1.0 draft release notes and tag preparation checklist.'
+    expect(releaseSource).toContain('### npm Publish Step');
+    expect(releaseSource).toContain(
+      'Log in to npm only after local validation, GitHub Actions CI, and the pushed'
     );
-    expect(readmeSource).toContain('reviewed v0.1.0 release notes draft');
-    expect(readmeSource).toContain('Tag commands are documented in `RELEASE.md`');
+    expect(releaseSource).toContain(
+      'pnpm login --registry=https://registry.npmjs.org/'
+    );
+    expect(releaseSource).toContain('pnpm whoami');
+    expect(releaseSource).toContain('pnpm publish');
+    expect(releaseSource).toContain(
+      'pnpm view react-native-image-compression-kit version'
+    );
+    expect(releaseSource).toContain(
+      'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
+    );
+    expect(readmeSource).toContain(
+      'See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, tag preparation checklist, and publish operator checklist.'
+    );
+    expect(readmeSource).toContain('reviewed v0.1.0 release notes');
+    expect(readmeSource).toContain(
+      'Tag and npm publish commands are documented in `RELEASE.md`'
+    );
   });
 
   it('keeps GitHub Actions on Node 24 runtime-compatible action majors', () => {

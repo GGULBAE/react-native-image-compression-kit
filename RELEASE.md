@@ -1,12 +1,10 @@
 # Release Notes
 
-## v0.1.0 Draft
+## v0.1.0
 
-Status: draft; not tagged and not published.
-
-This draft describes the intended first public package release for
+This release note describes the first public package release for
 `react-native-image-compression-kit`. It should stay aligned with the Android
-MVP implementation and the README before any `v0.1.0` tag is created.
+MVP implementation and the README before the package is published.
 
 ### Included
 
@@ -37,12 +35,12 @@ MVP implementation and the README before any `v0.1.0` tag is created.
 - Cancellation and progress callbacks are not implemented.
 - Actual npm publish remains a separate manual step.
 
-### Pre-tag Checklist
+### Pre-publish Checklist
 
-Complete these checks before creating a local or remote `v0.1.0` tag:
+Complete these checks before publishing `v0.1.0` to npm:
 
 - Confirm `package.json` still has version `0.1.0`.
-- Review this v0.1.0 draft and README release status for consistency with the implemented Android MVP.
+- Review this v0.1.0 release note and README release status for consistency with the implemented Android MVP.
 - Confirm the working tree and branch are correct:
 
 ```bash
@@ -64,5 +62,29 @@ git tag -a v0.1.0 -m "v0.1.0"
 git push origin v0.1.0
 ```
 
-Do not run the tag commands as part of the dry-run checklist. They are the
-manual promotion step after local validation and GitHub Actions CI are green.
+Do not run the tag commands as part of the dry-run checklist. They are a manual
+promotion step after local validation and GitHub Actions CI are green.
+
+### npm Publish Step
+
+Log in to npm only after local validation, GitHub Actions CI, and the pushed
+`v0.1.0` tag are confirmed:
+
+```bash
+pnpm login --registry=https://registry.npmjs.org/
+pnpm whoami
+pnpm publish
+pnpm view react-native-image-compression-kit version
+```
+
+If npm two-factor authentication asks for a one-time password, run:
+
+```bash
+pnpm publish --otp 123456
+```
+
+After npm publish succeeds, create the GitHub Release from this note:
+
+```bash
+gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md
+```

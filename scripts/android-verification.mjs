@@ -71,7 +71,7 @@ function runDoctor() {
     checkPackageFiles(),
     checkConsumerSmokeTestEnvironment(),
     checkReleaseDryRunChecklist(),
-    checkReleaseNotesDraft(),
+    checkReleaseNotes(),
     checkGitHubActionRuntimeVersions(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
@@ -195,9 +195,10 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('initial `0.1.0` public release'),
+    readmeContents.includes('initial `0.1.0` public release is distributed under'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
-    readmeContents.includes('After the first npm release:'),
+    readmeContents.includes('Install from npm:'),
+    readmeContents.includes('- [x] Public npm release.'),
   ];
 
   return {
@@ -400,7 +401,7 @@ function checkReleaseDryRunChecklist() {
     [releaseScriptContents, "args: ['smoke:consumer']"],
     [releaseScriptContents, "args: ['publish', '--dry-run', '--no-git-checks']"],
     [readmeContents, '## Release Dry Run Checklist'],
-    [readmeContents, 'Actual npm publishing is intentionally outside the current release checklist.'],
+    [readmeContents, 'Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist.'],
     [readmeContents, 'pnpm release:dry-run'],
     [readmeContents, 'pnpm verify'],
     [readmeContents, 'pnpm example:typecheck'],
@@ -429,13 +430,13 @@ function checkReleaseDryRunChecklist() {
   };
 }
 
-function checkReleaseNotesDraft() {
+function checkReleaseNotes() {
   const releaseContents = readText('RELEASE.md');
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
-    '## v0.1.0 Draft',
-    'Status: draft; not tagged and not published.',
+    '## v0.1.0',
+    'This release note describes the first public package release',
     'Android MVP only',
     'file://` and `content://',
     'JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input',
@@ -450,16 +451,24 @@ function checkReleaseNotesDraft() {
     'HEIC / HEIF output is not implemented',
     'GIF output and animation preservation are not implemented',
     'Actual npm publish remains a separate manual step',
+    '### Pre-publish Checklist',
     'git status --short --branch',
     'pnpm release:dry-run',
     'GitHub Actions CI success',
     'git tag -a v0.1.0 -m "v0.1.0"',
     'git push origin v0.1.0',
+    '### npm Publish Step',
+    'Log in to npm only after local validation, GitHub Actions CI, and the pushed',
+    'pnpm login --registry=https://registry.npmjs.org/',
+    'pnpm whoami',
+    'pnpm publish',
+    'pnpm view react-native-image-compression-kit version',
+    'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.1.0 draft release notes and tag preparation checklist.',
-    'reviewed v0.1.0 release notes draft',
-    'Tag commands are documented in `RELEASE.md`',
+    'See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, tag preparation checklist, and publish operator checklist.',
+    'reviewed v0.1.0 release notes',
+    'Tag and npm publish commands are documented in `RELEASE.md`',
   ];
   const missing = [
     ...releaseSnippets
@@ -475,7 +484,7 @@ function checkReleaseNotesDraft() {
     ok,
     label: 'v0.1.0 release notes and tag checklist are current',
     detail: ok
-      ? 'RELEASE.md documents the draft scope, non-goals, dry-run gate, CI gate, and manual tag commands'
+      ? 'RELEASE.md documents the release scope, non-goals, dry-run gate, CI gate, tag commands, and npm publish operator steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
           ...(packageJson.version === '0.1.0' ? [] : ['package.json version 0.1.0']),

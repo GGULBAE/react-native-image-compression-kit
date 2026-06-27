@@ -349,15 +349,15 @@ This project is not intended to handle:
 - [ ] AVIF output.
 - [ ] Metadata support for non-JPEG formats and iOS.
 - [ ] Cancellation and progress.
-- [ ] Public npm release.
+- [x] Public npm release.
 
 ## Installation
 
-This package has not been published to npm yet. The package metadata is prepared for an initial `0.1.0` public release under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and the iOS stub included in the packed package. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
+The initial `0.1.0` public release is distributed under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and the iOS stub included in the packed package. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
 
 The repository contains an initial TypeScript API scaffold and an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. iOS compression, HEIC/HEIF output, AVIF output, and broader input format support are not implemented yet.
 
-After the first npm release:
+Install from npm:
 
 ```bash
 npm install react-native-image-compression-kit
@@ -524,7 +524,7 @@ The executable Android checks require a Java runtime, Android SDK, and a Gradle 
 
 ## Release Dry Run Checklist
 
-Actual npm publishing is intentionally outside the current release checklist. See [RELEASE.md](RELEASE.md) for the v0.1.0 draft release notes and tag preparation checklist. Before publishing, review the intended version and package metadata, then run the dry-run release gate from the repository root:
+Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, tag preparation checklist, and publish operator checklist. Before publishing, review the intended version and package metadata, then run the dry-run release gate from the repository root:
 
 ```bash
 pnpm release:dry-run
@@ -541,7 +541,7 @@ pnpm smoke:consumer
 pnpm publish --dry-run --no-git-checks
 ```
 
-The final `pnpm publish --dry-run --no-git-checks` step exercises the publish packaging path without uploading a package. The `--no-git-checks` flag keeps the dry run usable before the release commit or tag exists; the actual publish decision should still wait for a clean working tree, the intended version, a reviewed v0.1.0 release notes draft, and a successful GitHub Actions CI run on the pushed release commit. Tag commands are documented in `RELEASE.md` and should only be run manually after those checks pass.
+The final `pnpm publish --dry-run --no-git-checks` step exercises the publish packaging path without uploading a package. The `--no-git-checks` flag keeps the dry run usable before the release commit or tag exists; the actual publish decision should still wait for a clean working tree, the intended version, reviewed v0.1.0 release notes, a pushed `v0.1.0` tag, and a successful GitHub Actions CI run on the pushed release commit. Tag and npm publish commands are documented in `RELEASE.md` and should only be run manually after those checks pass.
 
 ### Local Commit Hook
 
