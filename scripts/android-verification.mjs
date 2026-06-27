@@ -442,7 +442,7 @@ function checkHeicHeifCodecSampleStrategy() {
     'Generated fixtures are committed because they are tiny',
     'android/src/test/assets/heic-heif/',
     'They verify the fixture files and metadata, but they do not boot an emulator.',
-    'A separate Android Instrumentation workflow boots an API 35 Google APIs emulator',
+    'A separate Android Instrumentation workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout',
     '`pnpm example:android-instrumentation`',
     'committed `sample.heic`, `sample.heif`, and `sample.avif` fixtures through their `ImageDecoder` routes',
     'Manual codec validation beyond CI should use a codec-backed Android device or emulator',
@@ -489,11 +489,15 @@ function checkHeicHeifInstrumentationValidation() {
     testContents.includes('assertBitmapDimensions(outputFile, width = 16, height = 12)'),
     workflowContents.includes('name: Android Instrumentation'),
     workflowContents.includes('HEIC/HEIF/AVIF emulator validation'),
+    workflowContents.includes('Enable KVM group permissions'),
     workflowContents.includes('reactivecircus/android-emulator-runner@v2'),
     workflowContents.includes('api-level: 35'),
     workflowContents.includes('target: google_apis'),
+    workflowContents.includes('emulator-boot-timeout: 1200'),
     workflowContents.includes('script: pnpm example:android-instrumentation'),
     readmeContents.includes('Android Instrumentation workflow'),
+    readmeContents.includes('enables KVM permissions'),
+    readmeContents.includes('extended boot timeout'),
     readmeContents.includes('pnpm example:android-instrumentation'),
     readmeContents.includes('API 35 Google APIs emulator'),
   ];
@@ -502,7 +506,7 @@ function checkHeicHeifInstrumentationValidation() {
     ok: checks.every(Boolean),
     label: 'HEIC/HEIF/AVIF emulator instrumentation validation is wired',
     detail: checks.every(Boolean)
-      ? 'androidTest assets, API 34+ codec sample assertions, package script, workflow, and README are present'
+      ? 'androidTest assets, API 34+ codec sample assertions, package script, KVM/boot-timeout workflow setup, and README are present'
       : 'expected androidTest setup, package script, workflow snippets, or README documentation are missing/mismatched',
   };
 }

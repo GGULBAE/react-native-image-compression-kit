@@ -89,7 +89,7 @@ describe('Android verification scripts', () => {
       'They verify the fixture files and metadata, but they do not boot an emulator.'
     );
     expect(readmeSource).toContain(
-      'A separate Android Instrumentation workflow boots an API 35 Google APIs emulator'
+      'A separate Android Instrumentation workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout'
     );
     expect(readmeSource).toContain('`pnpm example:android-instrumentation`');
     expect(readmeSource).toContain(
@@ -144,9 +144,11 @@ describe('Android verification scripts', () => {
     );
     expect(workflowSource).toContain('name: Android Instrumentation');
     expect(workflowSource).toContain('HEIC/HEIF/AVIF emulator validation');
+    expect(workflowSource).toContain('Enable KVM group permissions');
     expect(workflowSource).toContain('reactivecircus/android-emulator-runner@v2');
     expect(workflowSource).toContain('api-level: 35');
     expect(workflowSource).toContain('target: google_apis');
+    expect(workflowSource).toContain('emulator-boot-timeout: 1200');
     expect(workflowSource).toContain('script: pnpm example:android-instrumentation');
     expect(verificationSource).toContain('checkHeicHeifInstrumentationValidation');
   });
