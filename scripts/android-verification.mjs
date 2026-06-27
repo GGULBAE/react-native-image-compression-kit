@@ -15,6 +15,7 @@ const REQUIRED_FILES = [
   'package.json',
   'Dockerfile',
   '.dockerignore',
+  '.github/workflows/ci.yml',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt',
@@ -33,6 +34,7 @@ const REQUIRED_FILES = [
   'android/src/test/assets/avif/sample.avif',
   'android/src/test/assets/avif/manifest.json',
   '.github/workflows/android-instrumentation.yml',
+  'scripts/consumer-smoke-test.mjs',
   'scripts/docker-android.mjs',
   'scripts/generate-avif-fixtures.mjs',
   'scripts/generate-heic-heif-fixtures.mjs',
@@ -64,6 +66,7 @@ function runDoctor() {
     checkSpecFile(),
     checkDockerAndroidEnvironment(),
     checkPackageFiles(),
+    checkConsumerSmokeTestEnvironment(),
     checkGitHubActionRuntimeVersions(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
@@ -283,6 +286,47 @@ function checkPackageFiles() {
       hasRequiredEntries && excludesBroadAndroidDirectory
         ? 'Android package entries include source and Gradle config without packaging android/build artifacts'
         : 'expected package.json files to include android/build.gradle and android/src, without the broad android directory',
+  };
+}
+
+function checkConsumerSmokeTestEnvironment() {
+  const packageJson = readJson('package.json');
+  const smokeScriptContents = readText('scripts/consumer-smoke-test.mjs');
+  const ciContents = readText('.github/workflows/ci.yml');
+  const readmeContents = readText('README.md');
+  const expectedSnippets = [
+    [smokeScriptContents, "run('pnpm', ['pack', '--pack-destination', packDir], ROOT)"],
+    [smokeScriptContents, "run('pnpm', ['install', '--ignore-scripts'], consumerDir)"],
+    [smokeScriptContents, "run('pnpm', ['typecheck'], consumerDir)"],
+    [smokeScriptContents, "'react-native-image-compression-kit': tarballSpecifier"],
+    [smokeScriptContents, "const REACT_NATIVE_VERSION = '0.86.0'"],
+    [smokeScriptContents, 'lib/index.d.ts'],
+    [smokeScriptContents, 'compressImage(options)'],
+    [smokeScriptContents, 'getImageCompressionCapabilities()'],
+    [ciContents, 'name: Run package consumer smoke test'],
+    [ciContents, 'run: pnpm smoke:consumer'],
+    [readmeContents, 'pnpm smoke:consumer'],
+    [readmeContents, 'separate temporary React Native consumer project'],
+    [readmeContents, 'typechecks imports from `react-native-image-compression-kit`'],
+    [readmeContents, 'without publishing to npm'],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => !contents.includes(snippet))
+    .map(([, snippet]) => snippet);
+  const hasScript =
+    packageJson.scripts?.['smoke:consumer'] ===
+    'pnpm build && node scripts/consumer-smoke-test.mjs';
+
+  return {
+    ok: hasScript && missing.length === 0,
+    label: 'package consumer smoke test is wired',
+    detail:
+      hasScript && missing.length === 0
+        ? 'package script, packed-tarball consumer installer, CI step, and README guidance are present'
+        : `missing snippets or package script: ${[
+            ...missing,
+            ...(hasScript ? [] : ['package.json smoke:consumer script']),
+          ].join(' | ')}`,
   };
 }
 

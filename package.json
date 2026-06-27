@@ -37,6 +37,7 @@
     "fixtures:heic-heif": "node scripts/generate-heic-heif-fixtures.mjs",
     "fixtures:heic-heif:check": "node scripts/generate-heic-heif-fixtures.mjs --check",
     "hooks:install": "node scripts/install-git-hooks.mjs",
+    "smoke:consumer": "pnpm build && node scripts/consumer-smoke-test.mjs",
     "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm android:doctor",
     "android:doctor": "node scripts/android-verification.mjs doctor",
     "android:codegen": "node scripts/android-verification.mjs codegen",

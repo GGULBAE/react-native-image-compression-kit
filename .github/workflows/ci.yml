@@ -72,3 +72,6 @@ jobs:
 
       - name: Build Android example app
         run: pnpm example:build
+
+      - name: Run package consumer smoke test
+        run: pnpm smoke:consumer

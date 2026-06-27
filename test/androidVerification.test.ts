@@ -147,6 +147,38 @@ describe('Android verification scripts', () => {
     expect(packageJson.files).not.toContain('android');
   });
 
+  it('wires the packed package consumer smoke test', () => {
+    const smokeScriptSource = readProjectFile('scripts/consumer-smoke-test.mjs');
+    const ciWorkflowSource = readProjectFile('.github/workflows/ci.yml');
+    const readmeSource = readProjectFile('README.md');
+
+    expect(packageJson.scripts['smoke:consumer']).toBe(
+      'pnpm build && node scripts/consumer-smoke-test.mjs'
+    );
+    expect(smokeScriptSource).toContain(
+      "run('pnpm', ['pack', '--pack-destination', packDir], ROOT)"
+    );
+    expect(smokeScriptSource).toContain(
+      "run('pnpm', ['install', '--ignore-scripts'], consumerDir)"
+    );
+    expect(smokeScriptSource).toContain("run('pnpm', ['typecheck'], consumerDir)");
+    expect(smokeScriptSource).toContain(
+      "'react-native-image-compression-kit': tarballSpecifier"
+    );
+    expect(smokeScriptSource).toContain("const REACT_NATIVE_VERSION = '0.86.0'");
+    expect(smokeScriptSource).toContain('lib/index.d.ts');
+    expect(smokeScriptSource).toContain('compressImage(options)');
+    expect(smokeScriptSource).toContain('getImageCompressionCapabilities()');
+    expect(ciWorkflowSource).toContain('name: Run package consumer smoke test');
+    expect(ciWorkflowSource).toContain('run: pnpm smoke:consumer');
+    expect(readmeSource).toContain('pnpm smoke:consumer');
+    expect(readmeSource).toContain('separate temporary React Native consumer project');
+    expect(readmeSource).toContain(
+      'typechecks imports from `react-native-image-compression-kit`'
+    );
+    expect(readmeSource).toContain('without publishing to npm');
+  });
+
   it('keeps GitHub Actions on Node 24 runtime-compatible action majors', () => {
     const ciWorkflowSource = readProjectFile('.github/workflows/ci.yml');
     const instrumentationWorkflowSource = readProjectFile(

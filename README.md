@@ -428,9 +428,12 @@ pnpm example:typecheck
 pnpm example:codegen
 pnpm example:android-unit-test
 pnpm example:build
+pnpm smoke:consumer
 ```
 
 `pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP/GIF input and JPEG/PNG/WebP output format and byte-signature behavior, and module-level `compressImage` file URI, content URI, AVIF API-gated decode boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF/AVIF capability-note structure, corrupt supported-format decode failure, GIF static first-frame decoding, PNG/WebP/GIF input resize, EXIF orientation, target-size, and metadata no-copy integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input paths and JPEG, PNG, and WebP output paths.
+
+`pnpm smoke:consumer` builds the TypeScript output, creates a `pnpm pack` tarball, installs that tarball into a separate temporary React Native consumer project, and typechecks imports from `react-native-image-compression-kit` against the packed package. This pre-release smoke test verifies the npm package shape without publishing to npm or running Metro/native device builds. Set `RNICK_CONSUMER_SMOKE_KEEP=1` to keep the temporary project for inspection, or `RNICK_CONSUMER_SMOKE_TMPDIR=/path/to/tmp` to choose its parent directory.
 
 The separate `.github/workflows/android-instrumentation.yml` workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout, and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC, HEIF, and AVIF fixtures decode on the Android `ImageDecoder` paths and can be compressed to JPEG, PNG, and WebP. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
 
@@ -483,6 +486,14 @@ pnpm verify
 ```
 
 `pnpm verify` runs type checking, unit tests, the TypeScript build, and the Android verification doctor.
+
+Run the pack-based consumer smoke test before release-oriented changes:
+
+```bash
+pnpm smoke:consumer
+```
+
+This command builds the package, creates a local tarball with `pnpm pack`, installs it into a separate temporary React Native consumer project, and typechecks public API imports from the packed package.
 
 To run only the Android repository checks:
 
