@@ -524,7 +524,7 @@ The executable Android checks require a Java runtime, Android SDK, and a Gradle 
 
 ## Release Dry Run Checklist
 
-Actual npm publishing is intentionally outside the current release checklist. Before publishing, review the intended version and package metadata, then run the dry-run release gate from the repository root:
+Actual npm publishing is intentionally outside the current release checklist. See [RELEASE.md](RELEASE.md) for the v0.1.0 draft release notes and tag preparation checklist. Before publishing, review the intended version and package metadata, then run the dry-run release gate from the repository root:
 
 ```bash
 pnpm release:dry-run
@@ -541,7 +541,7 @@ pnpm smoke:consumer
 pnpm publish --dry-run --no-git-checks
 ```
 
-The final `pnpm publish --dry-run --no-git-checks` step exercises the publish packaging path without uploading a package. The `--no-git-checks` flag keeps the dry run usable before the release commit or tag exists; the actual publish decision should still wait for a clean working tree, the intended version, and a successful GitHub Actions CI run on the pushed release commit.
+The final `pnpm publish --dry-run --no-git-checks` step exercises the publish packaging path without uploading a package. The `--no-git-checks` flag keeps the dry run usable before the release commit or tag exists; the actual publish decision should still wait for a clean working tree, the intended version, a reviewed v0.1.0 release notes draft, and a successful GitHub Actions CI run on the pushed release commit. Tag commands are documented in `RELEASE.md` and should only be run manually after those checks pass.
 
 ### Local Commit Hook
 

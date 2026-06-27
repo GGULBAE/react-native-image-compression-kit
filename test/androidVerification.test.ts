@@ -265,6 +265,51 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('successful GitHub Actions CI run');
   });
 
+  it('documents the v0.1.0 release notes and tag checklist', () => {
+    const releaseSource = readProjectFile('RELEASE.md');
+    const readmeSource = readProjectFile('README.md');
+
+    expect(packageJson.version).toBe('0.1.0');
+    expect(releaseSource).toContain('## v0.1.0 Draft');
+    expect(releaseSource).toContain('Status: draft; not tagged and not published.');
+    expect(releaseSource).toContain('Android MVP only');
+    expect(releaseSource).toContain('file://` and `content://');
+    expect(releaseSource).toContain(
+      'JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input'
+    );
+    expect(releaseSource).toContain(
+      'GIF input is decoded as a static first frame'
+    );
+    expect(releaseSource).toContain('HEIC / HEIF input is SDK-gated');
+    expect(releaseSource).toContain('Android 14+ AVIF input');
+    expect(releaseSource).toContain('JPEG, PNG, and WebP output');
+    expect(releaseSource).toContain(
+      'Target-size compression with maxBytes for JPEG and WebP output'
+    );
+    expect(releaseSource).toContain(
+      'Metadata policies preserve, safe, and strip'
+    );
+    expect(releaseSource).toContain('iOS compression is not implemented');
+    expect(releaseSource).toContain('AVIF output is not implemented');
+    expect(releaseSource).toContain('HEIC / HEIF output is not implemented');
+    expect(releaseSource).toContain(
+      'GIF output and animation preservation are not implemented'
+    );
+    expect(releaseSource).toContain(
+      'Actual npm publish remains a separate manual step'
+    );
+    expect(releaseSource).toContain('git status --short --branch');
+    expect(releaseSource).toContain('pnpm release:dry-run');
+    expect(releaseSource).toContain('GitHub Actions CI success');
+    expect(releaseSource).toContain('git tag -a v0.1.0 -m "v0.1.0"');
+    expect(releaseSource).toContain('git push origin v0.1.0');
+    expect(readmeSource).toContain(
+      'See [RELEASE.md](RELEASE.md) for the v0.1.0 draft release notes and tag preparation checklist.'
+    );
+    expect(readmeSource).toContain('reviewed v0.1.0 release notes draft');
+    expect(readmeSource).toContain('Tag commands are documented in `RELEASE.md`');
+  });
+
   it('keeps GitHub Actions on Node 24 runtime-compatible action majors', () => {
     const ciWorkflowSource = readProjectFile('.github/workflows/ci.yml');
     const instrumentationWorkflowSource = readProjectFile(

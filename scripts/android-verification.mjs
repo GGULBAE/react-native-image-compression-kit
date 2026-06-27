@@ -13,6 +13,7 @@ const GRADLE_TASK_ENV = 'RNICK_ANDROID_GRADLE_TASK';
 
 const REQUIRED_FILES = [
   'package.json',
+  'RELEASE.md',
   'Dockerfile',
   '.dockerignore',
   '.github/workflows/ci.yml',
@@ -70,6 +71,7 @@ function runDoctor() {
     checkPackageFiles(),
     checkConsumerSmokeTestEnvironment(),
     checkReleaseDryRunChecklist(),
+    checkReleaseNotesDraft(),
     checkGitHubActionRuntimeVersions(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
@@ -424,6 +426,60 @@ function checkReleaseDryRunChecklist() {
             ...missing,
             ...(hasScript ? [] : ['package.json release:dry-run script']),
           ].join(' | ')}`,
+  };
+}
+
+function checkReleaseNotesDraft() {
+  const releaseContents = readText('RELEASE.md');
+  const readmeContents = readText('README.md');
+  const packageJson = readJson('package.json');
+  const releaseSnippets = [
+    '## v0.1.0 Draft',
+    'Status: draft; not tagged and not published.',
+    'Android MVP only',
+    'file://` and `content://',
+    'JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input',
+    'GIF input is decoded as a static first frame',
+    'HEIC / HEIF input is SDK-gated',
+    'Android 14+ AVIF input',
+    'JPEG, PNG, and WebP output',
+    'Target-size compression with maxBytes for JPEG and WebP output',
+    'Metadata policies preserve, safe, and strip',
+    'iOS compression is not implemented',
+    'AVIF output is not implemented',
+    'HEIC / HEIF output is not implemented',
+    'GIF output and animation preservation are not implemented',
+    'Actual npm publish remains a separate manual step',
+    'git status --short --branch',
+    'pnpm release:dry-run',
+    'GitHub Actions CI success',
+    'git tag -a v0.1.0 -m "v0.1.0"',
+    'git push origin v0.1.0',
+  ];
+  const readmeSnippets = [
+    'See [RELEASE.md](RELEASE.md) for the v0.1.0 draft release notes and tag preparation checklist.',
+    'reviewed v0.1.0 release notes draft',
+    'Tag commands are documented in `RELEASE.md`',
+  ];
+  const missing = [
+    ...releaseSnippets
+      .filter((snippet) => !releaseContents.includes(snippet))
+      .map((snippet) => `RELEASE.md ${snippet}`),
+    ...readmeSnippets
+      .filter((snippet) => !readmeContents.includes(snippet))
+      .map((snippet) => `README.md ${snippet}`),
+  ];
+  const ok = packageJson.version === '0.1.0' && missing.length === 0;
+
+  return {
+    ok,
+    label: 'v0.1.0 release notes and tag checklist are current',
+    detail: ok
+      ? 'RELEASE.md documents the draft scope, non-goals, dry-run gate, CI gate, and manual tag commands'
+      : `missing release notes snippets or version mismatch: ${[
+          ...missing,
+          ...(packageJson.version === '0.1.0' ? [] : ['package.json version 0.1.0']),
+        ].join(' | ')}`,
   };
 }
 
