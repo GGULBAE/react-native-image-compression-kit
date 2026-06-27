@@ -524,7 +524,7 @@ The executable Android checks require a Java runtime, Android SDK, and a Gradle 
 
 ## Release Dry Run Checklist
 
-Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, tag preparation checklist, and publish operator checklist. Before publishing, review the intended version and package metadata, then run the dry-run release gate from the repository root:
+Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
 
 ```bash
 pnpm release:dry-run
@@ -541,7 +541,7 @@ pnpm smoke:consumer
 pnpm publish --dry-run --no-git-checks
 ```
 
-The final `pnpm publish --dry-run --no-git-checks` step exercises the publish packaging path without uploading a package. The `--no-git-checks` flag keeps the dry run usable before the release commit or tag exists; the actual publish decision should still wait for a clean working tree, the intended version, reviewed v0.1.0 release notes, a pushed `v0.1.0` tag, and a successful GitHub Actions CI run on the pushed release commit. Tag and npm publish commands are documented in `RELEASE.md` and should only be run manually after those checks pass.
+The final `pnpm publish --dry-run --no-git-checks` step exercises the publish packaging path without uploading a package. The `--no-git-checks` flag keeps the dry run usable before the release commit or tag exists; the actual publish decision should still wait for a clean working tree, the intended version, reviewed release notes, a pushed version tag, and a successful GitHub Actions CI run on the pushed release commit. Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md` and should only be run manually after those checks pass.
 
 ### Local Commit Hook
 
@@ -556,6 +556,10 @@ The `pre-commit` hook runs `git diff --cached --check`, `pnpm verify`, and `pnpm
 ## Contributing
 
 The project is in its initial design phase. Issues and discussions about the proposed API, format priorities, platform behavior, metadata policy, and native implementation strategy are welcome once the repository is ready for public collaboration.
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, and package security hygiene. Published packages should not run install-time lifecycle scripts, and release verification should confirm that credentials, `.npmrc`, `.env*`, tests, fixtures, example app files, and debug keystores stay out of the npm tarball.
 
 ## License
 

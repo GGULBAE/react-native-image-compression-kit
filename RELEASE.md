@@ -2,9 +2,20 @@
 
 ## v0.1.0
 
+Status: published to npm on June 27, 2026 at 10:51:55 UTC (19:51:55 KST), tagged as `v0.1.0`.
+
 This release note describes the first public package release for
-`react-native-image-compression-kit`. It should stay aligned with the Android
-MVP implementation and the README before the package is published.
+`react-native-image-compression-kit`, published as
+`react-native-image-compression-kit@0.1.0`. It should stay aligned with the
+Android MVP implementation and the README.
+
+### Published Artifacts
+
+- npm package: `react-native-image-compression-kit@0.1.0`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.1.0.tgz`
+- npm integrity: `sha512-W8kaa3eKdWVLHCGeApdOqNMfeD7np42OcgjGCUZAQDZqzx86diybRtEqK+MJtX73Yt4wLcVKOtb62sPtLJLk9g==`
+- Git tag: `v0.1.0`
+- Published tarball size: 34.2 kB package size, 142.2 kB unpacked size, 48 files.
 
 ### Included
 
@@ -33,11 +44,10 @@ MVP implementation and the README before the package is published.
 - Animated WebP and animated AVIF preservation are not implemented.
 - Metadata support for non-JPEG formats and iOS is not implemented.
 - Cancellation and progress callbacks are not implemented.
-- Actual npm publish remains a separate manual step.
 
-### Pre-publish Checklist
+### Release Checklist
 
-Complete these checks before publishing `v0.1.0` to npm:
+The `v0.1.0` release completed these checks before npm publish:
 
 - Confirm `package.json` still has version `0.1.0`.
 - Review this v0.1.0 release note and README release status for consistency with the implemented Android MVP.
@@ -65,25 +75,35 @@ git push origin v0.1.0
 Do not run the tag commands as part of the dry-run checklist. They are a manual
 promotion step after local validation and GitHub Actions CI are green.
 
-### npm Publish Step
+### Publish Commands
 
-Log in to npm only after local validation, GitHub Actions CI, and the pushed
-`v0.1.0` tag are confirmed:
+The npm publish step requires an authenticated npm registry session. If npm
+two-factor authentication is enabled, pass a current one-time password:
 
 ```bash
 pnpm login --registry=https://registry.npmjs.org/
 pnpm whoami
-pnpm publish
-pnpm view react-native-image-compression-kit version
-```
-
-If npm two-factor authentication asks for a one-time password, run:
-
-```bash
 pnpm publish --otp 123456
 ```
 
-After npm publish succeeds, create the GitHub Release from this note:
+After publish, verify the registry version:
+
+```bash
+pnpm view react-native-image-compression-kit version dist.integrity
+```
+
+### Post-publish Security Review
+
+Completed after npm publish:
+
+- `pnpm view react-native-image-compression-kit version dist.tarball dist.integrity time --json` confirmed version `0.1.0`, registry tarball URL, integrity, and publish timestamp.
+- `npm pack react-native-image-compression-kit@0.1.0` confirmed the published tarball contains 48 files and excludes development-only scripts, tests, fixtures, example app files, build directories, and debug keystores.
+- The published `package.json` contains no `preinstall`, `install`, `postinstall`, `prepare`, `prepack`, `postpack`, `publish`, or `postpublish` lifecycle scripts.
+- Registry tarball forbidden-file scan found no `.env*`, `.npmrc`, key files, debug keystore, Android test directories, example app files, or repository scripts.
+- Registry tarball secret-like string scan found no npm tokens, GitHub tokens, auth tokens, private key blocks, passwords, or broad secret markers.
+- `pnpm audit --prod` reported no known vulnerabilities.
+
+Create the GitHub Release from this note when ready:
 
 ```bash
 gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md

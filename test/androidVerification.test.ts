@@ -79,6 +79,9 @@ describe('Android verification scripts', () => {
       default: './lib/index.js',
     });
     expect(packageJson.peerDependencies['react-native']).toBe('>=0.73 <1.0');
+    expect(packageJson.files).toContain('README.md');
+    expect(packageJson.files).toContain('SECURITY.md');
+    expect(packageJson.files).toContain('LICENSE');
 
     for (const keyword of expectedKeywords) {
       expect(packageJson.keywords).toContain(keyword);
@@ -275,7 +278,18 @@ describe('Android verification scripts', () => {
     expect(packageJson.version).toBe('0.1.0');
     expect(releaseSource).toContain('## v0.1.0');
     expect(releaseSource).toContain(
-      'This release note describes the first public package release'
+      'Status: published to npm on June 27, 2026 at 10:51:55 UTC (19:51:55 KST), tagged as `v0.1.0`.'
+    );
+    expect(releaseSource).toContain('published as');
+    expect(releaseSource).toContain('### Published Artifacts');
+    expect(releaseSource).toContain(
+      'npm package: `react-native-image-compression-kit@0.1.0`'
+    );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-W8kaa3eKdWVLHCGeApdOqNMfeD7np42OcgjGCUZAQDZqzx86diybRtEqK+MJtX73Yt4wLcVKOtb62sPtLJLk9g==`'
+    );
+    expect(releaseSource).toContain(
+      'Published tarball size: 34.2 kB package size, 142.2 kB unpacked size, 48 files.'
     );
     expect(releaseSource).toContain('Android MVP only');
     expect(releaseSource).toContain('file://` and `content://');
@@ -300,36 +314,75 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'GIF output and animation preservation are not implemented'
     );
-    expect(releaseSource).toContain(
-      'Actual npm publish remains a separate manual step'
-    );
-    expect(releaseSource).toContain('### Pre-publish Checklist');
+    expect(releaseSource).toContain('### Release Checklist');
     expect(releaseSource).toContain('git status --short --branch');
     expect(releaseSource).toContain('pnpm release:dry-run');
     expect(releaseSource).toContain('GitHub Actions CI success');
     expect(releaseSource).toContain('git tag -a v0.1.0 -m "v0.1.0"');
     expect(releaseSource).toContain('git push origin v0.1.0');
-    expect(releaseSource).toContain('### npm Publish Step');
-    expect(releaseSource).toContain(
-      'Log in to npm only after local validation, GitHub Actions CI, and the pushed'
-    );
+    expect(releaseSource).toContain('### Publish Commands');
     expect(releaseSource).toContain(
       'pnpm login --registry=https://registry.npmjs.org/'
     );
     expect(releaseSource).toContain('pnpm whoami');
-    expect(releaseSource).toContain('pnpm publish');
+    expect(releaseSource).toContain('pnpm publish --otp 123456');
     expect(releaseSource).toContain(
-      'pnpm view react-native-image-compression-kit version'
+      'pnpm view react-native-image-compression-kit version dist.integrity'
+    );
+    expect(releaseSource).toContain('### Post-publish Security Review');
+    expect(releaseSource).toContain(
+      'contains no `preinstall`, `install`, `postinstall`, `prepare`, `prepack`, `postpack`, `publish`, or `postpublish` lifecycle scripts'
+    );
+    expect(releaseSource).toContain(
+      'forbidden-file scan found no `.env*`, `.npmrc`, key files, debug keystore, Android test directories, example app files, or repository scripts'
+    );
+    expect(releaseSource).toContain(
+      '`pnpm audit --prod` reported no known vulnerabilities'
     );
     expect(releaseSource).toContain(
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, tag preparation checklist, and publish operator checklist.'
+      'See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, published artifact details, tag checklist, and post-publish security review.'
     );
-    expect(readmeSource).toContain('reviewed v0.1.0 release notes');
+    expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
-      'Tag and npm publish commands are documented in `RELEASE.md`'
+      'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`'
+    );
+  });
+
+  it('documents security policy and package hygiene expectations', () => {
+    const securitySource = readProjectFile('SECURITY.md');
+    const readmeSource = readProjectFile('README.md');
+
+    expect(securitySource).toContain('# Security Policy');
+    expect(securitySource).toContain('| 0.1.x | Yes |');
+    expect(securitySource).toContain(
+      'Please do not include exploit details, secrets, private keys, or sensitive'
+    );
+    expect(securitySource).toContain(
+      'The npm package is intended to avoid install-time code execution.'
+    );
+    expect(securitySource).toContain(
+      '`preinstall`, `install`, `postinstall`, `prepare`'
+    );
+    expect(securitySource).toContain(
+      'Development-only scripts, tests,'
+    );
+    expect(securitySource).toContain(
+      'fixtures, example apps, build directories, credentials, `.npmrc`, `.env*`, keys,'
+    );
+    expect(securitySource).toContain('pnpm release:dry-run');
+    expect(securitySource).toContain('pnpm audit --prod');
+    expect(securitySource).toContain(
+      'npm pack react-native-image-compression-kit@<version>'
+    );
+    expect(readmeSource).toContain('## Security');
+    expect(readmeSource).toContain(
+      'See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, and package security hygiene.'
+    );
+    expect(readmeSource).toContain(
+      'Published packages should not run install-time lifecycle scripts'
     );
   });
 

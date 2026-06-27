@@ -14,6 +14,7 @@ const GRADLE_TASK_ENV = 'RNICK_ANDROID_GRADLE_TASK';
 const REQUIRED_FILES = [
   'package.json',
   'RELEASE.md',
+  'SECURITY.md',
   'Dockerfile',
   '.dockerignore',
   '.github/workflows/ci.yml',
@@ -72,6 +73,7 @@ function runDoctor() {
     checkConsumerSmokeTestEnvironment(),
     checkReleaseDryRunChecklist(),
     checkReleaseNotes(),
+    checkSecurityPolicy(),
     checkGitHubActionRuntimeVersions(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
@@ -329,7 +331,16 @@ function checkDockerAndroidEnvironment() {
 function checkPackageFiles() {
   const packageJson = readJson('package.json');
   const files = packageJson.files ?? [];
-  const requiredEntries = ['android/build.gradle', 'android/src/main', 'ios', 'lib', 'src'];
+  const requiredEntries = [
+    'android/build.gradle',
+    'android/src/main',
+    'ios',
+    'lib',
+    'src',
+    'README.md',
+    'SECURITY.md',
+    'LICENSE',
+  ];
   const forbiddenEntries = ['android', 'android/src', 'scripts'];
   const hasRequiredEntries = requiredEntries.every((entry) => files.includes(entry));
   const excludesDevelopmentEntries = forbiddenEntries.every((entry) => !files.includes(entry));
@@ -339,8 +350,8 @@ function checkPackageFiles() {
     label: 'npm package file globs avoid development-only files',
     detail:
       hasRequiredEntries && excludesDevelopmentEntries
-        ? 'publish entries include runtime native source, JS build output, and Codegen source without Android tests, fixtures, or repo scripts'
-        : 'expected package.json files to include android/build.gradle and android/src/main, without android, android/src, or scripts',
+        ? 'publish entries include runtime native source, JS build output, Codegen source, README, SECURITY, and LICENSE without Android tests, fixtures, or repo scripts'
+        : 'expected package.json files to include runtime source and docs, without android, android/src, or scripts',
   };
 }
 
@@ -436,7 +447,12 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.1.0',
-    'This release note describes the first public package release',
+    'Status: published to npm on June 27, 2026 at 10:51:55 UTC (19:51:55 KST), tagged as `v0.1.0`.',
+    'published as',
+    '### Published Artifacts',
+    'npm package: `react-native-image-compression-kit@0.1.0`',
+    'npm integrity: `sha512-W8kaa3eKdWVLHCGeApdOqNMfeD7np42OcgjGCUZAQDZqzx86diybRtEqK+MJtX73Yt4wLcVKOtb62sPtLJLk9g==`',
+    'Published tarball size: 34.2 kB package size, 142.2 kB unpacked size, 48 files.',
     'Android MVP only',
     'file://` and `content://',
     'JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input',
@@ -450,25 +466,27 @@ function checkReleaseNotes() {
     'AVIF output is not implemented',
     'HEIC / HEIF output is not implemented',
     'GIF output and animation preservation are not implemented',
-    'Actual npm publish remains a separate manual step',
-    '### Pre-publish Checklist',
+    '### Release Checklist',
     'git status --short --branch',
     'pnpm release:dry-run',
     'GitHub Actions CI success',
     'git tag -a v0.1.0 -m "v0.1.0"',
     'git push origin v0.1.0',
-    '### npm Publish Step',
-    'Log in to npm only after local validation, GitHub Actions CI, and the pushed',
+    '### Publish Commands',
     'pnpm login --registry=https://registry.npmjs.org/',
     'pnpm whoami',
-    'pnpm publish',
-    'pnpm view react-native-image-compression-kit version',
+    'pnpm publish --otp 123456',
+    'pnpm view react-native-image-compression-kit version dist.integrity',
+    '### Post-publish Security Review',
+    'contains no `preinstall`, `install`, `postinstall`, `prepare`, `prepack`, `postpack`, `publish`, or `postpublish` lifecycle scripts',
+    'forbidden-file scan found no `.env*`, `.npmrc`, key files, debug keystore, Android test directories, example app files, or repository scripts',
+    '`pnpm audit --prod` reported no known vulnerabilities',
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, tag preparation checklist, and publish operator checklist.',
-    'reviewed v0.1.0 release notes',
-    'Tag and npm publish commands are documented in `RELEASE.md`',
+    'See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, published artifact details, tag checklist, and post-publish security review.',
+    'reviewed release notes',
+    'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
   const missing = [
     ...releaseSnippets
@@ -484,11 +502,43 @@ function checkReleaseNotes() {
     ok,
     label: 'v0.1.0 release notes and tag checklist are current',
     detail: ok
-      ? 'RELEASE.md documents the release scope, non-goals, dry-run gate, CI gate, tag commands, and npm publish operator steps'
+      ? 'RELEASE.md documents the release scope, non-goals, dry-run gate, CI gate, tag commands, and npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
           ...(packageJson.version === '0.1.0' ? [] : ['package.json version 0.1.0']),
         ].join(' | ')}`,
+  };
+}
+
+function checkSecurityPolicy() {
+  const securityContents = readText('SECURITY.md');
+  const readmeContents = readText('README.md');
+  const expectedSnippets = [
+    [securityContents, '# Security Policy'],
+    [securityContents, '| 0.1.x | Yes |'],
+    [securityContents, 'Please do not include exploit details, secrets, private keys, or sensitive'],
+    [securityContents, 'The npm package is intended to avoid install-time code execution.'],
+    [securityContents, '`preinstall`, `install`, `postinstall`, `prepare`'],
+    [securityContents, 'Development-only scripts, tests,'],
+    [securityContents, 'fixtures, example apps, build directories, credentials, `.npmrc`, `.env*`, keys,'],
+    [securityContents, 'pnpm release:dry-run'],
+    [securityContents, 'pnpm audit --prod'],
+    [securityContents, 'npm pack react-native-image-compression-kit@<version>'],
+    [readmeContents, '## Security'],
+    [readmeContents, 'See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, and package security hygiene.'],
+    [readmeContents, 'Published packages should not run install-time lifecycle scripts'],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => !contents.includes(snippet))
+    .map(([, snippet]) => snippet);
+
+  return {
+    ok: missing.length === 0,
+    label: 'security policy and package hygiene guidance are documented',
+    detail:
+      missing.length === 0
+        ? 'SECURITY.md and README document reporting, supported versions, install-time script avoidance, tarball exclusions, and audit checks'
+        : `missing security documentation snippets: ${missing.join(' | ')}`,
   };
 }
 

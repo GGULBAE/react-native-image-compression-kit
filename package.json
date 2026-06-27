@@ -26,6 +26,7 @@
     "lib",
     "src",
     "README.md",
+    "SECURITY.md",
     "LICENSE",
     "react-native-image-compression-kit.podspec",
     "react-native.config.js"
