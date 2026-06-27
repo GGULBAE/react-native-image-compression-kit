@@ -289,6 +289,9 @@ describe('Android verification scripts', () => {
       'npm integrity: `sha512-W8kaa3eKdWVLHCGeApdOqNMfeD7np42OcgjGCUZAQDZqzx86diybRtEqK+MJtX73Yt4wLcVKOtb62sPtLJLk9g==`'
     );
     expect(releaseSource).toContain(
+      'GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.1.0`'
+    );
+    expect(releaseSource).toContain(
       'Published tarball size: 34.2 kB package size, 142.2 kB unpacked size, 48 files.'
     );
     expect(releaseSource).toContain('Android MVP only');
@@ -338,6 +341,22 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain(
       '`pnpm audit --prod` reported no known vulnerabilities'
+    );
+    expect(releaseSource).toContain('### External Install Smoke');
+    expect(releaseSource).toContain(
+      'Installed `react-native-image-compression-kit@0.1.0` from the npm registry with `pnpm install --ignore-scripts`'
+    );
+    expect(releaseSource).toContain(
+      'Confirmed dependency resolution with `pnpm list react-native-image-compression-kit react-native react --depth 0`'
+    );
+    expect(releaseSource).toContain(
+      'Typechecked imports for `compressImage`, `getImageCompressionCapabilities`, `ImageCompressionKitError`, `CompressionOptions`, `CompressionResult`, and `ImageCompressionCapabilities`'
+    );
+    expect(releaseSource).toContain(
+      '`pnpm typecheck` completed successfully in the external consumer project'
+    );
+    expect(releaseSource).toContain(
+      'The GitHub Release was created from this note'
     );
     expect(releaseSource).toContain(
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'

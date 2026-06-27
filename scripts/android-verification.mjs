@@ -452,6 +452,7 @@ function checkReleaseNotes() {
     '### Published Artifacts',
     'npm package: `react-native-image-compression-kit@0.1.0`',
     'npm integrity: `sha512-W8kaa3eKdWVLHCGeApdOqNMfeD7np42OcgjGCUZAQDZqzx86diybRtEqK+MJtX73Yt4wLcVKOtb62sPtLJLk9g==`',
+    'GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.1.0`',
     'Published tarball size: 34.2 kB package size, 142.2 kB unpacked size, 48 files.',
     'Android MVP only',
     'file://` and `content://',
@@ -481,6 +482,12 @@ function checkReleaseNotes() {
     'contains no `preinstall`, `install`, `postinstall`, `prepare`, `prepack`, `postpack`, `publish`, or `postpublish` lifecycle scripts',
     'forbidden-file scan found no `.env*`, `.npmrc`, key files, debug keystore, Android test directories, example app files, or repository scripts',
     '`pnpm audit --prod` reported no known vulnerabilities',
+    '### External Install Smoke',
+    'Installed `react-native-image-compression-kit@0.1.0` from the npm registry with `pnpm install --ignore-scripts`',
+    'Confirmed dependency resolution with `pnpm list react-native-image-compression-kit react-native react --depth 0`',
+    'Typechecked imports for `compressImage`, `getImageCompressionCapabilities`, `ImageCompressionKitError`, `CompressionOptions`, `CompressionResult`, and `ImageCompressionCapabilities`',
+    '`pnpm typecheck` completed successfully in the external consumer project',
+    'The GitHub Release was created from this note',
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [

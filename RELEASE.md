@@ -15,6 +15,7 @@ Android MVP implementation and the README.
 - npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.1.0.tgz`
 - npm integrity: `sha512-W8kaa3eKdWVLHCGeApdOqNMfeD7np42OcgjGCUZAQDZqzx86diybRtEqK+MJtX73Yt4wLcVKOtb62sPtLJLk9g==`
 - Git tag: `v0.1.0`
+- GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.1.0`
 - Published tarball size: 34.2 kB package size, 142.2 kB unpacked size, 48 files.
 
 ### Included
@@ -103,7 +104,17 @@ Completed after npm publish:
 - Registry tarball secret-like string scan found no npm tokens, GitHub tokens, auth tokens, private key blocks, passwords, or broad secret markers.
 - `pnpm audit --prod` reported no known vulnerabilities.
 
-Create the GitHub Release from this note when ready:
+### External Install Smoke
+
+Completed after npm publish and GitHub Release creation:
+
+- Created a fresh temporary consumer project outside this repository.
+- Installed `react-native-image-compression-kit@0.1.0` from the npm registry with `pnpm install --ignore-scripts`.
+- Confirmed dependency resolution with `pnpm list react-native-image-compression-kit react-native react --depth 0`.
+- Typechecked imports for `compressImage`, `getImageCompressionCapabilities`, `ImageCompressionKitError`, `CompressionOptions`, `CompressionResult`, and `ImageCompressionCapabilities`.
+- `pnpm typecheck` completed successfully in the external consumer project.
+
+The GitHub Release was created from this note:
 
 ```bash
 gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md
