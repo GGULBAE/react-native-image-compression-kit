@@ -64,6 +64,7 @@ function runDoctor() {
     checkSpecFile(),
     checkDockerAndroidEnvironment(),
     checkPackageFiles(),
+    checkGitHubActionRuntimeVersions(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
     checkHeicHeifCodecSampleStrategy(),
@@ -282,6 +283,60 @@ function checkPackageFiles() {
       hasRequiredEntries && excludesBroadAndroidDirectory
         ? 'Android package entries include source and Gradle config without packaging android/build artifacts'
         : 'expected package.json files to include android/build.gradle and android/src, without the broad android directory',
+  };
+}
+
+function checkGitHubActionRuntimeVersions() {
+  const ciContents = readText('.github/workflows/ci.yml');
+  const instrumentationContents = readText('.github/workflows/android-instrumentation.yml');
+  const readmeContents = readText('README.md');
+  const expectedWorkflowSnippets = [
+    'uses: actions/checkout@v7',
+    'uses: actions/setup-java@v5',
+    'uses: android-actions/setup-android@v4',
+    'uses: pnpm/action-setup@v6',
+    'uses: actions/setup-node@v6',
+    'uses: gradle/actions/setup-gradle@v6',
+  ];
+  const deprecatedWorkflowSnippets = [
+    'uses: actions/checkout@v4',
+    'uses: actions/setup-java@v4',
+    'uses: android-actions/setup-android@v3',
+    'uses: pnpm/action-setup@v4',
+    'uses: actions/setup-node@v4',
+    'uses: gradle/actions/setup-gradle@v4',
+  ];
+  const readmeSnippets = [
+    'Node 24 runtime-compatible majors',
+    '`actions/checkout@v7`',
+    '`actions/setup-node@v6`',
+    '`actions/setup-java@v5`',
+    '`android-actions/setup-android@v4`',
+    '`pnpm/action-setup@v6`',
+    '`gradle/actions/setup-gradle@v6`',
+  ];
+  const missing = [
+    ...expectedWorkflowSnippets
+      .filter((snippet) => !ciContents.includes(snippet))
+      .map((snippet) => `.github/workflows/ci.yml ${snippet}`),
+    ...expectedWorkflowSnippets
+      .filter((snippet) => !instrumentationContents.includes(snippet))
+      .map((snippet) => `.github/workflows/android-instrumentation.yml ${snippet}`),
+    ...readmeSnippets
+      .filter((snippet) => !readmeContents.includes(snippet))
+      .map((snippet) => `README.md ${snippet}`),
+  ];
+  const deprecated = deprecatedWorkflowSnippets.filter(
+    (snippet) => ciContents.includes(snippet) || instrumentationContents.includes(snippet)
+  );
+
+  return {
+    ok: missing.length === 0 && deprecated.length === 0,
+    label: 'GitHub Actions use Node 24 runtime-compatible action majors',
+    detail:
+      missing.length === 0 && deprecated.length === 0
+        ? 'CI and Android instrumentation workflows avoid action majors that target the deprecated Node 20 runtime'
+        : `missing or deprecated snippets: ${[...missing, ...deprecated].join(' | ')}`,
   };
 }
 

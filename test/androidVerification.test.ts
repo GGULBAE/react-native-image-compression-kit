@@ -147,6 +147,51 @@ describe('Android verification scripts', () => {
     expect(packageJson.files).not.toContain('android');
   });
 
+  it('keeps GitHub Actions on Node 24 runtime-compatible action majors', () => {
+    const ciWorkflowSource = readProjectFile('.github/workflows/ci.yml');
+    const instrumentationWorkflowSource = readProjectFile(
+      '.github/workflows/android-instrumentation.yml'
+    );
+    const readmeSource = readProjectFile('README.md');
+    const expectedActions = [
+      'uses: actions/checkout@v7',
+      'uses: actions/setup-java@v5',
+      'uses: android-actions/setup-android@v4',
+      'uses: pnpm/action-setup@v6',
+      'uses: actions/setup-node@v6',
+      'uses: gradle/actions/setup-gradle@v6',
+    ];
+    const deprecatedActions = [
+      'uses: actions/checkout@v4',
+      'uses: actions/setup-java@v4',
+      'uses: android-actions/setup-android@v3',
+      'uses: pnpm/action-setup@v4',
+      'uses: actions/setup-node@v4',
+      'uses: gradle/actions/setup-gradle@v4',
+    ];
+
+    for (const action of expectedActions) {
+      expect(ciWorkflowSource).toContain(action);
+      expect(instrumentationWorkflowSource).toContain(action);
+    }
+
+    for (const action of deprecatedActions) {
+      expect(ciWorkflowSource).not.toContain(action);
+      expect(instrumentationWorkflowSource).not.toContain(action);
+    }
+
+    expect(instrumentationWorkflowSource).toContain(
+      'uses: reactivecircus/android-emulator-runner@v2'
+    );
+    expect(readmeSource).toContain('Node 24 runtime-compatible majors');
+    expect(readmeSource).toContain('`actions/checkout@v7`');
+    expect(readmeSource).toContain('`actions/setup-node@v6`');
+    expect(readmeSource).toContain('`actions/setup-java@v5`');
+    expect(readmeSource).toContain('`android-actions/setup-android@v4`');
+    expect(readmeSource).toContain('`pnpm/action-setup@v6`');
+    expect(readmeSource).toContain('`gradle/actions/setup-gradle@v6`');
+  });
+
   it('documents the HEIC, HEIF, and AVIF real codec sample validation strategy', () => {
     const readmeSource = readProjectFile('README.md');
     const verificationSource = readProjectFile('scripts/android-verification.mjs');

@@ -419,7 +419,7 @@ These commands require a Java runtime and Android SDK. `pnpm example:android-uni
 
 GitHub Actions runs the repository checks and Android example build on pushes to `master` and pull requests. The lightweight workflow is defined in `.github/workflows/ci.yml`.
 
-The CI job uses Node.js 24, pnpm 11.7.0, Temurin JDK 21, Android SDK platform 36, Android build tools 36.0.0, and Android NDK 27.1.12297006. It enables pnpm and Gradle caching, then runs:
+The CI job uses Node.js 24, pnpm 11.7.0, Temurin JDK 21, Android SDK platform 36, Android build tools 36.0.0, and Android NDK 27.1.12297006. The GitHub Actions workflow actions are kept on Node 24 runtime-compatible majors: `actions/checkout@v7`, `actions/setup-node@v6`, `actions/setup-java@v5`, `android-actions/setup-android@v4`, `pnpm/action-setup@v6`, and `gradle/actions/setup-gradle@v6`. It enables pnpm and Gradle caching, then runs:
 
 ```bash
 pnpm install --frozen-lockfile
