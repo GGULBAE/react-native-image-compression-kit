@@ -27,7 +27,11 @@ const REQUIRED_FILES = [
   'android/src/test/assets/heic-heif/sample.heic',
   'android/src/test/assets/heic-heif/sample.heif',
   'android/src/test/assets/heic-heif/manifest.json',
+  'android/src/test/assets/avif/source.png',
+  'android/src/test/assets/avif/sample.avif',
+  'android/src/test/assets/avif/manifest.json',
   '.github/workflows/android-instrumentation.yml',
+  'scripts/generate-avif-fixtures.mjs',
   'scripts/generate-heic-heif-fixtures.mjs',
 ];
 
@@ -59,6 +63,7 @@ function runDoctor() {
     checkAndroidNativeModule(),
     checkHeicHeifCodecSampleStrategy(),
     checkHeicHeifFixtures(),
+    checkAvifFixtures(),
     checkHeicHeifInstrumentationValidation(),
   ];
 
@@ -244,12 +249,13 @@ function checkAndroidNativeModule() {
     'readInputFormatHint(inputSource)',
     'readUnsupportedInputMimeTypeHint(inputSource)',
     'queryContentMimeType(inputSource.uri)',
-    'UnsupportedInputFormat.fromMimeType(contentMimeType)',
-    'UnsupportedInputFormat.fromFileExtension(fileExtension)',
+    'usesAvifDecodePath',
     'InputFormat.fromFileExtension(fileExtension)',
     'Build.VERSION.SDK_INT >= Build.VERSION_CODES.P',
     'Build.VERSION.SDK_INT >= Build.VERSION_CODES.O',
+    'Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE',
     'decodeHeicHeifBitmapWithImageDecoder',
+    'decodeAvifBitmapWithImageDecoder',
     'decodeBitmapFactory(inputSource)',
     'mimeType = "image/jpeg"',
     'mimeType = "image/png"',
@@ -279,11 +285,13 @@ function checkAndroidNativeModule() {
     'webpFormatNotes',
     'gifFormatNotes',
     'heicHeifFormatNotes',
+    'avifFormatNotes',
     'SUPPORTED_INPUT_FORMATS',
     'HEIC_FORMAT',
     'HEIF_FORMAT',
+    'AVIF_FORMAT',
     'output = outputFormat != null',
-    'supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input with JPEG, PNG, and WebP output only',
+    'supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input with JPEG, PNG, and WebP output only',
     'readMetadataPolicy(options)',
     'MetadataPolicy.PRESERVE',
     'createCopiedExifMetadata',
@@ -295,7 +303,7 @@ function checkAndroidNativeModule() {
     'ExifInterface.TAG_CAMERA_OWNER_NAME',
     'ExifInterface.TAG_MAKER_NOTE',
     'Metadata safe copies privacy-filtered JPEG source EXIF attributes.',
-    'PNG, WebP, GIF, HEIC, and HEIF sources are decoded without copying EXIF metadata.',
+    'PNG, WebP, GIF, HEIC, HEIF, and AVIF sources are decoded without copying EXIF metadata.',
     'heicHeifFormatNotes("HEIC")',
     'heicHeifFormatNotes("HEIF")',
     '$formatLabel input is supported on Android 8.0+ when device HEIF decode codecs are present.',
@@ -303,6 +311,10 @@ function checkAndroidNativeModule() {
     'Android API 26-27 attempts a guarded BitmapFactory HEIF decode fallback.',
     '$formatLabel inputs are decoded without copying EXIF metadata.',
     '$formatLabel output is not implemented.',
+    'AVIF input is supported on Android 14+ for baseline still images.',
+    'Android API 34+ uses ImageDecoder for AVIF input.',
+    'AVIF inputs are decoded without copying EXIF metadata.',
+    'AVIF output is not implemented.',
     'Android MVP decodes GIF file:// and content:// sources as a static first frame.',
     'Animated GIF preservation is not implemented.',
     'GIF output is not implemented.',
@@ -319,8 +331,9 @@ function checkAndroidNativeModule() {
     'nullMetadataLeavesOutputExifUntouchedForStripPolicy',
     'outputFormatsCreateMatchingResultFormatAndFileExtensions',
     'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile',
-    'capabilitiesExposeJpegPngWebpGifHeicHeifInputsAndJpegPngWebpOutputsOnly',
+    'capabilitiesExposeJpegPngWebpGifHeicHeifAvifInputsAndJpegPngWebpOutputsOnly',
     'assertHeicHeifCapabilityNotes',
+    'assertAvifCapabilityNotes',
     'pngRejectsMaxBytesButWebpAndJpegAllowIt',
     'outputFormatsMapToAndroidCompressFormatsAndQualityRules',
     'ImageCompressionOutput.encodeBitmap',
@@ -331,11 +344,12 @@ function checkAndroidNativeModule() {
     'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif',
     'compressImageReadsContentUriJpegLikeFileUriAndReportsMetadata',
     'compressImageRejectsUnreadableContentUriAtModuleBoundary',
-    'compressImageRejectsUnsupportedImageFileExtensionsAtModuleBoundary',
-    'compressImageRejectsUnsupportedContentMimeTypesAtModuleBoundary',
+    'compressImageRejectsAvifFileBeforeAndroidU',
+    'compressImageRejectsAvifContentMimeBeforeAndroidU',
     'compressImageTreatsHeicAndHeifSourcesAsDecodeCandidatesOnSupportedSdk',
+    'compressImageTreatsAvifSourcesAsDecodeCandidatesOnSupportedSdk',
     'compressImageRejectsHeicAndHeifBeforeAndroidO',
-    'compressImageSeparatesUnsupportedFormatFromDecodeFailure',
+    'compressImageSeparatesSupportedFormatDecodeFailures',
     'compressImageAcceptsGifFileAndContentSourcesAsStaticFrameWithAllImplementedOutputs',
     'compressImageResizesGifSourceAcrossModes',
     'compressImageHonorsJpegAndWebpMaxBytesForGifSource',
@@ -390,6 +404,7 @@ function checkAndroidNativeModule() {
     'ERR_UNSUPPORTED_FORMAT',
     'ImageCompressionKitModule.ERR_DECODE_FAILED',
     'Android MVP could not decode the source image.',
+    'Android AVIF input requires Android 14+ platform decoder support.',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
   const hasUnitTestScript =
@@ -401,7 +416,7 @@ function checkAndroidNativeModule() {
     label: 'Android Kotlin module matches generated spec and Android image MVP path',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG/PNG/WebP/GIF/HEIC/HEIF decode paths, AVIF and SDK-gated unsupported input boundaries, JPEG orient/metadata, resize, target-size, JPEG/PNG/WebP output encode path, and module-level file/content URI tests'
+        ? 'module extends generated spec and contains JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF decode paths, SDK-gated unsupported input boundaries, JPEG orient/metadata, resize, target-size, JPEG/PNG/WebP output encode path, and module-level file/content URI tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),
@@ -412,8 +427,8 @@ function checkAndroidNativeModule() {
 function checkHeicHeifCodecSampleStrategy() {
   const contents = readText('README.md');
   const expectedSnippets = [
-    '## HEIC / HEIF Codec Sample Validation Strategy',
-    'This repository now commits tiny HEIC / HEIF samples generated from the repo-owned PNG source.',
+    '## HEIC / HEIF / AVIF Codec Sample Validation Strategy',
+    'This repository now commits tiny HEIC / HEIF / AVIF samples generated from repo-owned PNG sources.',
     'Use `android/src/test/assets/heic-heif/source.png`',
     'Track source and generated output metadata',
     '`android/src/test/assets/heic-heif/manifest.json`',
@@ -421,21 +436,25 @@ function checkHeicHeifCodecSampleStrategy() {
     '`pnpm fixtures:heic-heif:check`',
     '`pnpm fixtures:heic-heif`',
     'heif-enc --quality 80 source.png -o sample.heic',
+    '`pnpm fixtures:avif:check`',
+    '`pnpm fixtures:avif`',
+    'heif-enc --quality 80 --avif source.png -o sample.avif',
     'Generated fixtures are committed because they are tiny',
     'android/src/test/assets/heic-heif/',
     'They verify the fixture files and metadata, but they do not boot an emulator.',
     'A separate Android Instrumentation workflow boots an API 35 Google APIs emulator',
     '`pnpm example:android-instrumentation`',
-    'committed `sample.heic` and `sample.heif` fixtures through the API 28+ `ImageDecoder` route',
+    'committed `sample.heic`, `sample.heif`, and `sample.avif` fixtures through their `ImageDecoder` routes',
     'Manual codec validation beyond CI should use a codec-backed Android device or emulator',
     'file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic',
     'API 26-27 should still be checked separately for the guarded `BitmapFactory` fallback',
+    'For AVIF manual validation, use an API 34+ device or emulator',
   ];
   const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
 
   return {
     ok: missing.length === 0,
-    label: 'README documents HEIC/HEIF codec sample validation strategy',
+    label: 'README documents HEIC/HEIF/AVIF codec sample validation strategy',
     detail:
       missing.length === 0
         ? 'fixture generation, instrumentation codec validation, and manual codec boundaries are documented'
@@ -457,10 +476,11 @@ function checkHeicHeifInstrumentationValidation() {
     gradleContents.includes('testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"'),
     gradleContents.includes('androidTest.assets.srcDirs += ["src/test/assets"]'),
     gradleContents.includes('androidTestImplementation "androidx.test.ext:junit:1.2.1"'),
-    testContents.includes('compressesCommittedHeicAndHeifSamplesToJpegPngAndWebp'),
-    testContents.includes('Build.VERSION.SDK_INT >= Build.VERSION_CODES.P'),
+    testContents.includes('compressesCommittedHeicHeifAndAvifSamplesToJpegPngAndWebp'),
+    testContents.includes('Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE'),
     testContents.includes('heic-heif/sample.heic'),
     testContents.includes('heic-heif/sample.heif'),
+    testContents.includes('avif/sample.avif'),
     testContents.includes('ImageCompressionKitModule('),
     testContents.includes('JavaOnlyMap.of'),
     testContents.includes('OutputCase("jpeg", ::assertJpegSignature)'),
@@ -468,6 +488,7 @@ function checkHeicHeifInstrumentationValidation() {
     testContents.includes('OutputCase("webp", ::assertWebpSignature)'),
     testContents.includes('assertBitmapDimensions(outputFile, width = 16, height = 12)'),
     workflowContents.includes('name: Android Instrumentation'),
+    workflowContents.includes('HEIC/HEIF/AVIF emulator validation'),
     workflowContents.includes('reactivecircus/android-emulator-runner@v2'),
     workflowContents.includes('api-level: 35'),
     workflowContents.includes('target: google_apis'),
@@ -479,10 +500,64 @@ function checkHeicHeifInstrumentationValidation() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'HEIC/HEIF emulator instrumentation validation is wired',
+    label: 'HEIC/HEIF/AVIF emulator instrumentation validation is wired',
     detail: checks.every(Boolean)
-      ? 'androidTest assets, API 28+ HEIC/HEIF sample assertions, package script, workflow, and README are present'
+      ? 'androidTest assets, API 34+ codec sample assertions, package script, workflow, and README are present'
       : 'expected androidTest setup, package script, workflow snippets, or README documentation are missing/mismatched',
+  };
+}
+
+function checkAvifFixtures() {
+  const manifest = readJson('android/src/test/assets/avif/manifest.json');
+  const packageJson = readJson('package.json');
+  const scriptContents = readText('scripts/generate-avif-fixtures.mjs');
+  const source = manifest.source;
+  const sourcePath = source?.path;
+  const sourceBytes = sourcePath ? readBinary(sourcePath) : null;
+  const sourceDimensions = sourceBytes ? readPngDimensions(sourceBytes) : null;
+  const sourceHash = sourceBytes ? sha256(sourceBytes) : null;
+  const fixture = manifest.generatedFixtures?.[0];
+  const fixturePath = fixture?.targetPath;
+  const fixtureBytes = fixturePath ? readBinary(fixturePath) : null;
+  const checks = [
+    manifest.schemaVersion === 1,
+    manifest.description?.includes('AVIF fixture'),
+    source?.format === 'png',
+    sourcePath === 'android/src/test/assets/avif/source.png',
+    source?.byteSize === sourceBytes?.length,
+    source?.sha256 === sourceHash,
+    source?.dimensions?.width === sourceDimensions?.width,
+    source?.dimensions?.height === sourceDimensions?.height,
+    source?.provenance?.owner === 'react-native-image-compression-kit',
+    source?.provenance?.license === 'MIT',
+    Array.isArray(manifest.generatedFixtures),
+    manifest.generatedFixtures?.length === 1,
+    fixture?.format === 'avif',
+    fixture?.sourcePath === sourcePath,
+    fixturePath === 'android/src/test/assets/avif/sample.avif',
+    fixture?.byteSize === fixtureBytes?.length,
+    fixture?.sha256 === (fixtureBytes ? sha256(fixtureBytes) : null),
+    fixture?.dimensions?.width === sourceDimensions?.width,
+    fixture?.dimensions?.height === sourceDimensions?.height,
+    fixture?.generationCommand?.includes('heif-enc --quality 80 --avif source.png -o sample.avif'),
+    fixture?.provenance?.generator === 'libheif heif-enc',
+    fixture?.provenance?.generatorVersion === '1.23.0',
+    fixture?.provenance?.license === 'MIT',
+    packageJson.scripts?.['fixtures:avif'] === 'node scripts/generate-avif-fixtures.mjs',
+    packageJson.scripts?.['fixtures:avif:check'] ===
+      'node scripts/generate-avif-fixtures.mjs --check',
+    scriptContents.includes('heif-enc'),
+    scriptContents.includes('--avif'),
+    scriptContents.includes('validateCommittedFixture'),
+    scriptContents.includes('AVIF fixture manifest OK'),
+  ];
+
+  return {
+    ok: checks.every(Boolean),
+    label: 'AVIF fixture manifest and committed sample are consistent',
+    detail: checks.every(Boolean)
+      ? 'source PNG metadata, committed AVIF hash, package scripts, and generator checks are consistent'
+      : 'expected AVIF source metadata, fixture metadata, package scripts, or generator snippets are missing/mismatched',
   };
 }
 

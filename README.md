@@ -30,7 +30,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, and unit test foundation are in place, and the package is not available on npm yet.
 
-Android includes an image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, and HEIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. GIF output, GIF animation preservation, HEIC / HEIF output, AVIF input/output, iOS compression, and broader input format support are not implemented yet.
+Android includes an image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. GIF output, GIF animation preservation, HEIC / HEIF output, AVIF output, iOS compression, and broader input format support are not implemented yet.
 
 ## Current Implementation Scope
 
@@ -38,20 +38,20 @@ The current implementation is intentionally small:
 
 - Android only.
 - `file://` and `content://` local URI input.
-- JPEG, PNG, WebP, GIF, HEIC, and HEIF input. GIF input is static first-frame only, and HEIC / HEIF input depends on Android SDK and device codec support.
+- JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input. GIF input is static first-frame only, HEIC / HEIF input depends on Android SDK and device codec support, and AVIF input requires Android 14+ baseline image support.
 - JPEG, PNG, and WebP output.
 - Quality-based compression for JPEG and WebP output. PNG output ignores `quality`.
 - Target-size compression with `maxBytes` for JPEG and WebP output. PNG output rejects `maxBytes`.
 - JPEG EXIF orientation correction before resize and selected output encoding.
 - Optional resize with `maxWidth`, `maxHeight`, and `contain`, `cover`, or `stretch` mode.
-- Metadata `preserve`, privacy-filtered `safe`, and `strip` policies for JPEG source to JPEG output. PNG/WebP/GIF/HEIC/HEIF sources and PNG/WebP output do not preserve source EXIF metadata.
+- Metadata `preserve`, privacy-filtered `safe`, and `strip` policies for JPEG source to JPEG output. PNG/WebP/GIF/HEIC/HEIF/AVIF sources and PNG/WebP output do not preserve source EXIF metadata.
 - Output file written to the Android app cache directory.
 - `CompressionResult` returns `uri`, `format`, final `width`, final `height`, `byteSize`, `originalByteSize`, and `compressionRatio`.
 
 The following remain planned and are not implemented in the MVP:
 
 - iOS compression.
-- AVIF input processing.
+- AVIF output.
 - HEIC / HEIF output.
 - GIF output and GIF/WebP animation preservation.
 - Metadata support for non-JPEG formats and iOS.
@@ -96,7 +96,7 @@ The following product features are planned or only partially implemented.
 - Quality-based compression.
 - Target file size compression with `maxBytes`. Android MVP support is implemented for JPEG and WebP output.
 - Optional resize during compression. Android MVP support is implemented.
-- Output format selection. Android MVP supports JPEG, PNG, WebP, and static first-frame GIF input with JPEG, PNG, and WebP output.
+- Output format selection. Android MVP supports JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC / HEIF, and Android 14+ AVIF input with JPEG, PNG, and WebP output.
 - Automatic EXIF orientation correction. Android MVP support is implemented for JPEG input.
 - Metadata preservation and stripping policies. Android MVP supports `preserve`, `safe`, and `strip` for JPEG source to JPEG output.
 - Alpha-channel handling.
@@ -117,10 +117,10 @@ The table below describes planned input and output support. Actual availability 
 | PNG | Yes | Yes | Lossless compression |
 | WebP | Yes | Yes | Lossy and lossless |
 | HEIC / HEIF | Yes | Optional / later | Android input implemented with SDK and codec gating |
-| AVIF | Yes | Yes | Planned codec integration |
+| AVIF | Yes | Later | Android input implemented on API 34+ with ImageDecoder |
 | GIF | Yes | Later | Static first-frame support before animation preservation |
 
-Current Android MVP support is narrower than the planned table: JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC, and SDK-gated HEIF input are implemented, and JPEG, PNG, and WebP output are implemented. GIF output, GIF animation preservation, animated WebP, HEIC / HEIF output, and AVIF support remain planned. Known AVIF input MIME types and file extensions are rejected as `ERR_UNSUPPORTED_FORMAT`; HEIC / HEIF inputs on Android versions below 8.0 are also rejected as `ERR_UNSUPPORTED_FORMAT`. Corrupt supported-format inputs, including corrupt GIF and HEIC / HEIF candidates on supported SDKs, reject as `ERR_DECODE_FAILED`.
+Current Android MVP support is narrower than the planned table: JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC, SDK-gated HEIF, and Android 14+ AVIF input are implemented, and JPEG, PNG, and WebP output are implemented. GIF output, GIF animation preservation, animated WebP, HEIC / HEIF output, and AVIF output remain planned. HEIC / HEIF inputs on Android versions below 8.0 and AVIF inputs on Android versions below 14 reject as `ERR_UNSUPPORTED_FORMAT`. Corrupt supported-format inputs, including corrupt GIF, HEIC / HEIF, and AVIF candidates on supported SDKs, reject as `ERR_DECODE_FAILED`.
 
 Animation preservation for GIF, animated WebP, and animated AVIF is not planned as an initial-version guarantee.
 
@@ -135,9 +135,19 @@ Android platform documentation lists [HEIF decode support on Android 8.0+](https
 
 Runtime capabilities currently expose HEIC / HEIF with `input=true` and `output=false`, plus notes that describe the Android 8.0+ platform decode condition, the API 28+ `ImageDecoder` route, the API 26-27 guarded `BitmapFactory` fallback, and the unsupported output state. The main CI validates the version-gated structure and rejection boundaries, and the separate Android Instrumentation workflow validates committed HEIC / HEIF sample decoding on an API 35 emulator.
 
-## HEIC / HEIF Codec Sample Validation Strategy
+## Android AVIF Input
 
-This repository now commits tiny HEIC / HEIF samples generated from the repo-owned PNG source. The fixture path is:
+Android platform documentation lists AVIF baseline image support as mandatory on Android 14+. The Android implementation route is:
+
+- Use `ImageDecoder` on API 34+ for AVIF input and force software bitmap allocation before resize and output encoding.
+- Reject AVIF inputs with `ERR_UNSUPPORTED_FORMAT` below Android 14.
+- Keep AVIF output unsupported unless a later goal explicitly designs it.
+
+Runtime capabilities currently expose AVIF with `input=true` and `output=false`, plus notes that describe the Android 14+ `ImageDecoder` route, static image support, no EXIF metadata copy, unsupported animation preservation, and unsupported output state. The main CI validates the API-gated unsupported boundary and corrupt-candidate decode failure behavior, and the separate Android Instrumentation workflow validates committed AVIF sample decoding on an API 35 emulator.
+
+## HEIC / HEIF / AVIF Codec Sample Validation Strategy
+
+This repository now commits tiny HEIC / HEIF / AVIF samples generated from repo-owned PNG sources. The fixture paths are:
 
 - Use `android/src/test/assets/heic-heif/source.png`, a repo-owned 16x12 RGB PNG pattern with no user-photo content.
 - Track source and generated output metadata in `android/src/test/assets/heic-heif/manifest.json`.
@@ -146,10 +156,13 @@ This repository now commits tiny HEIC / HEIF samples generated from the repo-own
 - Generated fixtures are committed because they are tiny, repo-owned derivative assets, and covered by MIT provenance in the manifest.
 - Store committed fixtures under `android/src/test/assets/heic-heif/` so Android runtime tests can load them without depending on network access.
 - When regenerating with a different `libheif` / `heif-enc` version, update byte size, SHA-256, generator version, dimensions, generation command, and license/provenance in the manifest.
+- Use `android/src/test/assets/avif/source.png` and `android/src/test/assets/avif/sample.avif` for AVIF runtime validation.
+- Validate the AVIF source image, manifest fields, and committed sample file with `pnpm fixtures:avif:check`.
+- Generate or refresh the committed AVIF fixture with `pnpm fixtures:avif`, which uses `heif-enc --quality 80 --avif source.png -o sample.avif`.
 
-Current lightweight coverage is intentionally narrower than real codec validation. `pnpm verify`, `pnpm example:android-unit-test`, and the main GitHub Actions CI validate the HEIC / HEIF MIME and extension routing, SDK gates, capability notes, corrupt-candidate rejection boundaries, and committed fixture metadata. They verify the fixture files and metadata, but they do not boot an emulator.
+Current lightweight coverage is intentionally narrower than real codec validation. `pnpm verify`, `pnpm example:android-unit-test`, and the main GitHub Actions CI validate the HEIC / HEIF / AVIF MIME and extension routing, SDK gates, capability notes, corrupt-candidate rejection boundaries, and committed fixture metadata. They verify the fixture files and metadata, but they do not boot an emulator.
 
-A separate Android Instrumentation workflow boots an API 35 Google APIs emulator and runs `pnpm example:android-instrumentation`. That task executes `:react-native-image-compression-kit:connectedDebugAndroidTest` and validates the committed `sample.heic` and `sample.heif` fixtures through the API 28+ `ImageDecoder` route, asserting JPEG, PNG, and WebP output success with 16x12 result dimensions and byte-signature checks.
+A separate Android Instrumentation workflow boots an API 35 Google APIs emulator and runs `pnpm example:android-instrumentation`. That task executes `:react-native-image-compression-kit:connectedDebugAndroidTest` and validates the committed `sample.heic`, `sample.heif`, and `sample.avif` fixtures through their `ImageDecoder` routes, asserting JPEG, PNG, and WebP output success with 16x12 result dimensions and byte-signature checks.
 
 Manual codec validation beyond CI should use a codec-backed Android device or emulator on API 28+ first, because that also exercises the `ImageDecoder` route through the example app. After installing the example app, copy a fixture into the app-private files directory and paste the resulting file URI into the example screen:
 
@@ -160,6 +173,8 @@ adb shell run-as com.imagecompressionkit.example sh -c 'cat > files/rnick-codec/
 ```
 
 Then use `file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic` as the source URI and verify JPEG, PNG, and WebP outputs. Repeat with `sample.heif`. API 26-27 should still be checked separately for the guarded `BitmapFactory` fallback because emulator/device codec availability can differ from API 28+.
+
+For AVIF manual validation, use an API 34+ device or emulator and repeat the copy/paste flow with `android/src/test/assets/avif/sample.avif`.
 
 ## Proposed API
 
@@ -260,7 +275,7 @@ metadata: 'safe'
 metadata: 'strip'
 ```
 
-Android MVP currently supports `preserve`, `safe`, and `strip` for JPEG source to JPEG output. JPEG EXIF orientation is applied to pixels before encoding, so output orientation metadata is normalized instead of preserving the original rotation flag. PNG/WebP/GIF sources and PNG/WebP output do not copy source EXIF metadata.
+Android MVP currently supports `preserve`, `safe`, and `strip` for JPEG source to JPEG output. JPEG EXIF orientation is applied to pixels before encoding, so output orientation metadata is normalized instead of preserving the original rotation flag. PNG/WebP/GIF/HEIC/HEIF/AVIF sources and PNG/WebP output do not copy source EXIF metadata.
 
 `safe` is the default policy. In the Android MVP it copies a privacy-filtered JPEG EXIF allowlist into JPEG output, including common camera, date/time, exposure, lens, and color-space attributes. It excludes GPS/location, owner/serial identifiers, maker note, user comment, image-unique ID, XMP, and other broad free-form metadata.
 
@@ -316,6 +331,7 @@ This project is not intended to handle:
 - [x] Android HEIC/HEIF input decode path and capability notes.
 - [x] Android HEIC/HEIF real codec sample validation strategy.
 - [x] Android HEIC/HEIF committed sample fixtures and manifest metadata.
+- [x] Android AVIF input decode path, fixture manifest, and emulator validation.
 - [x] Android GIF static first-frame input support.
 - [x] Android GIF input module-level JVM tests for file/content URI, resize, target-size, and metadata no-copy behavior.
 - [x] Android JPEG-input resize/orientation module-level JVM tests.
@@ -329,14 +345,15 @@ This project is not intended to handle:
 - [x] Example output format selector for JPEG, PNG, and WebP.
 - [x] Android HEIC / HEIF input.
 - [x] Android HEIC / HEIF emulator/instrumentation validation.
-- [ ] AVIF support.
+- [x] Android AVIF input.
+- [ ] AVIF output.
 - [ ] Metadata support for non-JPEG formats and iOS.
 - [ ] Cancellation and progress.
 - [ ] Public npm release.
 
 ## Installation
 
-This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, unsupported AVIF input error boundaries, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. iOS compression, HEIC/HEIF output, and broader input format support are not implemented yet.
+This package has not been published to npm yet. The repository contains an initial TypeScript API scaffold and an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. iOS compression, HEIC/HEIF output, AVIF output, and broader input format support are not implemented yet.
 
 Planned installation command:
 
@@ -366,7 +383,7 @@ In another terminal, run the Android app:
 pnpm example:android
 ```
 
-The example screen copies a bundled `sample.jpg` asset into the app cache and uses that cache file URI by default. You can also paste another local `file://` or `content://` JPEG, PNG, WebP, GIF, HEIC, or HEIF URI. The screen calls:
+The example screen copies a bundled `sample.jpg` asset into the app cache and uses that cache file URI by default. You can also paste another local `file://` or `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, or AVIF URI. The screen calls:
 
 ```ts
 compressImage({
@@ -396,7 +413,7 @@ pnpm example:android-instrumentation
 pnpm example:build
 ```
 
-These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, unsupported AVIF input boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF capability notes, corrupt supported-format decode failures, PNG/WebP/GIF input, GIF static first-frame decoding, PNG/WebP/GIF input resize modes, PNG/WebP/GIF input target-size `maxBytes`, PNG/WebP/GIF metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android-instrumentation` requires a connected API 28+ emulator or device and runs the committed HEIC/HEIF sample-to-JPEG/PNG/WebP instrumentation test. `pnpm android:doctor` also validates the HEIC/HEIF source and committed sample fixture manifest, byte sizes, SHA-256 hashes, and instrumentation wiring. `pnpm example:android` still requires a connected emulator/device.
+These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, AVIF API-gated decode boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF/AVIF capability notes, corrupt supported-format decode failures, PNG/WebP/GIF input, GIF static first-frame decoding, PNG/WebP/GIF input resize modes, PNG/WebP/GIF input target-size `maxBytes`, PNG/WebP/GIF metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android-instrumentation` requires a connected API 34+ emulator or device and runs the committed HEIC/HEIF/AVIF sample-to-JPEG/PNG/WebP instrumentation test. `pnpm android:doctor` also validates the HEIC/HEIF and AVIF source and committed sample fixture manifests, byte sizes, SHA-256 hashes, and instrumentation wiring. `pnpm example:android` still requires a connected emulator/device.
 
 ## Continuous Integration
 
@@ -413,9 +430,9 @@ pnpm example:android-unit-test
 pnpm example:build
 ```
 
-`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP/GIF input and JPEG/PNG/WebP output format and byte-signature behavior, and module-level `compressImage` file URI, content URI, unsupported AVIF input rejection, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF capability-note structure, corrupt supported-format decode failure, GIF static first-frame decoding, PNG/WebP/GIF input resize, EXIF orientation, target-size, and metadata no-copy integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, WebP, GIF, HEIC, and HEIF input paths and JPEG, PNG, and WebP output paths.
+`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP/GIF input and JPEG/PNG/WebP output format and byte-signature behavior, and module-level `compressImage` file URI, content URI, AVIF API-gated decode boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF/AVIF capability-note structure, corrupt supported-format decode failure, GIF static first-frame decoding, PNG/WebP/GIF input resize, EXIF orientation, target-size, and metadata no-copy integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input paths and JPEG, PNG, and WebP output paths.
 
-The separate `.github/workflows/android-instrumentation.yml` workflow boots an API 35 Google APIs emulator and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC and HEIF fixtures decode on the Android `ImageDecoder` path and can be compressed to JPEG, PNG, and WebP. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
+The separate `.github/workflows/android-instrumentation.yml` workflow boots an API 35 Google APIs emulator and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC, HEIF, and AVIF fixtures decode on the Android `ImageDecoder` paths and can be compressed to JPEG, PNG, and WebP. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
 
 ## Development Verification
 
@@ -442,7 +459,7 @@ RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:react-nati
 ```
 
 For the bundled example app, use `pnpm example:codegen`, `pnpm example:android-unit-test`, and `pnpm example:build`.
-Use `pnpm example:android-instrumentation` only when an API 28+ emulator or device is connected.
+Use `pnpm example:android-instrumentation` only when an API 34+ emulator or device is connected.
 
 `pnpm android:codegen` runs `generateCodegenArtifactsFromSchema` in the app Android project. `pnpm android:build` runs `assembleDebug` by default. To use a different Gradle task:
 

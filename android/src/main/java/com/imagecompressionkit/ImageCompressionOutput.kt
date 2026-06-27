@@ -190,6 +190,7 @@ internal object ImageCompressionOutput {
         null -> when (format) {
           HEIC_FORMAT -> heicHeifFormatNotes("HEIC")
           HEIF_FORMAT -> heicHeifFormatNotes("HEIF")
+          AVIF_FORMAT -> avifFormatNotes()
           GIF_FORMAT -> gifFormatNotes()
           else -> notImplementedNotes()
         }
@@ -207,6 +208,15 @@ internal object ImageCompressionOutput {
       "Android API 26-27 attempts a guarded BitmapFactory HEIF decode fallback.",
       "$formatLabel inputs are decoded without copying EXIF metadata.",
       "$formatLabel output is not implemented."
+    )
+
+  private fun avifFormatNotes(): List<String> =
+    listOf(
+      "AVIF input is supported on Android 14+ for baseline still images.",
+      "Android API 34+ uses ImageDecoder for AVIF input.",
+      "AVIF inputs are decoded without copying EXIF metadata.",
+      "Animated AVIF preservation is not implemented.",
+      "AVIF output is not implemented."
     )
 
   private fun encodeBitmapToTargetSize(
@@ -336,7 +346,7 @@ internal object ImageCompressionOutput {
       "Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.",
       "Metadata preserve normalizes output EXIF orientation after pixels are transformed.",
       "Metadata strip re-encodes JPEG output without preserving source metadata.",
-      "PNG, WebP, GIF, HEIC, and HEIF sources are decoded without copying EXIF metadata."
+      "PNG, WebP, GIF, HEIC, HEIF, and AVIF sources are decoded without copying EXIF metadata."
     )
 
   private fun pngFormatNotes(): List<String> =
@@ -370,6 +380,7 @@ internal object ImageCompressionOutput {
     WEBP_FORMAT,
     HEIC_FORMAT,
     HEIF_FORMAT,
+    AVIF_FORMAT,
     GIF_FORMAT
   )
 
@@ -378,6 +389,7 @@ internal object ImageCompressionOutput {
   private const val WEBP_FORMAT = "webp"
   private const val HEIC_FORMAT = "heic"
   private const val HEIF_FORMAT = "heif"
+  private const val AVIF_FORMAT = "avif"
   private const val GIF_FORMAT = "gif"
   private const val OUTPUT_DIRECTORY_NAME = "image-compression-kit"
   private const val MIN_QUALITY = 0

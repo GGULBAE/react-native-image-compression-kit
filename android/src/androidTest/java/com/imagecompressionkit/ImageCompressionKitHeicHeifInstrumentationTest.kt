@@ -31,10 +31,10 @@ import java.nio.charset.StandardCharsets
 @RunWith(AndroidJUnit4::class)
 class ImageCompressionKitHeicHeifInstrumentationTest {
   @Test
-  fun compressesCommittedHeicAndHeifSamplesToJpegPngAndWebp() {
+  fun compressesCommittedHeicHeifAndAvifSamplesToJpegPngAndWebp() {
     assertTrue(
-      "HEIC/HEIF instrumentation validation must run on API 28+ to exercise ImageDecoder.",
-      Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
+      "Codec instrumentation validation must run on API 34+ to exercise AVIF ImageDecoder.",
+      Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
     )
 
     val instrumentation = InstrumentationRegistry.getInstrumentation()
@@ -47,7 +47,8 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
     )
     val sources = listOf(
       "heic-heif/sample.heic",
-      "heic-heif/sample.heif"
+      "heic-heif/sample.heif",
+      "avif/sample.avif"
     )
     val outputs = listOf(
       OutputCase("jpeg", ::assertJpegSignature),

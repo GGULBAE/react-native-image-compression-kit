@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   heic-heif:
-    name: HEIC/HEIF emulator validation
+    name: HEIC/HEIF/AVIF emulator validation
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -62,7 +62,7 @@ jobs:
       - name: Generate Android codegen artifacts
         run: pnpm example:codegen
 
-      - name: Run HEIC/HEIF instrumentation tests
+      - name: Run HEIC/HEIF/AVIF instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35

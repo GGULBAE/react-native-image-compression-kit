@@ -110,7 +110,7 @@ class ImageCompressionOutputTest {
   }
 
   @Test
-  fun capabilitiesExposeJpegPngWebpGifHeicHeifInputsAndJpegPngWebpOutputsOnly() {
+  fun capabilitiesExposeJpegPngWebpGifHeicHeifAvifInputsAndJpegPngWebpOutputsOnly() {
     val capabilities = ImageCompressionOutput.FORMAT_VALUES.associateWith {
       ImageCompressionOutput.createFormatCapability(it)
     }
@@ -137,7 +137,7 @@ class ImageCompressionOutputTest {
     )
     assertTrue(
       capabilities.getValue("jpeg").notes.any {
-        it == "PNG, WebP, GIF, HEIC, and HEIF sources are decoded without copying EXIF metadata."
+        it == "PNG, WebP, GIF, HEIC, HEIF, and AVIF sources are decoded without copying EXIF metadata."
       }
     )
     assertCapability(
@@ -160,9 +160,10 @@ class ImageCompressionOutputTest {
     )
     assertCapability(
       capability = capabilities.getValue("avif"),
-      input = false,
+      input = true,
       output = false
     )
+    assertAvifCapabilityNotes(capabilities.getValue("avif"))
     assertCapability(
       capability = capabilities.getValue("gif"),
       input = true,
@@ -283,6 +284,34 @@ class ImageCompressionOutputTest {
     assertTrue(
       capability.notes.any {
         it == "$formatLabel output is not implemented."
+      }
+    )
+  }
+
+  private fun assertAvifCapabilityNotes(capability: CompressionFormatCapability) {
+    assertTrue(
+      capability.notes.any {
+        it == "AVIF input is supported on Android 14+ for baseline still images."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "Android API 34+ uses ImageDecoder for AVIF input."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "AVIF inputs are decoded without copying EXIF metadata."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "Animated AVIF preservation is not implemented."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "AVIF output is not implemented."
       }
     )
   }

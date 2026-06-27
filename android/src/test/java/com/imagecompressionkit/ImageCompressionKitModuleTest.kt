@@ -290,66 +290,53 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
-  fun compressImageRejectsUnsupportedImageFileExtensionsAtModuleBoundary() {
+  @Config(sdk = [33])
+  fun compressImageRejectsAvifFileBeforeAndroidU() {
     val module = createModule()
-    val unsupportedCases = listOf(
-      UnsupportedSourceCase(fileExtension = "avif", mimeType = "image/avif")
+    val promise = RecordingPromise()
+
+    module.compressImage(
+      compressionOptions(
+        sourceFile = createInvalidImageFile("avif"),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      promise
     )
 
-    unsupportedCases.forEach { unsupportedCase ->
-      val promise = RecordingPromise()
-      val sourceFile = createInvalidImageFile(unsupportedCase.fileExtension)
-
-      module.compressImage(
-        compressionOptions(
-          sourceFile = sourceFile,
-          output = JavaOnlyMap.of(
-            "format",
-            "jpeg",
-            "quality",
-            72
-          )
-        ),
-        promise
-      )
-
-      assertUnsupportedFormatRejected(promise)
-    }
+    assertAvifSdkUnsupportedRejected(promise)
   }
 
   @Test
-  fun compressImageRejectsUnsupportedContentMimeTypesAtModuleBoundary() {
+  @Config(sdk = [33])
+  fun compressImageRejectsAvifContentMimeBeforeAndroidU() {
     val reactContext = createReactContext()
     val module = createModule(reactContext)
-    val unsupportedCases = listOf(
-      UnsupportedSourceCase(fileExtension = "bin", mimeType = "image/avif")
+    val contentUri = Uri.parse(
+      "content://image-compression-kit-avif-${System.nanoTime()}/source.bin"
+    )
+    val promise = RecordingPromise()
+
+    registerContentInputStream(reactContext, contentUri, invalidImageBytes())
+    registerContentMimeType(contentUri, "image/avif")
+    module.compressImage(
+      compressionOptions(
+        sourceUri = contentUri.toString(),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      promise
     )
 
-    unsupportedCases.forEach { unsupportedCase ->
-      val authority = "image-compression-kit-mime-${System.nanoTime()}"
-      val contentUri = Uri.parse(
-        "content://$authority/source-${System.nanoTime()}.${unsupportedCase.fileExtension}"
-      )
-      val promise = RecordingPromise()
-
-      registerContentInputStream(reactContext, contentUri, invalidImageBytes())
-      registerContentMimeType(contentUri, unsupportedCase.mimeType)
-
-      module.compressImage(
-        compressionOptions(
-          sourceUri = contentUri.toString(),
-          output = JavaOnlyMap.of(
-            "format",
-            "jpeg",
-            "quality",
-            72
-          )
-        ),
-        promise
-      )
-
-      assertUnsupportedFormatRejected(promise)
-    }
+    assertAvifSdkUnsupportedRejected(promise)
   }
 
   @Test
@@ -401,6 +388,47 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
+  fun compressImageTreatsAvifSourcesAsDecodeCandidatesOnSupportedSdk() {
+    val reactContext = createReactContext()
+    val module = createModule(reactContext)
+    val filePromise = RecordingPromise()
+    val contentPromise = RecordingPromise()
+    val contentUri = Uri.parse(
+      "content://image-compression-kit-avif-${System.nanoTime()}/source.avif"
+    )
+
+    module.compressImage(
+      compressionOptions(
+        sourceFile = createInvalidImageFile("avif"),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      filePromise
+    )
+    registerContentInputStream(reactContext, contentUri, invalidImageBytes())
+    registerContentMimeType(contentUri, "image/avif")
+    module.compressImage(
+      compressionOptions(
+        sourceUri = contentUri.toString(),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      contentPromise
+    )
+
+    assertDecodeFailedRejected(filePromise)
+    assertDecodeFailedRejected(contentPromise)
+  }
+
+  @Test
   @Config(sdk = [25])
   fun compressImageRejectsHeicAndHeifBeforeAndroidO() {
     val module = createModule()
@@ -427,25 +455,13 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
-  fun compressImageSeparatesUnsupportedFormatFromDecodeFailure() {
+  fun compressImageSeparatesSupportedFormatDecodeFailures() {
     val module = createModule()
-    val unsupportedPromise = RecordingPromise()
     val decodeFailurePromise = RecordingPromise()
     val gifDecodeFailurePromise = RecordingPromise()
     val heicDecodeFailurePromise = RecordingPromise()
+    val avifDecodeFailurePromise = RecordingPromise()
 
-    module.compressImage(
-      compressionOptions(
-        sourceFile = createInvalidImageFile("avif"),
-        output = JavaOnlyMap.of(
-          "format",
-          "jpeg",
-          "quality",
-          72
-        )
-      ),
-      unsupportedPromise
-    )
     module.compressImage(
       compressionOptions(
         sourceFile = createInvalidImageFile("jpg"),
@@ -482,11 +498,23 @@ class ImageCompressionKitModuleTest {
       ),
       heicDecodeFailurePromise
     )
+    module.compressImage(
+      compressionOptions(
+        sourceFile = createInvalidImageFile("avif"),
+        output = JavaOnlyMap.of(
+          "format",
+          "jpeg",
+          "quality",
+          72
+        )
+      ),
+      avifDecodeFailurePromise
+    )
 
-    assertUnsupportedFormatRejected(unsupportedPromise)
     assertDecodeFailedRejected(decodeFailurePromise)
     assertDecodeFailedRejected(gifDecodeFailurePromise)
     assertDecodeFailedRejected(heicDecodeFailurePromise)
+    assertDecodeFailedRejected(avifDecodeFailurePromise)
   }
 
   @Test
@@ -1475,11 +1503,11 @@ class ImageCompressionKitModuleTest {
     )
   }
 
-  private fun assertUnsupportedFormatRejected(promise: RecordingPromise) {
+  private fun assertAvifSdkUnsupportedRejected(promise: RecordingPromise) {
     assertNull(promise.resolvedValue)
     assertEquals(ImageCompressionKitModule.ERR_UNSUPPORTED_FORMAT, promise.rejectionCode)
     assertEquals(
-      "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input only.",
+      "Android AVIF input requires Android 14+ platform decoder support.",
       promise.rejectionMessage
     )
   }

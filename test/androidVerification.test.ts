@@ -61,13 +61,13 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
   });
 
-  it('documents the HEIC and HEIF real codec sample validation strategy', () => {
+  it('documents the HEIC, HEIF, and AVIF real codec sample validation strategy', () => {
     const readmeSource = readProjectFile('README.md');
     const verificationSource = readProjectFile('scripts/android-verification.mjs');
 
-    expect(readmeSource).toContain('## HEIC / HEIF Codec Sample Validation Strategy');
+    expect(readmeSource).toContain('## HEIC / HEIF / AVIF Codec Sample Validation Strategy');
     expect(readmeSource).toContain(
-      'This repository now commits tiny HEIC / HEIF samples generated from the repo-owned PNG source.'
+      'This repository now commits tiny HEIC / HEIF / AVIF samples generated from repo-owned PNG sources.'
     );
     expect(readmeSource).toContain('Use `android/src/test/assets/heic-heif/source.png`');
     expect(readmeSource).toContain('Track source and generated output metadata');
@@ -77,6 +77,11 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('`pnpm fixtures:heic-heif`');
     expect(readmeSource).toContain(
       'heif-enc --quality 80 source.png -o sample.heic'
+    );
+    expect(readmeSource).toContain('`pnpm fixtures:avif:check`');
+    expect(readmeSource).toContain('`pnpm fixtures:avif`');
+    expect(readmeSource).toContain(
+      'heif-enc --quality 80 --avif source.png -o sample.avif'
     );
     expect(readmeSource).toContain('Generated fixtures are committed because they are tiny');
     expect(readmeSource).toContain('android/src/test/assets/heic-heif/');
@@ -88,7 +93,7 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain('`pnpm example:android-instrumentation`');
     expect(readmeSource).toContain(
-      'committed `sample.heic` and `sample.heif` fixtures through the API 28+ `ImageDecoder` route'
+      'committed `sample.heic`, `sample.heif`, and `sample.avif` fixtures through their `ImageDecoder` routes'
     );
     expect(readmeSource).toContain(
       'Manual codec validation beyond CI should use a codec-backed Android device or emulator'
@@ -99,10 +104,13 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       'API 26-27 should still be checked separately for the guarded `BitmapFactory` fallback'
     );
+    expect(readmeSource).toContain(
+      'For AVIF manual validation, use an API 34+ device or emulator'
+    );
     expect(verificationSource).toContain('checkHeicHeifCodecSampleStrategy');
   });
 
-  it('wires HEIC and HEIF emulator instrumentation validation', () => {
+  it('wires HEIC, HEIF, and AVIF emulator instrumentation validation', () => {
     const gradleSource = readProjectFile('android/build.gradle');
     const instrumentationSource = readProjectFile(
       'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt'
@@ -118,13 +126,14 @@ describe('Android verification scripts', () => {
       'androidTestImplementation "androidx.test.ext:junit:1.2.1"'
     );
     expect(instrumentationSource).toContain(
-      'compressesCommittedHeicAndHeifSamplesToJpegPngAndWebp'
+      'compressesCommittedHeicHeifAndAvifSamplesToJpegPngAndWebp'
     );
     expect(instrumentationSource).toContain(
-      'Build.VERSION.SDK_INT >= Build.VERSION_CODES.P'
+      'Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE'
     );
     expect(instrumentationSource).toContain('heic-heif/sample.heic');
     expect(instrumentationSource).toContain('heic-heif/sample.heif');
+    expect(instrumentationSource).toContain('avif/sample.avif');
     expect(instrumentationSource).toContain('ImageCompressionKitModule(');
     expect(instrumentationSource).toContain('JavaOnlyMap.of');
     expect(instrumentationSource).toContain('OutputCase("jpeg", ::assertJpegSignature)');
@@ -134,11 +143,58 @@ describe('Android verification scripts', () => {
       'assertBitmapDimensions(outputFile, width = 16, height = 12)'
     );
     expect(workflowSource).toContain('name: Android Instrumentation');
+    expect(workflowSource).toContain('HEIC/HEIF/AVIF emulator validation');
     expect(workflowSource).toContain('reactivecircus/android-emulator-runner@v2');
     expect(workflowSource).toContain('api-level: 35');
     expect(workflowSource).toContain('target: google_apis');
     expect(workflowSource).toContain('script: pnpm example:android-instrumentation');
     expect(verificationSource).toContain('checkHeicHeifInstrumentationValidation');
+  });
+
+  it('defines the AVIF source fixture manifest and committed sample', () => {
+    const manifest = JSON.parse(readProjectFile('android/src/test/assets/avif/manifest.json'));
+    const sourceBytes = readProjectBinary(manifest.source.path);
+    const sourceDimensions = readPngDimensions(sourceBytes);
+    const fixture = manifest.generatedFixtures[0];
+    const fixtureBytes = readProjectBinary(fixture.targetPath);
+    const generatorSource = readProjectFile('scripts/generate-avif-fixtures.mjs');
+
+    expect(packageJson.scripts['fixtures:avif']).toBe(
+      'node scripts/generate-avif-fixtures.mjs'
+    );
+    expect(packageJson.scripts['fixtures:avif:check']).toBe(
+      'node scripts/generate-avif-fixtures.mjs --check'
+    );
+    expect(manifest.schemaVersion).toBe(1);
+    expect(manifest.description).toContain('AVIF fixture');
+    expect(manifest.source).toMatchObject({
+      path: 'android/src/test/assets/avif/source.png',
+      format: 'png',
+      byteSize: sourceBytes.length,
+      sha256: sha256(sourceBytes),
+      dimensions: sourceDimensions,
+    });
+    expect(fixture).toMatchObject({
+      format: 'avif',
+      sourcePath: manifest.source.path,
+      targetPath: 'android/src/test/assets/avif/sample.avif',
+      byteSize: fixtureBytes.length,
+      sha256: sha256(fixtureBytes),
+      provenance: {
+        generator: 'libheif heif-enc',
+        generatorVersion: '1.23.0',
+        source: 'repo-owned source.png',
+        license: 'MIT',
+        status: 'committed fixture generated from repo-owned source',
+      },
+    });
+    expect(fixture.generationCommand).toContain(
+      'heif-enc --quality 80 --avif source.png -o sample.avif'
+    );
+    expect(manifest.validation.runtimeStatus).toContain('API 34+ emulator instrumentation');
+    expect(generatorSource).toContain('--avif');
+    expect(generatorSource).toContain('validateCommittedFixture');
+    expect(generatorSource).toContain('AVIF fixture manifest OK');
   });
 
   it('defines the HEIC and HEIF source fixture manifest and committed samples', () => {
@@ -218,7 +274,7 @@ describe('Android verification scripts', () => {
     );
   });
 
-  it('verifies the Android module supports file and content JPEG, PNG, WebP, GIF, HEIC, and HEIF sources', () => {
+  it('verifies the Android module supports file and content JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF sources', () => {
     const moduleSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
     );
@@ -235,12 +291,13 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('readInputFormatHint(inputSource)');
     expect(moduleSource).toContain('readUnsupportedInputMimeTypeHint(inputSource)');
     expect(moduleSource).toContain('queryContentMimeType(inputSource.uri)');
-    expect(moduleSource).toContain('UnsupportedInputFormat.fromMimeType(contentMimeType)');
-    expect(moduleSource).toContain('UnsupportedInputFormat.fromFileExtension(fileExtension)');
+    expect(moduleSource).toContain('usesAvifDecodePath');
     expect(moduleSource).toContain('InputFormat.fromFileExtension(fileExtension)');
     expect(moduleSource).toContain('Build.VERSION.SDK_INT >= Build.VERSION_CODES.P');
     expect(moduleSource).toContain('Build.VERSION.SDK_INT >= Build.VERSION_CODES.O');
+    expect(moduleSource).toContain('Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE');
     expect(moduleSource).toContain('decodeHeicHeifBitmapWithImageDecoder');
+    expect(moduleSource).toContain('decodeAvifBitmapWithImageDecoder');
     expect(moduleSource).toContain('decodeBitmapFactory(inputSource)');
     expect(moduleSource).toContain('mimeType = "image/jpeg"');
     expect(moduleSource).toContain('mimeType = "image/png"');
@@ -250,7 +307,7 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('mimeType = "image/avif"');
     expect(moduleSource).toContain('mimeType = "image/gif"');
     expect(moduleSource).toContain(
-      'Android MVP supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input only.'
+      'Android MVP supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input only.'
     );
     expect(moduleSource).toContain('createCompressionResult(');
     expect(moduleSource).toContain('outputFormat');
@@ -343,13 +400,15 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('webpFormatNotes');
     expect(combinedSource).toContain('gifFormatNotes');
     expect(combinedSource).toContain('heicHeifFormatNotes');
+    expect(combinedSource).toContain('avifFormatNotes');
     expect(combinedSource).toContain('SUPPORTED_INPUT_FORMATS');
     expect(combinedSource).toContain('HEIC_FORMAT');
     expect(combinedSource).toContain('HEIF_FORMAT');
+    expect(combinedSource).toContain('AVIF_FORMAT');
     expect(combinedSource).toContain('output = outputFormat != null');
     expect(combinedSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
     expect(combinedSource).toContain(
-      'supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input with JPEG, PNG, and WebP output only'
+      'supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input with JPEG, PNG, and WebP output only'
     );
     expect(combinedSource).not.toContain('PNG and WebP input remain planned.');
   });
@@ -386,7 +445,7 @@ describe('Android verification scripts', () => {
     expect(combinedSource).not.toContain('does not implement metadata preservation yet');
     expect(combinedSource).toContain('without preserving source metadata');
     expect(combinedSource).toContain(
-      'PNG, WebP, GIF, HEIC, and HEIF sources are decoded without copying EXIF metadata.'
+      'PNG, WebP, GIF, HEIC, HEIF, and AVIF sources are decoded without copying EXIF metadata.'
     );
     expect(combinedSource).toContain('heicHeifFormatNotes("HEIC")');
     expect(combinedSource).toContain('heicHeifFormatNotes("HEIF")');
@@ -403,6 +462,12 @@ describe('Android verification scripts', () => {
       '$formatLabel inputs are decoded without copying EXIF metadata.'
     );
     expect(combinedSource).toContain('$formatLabel output is not implemented.');
+    expect(combinedSource).toContain(
+      'AVIF input is supported on Android 14+ for baseline still images.'
+    );
+    expect(combinedSource).toContain('Android API 34+ uses ImageDecoder for AVIF input.');
+    expect(combinedSource).toContain('AVIF inputs are decoded without copying EXIF metadata.');
+    expect(combinedSource).toContain('AVIF output is not implemented.');
     expect(combinedSource).toContain(
       'Android MVP decodes GIF file:// and content:// sources as a static first frame.'
     );
@@ -498,9 +563,10 @@ describe('Android verification scripts', () => {
       'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile'
     );
     expect(testSource).toContain(
-      'capabilitiesExposeJpegPngWebpGifHeicHeifInputsAndJpegPngWebpOutputsOnly'
+      'capabilitiesExposeJpegPngWebpGifHeicHeifAvifInputsAndJpegPngWebpOutputsOnly'
     );
     expect(testSource).toContain('assertHeicHeifCapabilityNotes');
+    expect(testSource).toContain('assertAvifCapabilityNotes');
     expect(testSource).toContain('pngRejectsMaxBytesButWebpAndJpegAllowIt');
     expect(testSource).toContain(
       'outputFormatsMapToAndroidCompressFormatsAndQualityRules'
@@ -539,17 +605,20 @@ describe('Android verification scripts', () => {
       'compressImageRejectsUnreadableContentUriAtModuleBoundary'
     );
     expect(testSource).toContain(
-      'compressImageRejectsUnsupportedImageFileExtensionsAtModuleBoundary'
+      'compressImageRejectsAvifFileBeforeAndroidU'
     );
     expect(testSource).toContain(
-      'compressImageRejectsUnsupportedContentMimeTypesAtModuleBoundary'
+      'compressImageRejectsAvifContentMimeBeforeAndroidU'
     );
     expect(testSource).toContain(
       'compressImageTreatsHeicAndHeifSourcesAsDecodeCandidatesOnSupportedSdk'
     );
+    expect(testSource).toContain(
+      'compressImageTreatsAvifSourcesAsDecodeCandidatesOnSupportedSdk'
+    );
     expect(testSource).toContain('compressImageRejectsHeicAndHeifBeforeAndroidO');
     expect(testSource).toContain(
-      'compressImageSeparatesUnsupportedFormatFromDecodeFailure'
+      'compressImageSeparatesSupportedFormatDecodeFailures'
     );
     expect(testSource).toContain(
       'compressImageAcceptsGifFileAndContentSourcesAsStaticFrameWithAllImplementedOutputs'

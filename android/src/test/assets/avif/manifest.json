@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "description": "Tiny repo-owned AVIF fixture source and committed sample for Android codec validation.",
+  "source": {
+    "path": "android/src/test/assets/avif/source.png",
+    "format": "png",
+    "dimensions": {
+      "width": 16,
+      "height": 12
+    },
+    "byteSize": 656,
+    "sha256": "8ed5eb6353017474d82ec38008aaa8265838d61a287e38845e380bf314136574",
+    "provenance": {
+      "owner": "react-native-image-compression-kit",
+      "license": "MIT",
+      "description": "Deterministic RGB pattern generated for codec testing; contains no user-photo content."
+    }
+  },
+  "generatedFixtures": [
+    {
+      "format": "avif",
+      "targetPath": "android/src/test/assets/avif/sample.avif",
+      "generationCommand": "heif-enc --quality 80 --avif source.png -o sample.avif",
+      "quality": 80,
+      "dimensions": {
+        "width": 16,
+        "height": 12
+      },
+      "sourcePath": "android/src/test/assets/avif/source.png",
+      "byteSize": 494,
+      "sha256": "469ac312f50874f32cd7a8b9fe0885879852cca0b215fb022978a8b0524c6d12",
+      "provenance": {
+        "generator": "libheif heif-enc",
+        "generatorVersion": "1.23.0",
+        "source": "repo-owned source.png",
+        "license": "MIT",
+        "status": "committed fixture generated from repo-owned source"
+      }
+    }
+  ],
+  "validation": {
+    "checkCommand": "pnpm fixtures:avif:check",
+    "generationCommand": "pnpm fixtures:avif",
+    "runtimeStatus": "binary fixture is committed; API 34+ emulator instrumentation validates ImageDecoder decode"
+  }
+}

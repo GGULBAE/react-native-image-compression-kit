@@ -191,11 +191,11 @@ describe('compressImage', () => {
     });
   });
 
-  it('preserves Android MVP native error codes for unsupported inputs', async () => {
+  it('preserves Android MVP native error codes for platform-gated inputs', async () => {
     const nativeModule = mockNativeModule({
       compressImage: vi.fn().mockRejectedValue({
         code: 'ERR_UNSUPPORTED_FORMAT',
-        message: 'Android MVP supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input only.',
+        message: 'Android AVIF input requires Android 14+ platform decoder support.',
       }),
     });
     setNativeModuleForTesting(nativeModule);
@@ -207,7 +207,7 @@ describe('compressImage', () => {
       })
     ).rejects.toMatchObject({
       code: 'ERR_UNSUPPORTED_FORMAT',
-      message: 'Android MVP supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input only.',
+      message: 'Android AVIF input requires Android 14+ platform decoder support.',
     });
   });
 });

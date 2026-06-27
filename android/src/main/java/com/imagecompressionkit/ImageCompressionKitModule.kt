@@ -69,7 +69,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_NOT_IMPLEMENTED,
-          "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input with JPEG, PNG, and WebP output only."
+          "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input with JPEG, PNG, and WebP output only."
         )
         return
       }
@@ -602,10 +602,10 @@ class ImageCompressionKitModule(
     inputSource: ImageInputSource,
     inputFormat: InputFormat
   ): Bitmap? =
-    if (inputFormat.usesHeifDecodePath) {
-      decodeHeicHeifBitmap(inputSource)
-    } else {
-      decodeBitmapFactory(inputSource)
+    when {
+      inputFormat.usesAvifDecodePath -> decodeAvifBitmap(inputSource)
+      inputFormat.usesHeifDecodePath -> decodeHeicHeifBitmap(inputSource)
+      else -> decodeBitmapFactory(inputSource)
     }
 
   private fun decodeBitmapFactory(inputSource: ImageInputSource): Bitmap? =
@@ -620,6 +620,24 @@ class ImageCompressionKitModule(
       Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ->
         decodeBitmapFactory(inputSource)
       else -> null
+    }
+
+  @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+  private fun decodeAvifBitmap(inputSource: ImageInputSource): Bitmap? =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      decodeAvifBitmapWithImageDecoder(inputSource)
+    } else {
+      null
+    }
+
+  @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+  private fun decodeAvifBitmapWithImageDecoder(inputSource: ImageInputSource): Bitmap? =
+    try {
+      ImageDecoder.decodeBitmap(createImageDecoderSource(inputSource)) { decoder, _, _ ->
+        decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+      }
+    } catch (_: Exception) {
+      null
     }
 
   @TargetApi(Build.VERSION_CODES.P)
@@ -646,9 +664,6 @@ class ImageCompressionKitModule(
       is ImageInputSource.ContentSource -> queryContentMimeType(inputSource.uri)
     }
 
-    UnsupportedInputFormat.fromMimeType(contentMimeType)?.mimeType?.let { mimeType ->
-      return mimeType
-    }
     InputFormat.fromMimeType(contentMimeType)?.let { inputFormat ->
       if (!canDecodeInputFormat(inputFormat)) {
         return inputFormat.mimeType
@@ -660,10 +675,6 @@ class ImageCompressionKitModule(
       is ImageInputSource.FileSource -> inputSource.file.extension
       is ImageInputSource.ContentSource ->
         inputSource.uri.lastPathSegment?.substringAfterLast('.', "")
-    }
-
-    UnsupportedInputFormat.fromFileExtension(fileExtension)?.mimeType?.let { mimeType ->
-      return mimeType
     }
 
     val extensionInputFormat = InputFormat.fromFileExtension(fileExtension)
@@ -695,14 +706,25 @@ class ImageCompressionKitModule(
   }
 
   private fun canDecodeInputFormat(inputFormat: InputFormat): Boolean =
-    !inputFormat.usesHeifDecodePath || Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-
-  private fun unsupportedInputFormatMessage(mimeTypeHint: String): String =
-    if (InputFormat.fromMimeType(mimeTypeHint)?.usesHeifDecodePath == true) {
-      "Android HEIC/HEIF input requires Android 8.0+ platform decoder support."
-    } else {
-      DEFAULT_UNSUPPORTED_INPUT_FORMAT_MESSAGE
+    when {
+      inputFormat.usesAvifDecodePath ->
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+      inputFormat.usesHeifDecodePath ->
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+      else -> true
     }
+
+  private fun unsupportedInputFormatMessage(mimeTypeHint: String): String {
+    val inputFormat = InputFormat.fromMimeType(mimeTypeHint)
+
+    return when {
+      inputFormat?.usesHeifDecodePath == true ->
+        "Android HEIC/HEIF input requires Android 8.0+ platform decoder support."
+      inputFormat?.usesAvifDecodePath == true ->
+        "Android AVIF input requires Android 14+ platform decoder support."
+      else -> DEFAULT_UNSUPPORTED_INPUT_FORMAT_MESSAGE
+    }
+  }
 
   private fun queryContentMimeType(uri: Uri): String? =
     try {
@@ -982,7 +1004,8 @@ class ImageCompressionKitModule(
     val mimeTypeAliases: Set<String>,
     val fileExtensions: Set<String>,
     val supportsJpegExifMetadata: Boolean,
-    val usesHeifDecodePath: Boolean = false
+    val usesHeifDecodePath: Boolean = false,
+    val usesAvifDecodePath: Boolean = false
   ) {
     JPEG(
       mimeType = "image/jpeg",
@@ -1021,6 +1044,13 @@ class ImageCompressionKitModule(
       fileExtensions = setOf("heif"),
       supportsJpegExifMetadata = false,
       usesHeifDecodePath = true
+    ),
+    AVIF(
+      mimeType = "image/avif",
+      mimeTypeAliases = emptySet(),
+      fileExtensions = setOf("avif"),
+      supportsJpegExifMetadata = false,
+      usesAvifDecodePath = true
     );
 
     companion object {
@@ -1033,35 +1063,6 @@ class ImageCompressionKitModule(
       }
 
       fun fromFileExtension(fileExtension: String?): InputFormat? {
-        val normalizedFileExtension = fileExtension?.trim()?.trimStart('.')?.lowercase()
-          ?: return null
-
-        return values().firstOrNull { normalizedFileExtension in it.fileExtensions }
-      }
-    }
-  }
-
-  private enum class UnsupportedInputFormat(
-    val mimeType: String,
-    val mimeTypeAliases: Set<String>,
-    val fileExtensions: Set<String>
-  ) {
-    AVIF(
-      mimeType = "image/avif",
-      mimeTypeAliases = emptySet(),
-      fileExtensions = setOf("avif")
-    );
-
-    companion object {
-      fun fromMimeType(mimeType: String?): UnsupportedInputFormat? {
-        val normalizedMimeType = mimeType?.trim()?.lowercase() ?: return null
-
-        return values().firstOrNull {
-          it.mimeType == normalizedMimeType || normalizedMimeType in it.mimeTypeAliases
-        }
-      }
-
-      fun fromFileExtension(fileExtension: String?): UnsupportedInputFormat? {
         val normalizedFileExtension = fileExtension?.trim()?.trimStart('.')?.lowercase()
           ?: return null
 
@@ -1121,6 +1122,6 @@ class ImageCompressionKitModule(
     private const val METADATA_POLICY_SAFE = "safe"
     private const val METADATA_POLICY_STRIP = "strip"
     private const val DEFAULT_UNSUPPORTED_INPUT_FORMAT_MESSAGE =
-      "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, and HEIF input only."
+      "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input only."
   }
 }
