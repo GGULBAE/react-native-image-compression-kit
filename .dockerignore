@@ -1,0 +1,39 @@
+.git/
+.gradle/
+.pnpm-store/
+node_modules/
+
+# Build outputs and generated artifacts
+build/
+dist/
+lib/
+coverage/
+*.tsbuildinfo
+*.tgz
+
+# Android build outputs
+android/.gradle/
+android/build/
+android/generated/
+android/app/build/
+android/local.properties
+android/**/local.properties
+example/android/.gradle/
+example/android/build/
+example/android/app/build/
+example/android/local.properties
+example/android/**/local.properties
+
+# iOS build outputs
+ios/Pods/
+ios/build/
+ios/generated/
+ios/DerivedData/
+
+# Local/editor noise
+.DS_Store
+.idea/
+.vscode/
+*.log
+.env
+.env.*

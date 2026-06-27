@@ -12,7 +12,8 @@
     }
   },
   "files": [
-    "android",
+    "android/build.gradle",
+    "android/src",
     "ios",
     "lib",
     "scripts",
@@ -40,6 +41,14 @@
     "android:doctor": "node scripts/android-verification.mjs doctor",
     "android:codegen": "node scripts/android-verification.mjs codegen",
     "android:build": "node scripts/android-verification.mjs build",
+    "docker:android:build": "node scripts/docker-android.mjs build",
+    "docker:android:verify": "node scripts/docker-android.mjs verify",
+    "docker:android:example:typecheck": "node scripts/docker-android.mjs example:typecheck",
+    "docker:android:example:codegen": "node scripts/docker-android.mjs example:codegen",
+    "docker:android:example:android-unit-test": "node scripts/docker-android.mjs example:android-unit-test",
+    "docker:android:example:build": "node scripts/docker-android.mjs example:build",
+    "docker:android:ci": "node scripts/docker-android.mjs ci",
+    "docker:android:shell": "node scripts/docker-android.mjs shell",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

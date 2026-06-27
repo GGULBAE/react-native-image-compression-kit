@@ -61,6 +61,92 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts.verify).toContain('pnpm android:doctor');
   });
 
+  it('defines the Docker Android build and test environment', () => {
+    const dockerfileSource = readProjectFile('Dockerfile');
+    const dockerIgnoreSource = readProjectFile('.dockerignore');
+    const dockerScriptSource = readProjectFile('scripts/docker-android.mjs');
+    const readmeSource = readProjectFile('README.md');
+
+    expect(packageJson.scripts['docker:android:build']).toBe(
+      'node scripts/docker-android.mjs build'
+    );
+    expect(packageJson.scripts['docker:android:verify']).toBe(
+      'node scripts/docker-android.mjs verify'
+    );
+    expect(packageJson.scripts['docker:android:example:typecheck']).toBe(
+      'node scripts/docker-android.mjs example:typecheck'
+    );
+    expect(packageJson.scripts['docker:android:example:codegen']).toBe(
+      'node scripts/docker-android.mjs example:codegen'
+    );
+    expect(packageJson.scripts['docker:android:example:android-unit-test']).toBe(
+      'node scripts/docker-android.mjs example:android-unit-test'
+    );
+    expect(packageJson.scripts['docker:android:example:build']).toBe(
+      'node scripts/docker-android.mjs example:build'
+    );
+    expect(packageJson.scripts['docker:android:ci']).toBe(
+      'node scripts/docker-android.mjs ci'
+    );
+    expect(packageJson.scripts['docker:android:shell']).toBe(
+      'node scripts/docker-android.mjs shell'
+    );
+
+    expect(dockerfileSource).toContain('FROM eclipse-temurin:21-jdk-jammy');
+    expect(dockerfileSource).toContain('ARG NODE_VERSION=24.11.1');
+    expect(dockerfileSource).toContain('ARG PNPM_VERSION=11.7.0');
+    expect(dockerfileSource).toContain('ARG ANDROID_PLATFORM=android-36');
+    expect(dockerfileSource).toContain('ARG ANDROID_BUILD_TOOLS_VERSION=36.0.0');
+    expect(dockerfileSource).toContain('ARG ANDROID_LEGACY_BUILD_TOOLS_VERSION=35.0.0');
+    expect(dockerfileSource).toContain('ARG ANDROID_NDK_VERSION=27.1.12297006');
+    expect(dockerfileSource).toContain('ARG ANDROID_CMAKE_VERSION=3.22.1');
+    expect(dockerfileSource).toContain('ANDROID_HOME=/opt/android-sdk');
+    expect(dockerfileSource).toContain('GRADLE_OPTS=-Dorg.gradle.vfs.watch=false');
+    expect(dockerfileSource).toContain('npm install -g "pnpm@${PNPM_VERSION}"');
+    expect(dockerfileSource).toContain('sdkmanager --install');
+    expect(dockerfileSource).toContain('"platforms;${ANDROID_PLATFORM}"');
+    expect(dockerfileSource).toContain('"build-tools;${ANDROID_BUILD_TOOLS_VERSION}"');
+    expect(dockerfileSource).toContain('"build-tools;${ANDROID_LEGACY_BUILD_TOOLS_VERSION}"');
+    expect(dockerfileSource).toContain('"cmake;${ANDROID_CMAKE_VERSION}"');
+    expect(dockerfileSource).toContain('"ndk;${ANDROID_NDK_VERSION}"');
+    expect(dockerfileSource).toContain('WORKDIR /workspace');
+
+    expect(dockerIgnoreSource).toContain('node_modules/');
+    expect(dockerIgnoreSource).toContain('android/build/');
+    expect(dockerIgnoreSource).toContain('example/android/build/');
+
+    expect(dockerScriptSource).toContain('RNICK_ANDROID_DOCKER_PLATFORM');
+    expect(dockerScriptSource).toContain('linux/amd64');
+    expect(dockerScriptSource).toContain('pnpm install --frozen-lockfile');
+    expect(dockerScriptSource).toContain('example:android-unit-test');
+    expect(dockerScriptSource).toContain('${VOLUME_PREFIX}-node-modules:/workspace/node_modules');
+    expect(dockerScriptSource).toContain('${VOLUME_PREFIX}-pnpm-store:/pnpm/store');
+    expect(dockerScriptSource).toContain('${VOLUME_PREFIX}-gradle-home:/root/.gradle');
+    expect(dockerScriptSource).toContain('GRADLE_OPTS=-Dorg.gradle.vfs.watch=false');
+
+    expect(readmeSource).toContain('## Docker Android Build/Test Environment');
+    expect(readmeSource).toContain('Node.js 24, pnpm 11.7.0, Temurin JDK 21');
+    expect(readmeSource).toContain('Android SDK platform 36, Android build tools 36.0.0');
+    expect(readmeSource).toContain(
+      'Android build tools 35.0.0 for React Native/AGP compatibility'
+    );
+    expect(readmeSource).toContain('CMake 3.22.1');
+    expect(readmeSource).toContain('Android NDK 27.1.12297006');
+    expect(readmeSource).toContain('pnpm docker:android:build');
+    expect(readmeSource).toContain('pnpm docker:android:ci');
+    expect(readmeSource).toContain('pnpm docker:android:example:android-unit-test');
+    expect(readmeSource).toContain('linux/amd64');
+    expect(readmeSource).toContain('disables Gradle VFS watching');
+    expect(readmeSource).toContain('named Docker volumes');
+    expect(readmeSource).toContain('does not run an Android emulator');
+  });
+
+  it('keeps Android build outputs out of npm package file globs', () => {
+    expect(packageJson.files).toContain('android/build.gradle');
+    expect(packageJson.files).toContain('android/src');
+    expect(packageJson.files).not.toContain('android');
+  });
+
   it('documents the HEIC, HEIF, and AVIF real codec sample validation strategy', () => {
     const readmeSource = readProjectFile('README.md');
     const verificationSource = readProjectFile('scripts/android-verification.mjs');

@@ -434,6 +434,46 @@ pnpm example:build
 
 The separate `.github/workflows/android-instrumentation.yml` workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout, and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC, HEIF, and AVIF fixtures decode on the Android `ImageDecoder` paths and can be compressed to JPEG, PNG, and WebP. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
 
+## Docker Android Build/Test Environment
+
+The repository includes a Docker-based Android build/test environment for machines that do not have Java, Android SDK, build tools, CMake, or NDK installed locally. The root `Dockerfile` mirrors the lightweight CI environment with Node.js 24, pnpm 11.7.0, Temurin JDK 21, Android SDK platform 36, Android build tools 36.0.0, Android build tools 35.0.0 for React Native/AGP compatibility, CMake 3.22.1, and Android NDK 27.1.12297006.
+
+Build the image:
+
+```bash
+pnpm docker:android:build
+```
+
+Run the full non-emulator Android verification flow in Docker:
+
+```bash
+pnpm docker:android:ci
+```
+
+That command installs dependencies inside Docker-managed volumes, then runs:
+
+```bash
+pnpm verify
+pnpm example:typecheck
+pnpm example:codegen
+pnpm example:android-unit-test
+pnpm example:build
+```
+
+You can also run individual Docker-backed checks:
+
+```bash
+pnpm docker:android:verify
+pnpm docker:android:example:typecheck
+pnpm docker:android:example:codegen
+pnpm docker:android:example:android-unit-test
+pnpm docker:android:example:build
+```
+
+The Docker runner uses `linux/amd64` by default so Android SDK build tools behave like the GitHub Actions Linux environment. It bind-mounts the repository at `/workspace`, disables Gradle VFS watching for Docker bind-mount stability, and uses named Docker volumes for `node_modules`, the pnpm store, and the Gradle home cache so container dependencies do not overwrite the host install. Override the image, platform, or volume prefix with `RNICK_ANDROID_DOCKER_IMAGE`, `RNICK_ANDROID_DOCKER_PLATFORM`, or `RNICK_ANDROID_DOCKER_VOLUME_PREFIX` if needed.
+
+Docker covers repository checks, Android Codegen, Android JVM unit tests, and the example Android debug build. It does not run an Android emulator, `pnpm example:android`, or `pnpm example:android-instrumentation`; those still require a connected API 34+ emulator/device or the separate GitHub Actions instrumentation workflow.
+
 ## Development Verification
 
 Run the JavaScript and TypeScript checks:
@@ -467,7 +507,7 @@ Use `pnpm example:android-instrumentation` only when an API 34+ emulator or devi
 RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:app:assembleDebug pnpm android:build
 ```
 
-The executable Android checks require a Java runtime, Android SDK, and a Gradle wrapper or `gradle` command in the target app.
+The executable Android checks require a Java runtime, Android SDK, and a Gradle wrapper or `gradle` command in the target app. If those are not installed locally, use `pnpm docker:android:build` followed by `pnpm docker:android:ci` to run the non-emulator Android verification flow in the reproducible Docker environment.
 
 ### Local Commit Hook
 

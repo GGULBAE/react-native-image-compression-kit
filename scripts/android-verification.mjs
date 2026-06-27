@@ -13,6 +13,8 @@ const GRADLE_TASK_ENV = 'RNICK_ANDROID_GRADLE_TASK';
 
 const REQUIRED_FILES = [
   'package.json',
+  'Dockerfile',
+  '.dockerignore',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt',
@@ -31,6 +33,7 @@ const REQUIRED_FILES = [
   'android/src/test/assets/avif/sample.avif',
   'android/src/test/assets/avif/manifest.json',
   '.github/workflows/android-instrumentation.yml',
+  'scripts/docker-android.mjs',
   'scripts/generate-avif-fixtures.mjs',
   'scripts/generate-heic-heif-fixtures.mjs',
 ];
@@ -59,6 +62,8 @@ function runDoctor() {
     checkRequiredFiles(),
     checkCodegenConfig(),
     checkSpecFile(),
+    checkDockerAndroidEnvironment(),
+    checkPackageFiles(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
     checkHeicHeifCodecSampleStrategy(),
@@ -177,6 +182,106 @@ function checkSpecFile() {
     detail: ok
       ? 'Spec extends TurboModule and registers ImageCompressionKit'
       : 'expected a Spec interface and TurboModuleRegistry.get<Spec>(...)',
+  };
+}
+
+function checkDockerAndroidEnvironment() {
+  const packageJson = readJson('package.json');
+  const dockerfileContents = readText('Dockerfile');
+  const dockerIgnoreContents = readText('.dockerignore');
+  const dockerScriptContents = readText('scripts/docker-android.mjs');
+  const readmeContents = readText('README.md');
+  const expectedScripts = {
+    'docker:android:build': 'node scripts/docker-android.mjs build',
+    'docker:android:verify': 'node scripts/docker-android.mjs verify',
+    'docker:android:example:typecheck': 'node scripts/docker-android.mjs example:typecheck',
+    'docker:android:example:codegen': 'node scripts/docker-android.mjs example:codegen',
+    'docker:android:example:android-unit-test':
+      'node scripts/docker-android.mjs example:android-unit-test',
+    'docker:android:example:build': 'node scripts/docker-android.mjs example:build',
+    'docker:android:ci': 'node scripts/docker-android.mjs ci',
+    'docker:android:shell': 'node scripts/docker-android.mjs shell',
+  };
+  const scriptChecks = Object.entries(expectedScripts).map(
+    ([name, command]) => packageJson.scripts?.[name] === command
+  );
+  const expectedSnippets = [
+    [dockerfileContents, 'FROM eclipse-temurin:21-jdk-jammy'],
+    [dockerfileContents, 'ARG NODE_VERSION=24.11.1'],
+    [dockerfileContents, 'ARG PNPM_VERSION=11.7.0'],
+    [dockerfileContents, 'ARG ANDROID_PLATFORM=android-36'],
+    [dockerfileContents, 'ARG ANDROID_BUILD_TOOLS_VERSION=36.0.0'],
+    [dockerfileContents, 'ARG ANDROID_LEGACY_BUILD_TOOLS_VERSION=35.0.0'],
+    [dockerfileContents, 'ARG ANDROID_NDK_VERSION=27.1.12297006'],
+    [dockerfileContents, 'ARG ANDROID_CMAKE_VERSION=3.22.1'],
+    [dockerfileContents, 'ANDROID_HOME=/opt/android-sdk'],
+    [dockerfileContents, 'GRADLE_OPTS=-Dorg.gradle.vfs.watch=false'],
+    [dockerfileContents, 'npm install -g "pnpm@${PNPM_VERSION}"'],
+    [dockerfileContents, 'sdkmanager --install'],
+    [dockerfileContents, '"platforms;${ANDROID_PLATFORM}"'],
+    [dockerfileContents, '"build-tools;${ANDROID_BUILD_TOOLS_VERSION}"'],
+    [dockerfileContents, '"build-tools;${ANDROID_LEGACY_BUILD_TOOLS_VERSION}"'],
+    [dockerfileContents, '"cmake;${ANDROID_CMAKE_VERSION}"'],
+    [dockerfileContents, '"ndk;${ANDROID_NDK_VERSION}"'],
+    [dockerfileContents, 'WORKDIR /workspace'],
+    [dockerIgnoreContents, 'node_modules/'],
+    [dockerIgnoreContents, 'android/build/'],
+    [dockerIgnoreContents, 'example/android/build/'],
+    [dockerScriptContents, 'RNICK_ANDROID_DOCKER_PLATFORM'],
+    [dockerScriptContents, 'linux/amd64'],
+    [dockerScriptContents, 'pnpm install --frozen-lockfile'],
+    [dockerScriptContents, 'example:android-unit-test'],
+    [dockerScriptContents, '${VOLUME_PREFIX}-node-modules:/workspace/node_modules'],
+    [dockerScriptContents, '${VOLUME_PREFIX}-pnpm-store:/pnpm/store'],
+    [dockerScriptContents, '${VOLUME_PREFIX}-gradle-home:/root/.gradle'],
+    [dockerScriptContents, 'GRADLE_OPTS=-Dorg.gradle.vfs.watch=false'],
+    [readmeContents, '## Docker Android Build/Test Environment'],
+    [readmeContents, 'Node.js 24, pnpm 11.7.0, Temurin JDK 21'],
+    [readmeContents, 'Android SDK platform 36, Android build tools 36.0.0'],
+    [readmeContents, 'Android build tools 35.0.0 for React Native/AGP compatibility'],
+    [readmeContents, 'CMake 3.22.1'],
+    [readmeContents, 'Android NDK 27.1.12297006'],
+    [readmeContents, 'pnpm docker:android:build'],
+    [readmeContents, 'pnpm docker:android:ci'],
+    [readmeContents, 'pnpm docker:android:example:android-unit-test'],
+    [readmeContents, 'linux/amd64'],
+    [readmeContents, 'disables Gradle VFS watching'],
+    [readmeContents, 'named Docker volumes'],
+    [readmeContents, 'does not run an Android emulator'],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => !contents.includes(snippet))
+    .map(([, snippet]) => snippet);
+
+  return {
+    ok: scriptChecks.every(Boolean) && missing.length === 0,
+    label: 'Docker Android build/test environment is documented and wired',
+    detail:
+      scriptChecks.every(Boolean) && missing.length === 0
+        ? 'Dockerfile, docker runner scripts, package commands, .dockerignore, and README Docker guidance are present'
+        : `missing snippets or package scripts: ${[
+            ...missing,
+            ...Object.entries(expectedScripts)
+              .filter(([name, command]) => packageJson.scripts?.[name] !== command)
+              .map(([name]) => name),
+          ].join(' | ')}`,
+  };
+}
+
+function checkPackageFiles() {
+  const packageJson = readJson('package.json');
+  const files = packageJson.files ?? [];
+  const requiredEntries = ['android/build.gradle', 'android/src', 'ios', 'lib', 'src'];
+  const hasRequiredEntries = requiredEntries.every((entry) => files.includes(entry));
+  const excludesBroadAndroidDirectory = !files.includes('android');
+
+  return {
+    ok: hasRequiredEntries && excludesBroadAndroidDirectory,
+    label: 'npm package file globs avoid Android build outputs',
+    detail:
+      hasRequiredEntries && excludesBroadAndroidDirectory
+        ? 'Android package entries include source and Gradle config without packaging android/build artifacts'
+        : 'expected package.json files to include android/build.gradle and android/src, without the broad android directory',
   };
 }
 
@@ -642,7 +747,9 @@ function checkHeicHeifFixtures() {
 function collectEnvironmentReport() {
   const java = runCommand('java', ['-version']);
   const androidSdk = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT;
-  const gradle = resolveGradleCommand(path.join(ROOT, 'android'));
+  const gradle =
+    resolveGradleCommand(path.join(ROOT, 'example/android')) ??
+    resolveGradleCommand(path.join(ROOT, 'android'));
 
   return [
     {
