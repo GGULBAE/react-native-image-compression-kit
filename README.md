@@ -522,6 +522,27 @@ RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:app:assemb
 
 The executable Android checks require a Java runtime, Android SDK, and a Gradle wrapper or `gradle` command in the target app. If those are not installed locally, use `pnpm docker:android:build` followed by `pnpm docker:android:ci` to run the non-emulator Android verification flow in the reproducible Docker environment.
 
+## Release Dry Run Checklist
+
+Actual npm publishing is intentionally outside the current release checklist. Before publishing, review the intended version and package metadata, then run the dry-run release gate from the repository root:
+
+```bash
+pnpm release:dry-run
+```
+
+That command does not publish to npm. It runs the required pre-publish checks in this order:
+
+```bash
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm smoke:consumer
+pnpm publish --dry-run --no-git-checks
+```
+
+The final `pnpm publish --dry-run --no-git-checks` step exercises the publish packaging path without uploading a package. The `--no-git-checks` flag keeps the dry run usable before the release commit or tag exists; the actual publish decision should still wait for a clean working tree, the intended version, and a successful GitHub Actions CI run on the pushed release commit.
+
 ### Local Commit Hook
 
 Install the repository git hooks once per clone:

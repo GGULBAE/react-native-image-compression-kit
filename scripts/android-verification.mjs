@@ -38,6 +38,7 @@ const REQUIRED_FILES = [
   'scripts/docker-android.mjs',
   'scripts/generate-avif-fixtures.mjs',
   'scripts/generate-heic-heif-fixtures.mjs',
+  'scripts/release-dry-run.mjs',
 ];
 
 function main() {
@@ -68,6 +69,7 @@ function runDoctor() {
     checkDockerAndroidEnvironment(),
     checkPackageFiles(),
     checkConsumerSmokeTestEnvironment(),
+    checkReleaseDryRunChecklist(),
     checkGitHubActionRuntimeVersions(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
@@ -376,6 +378,51 @@ function checkConsumerSmokeTestEnvironment() {
         : `missing snippets or package script: ${[
             ...missing,
             ...(hasScript ? [] : ['package.json smoke:consumer script']),
+          ].join(' | ')}`,
+  };
+}
+
+function checkReleaseDryRunChecklist() {
+  const packageJson = readJson('package.json');
+  const releaseScriptContents = readText('scripts/release-dry-run.mjs');
+  const readmeContents = readText('README.md');
+  const expectedSnippets = [
+    [
+      releaseScriptContents,
+      'Release dry run only validates publish readiness. It does not publish to npm.',
+    ],
+    [releaseScriptContents, "args: ['verify']"],
+    [releaseScriptContents, "args: ['example:typecheck']"],
+    [releaseScriptContents, "args: ['diff', '--check']"],
+    [releaseScriptContents, "args: ['pack', '--dry-run']"],
+    [releaseScriptContents, "args: ['smoke:consumer']"],
+    [releaseScriptContents, "args: ['publish', '--dry-run', '--no-git-checks']"],
+    [readmeContents, '## Release Dry Run Checklist'],
+    [readmeContents, 'Actual npm publishing is intentionally outside the current release checklist.'],
+    [readmeContents, 'pnpm release:dry-run'],
+    [readmeContents, 'pnpm verify'],
+    [readmeContents, 'pnpm example:typecheck'],
+    [readmeContents, 'git diff --check'],
+    [readmeContents, 'pnpm pack --dry-run'],
+    [readmeContents, 'pnpm smoke:consumer'],
+    [readmeContents, 'pnpm publish --dry-run --no-git-checks'],
+    [readmeContents, 'successful GitHub Actions CI run'],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => !contents.includes(snippet))
+    .map(([, snippet]) => snippet);
+  const hasScript =
+    packageJson.scripts?.['release:dry-run'] === 'node scripts/release-dry-run.mjs';
+
+  return {
+    ok: hasScript && missing.length === 0,
+    label: 'release dry-run checklist is documented and wired',
+    detail:
+      hasScript && missing.length === 0
+        ? 'package script, dry-run command sequence, README checklist, and non-publish boundary are present'
+        : `missing snippets or package script: ${[
+            ...missing,
+            ...(hasScript ? [] : ['package.json release:dry-run script']),
           ].join(' | ')}`,
   };
 }

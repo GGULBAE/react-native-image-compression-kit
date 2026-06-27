@@ -233,6 +233,38 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('without publishing to npm');
   });
 
+  it('documents and wires the release dry-run checklist', () => {
+    const releaseScriptSource = readProjectFile('scripts/release-dry-run.mjs');
+    const readmeSource = readProjectFile('README.md');
+
+    expect(packageJson.scripts['release:dry-run']).toBe(
+      'node scripts/release-dry-run.mjs'
+    );
+    expect(releaseScriptSource).toContain(
+      'Release dry run only validates publish readiness. It does not publish to npm.'
+    );
+    expect(releaseScriptSource).toContain("args: ['verify']");
+    expect(releaseScriptSource).toContain("args: ['example:typecheck']");
+    expect(releaseScriptSource).toContain("args: ['diff', '--check']");
+    expect(releaseScriptSource).toContain("args: ['pack', '--dry-run']");
+    expect(releaseScriptSource).toContain("args: ['smoke:consumer']");
+    expect(releaseScriptSource).toContain(
+      "args: ['publish', '--dry-run', '--no-git-checks']"
+    );
+    expect(readmeSource).toContain('## Release Dry Run Checklist');
+    expect(readmeSource).toContain(
+      'Actual npm publishing is intentionally outside the current release checklist.'
+    );
+    expect(readmeSource).toContain('pnpm release:dry-run');
+    expect(readmeSource).toContain('pnpm verify');
+    expect(readmeSource).toContain('pnpm example:typecheck');
+    expect(readmeSource).toContain('git diff --check');
+    expect(readmeSource).toContain('pnpm pack --dry-run');
+    expect(readmeSource).toContain('pnpm smoke:consumer');
+    expect(readmeSource).toContain('pnpm publish --dry-run --no-git-checks');
+    expect(readmeSource).toContain('successful GitHub Actions CI run');
+  });
+
   it('keeps GitHub Actions on Node 24 runtime-compatible action majors', () => {
     const ciWorkflowSource = readProjectFile('.github/workflows/ci.yml');
     const instrumentationWorkflowSource = readProjectFile(
