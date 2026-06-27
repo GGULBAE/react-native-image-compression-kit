@@ -203,9 +203,24 @@ function assertInstalledPackageFiles(projectDir) {
   const missing = requiredFiles.filter(
     (filePath) => !existsSync(path.join(packageDir, filePath))
   );
+  const forbiddenFiles = [
+    'scripts/consumer-smoke-test.mjs',
+    'scripts/android-verification.mjs',
+    'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
+    'android/src/test/assets/heic-heif/sample.heic',
+    'android/src/test/assets/avif/sample.avif',
+    'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
+  ];
+  const presentForbiddenFiles = forbiddenFiles.filter((filePath) =>
+    existsSync(path.join(packageDir, filePath))
+  );
 
   if (missing.length > 0) {
     fail(`Installed package is missing expected files: ${missing.join(', ')}`);
+  }
+
+  if (presentForbiddenFiles.length > 0) {
+    fail(`Installed package contains development-only files: ${presentForbiddenFiles.join(', ')}`);
   }
 }
 

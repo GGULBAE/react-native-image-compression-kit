@@ -42,6 +42,55 @@ function extractKotlinArray(source: string, arrayName: string): string {
 }
 
 describe('Android verification scripts', () => {
+  it('declares npm publish-ready package metadata', () => {
+    const readmeSource = readProjectFile('README.md');
+    const expectedKeywords = [
+      'react-native',
+      'image',
+      'image-processing',
+      'compression',
+      'resize',
+      'transcode',
+      'jpeg',
+      'png',
+      'webp',
+      'heic',
+      'heif',
+      'avif',
+    ];
+
+    expect(packageJson.name).toBe('react-native-image-compression-kit');
+    expect(packageJson.version).toBe('0.1.0');
+    expect(packageJson.license).toBe('MIT');
+    expect(packageJson.repository).toEqual({
+      type: 'git',
+      url: 'git+https://github.com/GGULBAE/react-native-image-compression-kit.git',
+    });
+    expect(packageJson.bugs).toEqual({
+      url: 'https://github.com/GGULBAE/react-native-image-compression-kit/issues',
+    });
+    expect(packageJson.homepage).toBe(
+      'https://github.com/GGULBAE/react-native-image-compression-kit#readme'
+    );
+    expect(packageJson.main).toBe('lib/index.js');
+    expect(packageJson.types).toBe('lib/index.d.ts');
+    expect(packageJson.exports['.']).toEqual({
+      types: './lib/index.d.ts',
+      default: './lib/index.js',
+    });
+    expect(packageJson.peerDependencies['react-native']).toBe('>=0.73 <1.0');
+
+    for (const keyword of expectedKeywords) {
+      expect(packageJson.keywords).toContain(keyword);
+    }
+
+    expect(readmeSource).toContain('initial `0.1.0` public release');
+    expect(readmeSource).toContain(
+      'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
+    );
+    expect(readmeSource).toContain('After the first npm release:');
+  });
+
   it('exposes repository and app-backed Android verification commands', () => {
     expect(packageJson.scripts['android:doctor']).toBe(
       'node scripts/android-verification.mjs doctor'
@@ -141,10 +190,12 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('does not run an Android emulator');
   });
 
-  it('keeps Android build outputs out of npm package file globs', () => {
+  it('keeps development-only files out of npm package file globs', () => {
     expect(packageJson.files).toContain('android/build.gradle');
-    expect(packageJson.files).toContain('android/src');
+    expect(packageJson.files).toContain('android/src/main');
     expect(packageJson.files).not.toContain('android');
+    expect(packageJson.files).not.toContain('android/src');
+    expect(packageJson.files).not.toContain('scripts');
   });
 
   it('wires the packed package consumer smoke test', () => {
@@ -167,6 +218,9 @@ describe('Android verification scripts', () => {
     );
     expect(smokeScriptSource).toContain("const REACT_NATIVE_VERSION = '0.86.0'");
     expect(smokeScriptSource).toContain('lib/index.d.ts');
+    expect(smokeScriptSource).toContain('development-only files');
+    expect(smokeScriptSource).toContain('scripts/consumer-smoke-test.mjs');
+    expect(smokeScriptSource).toContain('android/src/test/assets/heic-heif/sample.heic');
     expect(smokeScriptSource).toContain('compressImage(options)');
     expect(smokeScriptSource).toContain('getImageCompressionCapabilities()');
     expect(ciWorkflowSource).toContain('name: Run package consumer smoke test');

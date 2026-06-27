@@ -62,6 +62,7 @@ function main() {
 function runDoctor() {
   const checks = [
     checkRequiredFiles(),
+    checkPackageMetadata(),
     checkCodegenConfig(),
     checkSpecFile(),
     checkDockerAndroidEnvironment(),
@@ -153,6 +154,54 @@ function checkRequiredFiles() {
     ok: missing.length === 0,
     label: 'required Android/codegen files exist',
     detail: missing.length === 0 ? 'all expected files are present' : `missing: ${missing.join(', ')}`,
+  };
+}
+
+function checkPackageMetadata() {
+  const packageJson = readJson('package.json');
+  const readmeContents = readText('README.md');
+  const expectedKeywords = [
+    'react-native',
+    'image',
+    'image-processing',
+    'compression',
+    'resize',
+    'transcode',
+    'jpeg',
+    'png',
+    'webp',
+    'heic',
+    'heif',
+    'avif',
+  ];
+  const checks = [
+    packageJson.name === 'react-native-image-compression-kit',
+    packageJson.version === '0.1.0',
+    packageJson.license === 'MIT',
+    packageJson.repository?.type === 'git',
+    packageJson.repository?.url ===
+      'git+https://github.com/GGULBAE/react-native-image-compression-kit.git',
+    packageJson.bugs?.url ===
+      'https://github.com/GGULBAE/react-native-image-compression-kit/issues',
+    packageJson.homepage ===
+      'https://github.com/GGULBAE/react-native-image-compression-kit#readme',
+    packageJson.main === 'lib/index.js',
+    packageJson.types === 'lib/index.d.ts',
+    packageJson.exports?.['.']?.types === './lib/index.d.ts',
+    packageJson.exports?.['.']?.default === './lib/index.js',
+    packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
+    expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
+    readmeContents.includes('initial `0.1.0` public release'),
+    readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
+    readmeContents.includes('After the first npm release:'),
+  ];
+
+  return {
+    ok: checks.every(Boolean),
+    label: 'npm package metadata is publish-ready',
+    detail: checks.every(Boolean)
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
+      : 'expected package.json publish metadata or README release-status guidance is missing/mismatched',
   };
 }
 
@@ -275,17 +324,18 @@ function checkDockerAndroidEnvironment() {
 function checkPackageFiles() {
   const packageJson = readJson('package.json');
   const files = packageJson.files ?? [];
-  const requiredEntries = ['android/build.gradle', 'android/src', 'ios', 'lib', 'src'];
+  const requiredEntries = ['android/build.gradle', 'android/src/main', 'ios', 'lib', 'src'];
+  const forbiddenEntries = ['android', 'android/src', 'scripts'];
   const hasRequiredEntries = requiredEntries.every((entry) => files.includes(entry));
-  const excludesBroadAndroidDirectory = !files.includes('android');
+  const excludesDevelopmentEntries = forbiddenEntries.every((entry) => !files.includes(entry));
 
   return {
-    ok: hasRequiredEntries && excludesBroadAndroidDirectory,
-    label: 'npm package file globs avoid Android build outputs',
+    ok: hasRequiredEntries && excludesDevelopmentEntries,
+    label: 'npm package file globs avoid development-only files',
     detail:
-      hasRequiredEntries && excludesBroadAndroidDirectory
-        ? 'Android package entries include source and Gradle config without packaging android/build artifacts'
-        : 'expected package.json files to include android/build.gradle and android/src, without the broad android directory',
+      hasRequiredEntries && excludesDevelopmentEntries
+        ? 'publish entries include runtime native source, JS build output, and Codegen source without Android tests, fixtures, or repo scripts'
+        : 'expected package.json files to include android/build.gradle and android/src/main, without android, android/src, or scripts',
   };
 }
 

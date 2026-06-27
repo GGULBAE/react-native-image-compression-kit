@@ -1,8 +1,16 @@
 {
   "name": "react-native-image-compression-kit",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Native-first image compression and transcoding pipeline for React Native.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GGULBAE/react-native-image-compression-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GGULBAE/react-native-image-compression-kit/issues"
+  },
+  "homepage": "https://github.com/GGULBAE/react-native-image-compression-kit#readme",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
@@ -13,10 +21,9 @@
   },
   "files": [
     "android/build.gradle",
-    "android/src",
+    "android/src/main",
     "ios",
     "lib",
-    "scripts",
     "src",
     "README.md",
     "LICENSE",
@@ -57,15 +64,19 @@
   "keywords": [
     "react-native",
     "image",
+    "image-processing",
     "compression",
     "resize",
     "transcode",
+    "jpeg",
+    "png",
     "webp",
     "heic",
+    "heif",
     "avif"
   ],
   "peerDependencies": {
-    "react-native": ">=0.73"
+    "react-native": ">=0.73 <1.0"
   },
   "codegenConfig": {
     "name": "RNImageCompressionKitSpec",
