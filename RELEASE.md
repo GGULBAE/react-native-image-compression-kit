@@ -1,5 +1,92 @@
 # Release Notes
 
+## v0.1.2
+
+Status: prepared for an iOS-stub clarity patch release candidate. This
+preparation does not publish to npm, create a git tag, or push commits.
+
+This patch keeps Android runtime behavior unchanged while making the iOS stub
+experience explicit across native errors, TypeScript fallback errors, README
+guidance, and runtime capability reporting.
+
+### Purpose
+
+- Clarify that iOS ships a native package stub and iOS compression is not implemented.
+- Preserve a stable iOS `ERR_NOT_IMPLEMENTED` compression failure with a message that points developers to capability checks.
+- Make iOS capability reporting show no supported input formats, output formats, metadata policies, target-size compression, or cancellation.
+- Update the TypeScript native-unavailable message so missing native module errors no longer imply that Android is unimplemented.
+- Prepare package metadata for the `0.1.2` candidate without publishing.
+
+### Included
+
+- iOS stub `compressImage()` error message aligned to the package-stub state.
+- iOS `getImageCompressionCapabilities()` reports `metadataPolicies: []`, format `input=false`, format `output=false`, `supportsTargetSizeCompression: false`, and `supportsCancellation: false`.
+- TypeScript `ERR_NATIVE_MODULE_UNAVAILABLE` message distinguishes install/linking failure from the expected iOS stub `ERR_NOT_IMPLEMENTED` path.
+- README iOS stub behavior guidance and release dry-run wording updates.
+- `package.json` version bump to `0.1.2`.
+- Focused test and Android verification doctor expectation updates for the `0.1.2` candidate.
+
+### Not Included
+
+- iOS compression implementation.
+- Android runtime behavior changes.
+- New supported input or output formats.
+- npm publish, git tag creation, or git push.
+
+### Pre-publish Checklist
+
+Before publishing `v0.1.2`, confirm the working tree and branch are correct:
+
+```bash
+git status --short --branch
+```
+
+Run the release-candidate verification gate:
+
+```bash
+pnpm verify
+pnpm example:typecheck
+git diff --check
+```
+
+For packaging validation before promotion, also run:
+
+```bash
+pnpm release:dry-run
+```
+
+After local validation, commit the prepared patch, push the release commit, and
+wait for GitHub Actions CI success on the pushed commit.
+
+Only after the release commit and CI are confirmed, create and push the
+annotated tag:
+
+```bash
+git tag -a v0.1.2 -m "v0.1.2"
+git push origin v0.1.2
+```
+
+Do not run the tag commands as part of local candidate preparation. They are a
+manual promotion step after validation and CI are green.
+
+### Publish Commands
+
+The npm publish step requires an authenticated npm registry session. If npm
+two-factor authentication is enabled, pass a current one-time password:
+
+```bash
+pnpm login --registry=https://registry.npmjs.org/
+pnpm whoami
+pnpm publish --otp 123456
+```
+
+After publish, verify the registry version:
+
+```bash
+pnpm view react-native-image-compression-kit version dist.integrity time --json
+npm pack react-native-image-compression-kit@0.1.2
+```
+
 ## v0.1.1
 
 Status: prepared for a docs-only npm patch release. This preparation does not
