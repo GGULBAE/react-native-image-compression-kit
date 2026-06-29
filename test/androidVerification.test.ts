@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.1.1');
+    expect(packageJson.version).toBe('0.1.2');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -91,7 +91,7 @@ describe('Android verification scripts', () => {
       'public `0.1.x` package is distributed under'
     );
     expect(readmeSource).toContain(
-      'version `0.1.1` is a docs-only patch for README/npm package page status'
+      'version `0.1.2` is an iOS-stub clarity patch candidate'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -274,11 +274,59 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('successful GitHub Actions CI run');
   });
 
-  it('documents the v0.1.1 docs-only patch notes and v0.1.0 release notes', () => {
+  it('documents the v0.1.2 patch candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.1.1');
+    expect(packageJson.version).toBe('0.1.2');
+    expect(releaseSource).toContain('## v0.1.2');
+    expect(releaseSource).toContain(
+      'Status: prepared for an iOS-stub clarity patch release candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This patch keeps Android runtime behavior unchanged'
+    );
+    expect(releaseSource).toContain(
+      'Clarify that iOS ships a native package stub and iOS compression is not implemented.'
+    );
+    expect(releaseSource).toContain(
+      'Preserve a stable iOS `ERR_NOT_IMPLEMENTED` compression failure'
+    );
+    expect(releaseSource).toContain(
+      'Make iOS capability reporting show no supported input formats, output formats, metadata policies, target-size compression, or cancellation.'
+    );
+    expect(releaseSource).toContain(
+      'Update the TypeScript native-unavailable message'
+    );
+    expect(releaseSource).toContain(
+      'Prepare package metadata for the `0.1.2` candidate without publishing.'
+    );
+    expect(releaseSource).toContain(
+      'iOS stub `compressImage()` error message aligned to the package-stub state.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `getImageCompressionCapabilities()` reports `metadataPolicies: []`'
+    );
+    expect(releaseSource).toContain(
+      'TypeScript `ERR_NATIVE_MODULE_UNAVAILABLE` message distinguishes install/linking failure'
+    );
+    expect(releaseSource).toContain(
+      'README iOS stub behavior guidance and release dry-run wording updates.'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.1.2`.'
+    );
+    expect(releaseSource).toContain(
+      'Focused test and Android verification doctor expectation updates for the `0.1.2` candidate.'
+    );
+    expect(releaseSource).toContain('iOS compression implementation.');
+    expect(releaseSource).toContain('Android runtime behavior changes.');
+    expect(releaseSource).toContain('npm publish, git tag creation, or git push.');
+    expect(releaseSource).toContain('git tag -a v0.1.2 -m "v0.1.2"');
+    expect(releaseSource).toContain('git push origin v0.1.2');
+    expect(releaseSource).toContain(
+      'npm pack react-native-image-compression-kit@0.1.2'
+    );
     expect(releaseSource).toContain('## v0.1.1');
     expect(releaseSource).toContain(
       'Status: prepared for a docs-only npm patch release.'
@@ -420,7 +468,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.1.2 patch candidate notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

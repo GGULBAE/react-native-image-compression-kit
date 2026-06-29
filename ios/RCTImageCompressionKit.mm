@@ -4,15 +4,12 @@
 
 static NSString *const RCTImageCompressionKitModuleName = @"ImageCompressionKit";
 static NSString *const RCTImageCompressionKitNotImplementedCode = @"ERR_NOT_IMPLEMENTED";
+static NSString *const RCTImageCompressionKitNotImplementedMessage =
+  @"iOS compression is not implemented in react-native-image-compression-kit yet. The current iOS native package is a stub; use getImageCompressionCapabilities() to check support before calling compressImage().";
 
 static NSArray<NSString *> *RCTImageCompressionKitFormats(void)
 {
   return @[@"jpeg", @"png", @"webp", @"heic", @"heif", @"avif", @"gif"];
-}
-
-static NSArray<NSString *> *RCTImageCompressionKitMetadataPolicies(void)
-{
-  return @[@"preserve", @"safe", @"strip"];
 }
 
 static NSDictionary *RCTImageCompressionKitUnavailableFormatCapability(NSString *format)
@@ -23,7 +20,10 @@ static NSDictionary *RCTImageCompressionKitUnavailableFormatCapability(NSString 
     @"output" : @NO,
     @"supportsAlpha" : @NO,
     @"supportsAnimation" : @NO,
-    @"notes" : @[@"Native codec support has not been implemented yet."]
+    @"notes" : @[
+      @"iOS compression is not implemented in this package stub yet.",
+      @"No iOS input or output formats are available in v0.1.x."
+    ]
   };
 }
 
@@ -46,7 +46,7 @@ static NSDictionary *RCTImageCompressionKitUnavailableFormatCapability(NSString 
 {
   reject(
     RCTImageCompressionKitNotImplementedCode,
-    @"Image compression is not implemented in the iOS native stub yet.",
+    RCTImageCompressionKitNotImplementedMessage,
     nil
   );
 }
@@ -63,7 +63,7 @@ static NSDictionary *RCTImageCompressionKitUnavailableFormatCapability(NSString 
   resolve(@{
     @"platform" : @"ios",
     @"formats" : formats,
-    @"metadataPolicies" : RCTImageCompressionKitMetadataPolicies(),
+    @"metadataPolicies" : @[],
     @"supportsTargetSizeCompression" : @NO,
     @"supportsCancellation" : @NO
   });

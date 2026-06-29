@@ -22,7 +22,7 @@ const result: CompressionResult = {
 };
 
 const capabilities: ImageCompressionCapabilities = {
-  platform: 'ios',
+  platform: 'android',
   formats: [
     {
       format: 'jpeg',
@@ -149,6 +149,8 @@ describe('compressImage', () => {
       })
     ).rejects.toMatchObject({
       code: 'ERR_NATIVE_MODULE_UNAVAILABLE',
+      message:
+        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS currently ships a native stub that rejects compressImage() with ERR_NOT_IMPLEMENTED.',
     });
   });
 
@@ -175,7 +177,8 @@ describe('compressImage', () => {
     const nativeModule = mockNativeModule({
       compressImage: vi.fn().mockRejectedValue({
         code: 'ERR_NOT_IMPLEMENTED',
-        message: 'Image compression is not implemented in the native stub yet.',
+        message:
+          'iOS compression is not implemented in react-native-image-compression-kit yet. The current iOS native package is a stub; use getImageCompressionCapabilities() to check support before calling compressImage().',
       }),
     });
     setNativeModuleForTesting(nativeModule);
@@ -187,7 +190,8 @@ describe('compressImage', () => {
       })
     ).rejects.toMatchObject({
       code: 'ERR_NOT_IMPLEMENTED',
-      message: 'Image compression is not implemented in the native stub yet.',
+      message:
+        'iOS compression is not implemented in react-native-image-compression-kit yet. The current iOS native package is a stub; use getImageCompressionCapabilities() to check support before calling compressImage().',
     });
   });
 
