@@ -311,6 +311,29 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'npm pack react-native-image-compression-kit@0.1.1'
     );
+    expect(releaseSource).toContain('### Post-publish Verification');
+    expect(releaseSource).toContain(
+      '`pnpm publish --no-git-checks` published `react-native-image-compression-kit@0.1.1`.'
+    );
+    expect(releaseSource).toContain('`latest` dist-tag `0.1.1`');
+    expect(releaseSource).toContain(
+      'publish timestamp `2026-06-29T07:18:19.684Z`'
+    );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-pnLxeyn/JVKykGbOKrS9GYoU+pKr/oq4nffdHPn97ycjOw//RD6Yd6BGUPNuRcVoqnS17QsYgGx2c5JXWQq4BA==`'
+    );
+    expect(releaseSource).toContain(
+      '49 files, 35.1 kB package size, and 144.8 kB unpacked size'
+    );
+    expect(releaseSource).toContain(
+      'corrected README status, Android MVP published badge, Android MVP / iOS stub platform badge'
+    );
+    expect(releaseSource).toContain(
+      'Published README verification found no stale'
+    );
+    expect(releaseSource).toContain(
+      'fresh temporary consumer project installed `react-native-image-compression-kit@0.1.1`'
+    );
     expect(releaseSource).toContain('## v0.1.0');
     expect(releaseSource).toContain(
       'Status: published to npm on June 27, 2026 at 10:51:55 UTC (19:51:55 KST), tagged as `v0.1.0`.'
