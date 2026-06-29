@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.1.0');
+    expect(packageJson.version).toBe('0.1.1');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -88,7 +88,10 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'initial `0.1.0` public release is distributed under'
+      'public `0.1.x` package is distributed under'
+    );
+    expect(readmeSource).toContain(
+      'version `0.1.1` is a docs-only patch for README/npm package page status'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -271,11 +274,43 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('successful GitHub Actions CI run');
   });
 
-  it('documents the v0.1.0 release notes and tag checklist', () => {
+  it('documents the v0.1.1 docs-only patch notes and v0.1.0 release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.1.0');
+    expect(packageJson.version).toBe('0.1.1');
+    expect(releaseSource).toContain('## v0.1.1');
+    expect(releaseSource).toContain(
+      'Status: prepared for a docs-only npm patch release.'
+    );
+    expect(releaseSource).toContain(
+      'This patch corrects the README content that appears on the npm package page'
+    );
+    expect(releaseSource).toContain('Android MVP is published');
+    expect(releaseSource).toContain('iOS remains a');
+    expect(releaseSource).toContain(
+      'package stub and iOS compression is not implemented'
+    );
+    expect(releaseSource).toContain(
+      'Remove stale README wording that said the package had not been published to npm.'
+    );
+    expect(releaseSource).toContain(
+      'Replace React Native and TypeScript badge values'
+    );
+    expect(releaseSource).toContain('Bump package metadata to `0.1.1`');
+    expect(releaseSource).toContain(
+      'README status, badges, public API wording, installation wording, and release checklist wording updates.'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.1.1`.'
+    );
+    expect(releaseSource).toContain('Android runtime behavior changes.');
+    expect(releaseSource).toContain('npm publish, git tag creation, or git push.');
+    expect(releaseSource).toContain('git tag -a v0.1.1 -m "v0.1.1"');
+    expect(releaseSource).toContain('git push origin v0.1.1');
+    expect(releaseSource).toContain(
+      'npm pack react-native-image-compression-kit@0.1.1'
+    );
     expect(releaseSource).toContain('## v0.1.0');
     expect(releaseSource).toContain(
       'Status: published to npm on June 27, 2026 at 10:51:55 UTC (19:51:55 KST), tagged as `v0.1.0`.'
@@ -362,7 +397,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

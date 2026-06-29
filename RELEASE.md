@@ -1,5 +1,89 @@
 # Release Notes
 
+## v0.1.1
+
+Status: prepared for a docs-only npm patch release. This preparation does not
+publish to npm, create a git tag, or push commits.
+
+This patch corrects the README content that appears on the npm package page
+after the Android `0.1.0` release. It aligns the first-screen project status
+with the real registry state: the Android MVP is published, while iOS remains a
+package stub and iOS compression is not implemented.
+
+### Purpose
+
+- Remove stale README wording that said the package had not been published to npm.
+- Replace React Native and TypeScript badge values that still described those surfaces as planned.
+- Make the README first screen clear that Android MVP runtime compression is published and iOS is stubbed/not implemented.
+- Bump package metadata to `0.1.1` so the next npm publish can update the package page with corrected docs.
+- Keep the `v0.1.0` release notes as the source for the original Android MVP artifact details.
+
+### Included
+
+- README status, badges, public API wording, installation wording, and release checklist wording updates.
+- `package.json` version bump to `0.1.1`.
+- `RELEASE.md` entry for this docs-only patch release.
+- Repository verification expectations updated for the `0.1.1` preparation state.
+
+### Not Included
+
+- Android runtime behavior changes.
+- iOS compression implementation.
+- New native APIs or package exports.
+- npm publish, git tag creation, or git push.
+
+### Pre-publish Checklist
+
+Before publishing `v0.1.1`, confirm the working tree and branch are correct:
+
+```bash
+git status --short --branch
+```
+
+Confirm the registry state and intended version:
+
+```bash
+pnpm view react-native-image-compression-kit version versions time --json
+```
+
+Run the release dry-run gate:
+
+```bash
+pnpm release:dry-run
+```
+
+After local validation, commit the prepared docs-only release, push the release
+commit, and wait for GitHub Actions CI success on the pushed commit.
+
+Only after the release commit and CI are confirmed, create and push the
+annotated tag:
+
+```bash
+git tag -a v0.1.1 -m "v0.1.1"
+git push origin v0.1.1
+```
+
+Do not run the tag commands as part of local dry-run preparation. They are a
+manual promotion step after validation and CI are green.
+
+### Publish Commands
+
+The npm publish step requires an authenticated npm registry session. If npm
+two-factor authentication is enabled, pass a current one-time password:
+
+```bash
+pnpm login --registry=https://registry.npmjs.org/
+pnpm whoami
+pnpm publish --otp 123456
+```
+
+After publish, verify the registry version:
+
+```bash
+pnpm view react-native-image-compression-kit version dist.integrity time --json
+npm pack react-native-image-compression-kit@0.1.1
+```
+
 ## v0.1.0
 
 Status: published to npm on June 27, 2026 at 10:51:55 UTC (19:51:55 KST), tagged as `v0.1.0`.

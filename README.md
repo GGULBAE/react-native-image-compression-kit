@@ -5,14 +5,14 @@
 </p>
 
 <p align="center">
-  A planned native image compression and transcoding pipeline for React Native Android and iOS.
+  A published Android image compression MVP for React Native, with TypeScript exports and an iOS stub.
 </p>
 
 <p align="center">
-  <img alt="Status: Android Image MVP" src="https://img.shields.io/badge/Status-Android%20Image%20MVP-blue" />
-  <img alt="Platforms: Android | iOS" src="https://img.shields.io/badge/Platforms-Android%20%7C%20iOS-green" />
-  <img alt="React Native" src="https://img.shields.io/badge/React%20Native-planned-61dafb" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-planned-3178c6" />
+  <img alt="Status: Android MVP published" src="https://img.shields.io/badge/Status-Android%20MVP%20published-blue" />
+  <img alt="Platforms: Android MVP | iOS stub" src="https://img.shields.io/badge/Platforms-Android%20MVP%20%7C%20iOS%20stub-green" />
+  <img alt="React Native: Codegen ready" src="https://img.shields.io/badge/React%20Native-Codegen%20ready-61dafb" />
+  <img alt="TypeScript: API available" src="https://img.shields.io/badge/TypeScript-API%20available-3178c6" />
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow" />
 </p>
 
@@ -28,15 +28,15 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This project is currently in the design and early Android MVP phase. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, unit test foundation, and npm package metadata for the initial `0.1.0` release are in place, but the package has not been published to npm yet.
+This package is published on npm. The `0.1.0` release introduced the Android image compression MVP, and `0.1.1` is a docs-only patch that corrects README and npm package page status without changing runtime behavior. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, unit test foundation, and npm package metadata are in place.
 
-Android includes an image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. GIF output, GIF animation preservation, HEIC / HEIF output, AVIF output, iOS compression, and broader input format support are not implemented yet.
+Android includes a published image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. iOS is currently a package stub only; iOS compression is not implemented. GIF output, GIF animation preservation, HEIC / HEIF output, AVIF output, and broader input format support are not implemented yet.
 
 ## Current Implementation Scope
 
 The current implementation is intentionally small:
 
-- Android only.
+- Runtime compression is Android only; iOS is a package stub and compression is not implemented there yet.
 - `file://` and `content://` local URI input.
 - JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input. GIF input is static first-frame only, HEIC / HEIF input depends on Android SDK and device codec support, and AVIF input requires Android 14+ baseline image support.
 - JPEG, PNG, and WebP output.
@@ -176,9 +176,9 @@ Then use `file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sa
 
 For AVIF manual validation, use an API 34+ device or emulator and repeat the copy/paste flow with `android/src/test/assets/avif/sample.avif`.
 
-## Proposed API
+## Public API
 
-The API below is proposed and is not available in a published package yet.
+The API below is available from the published package. Runtime compression currently succeeds on the Android MVP; iOS compression remains a stub and is not implemented yet.
 
 ```ts
 import { compressImage } from 'react-native-image-compression-kit';
@@ -204,7 +204,7 @@ const result = await compressImage({
 });
 ```
 
-Example proposed result:
+Example result:
 
 ```ts
 {
@@ -353,7 +353,7 @@ This project is not intended to handle:
 
 ## Installation
 
-The initial `0.1.0` public release is distributed under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and the iOS stub included in the packed package. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
+The public `0.1.x` package is distributed under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and the iOS stub included in the packed package. Version `0.1.0` introduced the Android MVP, and version `0.1.1` is a docs-only patch for README/npm package page status. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
 
 The repository contains an initial TypeScript API scaffold and an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. iOS compression, HEIC/HEIF output, AVIF output, and broader input format support are not implemented yet.
 
@@ -365,7 +365,7 @@ npm install react-native-image-compression-kit
 
 ## Example Application
 
-The repository includes an Android React Native example app in `example/`. It links this local package through the pnpm workspace and exercises the Android JPEG/PNG/WebP/GIF input MVP against a `file://` or `content://` source URI.
+The repository includes an Android React Native example app in `example/`. It links this local package through the pnpm workspace and exercises the Android JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input MVP against a `file://` or `content://` source URI.
 
 Install dependencies from the repository root:
 
@@ -524,7 +524,7 @@ The executable Android checks require a Java runtime, Android SDK, and a Gradle 
 
 ## Release Dry Run Checklist
 
-Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.1.0 release notes, published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
+Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
 
 ```bash
 pnpm release:dry-run
