@@ -2,7 +2,7 @@
 
 ## v0.2.0
 
-Status: release candidate in progress. Not published to npm and not tagged.
+Status: release candidate validated. Not published to npm and not tagged.
 
 This candidate keeps Android runtime behavior unchanged while replacing the iOS
 package stub with a native iOS JPEG compression MVP.
@@ -75,6 +75,16 @@ The iOS host-app smoke should produce `RNICK_IOS_SMOKE_PASS` after validating
 capability reporting, JPEG and PNG to JPEG runtime compression, unsupported
 WebP/HEIC/HEIF/AVIF/GIF input errors, unsupported non-JPEG output errors,
 `output.maxBytes`, and `metadata: 'preserve'`.
+
+Actual iOS host-app validation result for the implementation candidate:
+
+- Date: June 30, 2026 UTC.
+- Commit: `5bf0bcc6045175b3fe9efa9a2b5867fc32a63cc3`.
+- GitHub Actions iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28424614173>.
+- Environment: macOS GitHub Actions runner, Xcode 26.5, iPhoneSimulator 26.5 SDK, iPhone 17 Pro simulator on iOS 26.4.1.
+- Native install/build evidence: CocoaPods installed 76 pods, React Native autolinked `react-native-image-compression-kit`, and `xcodebuild` completed with `BUILD SUCCEEDED`.
+- Runtime smoke evidence: `RNICK_IOS_SMOKE_PASS` with `jpegResultBytes: 946`, `pngResultBytes: 1034`, `unsupportedInputs: ['webp', 'heic', 'heif', 'avif', 'gif']`, and `unsupportedOutputs: ['png', 'webp', 'heic', 'heif', 'avif']`.
+- Same-commit CI evidence: CI passed at <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28424614148> and Android Instrumentation passed at <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28424614133>.
 
 Publishing and tag creation remain manual follow-up steps after this candidate
 is reviewed.

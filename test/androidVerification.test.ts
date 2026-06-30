@@ -284,7 +284,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.version).toBe('0.2.0');
     expect(releaseSource).toContain('## v0.2.0');
     expect(releaseSource).toContain(
-      'Status: release candidate in progress. Not published to npm and not tagged.'
+      'Status: release candidate validated. Not published to npm and not tagged.'
     );
     expect(releaseSource).toContain('replacing the iOS');
     expect(releaseSource).toContain(
@@ -349,6 +349,18 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain('pnpm pack --dry-run');
     expect(releaseSource).toContain(
       'native smoke test that links the pod and compresses a JPEG and PNG source to'
+    );
+    expect(releaseSource).toContain(
+      'Actual iOS host-app validation result for the implementation candidate:'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28424614173>.'
+    );
+    expect(releaseSource).toContain(
+      'Runtime smoke evidence: `RNICK_IOS_SMOKE_PASS` with `jpegResultBytes: 946`, `pngResultBytes: 1034`'
+    );
+    expect(releaseSource).toContain(
+      "unsupportedInputs: ['webp', 'heic', 'heif', 'avif', 'gif']"
     );
     expect(releaseSource).toContain('## v0.1.2');
     expect(releaseSource).toContain(

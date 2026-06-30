@@ -458,7 +458,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.0',
-    'Status: release candidate in progress. Not published to npm and not tagged.',
+    'Status: release candidate validated. Not published to npm and not tagged.',
     'replacing the iOS',
     'package stub with a native iOS JPEG compression MVP',
     'Implement iOS native `compressImage()` for local JPEG and PNG input.',
@@ -485,6 +485,10 @@ function checkReleaseNotes() {
     'Before publishing `v0.2.0`, confirm the working tree and branch are correct',
     'pnpm pack --dry-run',
     'native smoke test that links the pod and compresses a JPEG and PNG source to',
+    'Actual iOS host-app validation result for the implementation candidate:',
+    'GitHub Actions iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28424614173>.',
+    'Runtime smoke evidence: `RNICK_IOS_SMOKE_PASS` with `jpegResultBytes: 946`, `pngResultBytes: 1034`',
+    "unsupportedInputs: ['webp', 'heic', 'heif', 'avif', 'gif']",
     '## v0.1.2',
     'Status: published to npm on June 30, 2026 at 02:18:30 UTC (11:18:30 KST), tagged as `v0.1.2`.',
     'This patch keeps Android runtime behavior unchanged',
