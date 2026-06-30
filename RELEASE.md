@@ -1,10 +1,10 @@
 # Release Notes
 
-## v0.2.1 Candidate
+## v0.2.1
 
-Status: prepared as a local release candidate. Not published to npm, not tagged, and `package.json` remains at `0.2.0` until release promotion.
+Status: prepared for npm release promotion. Not published to npm yet.
 
-This candidate keeps Android runtime behavior unchanged while adding iOS JPEG
+This release keeps Android runtime behavior unchanged while adding iOS JPEG
 target-size compression to the existing iOS JPEG MVP.
 
 ### Goals
@@ -15,12 +15,14 @@ target-size compression to the existing iOS JPEG MVP.
 
 ### Included
 
+- `package.json` version bump to `0.2.1`.
 - iOS `compressImage()` now accepts `output.maxBytes` for JPEG output.
 - iOS JPEG target-size compression validates `maxBytes` as a positive integer and encodes JPEG candidates across the allowed quality range.
 - iOS `getImageCompressionCapabilities()` reports `supportsTargetSizeCompression: true`.
 - iOS format notes now state that JPEG output supports `maxBytes` by adjusting JPEG quality.
 - The iOS host-app smoke validates a JPEG target-size case and asserts `byteSize <= maxBytes`.
-- README iOS limitation, public API, target-size mode, roadmap, and host-app validation guidance are updated for the candidate behavior.
+- TypeScript native-unavailable messaging now mentions iOS JPEG target-size support.
+- README iOS limitation, public API, target-size mode, roadmap, and host-app validation guidance are updated for the release behavior.
 - Source-level tests and the Android verification doctor expectations are updated for the implemented iOS JPEG target-size path.
 
 ### Not Included
@@ -29,23 +31,44 @@ target-size compression to the existing iOS JPEG MVP.
 - iOS PNG, WebP, HEIC, HEIF, AVIF, or GIF output.
 - WebP, HEIC, HEIF, AVIF, or GIF input on iOS.
 - iOS metadata preservation.
-- npm publish, git tag creation, or package version bump.
+- New public API surface.
 
-### Candidate Validation
+### Release Checklist
 
-Before promotion, run:
+Before npm publish:
 
 ```bash
+git status --short --branch
 pnpm verify
 pnpm example:typecheck
 git diff --check
 pnpm pack --dry-run
 ```
 
-The iOS host-app smoke should produce `RNICK_IOS_SMOKE_PASS` after validating
-capability reporting, JPEG and PNG to JPEG runtime compression, JPEG target-size
-compression, unsupported WebP/HEIC/HEIF/AVIF/GIF input errors, unsupported
-non-JPEG output errors, and `metadata: 'preserve'`.
+Actual implementation validation before the release commit:
+
+- Commit: `ab85c398e4aa266dc98bd7eb4f20ae59dcdebd78`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28432011263>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28432011301>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28432011306>.
+- Runtime smoke evidence: `RNICK_IOS_SMOKE_STEP_PASS compress-jpeg-to-jpeg-max-bytes` and `RNICK_IOS_SMOKE_PASS` with `targetSizeResultBytes: 996` for `maxBytes: 1000`.
+
+### Publish Commands
+
+The npm publish step requires an authenticated npm registry session. If npm
+two-factor authentication is enabled, use a current passkey or one-time password:
+
+```bash
+pnpm whoami
+pnpm publish --tag latest
+```
+
+After publish, verify the registry version:
+
+```bash
+pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity time --json
+npm pack react-native-image-compression-kit@0.2.1
+```
 
 ## v0.2.0
 

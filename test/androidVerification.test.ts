@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.0');
+    expect(packageJson.version).toBe('0.2.1');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -88,13 +88,13 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'The public `0.2.0` package is distributed under'
+      'The `0.2.1` package metadata is prepared under'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
     );
     expect(readmeSource).toContain(
-      'Version `0.2.0` adds an iOS native MVP with JPEG/PNG input'
+      'version `0.2.1` adds iOS JPEG target-size compression'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -307,11 +307,57 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.0 release notes and previous release notes', () => {
+  it('documents the v0.2.1 release notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.0');
+    expect(packageJson.version).toBe('0.2.1');
+    expect(releaseSource).toContain('## v0.2.1');
+    expect(releaseSource).toContain(
+      'Status: prepared for npm release promotion. Not published to npm yet.'
+    );
+    expect(releaseSource).toContain('adding iOS JPEG');
+    expect(releaseSource).toContain(
+      'target-size compression to the existing iOS JPEG MVP'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.1`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `compressImage()` now accepts `output.maxBytes` for JPEG output.'
+    );
+    expect(releaseSource).toContain(
+      'iOS JPEG target-size compression validates `maxBytes` as a positive integer'
+    );
+    expect(releaseSource).toContain(
+      'iOS `getImageCompressionCapabilities()` reports `supportsTargetSizeCompression: true`.'
+    );
+    expect(releaseSource).toContain(
+      'TypeScript native-unavailable messaging now mentions iOS JPEG target-size support.'
+    );
+    expect(releaseSource).toContain('New public API surface.');
+    expect(releaseSource).toContain(
+      'Actual implementation validation before the release commit:'
+    );
+    expect(releaseSource).toContain(
+      'Commit: `ab85c398e4aa266dc98bd7eb4f20ae59dcdebd78`.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28432011263>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28432011301>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28432011306>.'
+    );
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS compress-jpeg-to-jpeg-max-bytes'
+    );
+    expect(releaseSource).toContain('targetSizeResultBytes: 996');
+    expect(releaseSource).toContain(
+      'npm pack react-native-image-compression-kit@0.2.1'
+    );
     expect(releaseSource).toContain('## v0.2.0');
     expect(releaseSource).toContain(
       'Status: published to npm on June 30, 2026 at 07:04:03 UTC (16:04:03 KST), tagged as `v0.2.0`.'
@@ -654,7 +700,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
