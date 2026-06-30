@@ -14,6 +14,9 @@ const WORKSPACE = path.join(IOS_DIR, 'ImageCompressionKitExample.xcworkspace');
 const SCHEME = 'ImageCompressionKitExample';
 const BUNDLE_ID = 'com.imagecompressionkit.example';
 const METRO_PORT = Number(process.env.RNICK_IOS_METRO_PORT ?? '8081');
+const METRO_READY_TIMEOUT_MS = Number(
+  process.env.RNICK_IOS_METRO_READY_TIMEOUT_MS ?? '180000'
+);
 const SMOKE_TIMEOUT_MS = Number(process.env.RNICK_IOS_SMOKE_TIMEOUT_MS ?? '180000');
 
 const mode = process.argv[2] ?? 'smoke';
@@ -221,7 +224,7 @@ function startMetro() {
 }
 
 async function waitForMetro(child) {
-  const deadline = Date.now() + 60000;
+  const deadline = Date.now() + METRO_READY_TIMEOUT_MS;
 
   while (Date.now() < deadline) {
     if (await isMetroReady()) {
@@ -247,7 +250,10 @@ async function waitForMetro(child) {
   }
 
   throw new Error(
-    [`Metro did not become ready on port ${METRO_PORT}.`, child.rnickOutput]
+    [
+      `Metro did not become ready on port ${METRO_PORT} after ${METRO_READY_TIMEOUT_MS}ms.`,
+      child.rnickOutput,
+    ]
       .filter(Boolean)
       .join('\n')
   );

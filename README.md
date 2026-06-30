@@ -462,6 +462,8 @@ pnpm example:ios:smoke
 
 The smoke command requires full Xcode with an iOS simulator SDK, Bundler or CocoaPods, and an available iPhone simulator. It installs pods when needed, starts Metro, builds the Debug simulator app, installs it, launches it with `RNICK_IOS_SMOKE=1`, and waits for the `RNICK_IOS_SMOKE_PASS` log marker.
 
+Metro startup waits up to 180 seconds by default to tolerate cold macOS CI runners. Override `RNICK_IOS_METRO_READY_TIMEOUT_MS` when a local machine or CI image needs a shorter or longer readiness window.
+
 The smoke path validates the native module link plus runtime behavior from the React Native host app: iOS capabilities report JPEG input/output, PNG input, `metadataPolicies: ['safe', 'strip']`, no target-size compression, and no cancellation; JPEG and PNG fixtures compress to JPEG output; WebP, HEIC, HEIF, AVIF, and GIF inputs reject with `ERR_UNSUPPORTED_FORMAT`; PNG, WebP, HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`; `output.maxBytes` rejects with `ERR_NOT_IMPLEMENTED`; and `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED`.
 
 ## Continuous Integration
