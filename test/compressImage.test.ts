@@ -150,7 +150,7 @@ describe('compressImage', () => {
     ).rejects.toMatchObject({
       code: 'ERR_NATIVE_MODULE_UNAVAILABLE',
       message:
-        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS currently ships a native stub that rejects compressImage() with ERR_NOT_IMPLEMENTED.',
+        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS runtime compression is implemented for JPEG/PNG input with JPEG output in the v0.2.0 MVP.',
     });
   });
 
@@ -173,12 +173,12 @@ describe('compressImage', () => {
     });
   });
 
-  it('preserves native not-implemented errors from platform stubs', async () => {
+  it('preserves native not-implemented errors from unsupported platform options', async () => {
     const nativeModule = mockNativeModule({
       compressImage: vi.fn().mockRejectedValue({
         code: 'ERR_NOT_IMPLEMENTED',
         message:
-          'iOS compression is not implemented in react-native-image-compression-kit yet. The current iOS native package is a stub; use getImageCompressionCapabilities() to check support before calling compressImage().',
+          'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
       }),
     });
     setNativeModuleForTesting(nativeModule);
@@ -191,7 +191,7 @@ describe('compressImage', () => {
     ).rejects.toMatchObject({
       code: 'ERR_NOT_IMPLEMENTED',
       message:
-        'iOS compression is not implemented in react-native-image-compression-kit yet. The current iOS native package is a stub; use getImageCompressionCapabilities() to check support before calling compressImage().',
+        'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
     });
   });
 

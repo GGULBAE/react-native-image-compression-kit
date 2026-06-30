@@ -1,5 +1,67 @@
 # Release Notes
 
+## v0.2.0
+
+Status: release candidate in progress. Not published to npm and not tagged.
+
+This candidate keeps Android runtime behavior unchanged while replacing the iOS
+package stub with a native iOS JPEG compression MVP.
+
+### Goals
+
+- Implement iOS native `compressImage()` for local JPEG and PNG input.
+- Support iOS JPEG output with `output.quality`, optional resize, and cache-file result metadata.
+- Report iOS runtime capabilities for JPEG input/output, PNG input, metadata policies, target-size compression, and cancellation.
+- Align README guidance, TypeScript native-unavailable messaging, and test expectations with the implemented iOS MVP.
+
+### Included
+
+- `package.json` version bump to `0.2.0`.
+- iOS `compressImage()` reads `file://` and best-effort `content://` source URIs.
+- iOS input detection accepts JPEG and PNG only, rejecting other formats with `ERR_UNSUPPORTED_FORMAT`.
+- iOS output supports JPEG only, rejecting unsupported output formats with `ERR_NOT_IMPLEMENTED`.
+- iOS resize supports `contain`, `cover`, and `stretch`.
+- iOS `output.quality` supports integer quality values from `0` to `100`, defaulting to `80`.
+- iOS `metadata: 'safe'` and `metadata: 'strip'` are accepted and re-encode without copying source metadata.
+- iOS `metadata: 'preserve'` and `output.maxBytes` reject with `ERR_NOT_IMPLEMENTED`.
+- iOS `getImageCompressionCapabilities()` reports `metadataPolicies: ['safe', 'strip']`, JPEG `input=true` and `output=true`, PNG `input=true` and `output=false`, `supportsTargetSizeCompression: false`, and `supportsCancellation: false`.
+- README iOS support matrix, public API guidance, roadmap, installation status, and release dry-run wording updates.
+- Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` candidate.
+
+### Not Included
+
+- Android runtime behavior changes.
+- HEIC / HEIF / AVIF / GIF / WebP input on iOS.
+- PNG, WebP, HEIC, HEIF, AVIF, or GIF output on iOS.
+- iOS target-size compression.
+- iOS metadata preservation.
+- npm publish.
+- Git tag creation.
+
+### Candidate Checklist
+
+Before publishing `v0.2.0`, confirm the working tree and branch are correct:
+
+```bash
+git status --short --branch
+```
+
+Run the release validation gate:
+
+```bash
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+```
+
+If an iOS build environment is available, also run a host-app iOS build or
+native smoke test that links the pod and compresses a JPEG and PNG source to
+JPEG output.
+
+Publishing and tag creation remain manual follow-up steps after this candidate
+is reviewed.
+
 ## v0.1.2
 
 Status: published to npm on June 30, 2026 at 02:18:30 UTC (11:18:30 KST), tagged as `v0.1.2`.

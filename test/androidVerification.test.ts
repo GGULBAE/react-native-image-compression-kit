@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.1.2');
+    expect(packageJson.version).toBe('0.2.0');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -91,7 +91,10 @@ describe('Android verification scripts', () => {
       'public `0.1.x` package is distributed under'
     );
     expect(readmeSource).toContain(
-      'version `0.1.2` is the published iOS-stub clarity patch'
+      'The current repository package metadata is `0.2.0` for the iOS native JPEG MVP candidate'
+    );
+    expect(readmeSource).toContain(
+      'The `0.2.0` candidate adds an iOS native MVP with JPEG/PNG input'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -274,11 +277,79 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('successful GitHub Actions CI run');
   });
 
-  it('documents the v0.1.2 published patch notes and previous release notes', () => {
+  it('documents the v0.2.0 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.1.2');
+    expect(packageJson.version).toBe('0.2.0');
+    expect(releaseSource).toContain('## v0.2.0');
+    expect(releaseSource).toContain(
+      'Status: release candidate in progress. Not published to npm and not tagged.'
+    );
+    expect(releaseSource).toContain('replacing the iOS');
+    expect(releaseSource).toContain(
+      'package stub with a native iOS JPEG compression MVP'
+    );
+    expect(releaseSource).toContain(
+      'Implement iOS native `compressImage()` for local JPEG and PNG input.'
+    );
+    expect(releaseSource).toContain(
+      'Support iOS JPEG output with `output.quality`, optional resize, and cache-file result metadata.'
+    );
+    expect(releaseSource).toContain(
+      'Report iOS runtime capabilities for JPEG input/output, PNG input, metadata policies, target-size compression, and cancellation.'
+    );
+    expect(releaseSource).toContain(
+      'Align README guidance, TypeScript native-unavailable messaging, and test expectations with the implemented iOS MVP.'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.0`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `compressImage()` reads `file://` and best-effort `content://` source URIs.'
+    );
+    expect(releaseSource).toContain(
+      'iOS input detection accepts JPEG and PNG only, rejecting other formats with `ERR_UNSUPPORTED_FORMAT`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS output supports JPEG only, rejecting unsupported output formats with `ERR_NOT_IMPLEMENTED`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS resize supports `contain`, `cover`, and `stretch`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `output.quality` supports integer quality values from `0` to `100`, defaulting to `80`.'
+    );
+    expect(releaseSource).toContain(
+      "iOS `metadata: 'safe'` and `metadata: 'strip'` are accepted"
+    );
+    expect(releaseSource).toContain(
+      "iOS `metadata: 'preserve'` and `output.maxBytes` reject with `ERR_NOT_IMPLEMENTED`."
+    );
+    expect(releaseSource).toContain(
+      "iOS `getImageCompressionCapabilities()` reports `metadataPolicies: ['safe', 'strip']`"
+    );
+    expect(releaseSource).toContain(
+      'README iOS support matrix, public API guidance, roadmap, installation status, and release dry-run wording updates.'
+    );
+    expect(releaseSource).toContain(
+      'Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` candidate.'
+    );
+    expect(releaseSource).toContain('Android runtime behavior changes.');
+    expect(releaseSource).toContain(
+      'HEIC / HEIF / AVIF / GIF / WebP input on iOS.'
+    );
+    expect(releaseSource).toContain('iOS target-size compression.');
+    expect(releaseSource).toContain('iOS metadata preservation.');
+    expect(releaseSource).toContain('npm publish.');
+    expect(releaseSource).toContain('Git tag creation.');
+    expect(releaseSource).toContain(
+      'Before publishing `v0.2.0`, confirm the working tree and branch are correct'
+    );
+    expect(releaseSource).toContain('pnpm pack --dry-run');
+    expect(releaseSource).toContain(
+      'native smoke test that links the pod and compresses a JPEG and PNG source to'
+    );
     expect(releaseSource).toContain('## v0.1.2');
     expect(releaseSource).toContain(
       'Status: published to npm on June 30, 2026 at 02:18:30 UTC (11:18:30 KST), tagged as `v0.1.2`.'
@@ -501,7 +572,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.0 candidate notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -842,6 +913,81 @@ describe('Android verification scripts', () => {
     expect(moduleSource).toContain('createCompressionResult(');
     expect(moduleSource).toContain('outputFormat');
     expect(moduleSource).not.toContain('BitmapFactory.decodeFile');
+  });
+
+  it('verifies the iOS native module implements the JPEG MVP path', () => {
+    const iosSource = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const podspecSource = readProjectFile(
+      'react-native-image-compression-kit.podspec'
+    );
+
+    expect(iosSource).toContain('#import <ImageIO/ImageIO.h>');
+    expect(iosSource).toContain('#import <UIKit/UIKit.h>');
+    expect(iosSource).toContain(
+      'RCTImageCompressionKitUnsupportedFormatCode = @"ERR_UNSUPPORTED_FORMAT"'
+    );
+    expect(iosSource).toContain(
+      'RCTImageCompressionKitNotImplementedCode = @"ERR_NOT_IMPLEMENTED"'
+    );
+    expect(iosSource).toContain('RCTImageCompressionKitJpegFormat = @"jpeg"');
+    expect(iosSource).toContain('RCTImageCompressionKitPngFormat = @"png"');
+    expect(iosSource).toContain(
+      'RCTImageCompressionKitDefaultMetadataPolicy = @"safe"'
+    );
+    expect(iosSource).toContain(
+      'RCTImageCompressionKitStripMetadataPolicy = @"strip"'
+    );
+    expect(iosSource).toContain(
+      'RCTImageCompressionKitPreserveMetadataPolicy = @"preserve"'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports PNG input with JPEG output conversion.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG and PNG input with JPEG output only.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP does not support output.maxBytes yet. Call getImageCompressionCapabilities() and omit maxBytes on iOS.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.'
+    );
+    expect(iosSource).toContain(
+      'Compression output.quality must be an integer from 0 to 100.'
+    );
+    expect(iosSource).toContain(
+      'Compression resize.mode must be one of: contain, cover, stretch.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports file:// and content:// image URIs only.'
+    );
+    expect(iosSource).toContain('iOS MVP could not read the source image URI.');
+    expect(iosSource).toContain('iOS MVP could not decode the source image.');
+    expect(iosSource).toContain('iOS MVP could not encode JPEG output.');
+    expect(iosSource).toContain('CGImageSourceCreateWithData');
+    expect(iosSource).toContain('UIImage imageWithData');
+    expect(iosSource).toContain('UIImageJPEGRepresentation');
+    expect(iosSource).toContain('UIGraphicsImageRenderer');
+    expect(iosSource).toContain('NSCachesDirectory');
+    expect(iosSource).toContain('RCTImageCompressionKitRenderImage');
+    expect(iosSource).toContain('RCTImageCompressionKitResizeModeContain');
+    expect(iosSource).toContain('RCTImageCompressionKitResizeModeCover');
+    expect(iosSource).toContain('RCTImageCompressionKitResizeModeStretch');
+    expect(iosSource).toContain('RCTImageCompressionKitReadSourceData');
+    expect(iosSource).toContain('RCTImageCompressionKitIsSupportedInputType');
+    expect(iosSource).toContain(
+      '@"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy]'
+    );
+    expect(iosSource).toContain('@"supportsTargetSizeCompression" : @NO');
+    expect(iosSource).toContain('@"supportsCancellation" : @NO');
+    expect(podspecSource).toContain('s.platforms = { :ios => "13.4" }');
+    expect(podspecSource).toContain('s.source_files = "ios/**/*.{h,m,mm}"');
   });
 
   it('verifies the Android module applies EXIF orientation before resize', () => {

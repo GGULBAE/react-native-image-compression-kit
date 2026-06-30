@@ -77,6 +77,7 @@ function runDoctor() {
     checkGitHubActionRuntimeVersions(),
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
+    checkIOSNativeModule(),
     checkHeicHeifCodecSampleStrategy(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
@@ -182,7 +183,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.1.2',
+    packageJson.version === '0.2.0',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -198,7 +199,8 @@ function checkPackageMetadata() {
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
     readmeContents.includes('public `0.1.x` package is distributed under'),
-    readmeContents.includes('version `0.1.2` is the published iOS-stub clarity patch'),
+    readmeContents.includes('The current repository package metadata is `0.2.0` for the iOS native JPEG MVP candidate'),
+    readmeContents.includes('The `0.2.0` candidate adds an iOS native MVP with JPEG/PNG input'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -206,7 +208,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata is publish-ready for v0.1.2',
+    label: 'npm package metadata is publish-ready for v0.2.0 candidate',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json publish metadata or README release-status guidance is missing/mismatched',
@@ -447,6 +449,34 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.0',
+    'Status: release candidate in progress. Not published to npm and not tagged.',
+    'replacing the iOS',
+    'package stub with a native iOS JPEG compression MVP',
+    'Implement iOS native `compressImage()` for local JPEG and PNG input.',
+    'Support iOS JPEG output with `output.quality`, optional resize, and cache-file result metadata.',
+    'Report iOS runtime capabilities for JPEG input/output, PNG input, metadata policies, target-size compression, and cancellation.',
+    'Align README guidance, TypeScript native-unavailable messaging, and test expectations with the implemented iOS MVP.',
+    '`package.json` version bump to `0.2.0`.',
+    'iOS `compressImage()` reads `file://` and best-effort `content://` source URIs.',
+    'iOS input detection accepts JPEG and PNG only, rejecting other formats with `ERR_UNSUPPORTED_FORMAT`.',
+    'iOS output supports JPEG only, rejecting unsupported output formats with `ERR_NOT_IMPLEMENTED`.',
+    'iOS resize supports `contain`, `cover`, and `stretch`.',
+    'iOS `output.quality` supports integer quality values from `0` to `100`, defaulting to `80`.',
+    "iOS `metadata: 'safe'` and `metadata: 'strip'` are accepted",
+    "iOS `metadata: 'preserve'` and `output.maxBytes` reject with `ERR_NOT_IMPLEMENTED`.",
+    "iOS `getImageCompressionCapabilities()` reports `metadataPolicies: ['safe', 'strip']`",
+    'README iOS support matrix, public API guidance, roadmap, installation status, and release dry-run wording updates.',
+    'Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` candidate.',
+    'Android runtime behavior changes.',
+    'HEIC / HEIF / AVIF / GIF / WebP input on iOS.',
+    'iOS target-size compression.',
+    'iOS metadata preservation.',
+    'npm publish.',
+    'Git tag creation.',
+    'Before publishing `v0.2.0`, confirm the working tree and branch are correct',
+    'pnpm pack --dry-run',
+    'native smoke test that links the pod and compresses a JPEG and PNG source to',
     '## v0.1.2',
     'Status: published to npm on June 30, 2026 at 02:18:30 UTC (11:18:30 KST), tagged as `v0.1.2`.',
     'This patch keeps Android runtime behavior unchanged',
@@ -548,7 +578,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.0 candidate notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -560,16 +590,16 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.1.2' && missing.length === 0;
+  const ok = packageJson.version === '0.2.0' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.1.2 published patch notes and previous release notes are current',
+    label: 'v0.2.0 candidate notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the release scope, non-goals, dry-run gate, CI gate, tag commands, and npm publish steps'
+      ? 'RELEASE.md documents the release scope, non-goals, validation gate, previous tag commands, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.1.2' ? [] : ['package.json version 0.1.2']),
+          ...(packageJson.version === '0.2.0' ? [] : ['package.json version 0.2.0']),
         ].join(' | ')}`,
   };
 }
@@ -900,6 +930,65 @@ function checkAndroidNativeModule() {
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),
+          ].join(' | ')}`,
+  };
+}
+
+function checkIOSNativeModule() {
+  const iosContents = readText('ios/RCTImageCompressionKit.mm');
+  const podspecContents = readText('react-native-image-compression-kit.podspec');
+  const expectedSnippets = [
+    '#import <ImageIO/ImageIO.h>',
+    '#import <UIKit/UIKit.h>',
+    'RCTImageCompressionKitUnsupportedFormatCode = @"ERR_UNSUPPORTED_FORMAT"',
+    'RCTImageCompressionKitNotImplementedCode = @"ERR_NOT_IMPLEMENTED"',
+    'RCTImageCompressionKitJpegFormat = @"jpeg"',
+    'RCTImageCompressionKitPngFormat = @"png"',
+    'RCTImageCompressionKitDefaultMetadataPolicy = @"safe"',
+    'RCTImageCompressionKitStripMetadataPolicy = @"strip"',
+    'RCTImageCompressionKitPreserveMetadataPolicy = @"preserve"',
+    'iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.',
+    'iOS MVP supports PNG input with JPEG output conversion.',
+    'iOS MVP supports JPEG and PNG input with JPEG output only.',
+    'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
+    'iOS MVP does not support output.maxBytes yet. Call getImageCompressionCapabilities() and omit maxBytes on iOS.',
+    'iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.',
+    'Compression output.quality must be an integer from 0 to 100.',
+    'Compression resize.mode must be one of: contain, cover, stretch.',
+    'iOS MVP supports file:// and content:// image URIs only.',
+    'iOS MVP could not read the source image URI.',
+    'iOS MVP could not decode the source image.',
+    'iOS MVP could not encode JPEG output.',
+    'CGImageSourceCreateWithData',
+    'UIImage imageWithData',
+    'UIImageJPEGRepresentation',
+    'UIGraphicsImageRenderer',
+    'NSCachesDirectory',
+    'ImageCompressionKit',
+    'RCTImageCompressionKitRenderImage',
+    'RCTImageCompressionKitResizeModeContain',
+    'RCTImageCompressionKitResizeModeCover',
+    'RCTImageCompressionKitResizeModeStretch',
+    'RCTImageCompressionKitReadSourceData',
+    'RCTImageCompressionKitIsSupportedInputType',
+    '@"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy]',
+    '@"supportsTargetSizeCompression" : @NO',
+    '@"supportsCancellation" : @NO',
+  ];
+  const missing = expectedSnippets.filter((snippet) => !iosContents.includes(snippet));
+  const podspecIncludesIOS =
+    podspecContents.includes('s.platforms = { :ios => "13.4" }') &&
+    podspecContents.includes('s.source_files = "ios/**/*.{h,m,mm}"');
+
+  return {
+    ok: missing.length === 0 && podspecIncludesIOS,
+    label: 'iOS native module implements the JPEG MVP path',
+    detail:
+      missing.length === 0 && podspecIncludesIOS
+        ? 'iOS source includes file/content URI reads, JPEG/PNG input detection, resize, quality-based JPEG output, explicit unsupported-option errors, and iOS capability reporting'
+        : `missing snippets: ${[
+            ...missing,
+            ...(podspecIncludesIOS ? [] : ['podspec iOS platform/source_files']),
           ].join(' | ')}`,
   };
 }

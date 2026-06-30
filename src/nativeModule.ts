@@ -44,7 +44,7 @@ export function getNativeModule(): NativeImageCompressionKitModule {
 
   throw new ImageCompressionKitError(
     'ERR_NATIVE_MODULE_UNAVAILABLE',
-    `Native module ${NATIVE_MODULE_NAME} is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS currently ships a native stub that rejects compressImage() with ERR_NOT_IMPLEMENTED.`
+    `Native module ${NATIVE_MODULE_NAME} is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS runtime compression is implemented for JPEG/PNG input with JPEG output in the v0.2.0 MVP.`
   );
 }
 

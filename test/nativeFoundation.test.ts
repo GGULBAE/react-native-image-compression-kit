@@ -63,22 +63,25 @@ describe('native module foundation', () => {
     expect(typeof moduleShape.getImageCompressionCapabilities).toBe('function');
   });
 
-  it('keeps the iOS package stub explicit about unavailable compression', () => {
-    const iosStubSource = readProjectFile('ios/RCTImageCompressionKit.mm');
+  it('keeps the iOS native MVP explicit about supported compression', () => {
+    const iosSource = readProjectFile('ios/RCTImageCompressionKit.mm');
 
-    expect(iosStubSource).toContain(
-      'RCTImageCompressionKitNotImplementedCode = @"ERR_NOT_IMPLEMENTED"'
+    expect(iosSource).toContain(
+      'RCTImageCompressionKitUnsupportedFormatCode = @"ERR_UNSUPPORTED_FORMAT"'
     );
-    expect(iosStubSource).toContain(
-      'iOS compression is not implemented in react-native-image-compression-kit yet.'
+    expect(iosSource).toContain('CGImageSourceCreateWithData');
+    expect(iosSource).toContain('UIImageJPEGRepresentation');
+    expect(iosSource).toContain('iOS MVP supports JPEG and PNG input only.');
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
     );
-    expect(iosStubSource).toContain(
-      'No iOS input or output formats are available in v0.1.x.'
+    expect(iosSource).toContain(
+      'iOS MVP does not support output.maxBytes yet. Call getImageCompressionCapabilities() and omit maxBytes on iOS.'
     );
-    expect(iosStubSource).toContain('@"metadataPolicies" : @[]');
-    expect(iosStubSource).toContain(
-      '@"supportsTargetSizeCompression" : @NO'
+    expect(iosSource).toContain(
+      '@"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy]'
     );
-    expect(iosStubSource).toContain('@"supportsCancellation" : @NO');
+    expect(iosSource).toContain('@"supportsTargetSizeCompression" : @NO');
+    expect(iosSource).toContain('@"supportsCancellation" : @NO');
   });
 });
