@@ -41,6 +41,7 @@ async function main() {
 
   if (mode === 'smoke') {
     checkIOSBuildEnvironment();
+    ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
     bootSimulator(simulator.udid);
@@ -64,6 +65,10 @@ async function main() {
   }
 
   throw new Error(`Unknown iOS validation mode: ${mode}`);
+}
+
+function ensurePackageJSBuild() {
+  mustRun('pnpm', ['build']);
 }
 
 function checkIOSBuildEnvironment() {
