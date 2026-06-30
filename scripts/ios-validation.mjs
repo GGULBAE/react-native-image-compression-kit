@@ -49,7 +49,7 @@ async function main() {
 
     try {
       metroProcess = startMetro();
-      await waitForMetro();
+      await waitForMetro(metroProcess);
       runXcodeBuild(simulator.udid);
       installApp(simulator.udid);
       await runSmoke(simulator.udid, metroProcess, (nextLogProcess) => {
@@ -181,10 +181,11 @@ function startMetro() {
   const child = spawn(
     'pnpm',
     [
-      '--filter',
-      'image-compression-kit-example',
+      '--dir',
+      EXAMPLE_DIR,
+      'exec',
+      'react-native',
       'start',
-      '--',
       '--port',
       String(METRO_PORT),
     ],
@@ -194,28 +195,59 @@ function startMetro() {
       stdio: ['ignore', 'pipe', 'pipe'],
     }
   );
+  child.rnickOutput = '';
+
+  const appendOutput = (chunk, stream) => {
+    const text = chunk.toString();
+    child.rnickOutput = `${child.rnickOutput}${text}`.slice(-8000);
+    stream.write(chunk);
+  };
 
   child.stdout.on('data', (chunk) => {
-    process.stdout.write(chunk);
+    appendOutput(chunk, process.stdout);
   });
   child.stderr.on('data', (chunk) => {
-    process.stderr.write(chunk);
+    appendOutput(chunk, process.stderr);
+  });
+  child.on('error', (error) => {
+    child.rnickError = error;
+    process.stderr.write(`${error.message}\n`);
   });
 
   return child;
 }
 
-async function waitForMetro() {
+async function waitForMetro(child) {
   const deadline = Date.now() + 60000;
 
   while (Date.now() < deadline) {
     if (await isMetroReady()) {
       return;
     }
+
+    if (child.rnickError) {
+      throw new Error(`Metro failed to start: ${child.rnickError.message}`);
+    }
+
+    if (child.exitCode !== null || child.signalCode !== null) {
+      throw new Error(
+        [
+          `Metro exited before becoming ready: code=${child.exitCode} signal=${child.signalCode}.`,
+          child.rnickOutput,
+        ]
+          .filter(Boolean)
+          .join('\n')
+      );
+    }
+
     await delay(1000);
   }
 
-  throw new Error(`Metro did not become ready on port ${METRO_PORT}.`);
+  throw new Error(
+    [`Metro did not become ready on port ${METRO_PORT}.`, child.rnickOutput]
+      .filter(Boolean)
+      .join('\n')
+  );
 }
 
 function isMetroReady() {
