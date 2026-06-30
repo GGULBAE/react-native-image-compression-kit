@@ -77,18 +77,15 @@ function checkIOSBuildEnvironment() {
 
 function runPodInstall() {
   if (hasCommand('bundle')) {
+    const env = bundlerEnv();
+
     mustRun('bundle', ['install'], {
       cwd: EXAMPLE_DIR,
-      env: {
-        BUNDLE_PATH: path.join(EXAMPLE_DIR, 'vendor', 'bundle'),
-        BUNDLE_FORCE_RUBY_PLATFORM: '1',
-      },
+      env,
     });
     mustRun('bundle', ['exec', 'pod', 'install'], {
       cwd: IOS_DIR,
-      env: {
-        BUNDLE_GEMFILE: path.join(EXAMPLE_DIR, 'Gemfile'),
-      },
+      env,
     });
     return;
   }
@@ -98,6 +95,15 @@ function runPodInstall() {
     failureHint:
       'Install CocoaPods or Bundler. The example/Gemfile pins the supported CocoaPods toolchain.',
   });
+}
+
+function bundlerEnv() {
+  return {
+    BUNDLE_APP_CONFIG: path.join(EXAMPLE_DIR, '.bundle'),
+    BUNDLE_FORCE_RUBY_PLATFORM: '1',
+    BUNDLE_GEMFILE: path.join(EXAMPLE_DIR, 'Gemfile'),
+    BUNDLE_PATH: path.join(EXAMPLE_DIR, 'vendor', 'bundle'),
+  };
 }
 
 function ensurePodsInstalled() {
