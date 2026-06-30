@@ -38,6 +38,8 @@ describe('example app', () => {
     expect(appSource).toContain('emitIOSSmokeLog');
     expect(appSource).toContain('runIOSHostAppSmokeValidation');
     expect(appSource).toContain('RNICK_IOS_SMOKE_START');
+    expect(appSource).toContain('RNICK_IOS_SMOKE_STEP_START');
+    expect(appSource).toContain('ERR_IOS_SMOKE_TIMEOUT');
     expect(appSource).toContain('RNICK_IOS_SMOKE_PASS');
     expect(appSource).toContain('RNICK_IOS_SMOKE_FAIL');
     expect(appSource).toContain('copySamplePngToCache');

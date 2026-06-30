@@ -70,6 +70,7 @@ describe('native module foundation', () => {
       'RCTImageCompressionKitUnsupportedFormatCode = @"ERR_UNSUPPORTED_FORMAT"'
     );
     expect(iosSource).toContain('CGImageSourceCreateWithData');
+    expect(iosSource).toContain('RCT_EXPORT_MODULE(ImageCompressionKit)');
     expect(iosSource).toContain('UIImageJPEGRepresentation');
     expect(iosSource).toContain('iOS MVP supports JPEG and PNG input only.');
     expect(iosSource).toContain(

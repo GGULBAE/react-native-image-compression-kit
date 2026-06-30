@@ -37,9 +37,15 @@ type ExampleImageSourceModule = {
   logSmokeEvent?: (message: string) => Promise<void>;
 };
 
+type IOSSmokeSampleModule = ExampleImageSourceModule & {
+  copySamplePngToCache: () => Promise<string>;
+  copyUnsupportedImageToCache: (format: string) => Promise<string>;
+};
+
 const DEFAULT_QUALITY = '72';
 const EXAMPLE_OUTPUT_FORMATS: OutputFormat[] = ['jpeg', 'png', 'webp'];
 const RESIZE_MODES: ResizeMode[] = ['contain', 'cover', 'stretch'];
+const IOS_SMOKE_STEP_TIMEOUT_MS = 30_000;
 const SAMPLE_MODULE = NativeModules.ExampleImageSource as
   | ExampleImageSourceModule
   | undefined;
@@ -483,15 +489,16 @@ type IOSHostAppSmokeSummary = {
 async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   await emitIOSSmokeLog('RNICK_IOS_SMOKE_START');
 
-  if (
-    !SAMPLE_MODULE?.copySampleJpegToCache ||
-    !SAMPLE_MODULE.copySamplePngToCache ||
-    !SAMPLE_MODULE.copyUnsupportedImageToCache
-  ) {
-    throw new Error('iOS smoke sample module methods are unavailable.');
-  }
+  const sampleModule = SAMPLE_MODULE;
+  assertIOSSmokeSampleModule(sampleModule);
+  const copySampleJpegToCache = sampleModule.copySampleJpegToCache;
+  const copySamplePngToCache = sampleModule.copySamplePngToCache;
+  const copyUnsupportedImageToCache =
+    sampleModule.copyUnsupportedImageToCache;
 
-  const capabilities = await getImageCompressionCapabilities();
+  const capabilities = await runIOSSmokeStep('capabilities', () =>
+    getImageCompressionCapabilities()
+  );
   assertIOSSmoke(
     capabilities.platform === 'ios',
     `Expected iOS capabilities, received ${capabilities.platform}.`
@@ -511,73 +518,91 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     'Expected iOS cancellation to be unsupported.'
   );
 
-  const jpegUri = await SAMPLE_MODULE.copySampleJpegToCache();
-  const pngUri = await SAMPLE_MODULE.copySamplePngToCache();
-  const jpegResult = await compressImage({
-    source: { uri: jpegUri },
-    resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
-    output: { format: 'jpeg', quality: 68 },
-    metadata: 'safe',
-  });
-  const pngResult = await compressImage({
-    source: { uri: pngUri },
-    resize: { maxWidth: 18, maxHeight: 12, mode: 'cover' },
-    output: { format: 'jpeg', quality: 72 },
-    metadata: 'strip',
-  });
+  const jpegUri = await runIOSSmokeStep('copy-jpeg-fixture', () =>
+    copySampleJpegToCache()
+  );
+  const pngUri = await runIOSSmokeStep('copy-png-fixture', () =>
+    copySamplePngToCache()
+  );
+  const jpegResult = await runIOSSmokeStep('compress-jpeg-to-jpeg', () =>
+    compressImage({
+      source: { uri: jpegUri },
+      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+      output: { format: 'jpeg', quality: 68 },
+      metadata: 'safe',
+    })
+  );
+  const pngResult = await runIOSSmokeStep('compress-png-to-jpeg', () =>
+    compressImage({
+      source: { uri: pngUri },
+      resize: { maxWidth: 18, maxHeight: 12, mode: 'cover' },
+      output: { format: 'jpeg', quality: 72 },
+      metadata: 'strip',
+    })
+  );
 
   assertCompressionResult(jpegResult, 'jpeg');
   assertCompressionResult(pngResult, 'jpeg');
 
   const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif'];
   for (const format of unsupportedInputs) {
-    const unsupportedUri =
-      await SAMPLE_MODULE.copyUnsupportedImageToCache(format);
-    await expectNativeErrorCode(
-      () =>
-        compressImage({
-          source: { uri: unsupportedUri },
-          output: { format: 'jpeg', quality: 70 },
-          metadata: 'safe',
-        }),
-      'ERR_UNSUPPORTED_FORMAT',
-      `Expected ${format} input to be unsupported on iOS.`
+    const unsupportedUri = await runIOSSmokeStep(
+      `copy-unsupported-${format}-fixture`,
+      () => copyUnsupportedImageToCache(format)
+    );
+    await runIOSSmokeStep(`reject-${format}-input`, () =>
+      expectNativeErrorCode(
+        () =>
+          compressImage({
+            source: { uri: unsupportedUri },
+            output: { format: 'jpeg', quality: 70 },
+            metadata: 'safe',
+          }),
+        'ERR_UNSUPPORTED_FORMAT',
+        `Expected ${format} input to be unsupported on iOS.`
+      )
     );
   }
 
   const unsupportedOutputs = ['png', 'webp', 'heic', 'heif', 'avif'] as const;
   for (const format of unsupportedOutputs) {
-    await expectNativeErrorCode(
-      () =>
-        compressImage({
-          source: { uri: jpegUri },
-          output: { format, quality: 70 },
-          metadata: 'safe',
-        }),
-      'ERR_NOT_IMPLEMENTED',
-      `Expected ${format} output to be unimplemented on iOS.`
+    await runIOSSmokeStep(`reject-${format}-output`, () =>
+      expectNativeErrorCode(
+        () =>
+          compressImage({
+            source: { uri: jpegUri },
+            output: { format, quality: 70 },
+            metadata: 'safe',
+          }),
+        'ERR_NOT_IMPLEMENTED',
+        `Expected ${format} output to be unimplemented on iOS.`
+      )
     );
   }
 
-  await expectNativeErrorCode(
-    () =>
-      compressImage({
-        source: { uri: jpegUri },
-        output: { format: 'jpeg', quality: 70, maxBytes: 4_000 },
-        metadata: 'safe',
-      }),
-    'ERR_NOT_IMPLEMENTED',
-    'Expected output.maxBytes to be unimplemented on iOS.'
+  await runIOSSmokeStep('reject-max-bytes', () =>
+    expectNativeErrorCode(
+      () =>
+        compressImage({
+          source: { uri: jpegUri },
+          output: { format: 'jpeg', quality: 70, maxBytes: 4_000 },
+          metadata: 'safe',
+        }),
+      'ERR_NOT_IMPLEMENTED',
+      'Expected output.maxBytes to be unimplemented on iOS.'
+    )
   );
-  await expectNativeErrorCode(
-    () =>
-      compressImage({
-        source: { uri: jpegUri },
-        output: { format: 'jpeg', quality: 70 },
-        metadata: 'preserve',
-      }),
-    'ERR_NOT_IMPLEMENTED',
-    "Expected metadata: 'preserve' to be unimplemented on iOS."
+  await runIOSSmokeStep('reject-metadata-preserve', () =>
+    expectNativeErrorCode(
+      () =>
+        compressImage({
+          source: { uri: jpegUri },
+          output: { format: 'jpeg', quality: 70 },
+          metadata: 'preserve',
+        }),
+      'ERR_NOT_IMPLEMENTED',
+      "Expected metadata: 'preserve' to be unimplemented on iOS."
+    )
   );
 
   return {
@@ -587,6 +612,59 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     unsupportedInputs,
     unsupportedOutputs: [...unsupportedOutputs],
   };
+}
+
+function assertIOSSmokeSampleModule(
+  module: ExampleImageSourceModule | undefined
+): asserts module is IOSSmokeSampleModule {
+  if (
+    !module?.copySampleJpegToCache ||
+    !module.copySamplePngToCache ||
+    !module.copyUnsupportedImageToCache
+  ) {
+    throw new Error('iOS smoke sample module methods are unavailable.');
+  }
+}
+
+async function runIOSSmokeStep<T>(
+  name: string,
+  action: () => Promise<T>
+): Promise<T> {
+  await emitIOSSmokeLog(`RNICK_IOS_SMOKE_STEP_START ${name}`);
+
+  try {
+    const result = await withIOSSmokeTimeout(name, action());
+    await emitIOSSmokeLog(`RNICK_IOS_SMOKE_STEP_PASS ${name}`);
+    return result;
+  } catch (error) {
+    const errorState = toErrorState(error);
+    await emitIOSSmokeLog(
+      `RNICK_IOS_SMOKE_STEP_FAIL ${name} ${errorState.code} ${errorState.message}`
+    );
+    throw error;
+  }
+}
+
+function withIOSSmokeTimeout<T>(name: string, promise: Promise<T>): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject({
+        code: 'ERR_IOS_SMOKE_TIMEOUT',
+        message: `Timed out while waiting for iOS smoke step: ${name}.`,
+      });
+    }, IOS_SMOKE_STEP_TIMEOUT_MS);
+
+    promise.then(
+      (result) => {
+        clearTimeout(timeout);
+        resolve(result);
+      },
+      (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      }
+    );
+  });
 }
 
 function assertIOSFormatCapability(

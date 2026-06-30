@@ -6,7 +6,6 @@
 #include <math.h>
 #include <memory>
 
-static NSString *const RCTImageCompressionKitModuleName = @"ImageCompressionKit";
 static NSString *const RCTImageCompressionKitInvalidOptionsCode = @"ERR_INVALID_OPTIONS";
 static NSString *const RCTImageCompressionKitUnsupportedSourceCode = @"ERR_UNSUPPORTED_SOURCE";
 static NSString *const RCTImageCompressionKitUnsupportedFormatCode = @"ERR_UNSUPPORTED_FORMAT";
@@ -451,10 +450,7 @@ static NSString *RCTImageCompressionKitOutputPath(NSError **error)
 
 @implementation RCTImageCompressionKit
 
-+ (NSString *)moduleName
-{
-  return RCTImageCompressionKitModuleName;
-}
+RCT_EXPORT_MODULE(ImageCompressionKit)
 
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params
