@@ -138,6 +138,35 @@ static void RCTImageCompressionKitReject(
   reject(code, message, error);
 }
 
+static BOOL RCTImageCompressionKitSmokeEnabled(void)
+{
+  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+  NSString *enabled = processInfo.environment[@"RNICK_IOS_SMOKE"];
+  NSString *simctlEnabled = processInfo.environment[@"SIMCTL_CHILD_RNICK_IOS_SMOKE"];
+
+  return
+    [enabled isEqualToString:@"1"] ||
+    [simctlEnabled isEqualToString:@"1"] ||
+    [processInfo.arguments containsObject:@"--rnick-ios-smoke"];
+}
+
+static void RCTImageCompressionKitSmokeLog(NSString *stage)
+{
+  if (RCTImageCompressionKitSmokeEnabled()) {
+    NSLog(@"RNICK_IOS_SMOKE_NATIVE %@", stage);
+  }
+}
+
+static void RCTImageCompressionKitRunImageWork(dispatch_block_t block)
+{
+  if ([NSThread isMainThread]) {
+    block();
+    return;
+  }
+
+  dispatch_sync(dispatch_get_main_queue(), block);
+}
+
 static BOOL RCTImageCompressionKitReadPositiveInteger(
   NSDictionary *map,
   NSString *key,
@@ -452,6 +481,11 @@ static NSString *RCTImageCompressionKitOutputPath(NSError **error)
 
 RCT_EXPORT_MODULE(ImageCompressionKit)
 
+- (dispatch_queue_t)methodQueue
+{
+  return dispatch_get_main_queue();
+}
+
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params
 {
@@ -463,6 +497,8 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
                reject:(RCTPromiseRejectBlock)reject
 {
   @try {
+    RCTImageCompressionKitSmokeLog(@"compress-start");
+
     if (![options isKindOfClass:[NSDictionary class]]) {
       RCTImageCompressionKitReject(reject, RCTImageCompressionKitInvalidOptionsCode, @"Compression options must be an object.", nil);
       return;
@@ -560,6 +596,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(reject, RCTImageCompressionKitInvalidOptionsCode, errorMessage, nil);
       return;
     }
+    RCTImageCompressionKitSmokeLog(@"options-validated");
 
     NSURL *sourceURL = RCTImageCompressionKitSourceURL(uri);
     if (sourceURL == nil) {
@@ -571,6 +608,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       );
       return;
     }
+    RCTImageCompressionKitSmokeLog(@"source-url-ready");
 
     NSError *sourceError = nil;
     NSData *sourceData = RCTImageCompressionKitReadSourceData(sourceURL, &sourceError);
@@ -583,6 +621,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       );
       return;
     }
+    RCTImageCompressionKitSmokeLog(@"source-read");
 
     NSString *imageType = RCTImageCompressionKitImageType(sourceData);
     if (imageType == nil) {
@@ -594,6 +633,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       );
       return;
     }
+    RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"image-type-%@", imageType]);
     if (!RCTImageCompressionKitIsSupportedInputType(imageType)) {
       RCTImageCompressionKitReject(
         reject,
@@ -604,7 +644,21 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       return;
     }
 
-    UIImage *sourceImage = [UIImage imageWithData:sourceData];
+    __block UIImage *sourceImage = nil;
+    __block UIImage *processedImage = nil;
+    __block NSData *outputData = nil;
+    RCTImageCompressionKitSmokeLog(@"image-work-start");
+    RCTImageCompressionKitRunImageWork(^{
+      sourceImage = [UIImage imageWithData:sourceData];
+      if (sourceImage == nil || sourceImage.size.width <= 0 || sourceImage.size.height <= 0) {
+        return;
+      }
+
+      processedImage = RCTImageCompressionKitRenderImage(sourceImage, resizeOptions);
+      outputData = UIImageJPEGRepresentation(processedImage, (CGFloat)quality / 100.0);
+    });
+    RCTImageCompressionKitSmokeLog(@"image-work-finished");
+
     if (sourceImage == nil || sourceImage.size.width <= 0 || sourceImage.size.height <= 0) {
       RCTImageCompressionKitReject(
         reject,
@@ -615,9 +669,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       return;
     }
 
-    UIImage *processedImage = RCTImageCompressionKitRenderImage(sourceImage, resizeOptions);
-    NSData *outputData = UIImageJPEGRepresentation(processedImage, (CGFloat)quality / 100.0);
-    if (outputData == nil || outputData.length == 0) {
+    if (processedImage == nil || outputData == nil || outputData.length == 0) {
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitEncodeFailedCode,
@@ -626,6 +678,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       );
       return;
     }
+    RCTImageCompressionKitSmokeLog(@"jpeg-encoded");
 
     NSError *outputPathError = nil;
     NSString *outputPath = RCTImageCompressionKitOutputPath(&outputPathError);
@@ -638,6 +691,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       );
       return;
     }
+    RCTImageCompressionKitSmokeLog(@"output-path-ready");
 
     NSError *writeError = nil;
     if (![outputData writeToFile:outputPath options:NSDataWritingAtomic error:&writeError]) {
@@ -649,6 +703,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       );
       return;
     }
+    RCTImageCompressionKitSmokeLog(@"output-written");
 
     CGSize outputSize = RCTImageCompressionKitPixelSize(processedImage);
     double byteSize = (double)outputData.length;
@@ -664,6 +719,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       @"originalByteSize" : @(originalByteSize),
       @"compressionRatio" : @(compressionRatio)
     });
+    RCTImageCompressionKitSmokeLog(@"compress-resolved");
   } @catch (NSException *exception) {
     RCTImageCompressionKitReject(
       reject,

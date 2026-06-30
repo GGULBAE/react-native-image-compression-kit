@@ -71,6 +71,8 @@ describe('native module foundation', () => {
     );
     expect(iosSource).toContain('CGImageSourceCreateWithData');
     expect(iosSource).toContain('RCT_EXPORT_MODULE(ImageCompressionKit)');
+    expect(iosSource).toContain('dispatch_get_main_queue()');
+    expect(iosSource).toContain('RNICK_IOS_SMOKE_NATIVE');
     expect(iosSource).toContain('UIImageJPEGRepresentation');
     expect(iosSource).toContain('iOS MVP supports JPEG and PNG input only.');
     expect(iosSource).toContain(

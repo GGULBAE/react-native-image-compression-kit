@@ -972,6 +972,8 @@ function checkIOSNativeModule() {
     'UIImage imageWithData',
     'UIImageJPEGRepresentation',
     'UIGraphicsImageRenderer',
+    'dispatch_get_main_queue()',
+    'RNICK_IOS_SMOKE_NATIVE',
     'NSCachesDirectory',
     'ImageCompressionKit',
     'RCTImageCompressionKitRenderImage',
