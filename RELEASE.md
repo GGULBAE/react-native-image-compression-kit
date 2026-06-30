@@ -13,6 +13,7 @@ package stub with a native iOS JPEG compression MVP.
 - Support iOS JPEG output with `output.quality`, optional resize, and cache-file result metadata.
 - Report iOS runtime capabilities for JPEG input/output, PNG input, metadata policies, target-size compression, and cancellation.
 - Align README guidance, TypeScript native-unavailable messaging, and test expectations with the implemented iOS MVP.
+- Validate the iOS MVP through a React Native iOS host app, not only source-level checks.
 
 ### Included
 
@@ -27,6 +28,11 @@ package stub with a native iOS JPEG compression MVP.
 - iOS `getImageCompressionCapabilities()` reports `metadataPolicies: ['safe', 'strip']`, JPEG `input=true` and `output=true`, PNG `input=true` and `output=false`, `supportsTargetSizeCompression: false`, and `supportsCancellation: false`.
 - README iOS support matrix, public API guidance, roadmap, installation status, and release dry-run wording updates.
 - Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` candidate.
+- React Native iOS example host app under `example/ios`.
+- iOS example `ExampleImageSource` native module for generated JPEG, PNG, GIF, WebP, HEIC, HEIF, and AVIF smoke fixtures.
+- `scripts/ios-validation.mjs` with `pods`, `build`, and `smoke` modes.
+- `pnpm example:ios:pods`, `pnpm example:ios:build`, and `pnpm example:ios:smoke` scripts.
+- GitHub Actions iOS Validation workflow that runs the host-app smoke on a macOS runner.
 
 ### Not Included
 
@@ -58,6 +64,17 @@ pnpm pack --dry-run
 If an iOS build environment is available, also run a host-app iOS build or
 native smoke test that links the pod and compresses a JPEG and PNG source to
 JPEG output.
+
+```bash
+pnpm example:ios:pods
+pnpm example:ios:build
+pnpm example:ios:smoke
+```
+
+The iOS host-app smoke should produce `RNICK_IOS_SMOKE_PASS` after validating
+capability reporting, JPEG and PNG to JPEG runtime compression, unsupported
+WebP/HEIC/HEIF/AVIF/GIF input errors, unsupported non-JPEG output errors,
+`output.maxBytes`, and `metadata: 'preserve'`.
 
 Publishing and tag creation remain manual follow-up steps after this candidate
 is reviewed.

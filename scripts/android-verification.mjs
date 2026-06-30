@@ -18,6 +18,7 @@ const REQUIRED_FILES = [
   'Dockerfile',
   '.dockerignore',
   '.github/workflows/ci.yml',
+  '.github/workflows/ios-validation.yml',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt',
@@ -38,9 +39,15 @@ const REQUIRED_FILES = [
   '.github/workflows/android-instrumentation.yml',
   'scripts/consumer-smoke-test.mjs',
   'scripts/docker-android.mjs',
+  'scripts/ios-validation.mjs',
   'scripts/generate-avif-fixtures.mjs',
   'scripts/generate-heic-heif-fixtures.mjs',
   'scripts/release-dry-run.mjs',
+  'example/Gemfile',
+  'example/ios/Podfile',
+  'example/ios/ImageCompressionKitExample.xcodeproj/project.pbxproj',
+  'example/ios/ImageCompressionKitExample/AppDelegate.swift',
+  'example/ios/ImageCompressionKitExample/ExampleImageSource.m',
 ];
 
 function main() {
@@ -78,6 +85,7 @@ function runDoctor() {
     checkAndroidGradleConfig(),
     checkAndroidNativeModule(),
     checkIOSNativeModule(),
+    checkIOSHostAppValidation(),
     checkHeicHeifCodecSampleStrategy(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
@@ -990,6 +998,100 @@ function checkIOSNativeModule() {
             ...missing,
             ...(podspecIncludesIOS ? [] : ['podspec iOS platform/source_files']),
           ].join(' | ')}`,
+  };
+}
+
+function checkIOSHostAppValidation() {
+  const packageJson = readJson('package.json');
+  const examplePackageJson = readJson('example/package.json');
+  const readmeContents = readText('README.md');
+  const releaseContents = readText('RELEASE.md');
+  const workflowContents = readText('.github/workflows/ios-validation.yml');
+  const validationScriptContents = readText('scripts/ios-validation.mjs');
+  const appContents = readText('example/src/App.tsx');
+  const iosModuleContents = readText('example/ios/ImageCompressionKitExample/ExampleImageSource.m');
+  const projectContents = readText('example/ios/ImageCompressionKitExample.xcodeproj/project.pbxproj');
+  const podfileContents = readText('example/ios/Podfile');
+  const gemfileContents = readText('example/Gemfile');
+  const expectedScripts = {
+    'example:ios': 'pnpm --filter image-compression-kit-example ios',
+    'example:ios:pods': 'node scripts/ios-validation.mjs pods',
+    'example:ios:build': 'node scripts/ios-validation.mjs build',
+    'example:ios:smoke': 'node scripts/ios-validation.mjs smoke',
+  };
+  const expectedSnippets = [
+    [examplePackageJson, '@react-native-community/cli-platform-ios'],
+    [examplePackageJson, 'react-native run-ios'],
+    [readmeContents, '## iOS Host-App Validation'],
+    [readmeContents, 'pnpm example:ios:pods'],
+    [readmeContents, 'pnpm example:ios:build'],
+    [readmeContents, 'pnpm example:ios:smoke'],
+    [readmeContents, 'RNICK_IOS_SMOKE_PASS'],
+    [readmeContents, "metadataPolicies: ['safe', 'strip']"],
+    [readmeContents, 'WebP, HEIC, HEIF, AVIF, and GIF inputs reject with `ERR_UNSUPPORTED_FORMAT`'],
+    [readmeContents, 'The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner'],
+    [releaseContents, 'Validate the iOS MVP through a React Native iOS host app'],
+    [releaseContents, 'React Native iOS example host app under `example/ios`.'],
+    [releaseContents, 'iOS example `ExampleImageSource` native module for generated JPEG, PNG, GIF, WebP, HEIC, HEIF, and AVIF smoke fixtures.'],
+    [releaseContents, '`scripts/ios-validation.mjs` with `pods`, `build`, and `smoke` modes.'],
+    [releaseContents, '`pnpm example:ios:pods`, `pnpm example:ios:build`, and `pnpm example:ios:smoke` scripts.'],
+    [releaseContents, 'GitHub Actions iOS Validation workflow that runs the host-app smoke on a macOS runner.'],
+    [releaseContents, 'RNICK_IOS_SMOKE_PASS'],
+    [workflowContents, 'name: iOS Validation'],
+    [workflowContents, 'runs-on: macos-latest'],
+    [workflowContents, 'run: pnpm example:ios:smoke'],
+    [validationScriptContents, 'RNICK_IOS_SMOKE_PASS'],
+    [validationScriptContents, 'RNICK_IOS_SMOKE_FAIL'],
+    [validationScriptContents, 'xcodebuild'],
+    [validationScriptContents, "['exec', 'pod', 'install']"],
+    [validationScriptContents, 'ImageCompressionKitExample.xcworkspace'],
+    [validationScriptContents, 'simctl'],
+    [validationScriptContents, 'RNICK_IOS_SMOKE'],
+    [appContents, 'runIOSHostAppSmokeValidation'],
+    [appContents, 'RNICK_IOS_SMOKE_START'],
+    [appContents, 'RNICK_IOS_SMOKE_PASS'],
+    [appContents, 'copySamplePngToCache'],
+    [appContents, 'copyUnsupportedImageToCache'],
+    [appContents, "const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif']"],
+    [appContents, "const unsupportedOutputs = ['png', 'webp', 'heic', 'heif', 'avif'] as const"],
+    [appContents, 'Expected output.maxBytes to be unimplemented on iOS.'],
+    [appContents, "Expected metadata: 'preserve' to be unimplemented on iOS."],
+    [iosModuleContents, 'RCT_EXPORT_MODULE();'],
+    [iosModuleContents, 'isSmokeTestEnabled'],
+    [iosModuleContents, 'copySampleJpegToCache'],
+    [iosModuleContents, 'copySamplePngToCache'],
+    [iosModuleContents, 'copyUnsupportedImageToCache'],
+    [iosModuleContents, 'RNICK_IOS_SMOKE'],
+    [iosModuleContents, 'UIImageJPEGRepresentation'],
+    [iosModuleContents, 'PNGDataWithActions'],
+    [iosModuleContents, '"gif"'],
+    [iosModuleContents, '"webp"'],
+    [iosModuleContents, '"heic"'],
+    [iosModuleContents, '"heif"'],
+    [iosModuleContents, '"avif"'],
+    [projectContents, 'ExampleImageSource.m in Sources'],
+    [podfileContents, 'use_native_modules!'],
+    [podfileContents, 'use_react_native!'],
+    [gemfileContents, "gem 'cocoapods'"],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => {
+      const haystack =
+        typeof contents === 'string' ? contents : JSON.stringify(contents);
+      return !haystack.includes(snippet);
+    })
+    .map(([, snippet]) => snippet);
+  const missingScripts = Object.entries(expectedScripts)
+    .filter(([name, command]) => packageJson.scripts?.[name] !== command)
+    .map(([name]) => name);
+
+  return {
+    ok: missing.length === 0 && missingScripts.length === 0,
+    label: 'iOS host-app validation is documented and wired',
+    detail:
+      missing.length === 0 && missingScripts.length === 0
+        ? 'example iOS app, fixture module, smoke script, package commands, README guidance, release notes, and macOS workflow are present'
+        : `missing snippets or scripts: ${[...missing, ...missingScripts].join(' | ')}`,
   };
 }
 

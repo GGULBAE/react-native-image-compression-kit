@@ -1,0 +1,144 @@
+#import <React/RCTBridgeModule.h>
+#import <UIKit/UIKit.h>
+
+@interface ExampleImageSource : NSObject <RCTBridgeModule>
+@end
+
+static UIImage *ExampleImageSourceImage(void);
+static NSData *ExampleImageSourceJpegData(void);
+static NSData *ExampleImageSourcePngData(void);
+static NSData *ExampleImageSourceUnsupportedData(NSString *format);
+
+@implementation ExampleImageSource
+
+RCT_EXPORT_MODULE();
+
+RCT_EXPORT_METHOD(isSmokeTestEnabled:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  (void)reject;
+  NSString *enabled = [NSProcessInfo processInfo].environment[@"RNICK_IOS_SMOKE"];
+  resolve(@([enabled isEqualToString:@"1"]));
+}
+
+RCT_EXPORT_METHOD(copySampleJpegToCache:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  [self writeSampleWithFormat:@"jpg"
+                         data:ExampleImageSourceJpegData()
+                      resolve:resolve
+                       reject:reject];
+}
+
+RCT_EXPORT_METHOD(copySamplePngToCache:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  [self writeSampleWithFormat:@"png"
+                         data:ExampleImageSourcePngData()
+                      resolve:resolve
+                       reject:reject];
+}
+
+RCT_EXPORT_METHOD(copyUnsupportedImageToCache:(NSString *)format
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSData *data = ExampleImageSourceUnsupportedData(format);
+  [self writeSampleWithFormat:format data:data resolve:resolve reject:reject];
+}
+
+- (void)writeSampleWithFormat:(NSString *)format
+                         data:(NSData *)data
+                      resolve:(RCTPromiseResolveBlock)resolve
+                       reject:(RCTPromiseRejectBlock)reject
+{
+  if (data == nil || data.length == 0) {
+    reject(
+      @"ERR_SAMPLE_GENERATION_FAILED",
+      @"The iOS example could not generate the sample image.",
+      nil
+    );
+    return;
+  }
+
+  NSString *fileName = [NSString stringWithFormat:@"rnick-sample.%@", format];
+  NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:fileName];
+  NSError *error = nil;
+
+  if (![data writeToFile:path options:NSDataWritingAtomic error:&error]) {
+    reject(
+      @"ERR_SAMPLE_WRITE_FAILED",
+      @"The iOS example could not write the sample image to cache.",
+      error
+    );
+    return;
+  }
+
+  resolve([[NSURL fileURLWithPath:path] absoluteString]);
+}
+
+static UIImage *ExampleImageSourceImage(void)
+{
+  CGSize size = CGSizeMake(32, 20);
+  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+  format.scale = 1.0;
+  format.opaque = NO;
+  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+
+  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *context) {
+    (void)context;
+    [[UIColor colorWithRed:0.09 green:0.36 blue:0.78 alpha:1.0] setFill];
+    UIRectFill(CGRectMake(0, 0, size.width, size.height));
+
+    [[UIColor colorWithRed:0.97 green:0.62 blue:0.13 alpha:1.0] setFill];
+    UIRectFill(CGRectMake(4, 4, 12, 12));
+
+    [[UIColor colorWithRed:0.16 green:0.72 blue:0.44 alpha:0.65] setFill];
+    UIRectFill(CGRectMake(14, 6, 14, 10));
+  }];
+}
+
+static NSData *ExampleImageSourceJpegData(void)
+{
+  return UIImageJPEGRepresentation(ExampleImageSourceImage(), 0.82);
+}
+
+static NSData *ExampleImageSourcePngData(void)
+{
+  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+  format.scale = 1.0;
+  format.opaque = NO;
+  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:CGSizeMake(32, 20) format:format];
+
+  return [renderer PNGDataWithActions:^(UIGraphicsImageRendererContext *context) {
+    (void)context;
+    [[UIColor clearColor] setFill];
+    UIRectFill(CGRectMake(0, 0, 32, 20));
+
+    [[UIColor colorWithRed:0.36 green:0.20 blue:0.76 alpha:0.85] setFill];
+    UIRectFill(CGRectMake(0, 0, 18, 20));
+
+    [[UIColor colorWithRed:0.98 green:0.78 blue:0.20 alpha:0.70] setFill];
+    UIRectFill(CGRectMake(10, 4, 20, 12));
+  }];
+}
+
+static NSData *ExampleImageSourceUnsupportedData(NSString *format)
+{
+  NSDictionary<NSString *, NSString *> *fixtures = @{
+    @"gif" : @"R0lGODdhKAAUAJEAAAAAADNmmf///wAAACH5BAQAAAAALAAAAAAoABQAAAIajI+py+0Po5y02ouz3rz7D4biSJbmiabqihUAOw==",
+    @"webp" : @"UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA",
+    @"heic" : @"AAAAHGZ0eXBoZWljAAAAAG1pZjFoZWljbWlhZgAAAXptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAACJpbG9jAAAAAERAAAEAAQAAAAABngABAAAAAAAAAW4AAAAjaWluZgAAAAAAAQAAABVpbmZlAgAAAAABAABodmMxAAAAAA5waXRtAAAAAAABAAAA+mlwcnAAAADaaXBjbwAAAHVodmNDAQNwAAAAAAAAAAAAHvAA/P34+AAADwNgAAEAGEABDAH//wNwAAADAJAAAAMAAAMAHroCQGEAAQApQgEBA3AAAAMAkAAAAwAAAwAeoCCBBZbqrprm4CGgwIAAAAyAAAADAIRiAAEABkQBwXPBiQAAABNjb2xybmNseAABAA0ABoAAAAAUaXNwZQAAAAAAAABAAAAAQAAAAChjbGFwAAAAEAAAAAEAAAAMAAAAAf///9AAAAAC////zAAAAAIAAAAOcGl4aQAAAAABCAAAABhpcG1hAAAAAAAAAAEAAQWBAgMFhAAAAXZtZGF0AAABaigBrwTyCZCFg3ApmkckCHWZ/3mepR0TJrbxfTFRlB1kZsXFxbKtWgP4P00MrtdUr5nPASXLwRsn6lCkn7baE5OB1yOvx0CZna4AjByr/RVFfZpycWEiS+80Yf4IUyaUzBD/sH5gS1GvWAArMlUV7Q0aLsStM2jrJF12dLpPZ6Qwslvt5gfG2QlaKDLfAgnMW+ym6MT7nrMP5eeBq2g58HCK5nASSQO5rVesPUGZm9vFsJ/sZF/0AxvuqiI5+IyFiUxUeB3CLL/MDf33JdKL3TgW3NGrocmsF/gSXa02Yl+QkzB3gML3bIa0+51gbE88VQWDNZVINw/WnPVLkcaeQzGZy1vHAI/FYTyQJQdMlvN3znRziCp1YdiNd5DOqeTfEbIT756p/Ynnauuz/WCrRHBZfPd1A2f8pLwIDYGFEs61+QfQt1PI5m33KAExDMmq4bALb/RWSrgcWHRDXUXnKIrtygOfYEyP3Bu/",
+    @"heif" : @"AAAAHGZ0eXBoZWljAAAAAG1pZjFoZWljbWlhZgAAAXptZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAACJpbG9jAAAAAERAAAEAAQAAAAABngABAAAAAAAAAW4AAAAjaWluZgAAAAAAAQAAABVpbmZlAgAAAAABAABodmMxAAAAAA5waXRtAAAAAAABAAAA+mlwcnAAAADaaXBjbwAAAHVodmNDAQNwAAAAAAAAAAAAHvAA/P34+AAADwNgAAEAGEABDAH//wNwAAADAJAAAAMAAAMAHroCQGEAAQApQgEBA3AAAAMAkAAAAwAAAwAeoCCBBZbqrprm4CGgwIAAAAyAAAADAIRiAAEABkQBwXPBiQAAABNjb2xybmNseAABAA0ABoAAAAAUaXNwZQAAAAAAAABAAAAAQAAAAChjbGFwAAAAEAAAAAEAAAAMAAAAAf///9AAAAAC////zAAAAAIAAAAOcGl4aQAAAAABCAAAABhpcG1hAAAAAAAAAAEAAQWBAgMFhAAAAXZtZGF0AAABaigBrwTyCZCFg3ApmkckCHWZ/3mepR0TJrbxfTFRlB1kZsXFxbKtWgP4P00MrtdUr5nPASXLwRsn6lCkn7baE5OB1yOvx0CZna4AjByr/RVFfZpycWEiS+80Yf4IUyaUzBD/sH5gS1GvWAArMlUV7Q0aLsStM2jrJF12dLpPZ6Qwslvt5gfG2QlaKDLfAgnMW+ym6MT7nrMP5eeBq2g58HCK5nASSQO5rVesPUGZm9vFsJ/sZF/0AxvuqiI5+IyFiUxUeB3CLL/MDf33JdKL3TgW3NGrocmsF/gSXa02Yl+QkzB3gML3bIa0+51gbE88VQWDNZVINw/WnPVLkcaeQzGZy1vHAI/FYTyQJQdMlvN3znRziCp1YdiNd5DOqeTfEbIT756p/Ynnauuz/WCrRHBZfPd1A2f8pLwIDYGFEs61+QfQt1PI5m33KAExDMmq4bALb/RWSrgcWHRDXUXnKIrtygOfYEyP3Bu/",
+    @"avif" : @"AAAAHGZ0eXBhdmlmAAAAAG1pZjFhdmlmbWlhZgAAAOhtZXRhAAAAAAAAACFoZGxyAAAAAAAAAABwaWN0AAAAAAAAAAAAAAAAAAAAACJpbG9jAAAAAERAAAEAAQAAAAABDAABAAAAAAAAAOIAAAAjaWluZgAAAAAAAQAAABVpbmZlAgAAAAABAABhdjAxAAAAAA5waXRtAAAAAAABAAAAaGlwcnAAAABJaXBjbwAAAAxhdjFDgQAMAAAAABNjb2xybmNseAABAA0ABoAAAAAUaXNwZQAAAAAAAAAQAAAADAAAAA5waXhpAAAAAAEIAAAAF2lwbWEAAAAAAAAAAQABBIECAwQAAADqbWRhdBIACgkYDP7aICGg0IAy0gETx4eGZQGGGH4VAAAIxJ00osKTn+ZjIVsXIEqnIoIVcokNhH2nBF43NQJmyRGcGop9NEq8nUr6KMcp6HeKgbkp+/i9bKP/KiLsCUwD8L6V47vELP4kr2cuHZBvbYH7WCMXP06uP/nbT0Cx0eBimqK7RpkL/Q4+Aw+We9CXufQyygjWB8+hteFdOzN9Sk/yAowqpyVSDyWTs2s56y0ZzjAkL248Nk0up4lAl1sqPAqyApN98lBYCxjasglfRvWkU7kxLUZJ24wlZen3s029IDc/FoA="
+  };
+  NSString *base64 = fixtures[format];
+
+  if (base64 == nil) {
+    return nil;
+  }
+
+  return [[NSData alloc] initWithBase64EncodedString:base64 options:0];
+}
+
+@end

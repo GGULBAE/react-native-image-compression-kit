@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Button,
   NativeModules,
+  Platform,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -30,6 +31,9 @@ type ErrorState = {
 
 type ExampleImageSourceModule = {
   copySampleJpegToCache: () => Promise<string>;
+  copySamplePngToCache?: () => Promise<string>;
+  copyUnsupportedImageToCache?: (format: string) => Promise<string>;
+  isSmokeTestEnabled?: () => Promise<boolean>;
 };
 
 const DEFAULT_QUALITY = '72';
@@ -118,6 +122,51 @@ export default function App(): React.JSX.Element {
   useEffect(() => {
     let isMounted = true;
 
+    if (Platform.OS !== 'ios' || !SAMPLE_MODULE?.isSmokeTestEnabled) {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    SAMPLE_MODULE.isSmokeTestEnabled()
+      .then(async (enabled) => {
+        if (!enabled || !isMounted) {
+          return;
+        }
+
+        try {
+          const smokeSummary = await runIOSHostAppSmokeValidation();
+          console.log(`RNICK_IOS_SMOKE_PASS ${JSON.stringify(smokeSummary)}`);
+        } catch (smokeError) {
+          const errorState = toErrorState(smokeError);
+          console.log(
+            `RNICK_IOS_SMOKE_FAIL ${errorState.code} ${errorState.message}`
+          );
+
+          if (isMounted) {
+            setError(errorState);
+          }
+        }
+      })
+      .catch((nativeError) => {
+        const errorState = toErrorState(nativeError);
+        console.log(
+          `RNICK_IOS_SMOKE_FAIL ${errorState.code} ${errorState.message}`
+        );
+
+        if (isMounted) {
+          setError(errorState);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
     getImageCompressionCapabilities()
       .then((nextCapabilities) => {
         if (isMounted) {
@@ -198,7 +247,7 @@ export default function App(): React.JSX.Element {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Image Compression Kit</Text>
-        <Text style={styles.subtitle}>Android Image MVP</Text>
+        <Text style={styles.subtitle}>Android MVP / iOS JPEG MVP</Text>
 
         <View style={styles.section}>
           <Text style={styles.label}>Source URI</Text>
@@ -408,6 +457,184 @@ function ResultLine({ label, value }: { label: string; value: string }) {
       </Text>
     </View>
   );
+}
+
+type IOSHostAppSmokeSummary = {
+  platform: 'ios';
+  jpegResultBytes: number;
+  pngResultBytes: number;
+  unsupportedInputs: string[];
+  unsupportedOutputs: string[];
+};
+
+async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
+  console.log('RNICK_IOS_SMOKE_START');
+
+  if (
+    !SAMPLE_MODULE?.copySampleJpegToCache ||
+    !SAMPLE_MODULE.copySamplePngToCache ||
+    !SAMPLE_MODULE.copyUnsupportedImageToCache
+  ) {
+    throw new Error('iOS smoke sample module methods are unavailable.');
+  }
+
+  const capabilities = await getImageCompressionCapabilities();
+  assertIOSSmoke(
+    capabilities.platform === 'ios',
+    `Expected iOS capabilities, received ${capabilities.platform}.`
+  );
+  assertIOSFormatCapability(capabilities, 'jpeg', true, true);
+  assertIOSFormatCapability(capabilities, 'png', true, false);
+  assertIOSSmoke(
+    capabilities.metadataPolicies.join(',') === 'safe,strip',
+    `Expected iOS metadata policies safe,strip, received ${capabilities.metadataPolicies.join(',')}.`
+  );
+  assertIOSSmoke(
+    capabilities.supportsTargetSizeCompression === false,
+    'Expected iOS target-size compression to be unsupported.'
+  );
+  assertIOSSmoke(
+    capabilities.supportsCancellation === false,
+    'Expected iOS cancellation to be unsupported.'
+  );
+
+  const jpegUri = await SAMPLE_MODULE.copySampleJpegToCache();
+  const pngUri = await SAMPLE_MODULE.copySamplePngToCache();
+  const jpegResult = await compressImage({
+    source: { uri: jpegUri },
+    resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+    output: { format: 'jpeg', quality: 68 },
+    metadata: 'safe',
+  });
+  const pngResult = await compressImage({
+    source: { uri: pngUri },
+    resize: { maxWidth: 18, maxHeight: 12, mode: 'cover' },
+    output: { format: 'jpeg', quality: 72 },
+    metadata: 'strip',
+  });
+
+  assertCompressionResult(jpegResult, 'jpeg');
+  assertCompressionResult(pngResult, 'jpeg');
+
+  const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif'];
+  for (const format of unsupportedInputs) {
+    const unsupportedUri =
+      await SAMPLE_MODULE.copyUnsupportedImageToCache(format);
+    await expectNativeErrorCode(
+      () =>
+        compressImage({
+          source: { uri: unsupportedUri },
+          output: { format: 'jpeg', quality: 70 },
+          metadata: 'safe',
+        }),
+      'ERR_UNSUPPORTED_FORMAT',
+      `Expected ${format} input to be unsupported on iOS.`
+    );
+  }
+
+  const unsupportedOutputs = ['png', 'webp', 'heic', 'heif', 'avif'] as const;
+  for (const format of unsupportedOutputs) {
+    await expectNativeErrorCode(
+      () =>
+        compressImage({
+          source: { uri: jpegUri },
+          output: { format, quality: 70 },
+          metadata: 'safe',
+        }),
+      'ERR_NOT_IMPLEMENTED',
+      `Expected ${format} output to be unimplemented on iOS.`
+    );
+  }
+
+  await expectNativeErrorCode(
+    () =>
+      compressImage({
+        source: { uri: jpegUri },
+        output: { format: 'jpeg', quality: 70, maxBytes: 4_000 },
+        metadata: 'safe',
+      }),
+    'ERR_NOT_IMPLEMENTED',
+    'Expected output.maxBytes to be unimplemented on iOS.'
+  );
+  await expectNativeErrorCode(
+    () =>
+      compressImage({
+        source: { uri: jpegUri },
+        output: { format: 'jpeg', quality: 70 },
+        metadata: 'preserve',
+      }),
+    'ERR_NOT_IMPLEMENTED',
+    "Expected metadata: 'preserve' to be unimplemented on iOS."
+  );
+
+  return {
+    platform: 'ios',
+    jpegResultBytes: jpegResult.byteSize,
+    pngResultBytes: pngResult.byteSize,
+    unsupportedInputs,
+    unsupportedOutputs: [...unsupportedOutputs],
+  };
+}
+
+function assertIOSFormatCapability(
+  capabilities: ImageCompressionCapabilities,
+  format: 'jpeg' | 'png',
+  expectedInput: boolean,
+  expectedOutput: boolean
+): void {
+  const capability = capabilities.formats.find(
+    (candidate) => candidate.format === format
+  );
+
+  assertIOSSmoke(!!capability, `Missing ${format} capability.`);
+  assertIOSSmoke(
+    capability.input === expectedInput,
+    `Expected ${format} input=${expectedInput}, received ${capability.input}.`
+  );
+  assertIOSSmoke(
+    capability.output === expectedOutput,
+    `Expected ${format} output=${expectedOutput}, received ${capability.output}.`
+  );
+}
+
+function assertCompressionResult(
+  result: CompressionResult,
+  format: OutputFormat
+): void {
+  assertIOSSmoke(result.format === format, `Expected result format ${format}.`);
+  assertIOSSmoke(result.uri.startsWith('file://'), 'Expected file:// result URI.');
+  assertIOSSmoke(result.width > 0, 'Expected positive result width.');
+  assertIOSSmoke(result.height > 0, 'Expected positive result height.');
+  assertIOSSmoke(result.byteSize > 0, 'Expected positive result byteSize.');
+  assertIOSSmoke(
+    result.originalByteSize > 0,
+    'Expected positive result originalByteSize.'
+  );
+}
+
+async function expectNativeErrorCode(
+  action: () => Promise<unknown>,
+  expectedCode: string,
+  message: string
+): Promise<void> {
+  try {
+    await action();
+  } catch (error) {
+    const errorState = toErrorState(error);
+    assertIOSSmoke(
+      errorState.code === expectedCode,
+      `${message} Received ${errorState.code}: ${errorState.message}`
+    );
+    return;
+  }
+
+  throw new Error(message);
+}
+
+function assertIOSSmoke(condition: boolean, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message);
+  }
 }
 
 function formatBytes(value: number): string {

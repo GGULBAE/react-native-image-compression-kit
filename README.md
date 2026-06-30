@@ -386,7 +386,7 @@ npm install react-native-image-compression-kit
 
 ## Example Application
 
-The repository includes an Android React Native example app in `example/`. It links this local package through the pnpm workspace and exercises the Android JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input MVP against a `file://` or `content://` source URI. The iOS native module is included in the package podspec, but this repository does not yet include a dedicated iOS example app target.
+The repository includes a React Native example app in `example/`. The Android app links this local package through the pnpm workspace and exercises the Android JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input MVP against a `file://` or `content://` source URI. The iOS host app under `example/ios` links the local package through CocoaPods and drives the iOS JPEG MVP smoke validation.
 
 Install dependencies from the repository root:
 
@@ -438,6 +438,32 @@ pnpm example:build
 
 These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, AVIF API-gated decode boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF/AVIF capability notes, corrupt supported-format decode failures, PNG/WebP/GIF input, GIF static first-frame decoding, PNG/WebP/GIF input resize modes, PNG/WebP/GIF input target-size `maxBytes`, PNG/WebP/GIF metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android-instrumentation` requires a connected API 34+ emulator or device and runs the committed HEIC/HEIF/AVIF sample-to-JPEG/PNG/WebP instrumentation test. `pnpm android:doctor` also validates the HEIC/HEIF and AVIF source and committed sample fixture manifests, byte sizes, SHA-256 hashes, and instrumentation wiring. `pnpm example:android` still requires a connected emulator/device.
 
+## iOS Host-App Validation
+
+The repository includes a React Native iOS example host app under `example/ios`. It links the local package through CocoaPods and includes an iOS-only `ExampleImageSource` native module that generates tiny JPEG, PNG, GIF, WebP, HEIC, HEIF, and AVIF smoke fixtures in the simulator cache.
+
+Install the iOS pods:
+
+```bash
+pnpm example:ios:pods
+```
+
+Build the iOS example app for an available simulator:
+
+```bash
+pnpm example:ios:build
+```
+
+Run the automated iOS host-app smoke:
+
+```bash
+pnpm example:ios:smoke
+```
+
+The smoke command requires full Xcode with an iOS simulator SDK, Bundler or CocoaPods, and an available iPhone simulator. It installs pods when needed, starts Metro, builds the Debug simulator app, installs it, launches it with `RNICK_IOS_SMOKE=1`, and waits for the `RNICK_IOS_SMOKE_PASS` log marker.
+
+The smoke path validates the native module link plus runtime behavior from the React Native host app: iOS capabilities report JPEG input/output, PNG input, `metadataPolicies: ['safe', 'strip']`, no target-size compression, and no cancellation; JPEG and PNG fixtures compress to JPEG output; WebP, HEIC, HEIF, AVIF, and GIF inputs reject with `ERR_UNSUPPORTED_FORMAT`; PNG, WebP, HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`; `output.maxBytes` rejects with `ERR_NOT_IMPLEMENTED`; and `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED`.
+
 ## Continuous Integration
 
 GitHub Actions runs the repository checks and Android example build on pushes to `master` and pull requests. The lightweight workflow is defined in `.github/workflows/ci.yml`.
@@ -459,6 +485,8 @@ pnpm smoke:consumer
 `pnpm smoke:consumer` builds the TypeScript output, creates a `pnpm pack` tarball, installs that tarball into a separate temporary React Native consumer project, and typechecks imports from `react-native-image-compression-kit` against the packed package. This pre-release smoke test verifies the npm package shape without publishing to npm or running Metro/native device builds. Set `RNICK_CONSUMER_SMOKE_KEEP=1` to keep the temporary project for inspection, or `RNICK_CONSUMER_SMOKE_TMPDIR=/path/to/tmp` to choose its parent directory.
 
 The separate `.github/workflows/android-instrumentation.yml` workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout, and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC, HEIF, and AVIF fixtures decode on the Android `ImageDecoder` paths and can be compressed to JPEG, PNG, and WebP. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
+
+The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner and executes `pnpm example:ios:smoke`. It validates pod install, React Native Codegen/autolinking through the iOS host app, simulator build/install/launch, JPEG and PNG to JPEG runtime compression, iOS capability reporting, and the expected iOS unsupported-option error surface.
 
 ## Docker Android Build/Test Environment
 
