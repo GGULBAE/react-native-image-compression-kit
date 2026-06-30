@@ -22,6 +22,7 @@ guidance, and runtime capability reporting.
 - npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.1.2.tgz`
 - npm integrity: `sha512-OOHIV4Lnmu+16/W8iGMZriiYXLbB9nIVV0vBz4dd3erW3meaSqV28JkWpc/5FetIz0HcLU/4Pfgq8eTZ8fIY6g==`
 - Git tag: `v0.1.2`
+- GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.1.2`
 - Published tarball size: 35.3 kB package size, 146.8 kB unpacked size, 49 files.
 
 ### Included
@@ -38,7 +39,6 @@ guidance, and runtime capability reporting.
 - iOS compression implementation.
 - Android runtime behavior changes.
 - New supported input or output formats.
-- GitHub Release creation.
 
 ### Pre-publish Checklist
 
@@ -106,6 +106,7 @@ Completed after npm publish:
 - The published tarball includes the README, iOS native stub, built JS, TypeScript declarations, Codegen source, Android runtime source, package metadata, SECURITY, and LICENSE.
 - Published tarball inspection confirmed the iOS `ERR_NOT_IMPLEMENTED` message, `metadataPolicies: []`, no iOS input/output format support notes, and TypeScript native-unavailable message are present.
 - A fresh temporary consumer project installed `react-native-image-compression-kit@0.1.2` from the npm registry with `pnpm install --ignore-scripts` and completed `pnpm typecheck` against public imports and types.
+- GitHub Release `v0.1.2` was created at `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.1.2`.
 
 ## v0.1.1
 

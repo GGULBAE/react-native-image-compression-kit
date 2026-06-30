@@ -310,6 +310,9 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain('Git tag: `v0.1.2`');
     expect(releaseSource).toContain(
+      'GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.1.2`'
+    );
+    expect(releaseSource).toContain(
       'Published tarball size: 35.3 kB package size, 146.8 kB unpacked size, 49 files.'
     );
     expect(releaseSource).toContain(
@@ -332,7 +335,6 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain('iOS compression implementation.');
     expect(releaseSource).toContain('Android runtime behavior changes.');
-    expect(releaseSource).toContain('GitHub Release creation.');
     expect(releaseSource).toContain('git tag -a v0.1.2 -m "v0.1.2"');
     expect(releaseSource).toContain('git push origin v0.1.2');
     expect(releaseSource).toContain(
@@ -354,6 +356,9 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain(
       'fresh temporary consumer project installed `react-native-image-compression-kit@0.1.2`'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Release `v0.1.2` was created at `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.1.2`.'
     );
     expect(releaseSource).toContain('## v0.1.1');
     expect(releaseSource).toContain(
