@@ -277,6 +277,30 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('successful GitHub Actions CI run');
   });
 
+  it('documents and guards iOS host-app validation stability', () => {
+    const readmeSource = readProjectFile('README.md');
+    const validationScriptSource = readProjectFile('scripts/ios-validation.mjs');
+
+    expect(packageJson.scripts['example:ios:pods']).toBe(
+      'node scripts/ios-validation.mjs pods'
+    );
+    expect(packageJson.scripts['example:ios:build']).toBe(
+      'node scripts/ios-validation.mjs build'
+    );
+    expect(packageJson.scripts['example:ios:smoke']).toBe(
+      'node scripts/ios-validation.mjs smoke'
+    );
+    expect(readmeSource).toContain('## iOS Host-App Validation');
+    expect(readmeSource).toContain('pnpm example:ios:smoke');
+    expect(readmeSource).toContain('RNICK_IOS_SMOKE_PASS');
+    expect(readmeSource).toContain('pathname contains null byte');
+    expect(readmeSource).toContain('RNICK_IOS_POD_INSTALL_ATTEMPTS');
+    expect(validationScriptSource).toContain('POD_INSTALL_MAX_ATTEMPTS');
+    expect(validationScriptSource).toContain('pathname contains null byte');
+    expect(validationScriptSource).toContain('cleanPodInstallArtifacts');
+    expect(validationScriptSource).toContain('iOS pod install diagnostics:');
+  });
+
   it('documents the v0.2.0 release notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');

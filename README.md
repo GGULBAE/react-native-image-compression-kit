@@ -462,6 +462,8 @@ pnpm example:ios:smoke
 
 The smoke command requires full Xcode with an iOS simulator SDK, Bundler or CocoaPods, and an available iPhone simulator. It installs pods when needed, starts Metro, builds the Debug simulator app, installs it, launches it with `RNICK_IOS_SMOKE=1`, and waits for the `RNICK_IOS_SMOKE_PASS` log marker.
 
+The pod install path treats CocoaPods `pathname contains null byte` as an external path-resolution flake. It retries once by default after removing generated `example/ios/Pods`, `example/ios/ImageCompressionKitExample.xcworkspace`, and `example/ios/Podfile.lock` artifacts, and prints Ruby, Bundler, CocoaPods, pnpm, and bundle path diagnostics before retrying or failing. Override `RNICK_IOS_POD_INSTALL_ATTEMPTS` when a CI image needs a different number of pod install attempts.
+
 Metro startup waits up to 180 seconds by default to tolerate cold macOS CI runners. Override `RNICK_IOS_METRO_READY_TIMEOUT_MS` when a local machine or CI image needs a shorter or longer readiness window.
 
 The smoke path validates the native module link plus runtime behavior from the React Native host app: iOS capabilities report JPEG input/output, PNG input, `metadataPolicies: ['safe', 'strip']`, no target-size compression, and no cancellation; JPEG and PNG fixtures compress to JPEG output; WebP, HEIC, HEIF, AVIF, and GIF inputs reject with `ERR_UNSUPPORTED_FORMAT`; PNG, WebP, HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`; `output.maxBytes` rejects with `ERR_NOT_IMPLEMENTED`; and `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED`.
@@ -488,7 +490,7 @@ pnpm smoke:consumer
 
 The separate `.github/workflows/android-instrumentation.yml` workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout, and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC, HEIF, and AVIF fixtures decode on the Android `ImageDecoder` paths and can be compressed to JPEG, PNG, and WebP. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
 
-The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner and executes `pnpm example:ios:smoke`. It validates pod install, React Native Codegen/autolinking through the iOS host app, simulator build/install/launch, JPEG and PNG to JPEG runtime compression, iOS capability reporting, and the expected iOS unsupported-option error surface.
+The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner and executes `pnpm example:ios:smoke`. It validates pod install, React Native Codegen/autolinking through the iOS host app, simulator build/install/launch, JPEG and PNG to JPEG runtime compression, iOS capability reporting, and the expected iOS unsupported-option error surface. The workflow inherits the guarded CocoaPods null-byte retry behavior from `scripts/ios-validation.mjs` so one transient CocoaPods path-resolution failure does not immediately fail the validation run.
 
 ## Docker Android Build/Test Environment
 

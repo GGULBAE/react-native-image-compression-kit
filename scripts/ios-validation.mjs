@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from 'node:child_process';
+import { rmSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import process from 'node:process';
@@ -18,6 +19,15 @@ const METRO_READY_TIMEOUT_MS = Number(
   process.env.RNICK_IOS_METRO_READY_TIMEOUT_MS ?? '180000'
 );
 const SMOKE_TIMEOUT_MS = Number(process.env.RNICK_IOS_SMOKE_TIMEOUT_MS ?? '180000');
+const POD_INSTALL_MAX_ATTEMPTS = parsePositiveInteger(
+  process.env.RNICK_IOS_POD_INSTALL_ATTEMPTS,
+  2
+);
+const POD_INSTALL_CLEANUP_PATHS = [
+  path.join(IOS_DIR, 'Pods'),
+  WORKSPACE,
+  path.join(IOS_DIR, 'Podfile.lock'),
+];
 
 const mode = process.argv[2] ?? 'smoke';
 
@@ -92,18 +102,87 @@ function runPodInstall() {
       cwd: EXAMPLE_DIR,
       env,
     });
-    mustRun('bundle', ['exec', 'pod', 'install'], {
+    runPodInstallWithRetry('bundle', ['exec', 'pod', 'install'], {
       cwd: IOS_DIR,
       env,
     });
     return;
   }
 
-  mustRun('pod', ['install'], {
+  runPodInstallWithRetry('pod', ['install'], {
     cwd: IOS_DIR,
     failureHint:
       'Install CocoaPods or Bundler. The example/Gemfile pins the supported CocoaPods toolchain.',
   });
+}
+
+function runPodInstallWithRetry(command, args, options) {
+  for (let attempt = 1; attempt <= POD_INSTALL_MAX_ATTEMPTS; attempt += 1) {
+    console.log(
+      `Running CocoaPods install (attempt ${attempt}/${POD_INSTALL_MAX_ATTEMPTS})...`
+    );
+    const result = runCommand(command, args, {
+      ...options,
+      capture: true,
+      printOutput: true,
+    });
+
+    if (result.status === 0) {
+      return;
+    }
+
+    const output = commandOutput(result);
+    const shouldRetry =
+      isCocoaPodsNullByteError(output) && attempt < POD_INSTALL_MAX_ATTEMPTS;
+
+    if (shouldRetry) {
+      console.warn(
+        [
+          'CocoaPods failed with `pathname contains null byte`.',
+          'Treating this as an external CocoaPods path-resolution flake and retrying after cleaning generated pod artifacts.',
+        ].join('\n')
+      );
+      printPodInstallDiagnostics(options.env);
+      cleanPodInstallArtifacts();
+      continue;
+    }
+
+    printPodInstallDiagnostics(options.env);
+    throw commandError(command, args, result, options.failureHint);
+  }
+}
+
+function isCocoaPodsNullByteError(output) {
+  return /pathname contains null byte/i.test(output);
+}
+
+function cleanPodInstallArtifacts() {
+  for (const artifactPath of POD_INSTALL_CLEANUP_PATHS) {
+    if (!pathExists(artifactPath)) {
+      continue;
+    }
+
+    rmSync(artifactPath, { recursive: true, force: true });
+    console.warn(`Removed generated CocoaPods artifact: ${path.relative(ROOT, artifactPath)}`);
+  }
+}
+
+function printPodInstallDiagnostics(env = {}) {
+  console.warn(
+    [
+      'iOS pod install diagnostics:',
+      `- node: ${process.version}`,
+      `- platform: ${process.platform} ${process.arch}`,
+      `- cwd: ${IOS_DIR}`,
+      `- BUNDLE_GEMFILE: ${env.BUNDLE_GEMFILE ?? process.env.BUNDLE_GEMFILE ?? '(unset)'}`,
+      `- BUNDLE_PATH: ${env.BUNDLE_PATH ?? process.env.BUNDLE_PATH ?? '(unset)'}`,
+      `- ruby: ${optionalCommandOutput('ruby', ['--version'])}`,
+      `- bundle: ${optionalCommandOutput('bundle', ['--version'], { cwd: EXAMPLE_DIR, env })}`,
+      `- cocoapods via bundle: ${optionalCommandOutput('bundle', ['exec', 'pod', '--version'], { cwd: IOS_DIR, env })}`,
+      `- cocoapods global: ${optionalCommandOutput('pod', ['--version'], { cwd: IOS_DIR })}`,
+      `- pnpm: ${optionalCommandOutput('pnpm', ['--version'])}`,
+    ].join('\n')
+  );
 }
 
 function bundlerEnv() {
@@ -371,6 +450,16 @@ function runSmoke(udid, metroProcess, setLogProcess) {
 }
 
 function mustRun(command, args, options = {}) {
+  const result = runCommand(command, args, options);
+
+  if (result.status !== 0) {
+    throw commandError(command, args, result, options.failureHint);
+  }
+
+  return result;
+}
+
+function runCommand(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? ROOT,
     env: {
@@ -378,11 +467,18 @@ function mustRun(command, args, options = {}) {
       ...(options.env ?? {}),
     },
     encoding: 'utf8',
+    maxBuffer: 50 * 1024 * 1024,
     stdio: options.capture ? 'pipe' : 'inherit',
   });
 
-  if (result.status !== 0) {
-    throw commandError(command, args, result, options.failureHint);
+  if (options.printOutput) {
+    if (result.stdout) {
+      process.stdout.write(result.stdout);
+    }
+
+    if (result.stderr) {
+      process.stderr.write(result.stderr);
+    }
   }
 
   return result;
@@ -398,7 +494,7 @@ function hasCommand(command) {
 }
 
 function commandError(command, args, result, hint) {
-  const output = [result.stdout, result.stderr].filter(Boolean).join('\n');
+  const output = commandOutput(result);
   return new Error(
     [
       `Command failed: ${command} ${args.join(' ')}`,
@@ -410,8 +506,38 @@ function commandError(command, args, result, hint) {
   );
 }
 
+function commandOutput(result) {
+  return [result.stdout, result.stderr, result.error?.message].filter(Boolean).join('\n');
+}
+
 function pathExists(value) {
   return spawnSync('test', ['-e', value]).status === 0;
+}
+
+function optionalCommandOutput(command, args, options = {}) {
+  const result = runCommand(command, args, {
+    ...options,
+    capture: true,
+  });
+
+  if (result.status !== 0) {
+    return result.error?.message ?? `unavailable (exit ${result.status ?? 'unknown'})`;
+  }
+
+  return commandOutput(result).trim() || '(no output)';
+}
+
+function parsePositiveInteger(value, defaultValue) {
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return defaultValue;
+  }
+
+  return parsed;
 }
 
 function stopProcess(child) {
