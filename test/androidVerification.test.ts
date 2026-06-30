@@ -1052,9 +1052,12 @@ describe('Android verification scripts', () => {
     expect(iosSource).toContain(
       'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
     );
+    expect(iosSource).toContain('RCTImageCompressionKitReadMaxBytes');
     expect(iosSource).toContain(
-      'iOS MVP does not support output.maxBytes yet. Call getImageCompressionCapabilities() and omit maxBytes on iOS.'
+      'Compression output.maxBytes must be a positive integer.'
     );
+    expect(iosSource).toContain('RCTImageCompressionKitEncodeJpegToTargetSize');
+    expect(iosSource).toContain('bestWithinTargetData');
     expect(iosSource).toContain(
       'iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.'
     );
@@ -1084,7 +1087,7 @@ describe('Android verification scripts', () => {
     expect(iosSource).toContain(
       '@"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy]'
     );
-    expect(iosSource).toContain('@"supportsTargetSizeCompression" : @NO');
+    expect(iosSource).toContain('@"supportsTargetSizeCompression" : @YES');
     expect(iosSource).toContain('@"supportsCancellation" : @NO');
     expect(podspecSource).toContain('s.platforms = { :ios => "13.4" }');
     expect(podspecSource).toContain('s.source_files = "ios/**/*.{h,m,mm}"');

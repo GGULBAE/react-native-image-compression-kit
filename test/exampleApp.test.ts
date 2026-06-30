@@ -46,9 +46,15 @@ describe('example app', () => {
     expect(appSource).toContain('copyUnsupportedImageToCache');
     expect(appSource).toContain("capabilities.platform === 'ios'");
     expect(appSource).toContain("metadataPolicies.join(',') === 'safe,strip'");
+    expect(appSource).toContain(
+      'Expected iOS JPEG target-size compression to be supported.'
+    );
+    expect(appSource).toContain('compress-jpeg-to-jpeg-max-bytes');
+    expect(appSource).toContain(
+      'Expected iOS target-size output <= ${targetSizeMaxBytes} bytes'
+    );
     expect(appSource).toContain("const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif']");
     expect(appSource).toContain("const unsupportedOutputs = ['png', 'webp', 'heic', 'heif', 'avif'] as const");
-    expect(appSource).toContain('Expected output.maxBytes to be unimplemented on iOS.');
     expect(appSource).toContain("Expected metadata: 'preserve' to be unimplemented on iOS.");
     expect(iosModuleSource).toContain('RCT_EXPORT_MODULE();');
     expect(iosModuleSource).toContain('copySampleJpegToCache');

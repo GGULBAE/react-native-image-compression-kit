@@ -995,7 +995,10 @@ function checkIOSNativeModule() {
     'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options',
     'compressImageWithDictionary:optionsMap',
     'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
-    'iOS MVP does not support output.maxBytes yet. Call getImageCompressionCapabilities() and omit maxBytes on iOS.',
+    'RCTImageCompressionKitReadMaxBytes',
+    'Compression output.maxBytes must be a positive integer.',
+    'RCTImageCompressionKitEncodeJpegToTargetSize',
+    'bestWithinTargetData',
     'iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.',
     'Compression output.quality must be an integer from 0 to 100.',
     'Compression resize.mode must be one of: contain, cover, stretch.',
@@ -1018,7 +1021,7 @@ function checkIOSNativeModule() {
     'RCTImageCompressionKitReadSourceData',
     'RCTImageCompressionKitIsSupportedInputType',
     '@"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy]',
-    '@"supportsTargetSizeCompression" : @NO',
+    '@"supportsTargetSizeCompression" : @YES',
     '@"supportsCancellation" : @NO',
   ];
   const missing = expectedSnippets.filter((snippet) => !iosContents.includes(snippet));
@@ -1031,7 +1034,7 @@ function checkIOSNativeModule() {
     label: 'iOS native module implements the JPEG MVP path',
     detail:
       missing.length === 0 && podspecIncludesIOS
-        ? 'iOS source includes file/content URI reads, JPEG/PNG input detection, resize, quality-based JPEG output, explicit unsupported-option errors, and iOS capability reporting'
+        ? 'iOS source includes file/content URI reads, JPEG/PNG input detection, resize, quality-based and target-size JPEG output, explicit unsupported-option errors, and iOS capability reporting'
         : `missing snippets: ${[
             ...missing,
             ...(podspecIncludesIOS ? [] : ['podspec iOS platform/source_files']),
@@ -1105,7 +1108,9 @@ function checkIOSHostAppValidation() {
     [appContents, 'copyUnsupportedImageToCache'],
     [appContents, "const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif']"],
     [appContents, "const unsupportedOutputs = ['png', 'webp', 'heic', 'heif', 'avif'] as const"],
-    [appContents, 'Expected output.maxBytes to be unimplemented on iOS.'],
+    [appContents, 'Expected iOS JPEG target-size compression to be supported.'],
+    [appContents, 'compress-jpeg-to-jpeg-max-bytes'],
+    [appContents, 'Expected iOS target-size output <= ${targetSizeMaxBytes} bytes'],
     [appContents, "Expected metadata: 'preserve' to be unimplemented on iOS."],
     [iosModuleContents, 'RCT_EXPORT_MODULE();'],
     [iosModuleContents, 'isSmokeTestEnabled'],

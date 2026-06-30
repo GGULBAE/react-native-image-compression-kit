@@ -98,7 +98,14 @@ export default function App(): React.JSX.Element {
     () => parseOptionalPositiveInteger(maxBytesText),
     [maxBytesText]
   );
-  const supportsSelectedTargetSize = outputFormat !== 'png';
+  const supportedOutputFormats =
+    capabilities?.formats
+      .filter((capability) => capability.output)
+      .map((capability) => capability.format) ?? [];
+  const supportsSelectedTargetSize =
+    capabilities?.supportsTargetSizeCompression === true &&
+    supportedOutputFormats.includes(outputFormat) &&
+    outputFormat !== 'png';
 
   const loadSample = useCallback(async () => {
     if (!SAMPLE_MODULE) {
@@ -241,10 +248,6 @@ export default function App(): React.JSX.Element {
   const jpegCapability = capabilities?.formats.find(
     (capability) => capability.format === 'jpeg'
   );
-  const supportedOutputFormats =
-    capabilities?.formats
-      .filter((capability) => capability.output)
-      .map((capability) => capability.format) ?? [];
   const supportedMetadataPolicies = capabilities?.metadataPolicies ?? [];
   const canSubmit = sourceUri.trim().length > 0 && !isCompressing;
 
@@ -482,6 +485,7 @@ type IOSHostAppSmokeSummary = {
   platform: 'ios';
   jpegResultBytes: number;
   pngResultBytes: number;
+  targetSizeResultBytes: number;
   unsupportedInputs: string[];
   unsupportedOutputs: string[];
 };
@@ -510,8 +514,8 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     `Expected iOS metadata policies safe,strip, received ${capabilities.metadataPolicies.join(',')}.`
   );
   assertIOSSmoke(
-    capabilities.supportsTargetSizeCompression === false,
-    'Expected iOS target-size compression to be unsupported.'
+    capabilities.supportsTargetSizeCompression === true,
+    'Expected iOS JPEG target-size compression to be supported.'
   );
   assertIOSSmoke(
     capabilities.supportsCancellation === false,
@@ -543,6 +547,27 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
 
   assertCompressionResult(jpegResult, 'jpeg');
   assertCompressionResult(pngResult, 'jpeg');
+
+  const targetSizeMaxBytes = 1_000;
+  const targetSizeResult = await runIOSSmokeStep(
+    'compress-jpeg-to-jpeg-max-bytes',
+    () =>
+      compressImage({
+        source: { uri: jpegUri },
+        resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+        output: {
+          format: 'jpeg',
+          quality: 90,
+          maxBytes: targetSizeMaxBytes,
+        },
+        metadata: 'safe',
+      })
+  );
+  assertCompressionResult(targetSizeResult, 'jpeg');
+  assertIOSSmoke(
+    targetSizeResult.byteSize <= targetSizeMaxBytes,
+    `Expected iOS target-size output <= ${targetSizeMaxBytes} bytes, received ${targetSizeResult.byteSize}.`
+  );
 
   const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif'];
   for (const format of unsupportedInputs) {
@@ -580,18 +605,6 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     );
   }
 
-  await runIOSSmokeStep('reject-max-bytes', () =>
-    expectNativeErrorCode(
-      () =>
-        compressImage({
-          source: { uri: jpegUri },
-          output: { format: 'jpeg', quality: 70, maxBytes: 4_000 },
-          metadata: 'safe',
-        }),
-      'ERR_NOT_IMPLEMENTED',
-      'Expected output.maxBytes to be unimplemented on iOS.'
-    )
-  );
   await runIOSSmokeStep('reject-metadata-preserve', () =>
     expectNativeErrorCode(
       () =>
@@ -609,6 +622,7 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     platform: 'ios',
     jpegResultBytes: jpegResult.byteSize,
     pngResultBytes: pngResult.byteSize,
+    targetSizeResultBytes: targetSizeResult.byteSize,
     unsupportedInputs,
     unsupportedOutputs: [...unsupportedOutputs],
   };
