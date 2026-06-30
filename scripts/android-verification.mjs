@@ -198,7 +198,7 @@ function checkPackageMetadata() {
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
     readmeContents.includes('public `0.1.x` package is distributed under'),
-    readmeContents.includes('version `0.1.2` is an iOS-stub clarity patch candidate'),
+    readmeContents.includes('version `0.1.2` is the published iOS-stub clarity patch'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -448,25 +448,37 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.1.2',
-    'Status: prepared for an iOS-stub clarity patch release candidate.',
+    'Status: published to npm on June 30, 2026 at 02:18:30 UTC (11:18:30 KST), tagged as `v0.1.2`.',
     'This patch keeps Android runtime behavior unchanged',
     'Clarify that iOS ships a native package stub and iOS compression is not implemented.',
     'Preserve a stable iOS `ERR_NOT_IMPLEMENTED` compression failure',
     'Make iOS capability reporting show no supported input formats, output formats, metadata policies, target-size compression, or cancellation.',
     'Update the TypeScript native-unavailable message',
-    'Prepare package metadata for the `0.1.2` candidate without publishing.',
+    'Publish package metadata for `0.1.2` after the release candidate passed local and GitHub Actions validation.',
+    '### Published Artifacts',
+    'npm package: `react-native-image-compression-kit@0.1.2`',
+    'npm integrity: `sha512-OOHIV4Lnmu+16/W8iGMZriiYXLbB9nIVV0vBz4dd3erW3meaSqV28JkWpc/5FetIz0HcLU/4Pfgq8eTZ8fIY6g==`',
+    'Git tag: `v0.1.2`',
+    'Published tarball size: 35.3 kB package size, 146.8 kB unpacked size, 49 files.',
     'iOS stub `compressImage()` error message aligned to the package-stub state.',
     'iOS `getImageCompressionCapabilities()` reports `metadataPolicies: []`',
     'TypeScript `ERR_NATIVE_MODULE_UNAVAILABLE` message distinguishes install/linking failure',
     'README iOS stub behavior guidance and release dry-run wording updates.',
     '`package.json` version bump to `0.1.2`.',
-    'Focused test and Android verification doctor expectation updates for the `0.1.2` candidate.',
+    'Focused test and Android verification doctor expectation updates for the `0.1.2` release.',
     'iOS compression implementation.',
     'Android runtime behavior changes.',
-    'npm publish, git tag creation, or git push.',
+    'GitHub Release creation.',
     'git tag -a v0.1.2 -m "v0.1.2"',
     'git push origin v0.1.2',
     'npm pack react-native-image-compression-kit@0.1.2',
+    '### Post-publish Verification',
+    '`npm publish --tag latest` published `react-native-image-compression-kit@0.1.2`.',
+    '`latest` dist-tag `0.1.2`',
+    'publish timestamp `2026-06-30T02:18:30.591Z`',
+    'The published tarball includes the README, iOS native stub, built JS',
+    'Published tarball inspection confirmed the iOS `ERR_NOT_IMPLEMENTED` message',
+    'fresh temporary consumer project installed `react-native-image-compression-kit@0.1.2`',
     '## v0.1.1',
     'Status: prepared for a docs-only npm patch release.',
     'This patch corrects the README content that appears on the npm package page',
@@ -535,7 +547,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.1.2 patch candidate notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -551,7 +563,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.1.2 patch candidate notes and previous release notes are current',
+    label: 'v0.1.2 published patch notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, dry-run gate, CI gate, tag commands, and npm publish steps'
       : `missing release notes snippets or version mismatch: ${[

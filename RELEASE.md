@@ -2,8 +2,7 @@
 
 ## v0.1.2
 
-Status: prepared for an iOS-stub clarity patch release candidate. This
-preparation does not publish to npm, create a git tag, or push commits.
+Status: published to npm on June 30, 2026 at 02:18:30 UTC (11:18:30 KST), tagged as `v0.1.2`.
 
 This patch keeps Android runtime behavior unchanged while making the iOS stub
 experience explicit across native errors, TypeScript fallback errors, README
@@ -15,7 +14,15 @@ guidance, and runtime capability reporting.
 - Preserve a stable iOS `ERR_NOT_IMPLEMENTED` compression failure with a message that points developers to capability checks.
 - Make iOS capability reporting show no supported input formats, output formats, metadata policies, target-size compression, or cancellation.
 - Update the TypeScript native-unavailable message so missing native module errors no longer imply that Android is unimplemented.
-- Prepare package metadata for the `0.1.2` candidate without publishing.
+- Publish package metadata for `0.1.2` after the release candidate passed local and GitHub Actions validation.
+
+### Published Artifacts
+
+- npm package: `react-native-image-compression-kit@0.1.2`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.1.2.tgz`
+- npm integrity: `sha512-OOHIV4Lnmu+16/W8iGMZriiYXLbB9nIVV0vBz4dd3erW3meaSqV28JkWpc/5FetIz0HcLU/4Pfgq8eTZ8fIY6g==`
+- Git tag: `v0.1.2`
+- Published tarball size: 35.3 kB package size, 146.8 kB unpacked size, 49 files.
 
 ### Included
 
@@ -24,14 +31,14 @@ guidance, and runtime capability reporting.
 - TypeScript `ERR_NATIVE_MODULE_UNAVAILABLE` message distinguishes install/linking failure from the expected iOS stub `ERR_NOT_IMPLEMENTED` path.
 - README iOS stub behavior guidance and release dry-run wording updates.
 - `package.json` version bump to `0.1.2`.
-- Focused test and Android verification doctor expectation updates for the `0.1.2` candidate.
+- Focused test and Android verification doctor expectation updates for the `0.1.2` release.
 
 ### Not Included
 
 - iOS compression implementation.
 - Android runtime behavior changes.
 - New supported input or output formats.
-- npm publish, git tag creation, or git push.
+- GitHub Release creation.
 
 ### Pre-publish Checklist
 
@@ -86,6 +93,19 @@ After publish, verify the registry version:
 pnpm view react-native-image-compression-kit version dist.integrity time --json
 npm pack react-native-image-compression-kit@0.1.2
 ```
+
+### Post-publish Verification
+
+Completed after npm publish:
+
+- `npm publish --tag latest` published `react-native-image-compression-kit@0.1.2`.
+- `pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity time --json` confirmed version `0.1.2`, `latest` dist-tag `0.1.2`, registry tarball URL, integrity, and publish timestamp `2026-06-30T02:18:30.591Z`.
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.1.2.tgz`
+- npm integrity: `sha512-OOHIV4Lnmu+16/W8iGMZriiYXLbB9nIVV0vBz4dd3erW3meaSqV28JkWpc/5FetIz0HcLU/4Pfgq8eTZ8fIY6g==`
+- `npm pack react-native-image-compression-kit@0.1.2` confirmed the published tarball contains 49 files, 35.3 kB package size, and 146.8 kB unpacked size.
+- The published tarball includes the README, iOS native stub, built JS, TypeScript declarations, Codegen source, Android runtime source, package metadata, SECURITY, and LICENSE.
+- Published tarball inspection confirmed the iOS `ERR_NOT_IMPLEMENTED` message, `metadataPolicies: []`, no iOS input/output format support notes, and TypeScript native-unavailable message are present.
+- A fresh temporary consumer project installed `react-native-image-compression-kit@0.1.2` from the npm registry with `pnpm install --ignore-scripts` and completed `pnpm typecheck` against public imports and types.
 
 ## v0.1.1
 

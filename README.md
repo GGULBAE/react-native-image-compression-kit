@@ -28,7 +28,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This package is published on npm. The `0.1.0` release introduced the Android image compression MVP, `0.1.1` is a published docs-only patch that corrects README and npm package page status without changing runtime behavior, and the repository is prepared for `0.1.2` as an iOS-stub clarity patch candidate. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, unit test foundation, and npm package metadata are in place.
+This package is published on npm. The `0.1.0` release introduced the Android image compression MVP, `0.1.1` is a published docs-only patch that corrects README and npm package page status without changing runtime behavior, and `0.1.2` is a published iOS-stub clarity patch for native-unavailable messaging, README guidance, and iOS capability reporting. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS stub, unit test foundation, and npm package metadata are in place.
 
 Android includes a published image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. iOS is currently a package stub only: `compressImage()` rejects with `ERR_NOT_IMPLEMENTED`, and `getImageCompressionCapabilities()` reports no supported iOS input formats, output formats, metadata policies, target-size compression, or cancellation. GIF output, GIF animation preservation, HEIC / HEIF output, AVIF output, and broader input format support are not implemented yet.
 
@@ -361,7 +361,7 @@ This project is not intended to handle:
 
 ## Installation
 
-The public `0.1.x` package is distributed under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and the iOS stub included in the packed package. Version `0.1.0` introduced the Android MVP, version `0.1.1` is the published docs-only patch for README/npm package page status, and version `0.1.2` is an iOS-stub clarity patch candidate for native-unavailable messaging, README guidance, and iOS capability reporting. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
+The public `0.1.x` package is distributed under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and the iOS stub included in the packed package. Version `0.1.0` introduced the Android MVP, version `0.1.1` is the published docs-only patch for README/npm package page status, and version `0.1.2` is the published iOS-stub clarity patch for native-unavailable messaging, README guidance, and iOS capability reporting. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
 
 The repository contains an initial TypeScript API scaffold and an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. iOS compression remains unimplemented; the iOS stub reports no supported input/output formats or metadata policies. HEIC/HEIF output, AVIF output, and broader input format support are not implemented yet.
 
@@ -532,7 +532,7 @@ The executable Android checks require a Java runtime, Android SDK, and a Gradle 
 
 ## Release Dry Run Checklist
 
-Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.1.2 patch candidate notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
+Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
 
 ```bash
 pnpm release:dry-run
