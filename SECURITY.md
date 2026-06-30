@@ -46,3 +46,27 @@ After publishing, inspect the registry tarball and verify:
 npm pack react-native-image-compression-kit@<version>
 pnpm view react-native-image-compression-kit version dist.integrity
 ```
+
+## Dependency Triage
+
+When GitHub Dependabot or another scanner reports an alert, classify the
+dependency as npm runtime, native runtime, example app, validation toolchain, or
+development-only before deciding whether it affects package consumers.
+
+The `example/Gemfile` Ruby dependencies are used for local and GitHub Actions
+iOS host-app validation only. They are excluded from the published npm tarball,
+but should still be kept on patched ranges because they run in CI. The iOS
+validation toolchain requires Ruby 3.1 or newer and pins ActiveSupport and
+Concurrent Ruby to patched minimum versions.
+
+### v0.2.0 Post-Release Alert Classification
+
+The June 30, 2026 post-release triage found no npm runtime advisories from
+`pnpm audit --json`. GitHub Dependabot reported six Ruby alerts in
+`example/Gemfile`; all are classified as fixed validation-toolchain alerts, not
+published package runtime alerts:
+
+- Alerts #2, #3, and #4: ActiveSupport advisories fixed by requiring
+  `activesupport >= 7.2.3.1`.
+- Alerts #5, #6, and #7: Concurrent Ruby advisories fixed by requiring
+  `concurrent-ruby >= 1.3.7`.

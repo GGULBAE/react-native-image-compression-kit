@@ -647,8 +647,20 @@ function checkSecurityPolicy() {
     [securityContents, 'pnpm release:dry-run'],
     [securityContents, 'pnpm audit --prod'],
     [securityContents, 'npm pack react-native-image-compression-kit@<version>'],
+    [securityContents, '## Dependency Triage'],
+    [securityContents, 'validation toolchain'],
+    [securityContents, 'The `example/Gemfile` Ruby dependencies are used for local and GitHub Actions'],
+    [securityContents, 'Ruby 3.1 or newer'],
+    [securityContents, 'pins ActiveSupport'],
+    [securityContents, 'Concurrent Ruby to patched minimum versions'],
+    [securityContents, '### v0.2.0 Post-Release Alert Classification'],
+    [securityContents, 'no npm runtime advisories from'],
+    [securityContents, 'Alerts #2, #3, and #4'],
+    [securityContents, 'activesupport >= 7.2.3.1'],
+    [securityContents, 'Alerts #5, #6, and #7'],
+    [securityContents, 'concurrent-ruby >= 1.3.7'],
     [readmeContents, '## Security'],
-    [readmeContents, 'See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, and package security hygiene.'],
+    [readmeContents, 'See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, dependency triage, and package security hygiene.'],
     [readmeContents, 'Published packages should not run install-time lifecycle scripts'],
   ];
   const missing = expectedSnippets
@@ -660,7 +672,7 @@ function checkSecurityPolicy() {
     label: 'security policy and package hygiene guidance are documented',
     detail:
       missing.length === 0
-        ? 'SECURITY.md and README document reporting, supported versions, install-time script avoidance, tarball exclusions, and audit checks'
+        ? 'SECURITY.md and README document reporting, supported versions, dependency triage, install-time script avoidance, tarball exclusions, and audit checks'
         : `missing security documentation snippets: ${missing.join(' | ')}`,
   };
 }
@@ -1114,7 +1126,10 @@ function checkIOSHostAppValidation() {
     [projectContents, 'ExampleImageSource.m in Sources'],
     [podfileContents, 'use_native_modules!'],
     [podfileContents, 'use_react_native!'],
+    [gemfileContents, "ruby '>= 3.1.0'"],
     [gemfileContents, "gem 'cocoapods'"],
+    [gemfileContents, "gem 'activesupport', '>= 7.2.3.1'"],
+    [gemfileContents, "gem 'concurrent-ruby', '>= 1.3.7'"],
   ];
   const missing = expectedSnippets
     .filter(([contents, snippet]) => {

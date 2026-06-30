@@ -279,6 +279,7 @@ describe('Android verification scripts', () => {
 
   it('documents and guards iOS host-app validation stability', () => {
     const readmeSource = readProjectFile('README.md');
+    const gemfileSource = readProjectFile('example/Gemfile');
     const validationScriptSource = readProjectFile('scripts/ios-validation.mjs');
 
     expect(packageJson.scripts['example:ios:pods']).toBe(
@@ -293,8 +294,13 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('## iOS Host-App Validation');
     expect(readmeSource).toContain('pnpm example:ios:smoke');
     expect(readmeSource).toContain('RNICK_IOS_SMOKE_PASS');
+    expect(readmeSource).toContain('Ruby 3.1 or newer');
+    expect(readmeSource).toContain('patched ActiveSupport and Concurrent Ruby ranges');
     expect(readmeSource).toContain('pathname contains null byte');
     expect(readmeSource).toContain('RNICK_IOS_POD_INSTALL_ATTEMPTS');
+    expect(gemfileSource).toContain("ruby '>= 3.1.0'");
+    expect(gemfileSource).toContain("gem 'activesupport', '>= 7.2.3.1'");
+    expect(gemfileSource).toContain("gem 'concurrent-ruby', '>= 1.3.7'");
     expect(validationScriptSource).toContain('POD_INSTALL_MAX_ATTEMPTS');
     expect(validationScriptSource).toContain('pathname contains null byte');
     expect(validationScriptSource).toContain('cleanPodInstallArtifacts');
@@ -678,6 +684,23 @@ describe('Android verification scripts', () => {
     expect(securitySource).toContain(
       'fixtures, example apps, build directories, credentials, `.npmrc`, `.env*`, keys,'
     );
+    expect(securitySource).toContain('## Dependency Triage');
+    expect(securitySource).toContain('dependency as npm runtime');
+    expect(securitySource).toContain('validation toolchain');
+    expect(securitySource).toContain(
+      'The `example/Gemfile` Ruby dependencies are used for local and GitHub Actions'
+    );
+    expect(securitySource).toContain('Ruby 3.1 or newer');
+    expect(securitySource).toContain('pins ActiveSupport');
+    expect(securitySource).toContain('Concurrent Ruby to patched minimum versions');
+    expect(securitySource).toContain(
+      '### v0.2.0 Post-Release Alert Classification'
+    );
+    expect(securitySource).toContain('no npm runtime advisories from');
+    expect(securitySource).toContain('Alerts #2, #3, and #4');
+    expect(securitySource).toContain('activesupport >= 7.2.3.1');
+    expect(securitySource).toContain('Alerts #5, #6, and #7');
+    expect(securitySource).toContain('concurrent-ruby >= 1.3.7');
     expect(securitySource).toContain('pnpm release:dry-run');
     expect(securitySource).toContain('pnpm audit --prod');
     expect(securitySource).toContain(
@@ -685,7 +708,7 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain('## Security');
     expect(readmeSource).toContain(
-      'See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, and package security hygiene.'
+      'See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, dependency triage, and package security hygiene.'
     );
     expect(readmeSource).toContain(
       'Published packages should not run install-time lifecycle scripts'

@@ -460,7 +460,7 @@ Run the automated iOS host-app smoke:
 pnpm example:ios:smoke
 ```
 
-The smoke command requires full Xcode with an iOS simulator SDK, Bundler or CocoaPods, and an available iPhone simulator. It installs pods when needed, starts Metro, builds the Debug simulator app, installs it, launches it with `RNICK_IOS_SMOKE=1`, and waits for the `RNICK_IOS_SMOKE_PASS` log marker.
+The smoke command requires full Xcode with an iOS simulator SDK, Ruby 3.1 or newer with Bundler or CocoaPods, and an available iPhone simulator. It installs pods when needed, starts Metro, builds the Debug simulator app, installs it, launches it with `RNICK_IOS_SMOKE=1`, and waits for the `RNICK_IOS_SMOKE_PASS` log marker. The example Gemfile pins the CocoaPods validation toolchain to patched ActiveSupport and Concurrent Ruby ranges; that Ruby toolchain is used for local/CI validation only and is excluded from the published npm tarball.
 
 The pod install path treats CocoaPods `pathname contains null byte` as an external path-resolution flake. It retries once by default after removing generated `example/ios/Pods`, `example/ios/ImageCompressionKitExample.xcworkspace`, and `example/ios/Podfile.lock` artifacts, and prints Ruby, Bundler, CocoaPods, pnpm, and bundle path diagnostics before retrying or failing. Override `RNICK_IOS_POD_INSTALL_ATTEMPTS` when a CI image needs a different number of pod install attempts.
 
@@ -612,7 +612,7 @@ The project is in its initial design phase. Issues and discussions about the pro
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, and package security hygiene. Published packages should not run install-time lifecycle scripts, and release verification should confirm that credentials, `.npmrc`, `.env*`, tests, fixtures, example app files, and debug keystores stay out of the npm tarball.
+See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, dependency triage, and package security hygiene. Published packages should not run install-time lifecycle scripts, and release verification should confirm that credentials, `.npmrc`, `.env*`, tests, fixtures, example app files, and debug keystores stay out of the npm tarball.
 
 ## License
 
