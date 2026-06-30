@@ -9,6 +9,7 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const EXAMPLE_DIR = path.join(ROOT, 'example');
 const IOS_DIR = path.join(EXAMPLE_DIR, 'ios');
 const DERIVED_DATA_DIR = path.join(IOS_DIR, 'build');
+const REACT_NATIVE_CLI = path.join(EXAMPLE_DIR, 'node_modules', 'react-native', 'cli.js');
 const WORKSPACE = path.join(IOS_DIR, 'ImageCompressionKitExample.xcworkspace');
 const SCHEME = 'ImageCompressionKitExample';
 const BUNDLE_ID = 'com.imagecompressionkit.example';
@@ -179,18 +180,15 @@ function installApp(udid) {
 
 function startMetro() {
   const child = spawn(
-    'pnpm',
+    process.execPath,
     [
-      '--dir',
-      EXAMPLE_DIR,
-      'exec',
-      'react-native',
+      REACT_NATIVE_CLI,
       'start',
       '--port',
       String(METRO_PORT),
     ],
     {
-      cwd: ROOT,
+      cwd: EXAMPLE_DIR,
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe'],
     }
