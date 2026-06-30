@@ -88,7 +88,10 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'The `0.2.2` package metadata is prepared under'
+      'The latest published npm package is `react-native-image-compression-kit@0.2.2`.'
+    );
+    expect(readmeSource).toContain(
+      'The `0.2.2` package metadata is published under'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -97,7 +100,7 @@ describe('Android verification scripts', () => {
       'version `0.2.1` is the published iOS JPEG target-size release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.2` adds iOS PNG output'
+      'version `0.2.2` is the published iOS PNG output release'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -317,7 +320,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.version).toBe('0.2.2');
     expect(releaseSource).toContain('## v0.2.2');
     expect(releaseSource).toContain(
-      'Status: prepared for npm release promotion. Not published to npm yet.'
+      'Status: published to npm on June 30, 2026 at 10:50:12 UTC (19:50:12 KST), tagged as `v0.2.2`.'
     );
     expect(releaseSource).toContain('adding PNG output');
     expect(releaseSource).toContain(
@@ -374,6 +377,46 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain('pngToPngResultBytes: 672');
     expect(releaseSource).toContain(
       'unsupportedOutputs` excluding `png`'
+    );
+    expect(releaseSource).toContain(
+      'Release commit validation before npm publish:'
+    );
+    expect(releaseSource).toContain(
+      'Commit: `8b00f730a9a9d4e37afe78434943ec69556dba80`.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265776>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265781>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265837>.'
+    );
+    expect(releaseSource).toContain(
+      '`pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.2`.'
+    );
+    expect(releaseSource).toContain('`latest` dist-tag `0.2.2`');
+    expect(releaseSource).toContain(
+      'publish timestamp `2026-06-30T10:50:12.131Z`'
+    );
+    expect(releaseSource).toContain(
+      'npm package: `react-native-image-compression-kit@0.2.2`'
+    );
+    expect(releaseSource).toContain(
+      'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.2.tgz`'
+    );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-E7fzlLfMxAJhQim1xFbX9b5aEIFDtifHNYNlk7IM5+LrDgtINAR4moUe8MrPglfjJ/zpZAxcDH5eL6IlFzgzlQ==`'
+    );
+    expect(releaseSource).toContain(
+      'npm shasum: `0bf7a4c554745d557e31787a78869895945d46df`'
+    );
+    expect(releaseSource).toContain(
+      'contains 49 files, 43.2 kB package size, and 182.2 kB unpacked size'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.2>.'
     );
     expect(releaseSource).toContain('## v0.2.1');
     expect(releaseSource).toContain(

@@ -206,10 +206,11 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('The `0.2.2` package metadata is prepared under'),
+    readmeContents.includes('The latest published npm package is `react-native-image-compression-kit@0.2.2`.'),
+    readmeContents.includes('The `0.2.2` package metadata is published under'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
-    readmeContents.includes('version `0.2.2` adds iOS PNG output'),
+    readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -217,7 +218,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata is aligned for v0.2.2 release promotion',
+    label: 'npm package metadata is aligned for v0.2.2 published release',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json publish metadata or README release-status guidance is missing/mismatched',
@@ -459,7 +460,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.2',
-    'Status: prepared for npm release promotion. Not published to npm yet.',
+    'Status: published to npm on June 30, 2026 at 10:50:12 UTC (19:50:12 KST), tagged as `v0.2.2`.',
     'adding PNG output',
     'to the existing iOS JPEG/PNG input MVP',
     '`package.json` version bump to `0.2.2`.',
@@ -482,7 +483,21 @@ function checkReleaseNotes() {
     'jpegToPngResultBytes: 805',
     'pngToPngResultBytes: 672',
     'unsupportedOutputs` excluding `png`',
+    'Release commit validation before npm publish:',
+    'Commit: `8b00f730a9a9d4e37afe78434943ec69556dba80`.',
+    'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265776>.',
+    'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265781>.',
+    'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265837>.',
     'npm pack react-native-image-compression-kit@0.2.2',
+    '`pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.2`.',
+    '`latest` dist-tag `0.2.2`',
+    'publish timestamp `2026-06-30T10:50:12.131Z`',
+    'npm package: `react-native-image-compression-kit@0.2.2`',
+    'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.2.tgz`',
+    'npm integrity: `sha512-E7fzlLfMxAJhQim1xFbX9b5aEIFDtifHNYNlk7IM5+LrDgtINAR4moUe8MrPglfjJ/zpZAxcDH5eL6IlFzgzlQ==`',
+    'npm shasum: `0bf7a4c554745d557e31787a78869895945d46df`',
+    'contains 49 files, 43.2 kB package size, and 182.2 kB unpacked size',
+    'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.2>.',
     '## v0.2.1',
     'Status: published to npm on June 30, 2026 at 09:37:20 UTC (18:37:20 KST), tagged as `v0.2.1`.',
     'adding iOS JPEG',

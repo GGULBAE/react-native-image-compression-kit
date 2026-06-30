@@ -2,7 +2,7 @@
 
 ## v0.2.2
 
-Status: prepared for npm release promotion. Not published to npm yet.
+Status: published to npm on June 30, 2026 at 10:50:12 UTC (19:50:12 KST), tagged as `v0.2.2`.
 
 This release keeps Android runtime behavior unchanged while adding PNG output
 to the existing iOS JPEG/PNG input MVP.
@@ -55,6 +55,14 @@ Actual implementation validation before the release commit:
 - iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28436846121>.
 - Runtime smoke evidence: `RNICK_IOS_SMOKE_STEP_PASS compress-jpeg-to-png`, `RNICK_IOS_SMOKE_STEP_PASS compress-png-to-png`, `RNICK_IOS_SMOKE_STEP_PASS reject-png-max-bytes`, and `RNICK_IOS_SMOKE_PASS` with `jpegToPngResultBytes: 805`, `pngToPngResultBytes: 672`, and `unsupportedOutputs` excluding `png`.
 
+Release commit validation before npm publish:
+
+- Commit: `8b00f730a9a9d4e37afe78434943ec69556dba80`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265776>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265781>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28438265837>.
+- Runtime smoke evidence: `RNICK_IOS_SMOKE_STEP_PASS compress-jpeg-to-png`, `RNICK_IOS_SMOKE_STEP_PASS compress-png-to-png`, `RNICK_IOS_SMOKE_STEP_PASS reject-png-max-bytes`, and `RNICK_IOS_SMOKE_PASS` with `jpegToPngResultBytes: 805`, `pngToPngResultBytes: 672`, and `unsupportedOutputs` excluding `png`.
+
 ### Publish Commands
 
 The npm publish step requires an authenticated npm registry session. If npm
@@ -71,6 +79,18 @@ After publish, verify the registry version:
 pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity time --json
 npm pack react-native-image-compression-kit@0.2.2
 ```
+
+Completed after npm publish:
+
+- `pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.2`.
+- `pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity dist.shasum time --json` confirmed version `0.2.2`, `latest` dist-tag `0.2.2`, registry tarball URL, integrity, shasum, and publish timestamp `2026-06-30T10:50:12.131Z`.
+- npm package: `react-native-image-compression-kit@0.2.2`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.2.tgz`
+- npm integrity: `sha512-E7fzlLfMxAJhQim1xFbX9b5aEIFDtifHNYNlk7IM5+LrDgtINAR4moUe8MrPglfjJ/zpZAxcDH5eL6IlFzgzlQ==`
+- npm shasum: `0bf7a4c554745d557e31787a78869895945d46df`
+- `npm pack react-native-image-compression-kit@0.2.2 --json` confirmed the published tarball contains 49 files, 43.2 kB package size, and 182.2 kB unpacked size.
+- The published tarball includes the README, SECURITY, LICENSE, iOS native source, Android runtime source, built JS, TypeScript declarations, Codegen source, package metadata, podspec, and React Native config.
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.2>.
 
 ## v0.2.1
 
