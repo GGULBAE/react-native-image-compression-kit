@@ -2,7 +2,7 @@
 
 ## v0.2.0
 
-Status: published to npm as `react-native-image-compression-kit@0.2.0`, tagged as `v0.2.0`.
+Status: published to npm on June 30, 2026 at 07:04:03 UTC (16:04:03 KST), tagged as `v0.2.0`.
 
 This release keeps Android runtime behavior unchanged while replacing the iOS
 package stub with a native iOS JPEG compression MVP.
@@ -47,8 +47,11 @@ package stub with a native iOS JPEG compression MVP.
 ### Published Artifacts
 
 - npm package: `react-native-image-compression-kit@0.2.0`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.0.tgz`
+- npm integrity: `sha512-YUsh/bwcU/ScsWu5RGQT/CEZaQ6dL9xCgoYfHOHalJkEeWicv9lT7HqEGhle84EUTLL8a8T3vefw+fso7kPj6Q==`
 - Git tag: `v0.2.0`
 - GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.0`
+- Published tarball size: 41.1 kB package size, 176.1 kB unpacked size, 49 files.
 
 ### Release Checklist
 
@@ -109,6 +112,19 @@ After publish, verify the registry version:
 pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity time --json
 npm pack react-native-image-compression-kit@0.2.0
 ```
+
+### Post-publish Verification
+
+Completed after npm publish:
+
+- `pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.0`.
+- `pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity time --json` confirmed version `0.2.0`, `latest` dist-tag `0.2.0`, registry tarball URL, integrity, and publish timestamp `2026-06-30T07:04:03.022Z`.
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.0.tgz`
+- npm integrity: `sha512-YUsh/bwcU/ScsWu5RGQT/CEZaQ6dL9xCgoYfHOHalJkEeWicv9lT7HqEGhle84EUTLL8a8T3vefw+fso7kPj6Q==`
+- `npm pack react-native-image-compression-kit@0.2.0` confirmed the published tarball contains 49 files, 41.1 kB package size, 176.1 kB unpacked size, and shasum `850a32e69d3c398e58b129ea330bc3d5a27eb5fd`.
+- The published tarball includes the README, SECURITY, LICENSE, iOS native source, Android runtime source, built JS, TypeScript declarations, Codegen source, package metadata, podspec, and React Native config.
+- A fresh temporary consumer project installed `react-native-image-compression-kit@0.2.0` from the npm registry with `pnpm install --ignore-scripts` and completed `pnpm typecheck` against public imports and types.
+- GitHub Release `v0.2.0` was created at `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.0`.
 
 ## v0.1.2
 

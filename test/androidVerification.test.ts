@@ -284,7 +284,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.version).toBe('0.2.0');
     expect(releaseSource).toContain('## v0.2.0');
     expect(releaseSource).toContain(
-      'Status: published to npm as `react-native-image-compression-kit@0.2.0`, tagged as `v0.2.0`.'
+      'Status: published to npm on June 30, 2026 at 07:04:03 UTC (16:04:03 KST), tagged as `v0.2.0`.'
     );
     expect(releaseSource).toContain('replacing the iOS');
     expect(releaseSource).toContain(
@@ -351,9 +351,15 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'npm package: `react-native-image-compression-kit@0.2.0`'
     );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-YUsh/bwcU/ScsWu5RGQT/CEZaQ6dL9xCgoYfHOHalJkEeWicv9lT7HqEGhle84EUTLL8a8T3vefw+fso7kPj6Q==`'
+    );
     expect(releaseSource).toContain('Git tag: `v0.2.0`');
     expect(releaseSource).toContain(
       'GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.0`'
+    );
+    expect(releaseSource).toContain(
+      'Published tarball size: 41.1 kB package size, 176.1 kB unpacked size, 49 files.'
     );
     expect(releaseSource).toContain(
       'The `v0.2.0` release completed these checks before npm publish'
@@ -378,6 +384,23 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain('pnpm publish --tag latest');
     expect(releaseSource).toContain(
       'npm pack react-native-image-compression-kit@0.2.0'
+    );
+    expect(releaseSource).toContain('### Post-publish Verification');
+    expect(releaseSource).toContain(
+      '`pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.0`.'
+    );
+    expect(releaseSource).toContain('`latest` dist-tag `0.2.0`');
+    expect(releaseSource).toContain(
+      'publish timestamp `2026-06-30T07:04:03.022Z`'
+    );
+    expect(releaseSource).toContain(
+      'shasum `850a32e69d3c398e58b129ea330bc3d5a27eb5fd`'
+    );
+    expect(releaseSource).toContain(
+      'fresh temporary consumer project installed `react-native-image-compression-kit@0.2.0`'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Release `v0.2.0` was created at `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.0`.'
     );
     expect(releaseSource).toContain('## v0.1.2');
     expect(releaseSource).toContain(
