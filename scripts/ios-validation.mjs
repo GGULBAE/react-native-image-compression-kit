@@ -355,6 +355,7 @@ function runSmoke(udid, metroProcess, setLogProcess) {
       '--terminate-running-process',
       udid,
       BUNDLE_ID,
+      '--rnick-ios-smoke',
     ], {
       env: {
         SIMCTL_CHILD_RNICK_IOS_SMOKE: '1',

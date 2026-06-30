@@ -34,6 +34,8 @@ describe('example app', () => {
 
     expect(appSource).toContain("Platform.OS !== 'ios'");
     expect(appSource).toContain('isSmokeTestEnabled');
+    expect(appSource).toContain('logSmokeEvent');
+    expect(appSource).toContain('emitIOSSmokeLog');
     expect(appSource).toContain('runIOSHostAppSmokeValidation');
     expect(appSource).toContain('RNICK_IOS_SMOKE_START');
     expect(appSource).toContain('RNICK_IOS_SMOKE_PASS');
@@ -50,7 +52,10 @@ describe('example app', () => {
     expect(iosModuleSource).toContain('copySampleJpegToCache');
     expect(iosModuleSource).toContain('copySamplePngToCache');
     expect(iosModuleSource).toContain('copyUnsupportedImageToCache');
+    expect(iosModuleSource).toContain('logSmokeEvent');
     expect(iosModuleSource).toContain('RNICK_IOS_SMOKE');
+    expect(iosModuleSource).toContain('--rnick-ios-smoke');
+    expect(iosModuleSource).toContain('NSLog');
     expect(iosModuleSource).toContain('UIImageJPEGRepresentation');
     expect(iosModuleSource).toContain('PNGDataWithActions');
     expect(iosModuleSource).toContain('"gif"');

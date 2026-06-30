@@ -17,8 +17,21 @@ RCT_EXPORT_METHOD(isSmokeTestEnabled:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 {
   (void)reject;
-  NSString *enabled = [NSProcessInfo processInfo].environment[@"RNICK_IOS_SMOKE"];
-  resolve(@([enabled isEqualToString:@"1"]));
+  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+  NSString *enabled = processInfo.environment[@"RNICK_IOS_SMOKE"];
+  NSString *simctlEnabled = processInfo.environment[@"SIMCTL_CHILD_RNICK_IOS_SMOKE"];
+  BOOL hasSmokeArgument = [processInfo.arguments containsObject:@"--rnick-ios-smoke"];
+
+  resolve(@([enabled isEqualToString:@"1"] || [simctlEnabled isEqualToString:@"1"] || hasSmokeArgument));
+}
+
+RCT_EXPORT_METHOD(logSmokeEvent:(NSString *)message
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  (void)reject;
+  NSLog(@"%@", message);
+  resolve(nil);
 }
 
 RCT_EXPORT_METHOD(copySampleJpegToCache:(RCTPromiseResolveBlock)resolve

@@ -34,6 +34,7 @@ type ExampleImageSourceModule = {
   copySamplePngToCache?: () => Promise<string>;
   copyUnsupportedImageToCache?: (format: string) => Promise<string>;
   isSmokeTestEnabled?: () => Promise<boolean>;
+  logSmokeEvent?: (message: string) => Promise<void>;
 };
 
 const DEFAULT_QUALITY = '72';
@@ -136,10 +137,12 @@ export default function App(): React.JSX.Element {
 
         try {
           const smokeSummary = await runIOSHostAppSmokeValidation();
-          console.log(`RNICK_IOS_SMOKE_PASS ${JSON.stringify(smokeSummary)}`);
+          await emitIOSSmokeLog(
+            `RNICK_IOS_SMOKE_PASS ${JSON.stringify(smokeSummary)}`
+          );
         } catch (smokeError) {
           const errorState = toErrorState(smokeError);
-          console.log(
+          await emitIOSSmokeLog(
             `RNICK_IOS_SMOKE_FAIL ${errorState.code} ${errorState.message}`
           );
 
@@ -148,9 +151,9 @@ export default function App(): React.JSX.Element {
           }
         }
       })
-      .catch((nativeError) => {
+      .catch(async (nativeError) => {
         const errorState = toErrorState(nativeError);
-        console.log(
+        await emitIOSSmokeLog(
           `RNICK_IOS_SMOKE_FAIL ${errorState.code} ${errorState.message}`
         );
 
@@ -459,6 +462,16 @@ function ResultLine({ label, value }: { label: string; value: string }) {
   );
 }
 
+async function emitIOSSmokeLog(message: string): Promise<void> {
+  console.log(message);
+
+  try {
+    await SAMPLE_MODULE?.logSmokeEvent?.(message);
+  } catch {
+    // The Metro console log above is still useful when native logging is unavailable.
+  }
+}
+
 type IOSHostAppSmokeSummary = {
   platform: 'ios';
   jpegResultBytes: number;
@@ -468,7 +481,7 @@ type IOSHostAppSmokeSummary = {
 };
 
 async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
-  console.log('RNICK_IOS_SMOKE_START');
+  await emitIOSSmokeLog('RNICK_IOS_SMOKE_START');
 
   if (
     !SAMPLE_MODULE?.copySampleJpegToCache ||
