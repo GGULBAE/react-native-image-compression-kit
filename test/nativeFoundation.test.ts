@@ -71,6 +71,10 @@ describe('native module foundation', () => {
     );
     expect(iosSource).toContain('CGImageSourceCreateWithData');
     expect(iosSource).toContain('RCT_EXPORT_MODULE(ImageCompressionKit)');
+    expect(iosSource).toContain(
+      'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options'
+    );
+    expect(iosSource).toContain('compressImageWithDictionary:optionsMap');
     expect(iosSource).toContain('dispatch_get_main_queue()');
     expect(iosSource).toContain('RNICK_IOS_SMOKE_NATIVE');
     expect(iosSource).toContain('UIImageJPEGRepresentation');

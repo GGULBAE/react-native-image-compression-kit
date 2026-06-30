@@ -959,6 +959,8 @@ function checkIOSNativeModule() {
     'iOS MVP supports PNG input with JPEG output conversion.',
     'iOS MVP supports JPEG and PNG input with JPEG output only.',
     'RCT_EXPORT_MODULE(ImageCompressionKit)',
+    'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options',
+    'compressImageWithDictionary:optionsMap',
     'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
     'iOS MVP does not support output.maxBytes yet. Call getImageCompressionCapabilities() and omit maxBytes on iOS.',
     'iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.',

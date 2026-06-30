@@ -492,7 +492,64 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
   return std::make_shared<facebook::react::NativeImageCompressionKitSpecJSI>(params);
 }
 
-- (void)compressImage:(NSDictionary *)options
+- (void)compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options
+              resolve:(RCTPromiseResolveBlock)resolve
+               reject:(RCTPromiseRejectBlock)reject
+{
+  JS::NativeImageCompressionKit::NativeCompressionSource source = options.source();
+  JS::NativeImageCompressionKit::NativeOutputOptions output = options.output();
+  NSMutableDictionary *sourceMap = [NSMutableDictionary dictionary];
+  NSMutableDictionary *outputMap = [NSMutableDictionary dictionary];
+  NSMutableDictionary *optionsMap = [NSMutableDictionary dictionary];
+  NSString *sourceUri = source.uri();
+  NSString *outputFormat = output.format();
+  NSString *metadata = options.metadata();
+  std::optional<double> quality = output.quality();
+  std::optional<double> maxBytes = output.maxBytes();
+  std::optional<JS::NativeImageCompressionKit::NativeResizeOptions> resize = options.resize();
+
+  if (sourceUri != nil) {
+    sourceMap[@"uri"] = sourceUri;
+  }
+  if (outputFormat != nil) {
+    outputMap[@"format"] = outputFormat;
+  }
+  if (quality.has_value()) {
+    outputMap[@"quality"] = @(quality.value());
+  }
+  if (maxBytes.has_value()) {
+    outputMap[@"maxBytes"] = @(maxBytes.value());
+  }
+
+  optionsMap[@"source"] = sourceMap;
+  optionsMap[@"output"] = outputMap;
+  if (metadata != nil) {
+    optionsMap[@"metadata"] = metadata;
+  }
+
+  if (resize.has_value()) {
+    JS::NativeImageCompressionKit::NativeResizeOptions resizeOptions = resize.value();
+    NSMutableDictionary *resizeMap = [NSMutableDictionary dictionary];
+    std::optional<double> maxWidth = resizeOptions.maxWidth();
+    std::optional<double> maxHeight = resizeOptions.maxHeight();
+    NSString *mode = resizeOptions.mode();
+
+    if (maxWidth.has_value()) {
+      resizeMap[@"maxWidth"] = @(maxWidth.value());
+    }
+    if (maxHeight.has_value()) {
+      resizeMap[@"maxHeight"] = @(maxHeight.value());
+    }
+    if (mode != nil) {
+      resizeMap[@"mode"] = mode;
+    }
+    optionsMap[@"resize"] = resizeMap;
+  }
+
+  [self compressImageWithDictionary:optionsMap resolve:resolve reject:reject];
+}
+
+- (void)compressImageWithDictionary:(NSDictionary *)options
               resolve:(RCTPromiseResolveBlock)resolve
                reject:(RCTPromiseRejectBlock)reject
 {
