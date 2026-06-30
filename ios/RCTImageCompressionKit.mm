@@ -99,6 +99,7 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
       @[
         @"iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.",
         @"JPEG output supports quality-based compression and optional resize.",
+        @"Target-size compression supports maxBytes by adjusting JPEG quality.",
         @"Metadata preserve is not implemented; safe and strip re-encode without copying source metadata."
       ]
     );
@@ -298,20 +299,33 @@ static BOOL RCTImageCompressionKitReadQuality(
   return YES;
 }
 
-static BOOL RCTImageCompressionKitValidateMaxBytes(
+static BOOL RCTImageCompressionKitReadMaxBytes(
   NSDictionary *output,
+  BOOL *hasMaxBytes,
+  NSUInteger *maxBytes,
   NSString **errorMessage
 ) {
+  *hasMaxBytes = NO;
+  *maxBytes = 0;
+
   if (!RCTImageCompressionKitHasValue(output, @"maxBytes")) {
     return YES;
   }
 
-  NSNumber *maxBytes = RCTImageCompressionKitNumberValue(output, @"maxBytes");
-  if (maxBytes == nil || !RCTImageCompressionKitIsIntegerNumber(maxBytes) || maxBytes.doubleValue <= 0) {
+  NSNumber *maxBytesNumber = RCTImageCompressionKitNumberValue(output, @"maxBytes");
+  double maxBytesValue = maxBytesNumber.doubleValue;
+  if (
+    maxBytesNumber == nil ||
+    !RCTImageCompressionKitIsIntegerNumber(maxBytesNumber) ||
+    maxBytesValue <= 0 ||
+    maxBytesValue > (double)NSUIntegerMax
+  ) {
     *errorMessage = @"Compression output.maxBytes must be a positive integer.";
     return NO;
   }
 
+  *hasMaxBytes = YES;
+  *maxBytes = (NSUInteger)maxBytesValue;
   return YES;
 }
 
@@ -454,6 +468,50 @@ static UIImage *RCTImageCompressionKitRenderImage(UIImage *image, RCTImageCompre
     UIRectFill(CGRectMake(0, 0, targetSize.width, targetSize.height));
     [image drawInRect:drawRect];
   }];
+}
+
+static NSData *RCTImageCompressionKitEncodeJpeg(UIImage *image, NSInteger quality)
+{
+  return UIImageJPEGRepresentation(image, (CGFloat)quality / 100.0);
+}
+
+static NSData *RCTImageCompressionKitEncodeJpegToTargetSize(
+  UIImage *image,
+  NSInteger qualityCap,
+  NSUInteger maxBytes
+) {
+  NSData *outputData = RCTImageCompressionKitEncodeJpeg(image, qualityCap);
+  if (outputData == nil || outputData.length == 0 || outputData.length <= maxBytes) {
+    return outputData;
+  }
+
+  NSData *lowestAboveTargetData = outputData;
+  NSUInteger lowestAboveTargetSize = outputData.length;
+  NSData *bestWithinTargetData = nil;
+  NSInteger low = RCTImageCompressionKitMinQuality;
+  NSInteger high = qualityCap - 1;
+
+  while (low <= high) {
+    NSInteger currentQuality = (low + high) / 2;
+    NSData *candidateData = RCTImageCompressionKitEncodeJpeg(image, currentQuality);
+    if (candidateData == nil || candidateData.length == 0) {
+      return candidateData;
+    }
+
+    NSUInteger byteSize = candidateData.length;
+    if (byteSize <= maxBytes) {
+      bestWithinTargetData = candidateData;
+      low = currentQuality + 1;
+    } else {
+      if (byteSize < lowestAboveTargetSize) {
+        lowestAboveTargetData = candidateData;
+        lowestAboveTargetSize = byteSize;
+      }
+      high = currentQuality - 1;
+    }
+  }
+
+  return bestWithinTargetData ?: lowestAboveTargetData;
 }
 
 static NSString *RCTImageCompressionKitOutputPath(NSError **error)
@@ -609,22 +667,15 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
 
     NSString *errorMessage = nil;
     NSInteger quality = RCTImageCompressionKitDefaultQuality;
+    BOOL hasMaxBytes = NO;
+    NSUInteger maxBytes = 0;
     if (!RCTImageCompressionKitReadQuality(output, &quality, &errorMessage)) {
       RCTImageCompressionKitReject(reject, RCTImageCompressionKitInvalidOptionsCode, errorMessage, nil);
       return;
     }
 
-    if (!RCTImageCompressionKitValidateMaxBytes(output, &errorMessage)) {
+    if (!RCTImageCompressionKitReadMaxBytes(output, &hasMaxBytes, &maxBytes, &errorMessage)) {
       RCTImageCompressionKitReject(reject, RCTImageCompressionKitInvalidOptionsCode, errorMessage, nil);
-      return;
-    }
-    if (RCTImageCompressionKitHasValue(output, @"maxBytes")) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitNotImplementedCode,
-        @"iOS MVP does not support output.maxBytes yet. Call getImageCompressionCapabilities() and omit maxBytes on iOS.",
-        nil
-      );
       return;
     }
 
@@ -712,7 +763,9 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       }
 
       processedImage = RCTImageCompressionKitRenderImage(sourceImage, resizeOptions);
-      outputData = UIImageJPEGRepresentation(processedImage, (CGFloat)quality / 100.0);
+      outputData = hasMaxBytes
+        ? RCTImageCompressionKitEncodeJpegToTargetSize(processedImage, quality, maxBytes)
+        : RCTImageCompressionKitEncodeJpeg(processedImage, quality);
     });
     RCTImageCompressionKitSmokeLog(@"image-work-finished");
 
@@ -800,7 +853,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     @"platform" : @"ios",
     @"formats" : formats,
     @"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy],
-    @"supportsTargetSizeCompression" : @NO,
+    @"supportsTargetSizeCompression" : @YES,
     @"supportsCancellation" : @NO
   });
 }

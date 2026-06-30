@@ -1,5 +1,52 @@
 # Release Notes
 
+## v0.2.1 Candidate
+
+Status: prepared as a local release candidate. Not published to npm, not tagged, and `package.json` remains at `0.2.0` until release promotion.
+
+This candidate keeps Android runtime behavior unchanged while adding iOS JPEG
+target-size compression to the existing iOS JPEG MVP.
+
+### Goals
+
+- Implement iOS JPEG output `output.maxBytes` without changing the public TypeScript API.
+- Keep iOS target-size semantics aligned with Android: treat `quality` as the upper quality bound, search for the highest JPEG quality that fits under `maxBytes`, and return the smallest generated JPEG if the target cannot be reached.
+- Align iOS capability reporting, README guidance, source-level expectations, and host-app smoke validation with the new JPEG target-size support.
+
+### Included
+
+- iOS `compressImage()` now accepts `output.maxBytes` for JPEG output.
+- iOS JPEG target-size compression validates `maxBytes` as a positive integer and encodes JPEG candidates across the allowed quality range.
+- iOS `getImageCompressionCapabilities()` reports `supportsTargetSizeCompression: true`.
+- iOS format notes now state that JPEG output supports `maxBytes` by adjusting JPEG quality.
+- The iOS host-app smoke validates a JPEG target-size case and asserts `byteSize <= maxBytes`.
+- README iOS limitation, public API, target-size mode, roadmap, and host-app validation guidance are updated for the candidate behavior.
+- Source-level tests and the Android verification doctor expectations are updated for the implemented iOS JPEG target-size path.
+
+### Not Included
+
+- Android runtime behavior changes.
+- iOS PNG, WebP, HEIC, HEIF, AVIF, or GIF output.
+- WebP, HEIC, HEIF, AVIF, or GIF input on iOS.
+- iOS metadata preservation.
+- npm publish, git tag creation, or package version bump.
+
+### Candidate Validation
+
+Before promotion, run:
+
+```bash
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+```
+
+The iOS host-app smoke should produce `RNICK_IOS_SMOKE_PASS` after validating
+capability reporting, JPEG and PNG to JPEG runtime compression, JPEG target-size
+compression, unsupported WebP/HEIC/HEIF/AVIF/GIF input errors, unsupported
+non-JPEG output errors, and `metadata: 'preserve'`.
+
 ## v0.2.0
 
 Status: published to npm on June 30, 2026 at 07:04:03 UTC (16:04:03 KST), tagged as `v0.2.0`.
