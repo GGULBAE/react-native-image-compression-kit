@@ -1,5 +1,62 @@
 # Release Notes
 
+## v0.2.2 Candidate
+
+Status: prepared for local and CI validation. Not published to npm yet.
+
+This candidate keeps Android runtime behavior unchanged while adding PNG output
+to the existing iOS JPEG/PNG input MVP.
+
+### Goals
+
+- Implement iOS PNG output without changing the public TypeScript API.
+- Keep iOS PNG behavior aligned with Android where applicable: PNG output ignores `quality`, preserves alpha where the processed image contains transparency, and rejects `output.maxBytes`.
+- Align iOS capability reporting, README guidance, source-level expectations, and host-app smoke validation with the new PNG output support.
+
+### Included
+
+- `package.json` version bump to `0.2.2`.
+- iOS `compressImage()` now accepts `output.format: 'png'` for JPEG and PNG input.
+- iOS PNG output is encoded with `UIImagePNGRepresentation()` into the app cache directory.
+- iOS PNG output keeps resize support and ignores `output.quality`.
+- iOS PNG output rejects `output.maxBytes` with `ERR_NOT_IMPLEMENTED`.
+- iOS `getImageCompressionCapabilities()` reports PNG `input=true` and `output=true`.
+- iOS format notes now state that PNG output preserves alpha where possible and does not support target-size `maxBytes`.
+- The iOS host-app smoke validates JPEG-to-PNG and PNG-to-PNG output, plus PNG `maxBytes` rejection.
+- TypeScript native-unavailable messaging now mentions iOS JPEG/PNG output support.
+- README iOS limitation, public API, target-size mode, roadmap, and host-app validation guidance are updated for the candidate behavior.
+- Source-level tests and the Android verification doctor expectations are updated for the implemented iOS PNG output path.
+
+### Not Included
+
+- Android runtime behavior changes.
+- iOS WebP, HEIC, HEIF, AVIF, or GIF output.
+- WebP, HEIC, HEIF, AVIF, or GIF input on iOS.
+- iOS metadata preservation.
+- New public API surface.
+- npm publish.
+
+### Candidate Verification
+
+Run before promoting this candidate:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+```
+
+Host-app validation should also pass through either local iOS smoke or GitHub
+Actions iOS Validation:
+
+```bash
+pnpm example:ios:smoke
+```
+
+The iOS host-app smoke should produce `RNICK_IOS_SMOKE_PASS` after validating capability reporting, JPEG and PNG to JPEG runtime compression, JPEG and PNG to PNG runtime compression, JPEG `output.maxBytes`, PNG `output.maxBytes` rejection, unsupported WebP/HEIC/HEIF/AVIF/GIF input errors, unsupported WebP/HEIC/HEIF/AVIF output errors, and `metadata: 'preserve'`.
+
 ## v0.2.1
 
 Status: published to npm on June 30, 2026 at 09:37:20 UTC (18:37:20 KST), tagged as `v0.2.1`.

@@ -109,13 +109,13 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
     return RCTImageCompressionKitFormatCapability(
       format,
       YES,
-      NO,
+      YES,
       YES,
       NO,
       @[
-        @"iOS MVP supports PNG input with JPEG output conversion.",
-        @"PNG alpha is composited over white when encoding JPEG output.",
-        @"PNG output is not implemented in the iOS MVP."
+        @"iOS MVP supports PNG input and PNG output through UIKit/ImageIO.",
+        @"PNG output preserves alpha where the processed image contains transparency.",
+        @"PNG output ignores quality and does not support target-size maxBytes."
       ]
     );
   }
@@ -126,7 +126,7 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
     NO,
     NO,
     NO,
-    @[@"iOS MVP supports JPEG and PNG input with JPEG output only."]
+    @[@"iOS MVP supports JPEG and PNG input with JPEG or PNG output only."]
   );
 }
 
@@ -427,7 +427,11 @@ static CGSize RCTImageCompressionKitCoverSize(CGSize imageSize, RCTImageCompress
   );
 }
 
-static UIImage *RCTImageCompressionKitRenderImage(UIImage *image, RCTImageCompressionKitResizeOptions resize)
+static UIImage *RCTImageCompressionKitRenderImage(
+  UIImage *image,
+  RCTImageCompressionKitResizeOptions resize,
+  BOOL opaque
+)
 {
   CGSize imageSize = RCTImageCompressionKitPixelSize(image);
   CGSize targetSize = imageSize;
@@ -459,12 +463,12 @@ static UIImage *RCTImageCompressionKitRenderImage(UIImage *image, RCTImageCompre
 
   UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
   format.scale = 1.0;
-  format.opaque = YES;
+  format.opaque = opaque;
 
   UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:targetSize format:format];
   return [renderer imageWithActions:^(UIGraphicsImageRendererContext *rendererContext) {
     (void)rendererContext;
-    [[UIColor whiteColor] setFill];
+    [(opaque ? [UIColor whiteColor] : [UIColor clearColor]) setFill];
     UIRectFill(CGRectMake(0, 0, targetSize.width, targetSize.height));
     [image drawInRect:drawRect];
   }];
@@ -473,6 +477,11 @@ static UIImage *RCTImageCompressionKitRenderImage(UIImage *image, RCTImageCompre
 static NSData *RCTImageCompressionKitEncodeJpeg(UIImage *image, NSInteger quality)
 {
   return UIImageJPEGRepresentation(image, (CGFloat)quality / 100.0);
+}
+
+static NSData *RCTImageCompressionKitEncodePng(UIImage *image)
+{
+  return UIImagePNGRepresentation(image);
 }
 
 static NSData *RCTImageCompressionKitEncodeJpegToTargetSize(
@@ -514,7 +523,7 @@ static NSData *RCTImageCompressionKitEncodeJpegToTargetSize(
   return bestWithinTargetData ?: lowestAboveTargetData;
 }
 
-static NSString *RCTImageCompressionKitOutputPath(NSError **error)
+static NSString *RCTImageCompressionKitOutputPath(NSString *outputFormat, NSError **error)
 {
   NSArray<NSString *> *cachePaths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
   NSString *cachePath = [cachePaths firstObject] ?: NSTemporaryDirectory();
@@ -527,10 +536,12 @@ static NSString *RCTImageCompressionKitOutputPath(NSError **error)
     }
   }
 
+  NSString *extension = [outputFormat isEqualToString:RCTImageCompressionKitPngFormat] ? @"png" : @"jpg";
   NSString *fileName = [NSString stringWithFormat:
-    @"compressed-%lld-%@.jpg",
+    @"compressed-%lld-%@.%@",
     (long long)([NSDate date].timeIntervalSince1970 * 1000.0),
-    [NSUUID UUID].UUIDString
+    [NSUUID UUID].UUIDString,
+    extension
   ];
   return [outputDirectory stringByAppendingPathComponent:fileName];
 }
@@ -655,11 +666,13 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       return;
     }
 
-    if (![outputFormat isEqualToString:RCTImageCompressionKitJpegFormat]) {
+    BOOL outputIsJpeg = [outputFormat isEqualToString:RCTImageCompressionKitJpegFormat];
+    BOOL outputIsPng = [outputFormat isEqualToString:RCTImageCompressionKitPngFormat];
+    if (!outputIsJpeg && !outputIsPng) {
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitNotImplementedCode,
-        @"iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.",
+        @"iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.",
         nil
       );
       return;
@@ -676,6 +689,15 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
 
     if (!RCTImageCompressionKitReadMaxBytes(output, &hasMaxBytes, &maxBytes, &errorMessage)) {
       RCTImageCompressionKitReject(reject, RCTImageCompressionKitInvalidOptionsCode, errorMessage, nil);
+      return;
+    }
+    if (hasMaxBytes && outputIsPng) {
+      RCTImageCompressionKitReject(
+        reject,
+        RCTImageCompressionKitNotImplementedCode,
+        @"iOS MVP supports output.maxBytes for JPEG output only.",
+        nil
+      );
       return;
     }
 
@@ -762,10 +784,14 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
         return;
       }
 
-      processedImage = RCTImageCompressionKitRenderImage(sourceImage, resizeOptions);
-      outputData = hasMaxBytes
-        ? RCTImageCompressionKitEncodeJpegToTargetSize(processedImage, quality, maxBytes)
-        : RCTImageCompressionKitEncodeJpeg(processedImage, quality);
+      processedImage = RCTImageCompressionKitRenderImage(sourceImage, resizeOptions, outputIsJpeg);
+      if (outputIsPng) {
+        outputData = RCTImageCompressionKitEncodePng(processedImage);
+      } else {
+        outputData = hasMaxBytes
+          ? RCTImageCompressionKitEncodeJpegToTargetSize(processedImage, quality, maxBytes)
+          : RCTImageCompressionKitEncodeJpeg(processedImage, quality);
+      }
     });
     RCTImageCompressionKitSmokeLog(@"image-work-finished");
 
@@ -783,15 +809,15 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitEncodeFailedCode,
-        @"iOS MVP could not encode JPEG output.",
+        [NSString stringWithFormat:@"iOS MVP could not encode %@ output.", [outputFormat uppercaseString]],
         nil
       );
       return;
     }
-    RCTImageCompressionKitSmokeLog(@"jpeg-encoded");
+    RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"%@-encoded", outputFormat]);
 
     NSError *outputPathError = nil;
-    NSString *outputPath = RCTImageCompressionKitOutputPath(&outputPathError);
+    NSString *outputPath = RCTImageCompressionKitOutputPath(outputFormat, &outputPathError);
     if (outputPath == nil) {
       RCTImageCompressionKitReject(
         reject,
@@ -808,7 +834,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitEncodeFailedCode,
-        @"iOS MVP could not write JPEG output.",
+        [NSString stringWithFormat:@"iOS MVP could not write %@ output.", [outputFormat uppercaseString]],
         writeError
       );
       return;
@@ -822,7 +848,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
 
     resolve(@{
       @"uri" : [[NSURL fileURLWithPath:outputPath] absoluteString],
-      @"format" : RCTImageCompressionKitJpegFormat,
+      @"format" : outputFormat,
       @"width" : @((NSInteger)outputSize.width),
       @"height" : @((NSInteger)outputSize.height),
       @"byteSize" : @(byteSize),

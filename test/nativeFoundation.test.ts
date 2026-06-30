@@ -78,9 +78,13 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('dispatch_get_main_queue()');
     expect(iosSource).toContain('RNICK_IOS_SMOKE_NATIVE');
     expect(iosSource).toContain('UIImageJPEGRepresentation');
+    expect(iosSource).toContain('UIImagePNGRepresentation');
     expect(iosSource).toContain('iOS MVP supports JPEG and PNG input only.');
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
+      'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports output.maxBytes for JPEG output only.'
     );
     expect(iosSource).toContain('RCTImageCompressionKitReadMaxBytes');
     expect(iosSource).toContain('Compression output.maxBytes must be a positive integer.');

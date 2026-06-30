@@ -19,7 +19,7 @@ describe('example app', () => {
     expect(appSource).toContain("useState<OutputFormat>('jpeg')");
     expect(appSource).toContain('format: outputFormat');
     expect(appSource).toContain('supportsSelectedTargetSize');
-    expect(appSource).toContain('Android MVP / iOS JPEG MVP');
+    expect(appSource).toContain('Android MVP / iOS JPEG+PNG MVP');
     expect(appSource).toContain('editable={supportsSelectedTargetSize}');
     expect(appSource).toContain('label="selected output"');
     expect(appSource).toContain('label="output formats"');
@@ -54,7 +54,11 @@ describe('example app', () => {
       'Expected iOS target-size output <= ${targetSizeMaxBytes} bytes'
     );
     expect(appSource).toContain("const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif']");
-    expect(appSource).toContain("const unsupportedOutputs = ['png', 'webp', 'heic', 'heif', 'avif'] as const");
+    expect(appSource).toContain("const unsupportedOutputs = ['webp', 'heic', 'heif', 'avif'] as const");
+    expect(appSource).toContain('compress-jpeg-to-png');
+    expect(appSource).toContain('compress-png-to-png');
+    expect(appSource).toContain('reject-png-max-bytes');
+    expect(appSource).toContain('Expected PNG maxBytes to be unsupported on iOS.');
     expect(appSource).toContain("Expected metadata: 'preserve' to be unimplemented on iOS.");
     expect(iosModuleSource).toContain('RCT_EXPORT_MODULE();');
     expect(iosModuleSource).toContain('copySampleJpegToCache');

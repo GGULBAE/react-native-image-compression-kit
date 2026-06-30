@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.1');
+    expect(packageJson.version).toBe('0.2.2');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -88,13 +88,16 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'The `0.2.1` npm package is published under'
+      'The `0.2.2` package metadata is prepared under'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
     );
     expect(readmeSource).toContain(
       'version `0.2.1` is the published iOS JPEG target-size release'
+    );
+    expect(readmeSource).toContain(
+      'version `0.2.2` is the iOS PNG output candidate'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -307,11 +310,51 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.1 release notes and previous release notes', () => {
+  it('documents the v0.2.2 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.1');
+    expect(packageJson.version).toBe('0.2.2');
+    expect(releaseSource).toContain('## v0.2.2 Candidate');
+    expect(releaseSource).toContain(
+      'Status: prepared for local and CI validation. Not published to npm yet.'
+    );
+    expect(releaseSource).toContain('adding PNG output');
+    expect(releaseSource).toContain(
+      'to the existing iOS JPEG/PNG input MVP'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.2`.'
+    );
+    expect(releaseSource).toContain(
+      "iOS `compressImage()` now accepts `output.format: 'png'` for JPEG and PNG input."
+    );
+    expect(releaseSource).toContain(
+      'iOS PNG output is encoded with `UIImagePNGRepresentation()` into the app cache directory.'
+    );
+    expect(releaseSource).toContain(
+      'iOS PNG output rejects `output.maxBytes` with `ERR_NOT_IMPLEMENTED`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `getImageCompressionCapabilities()` reports PNG `input=true` and `output=true`.'
+    );
+    expect(releaseSource).toContain(
+      'The iOS host-app smoke validates JPEG-to-PNG and PNG-to-PNG output, plus PNG `maxBytes` rejection.'
+    );
+    expect(releaseSource).toContain(
+      'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG output support.'
+    );
+    expect(releaseSource).toContain('New public API surface.');
+    expect(releaseSource).toContain('npm publish.');
+    expect(releaseSource).toContain('### Candidate Verification');
+    expect(releaseSource).toContain('pnpm example:ios:smoke');
+    expect(releaseSource).toContain(
+      'JPEG and PNG to PNG runtime compression'
+    );
+    expect(releaseSource).toContain('PNG `output.maxBytes` rejection');
+    expect(releaseSource).toContain(
+      'unsupported WebP/HEIC/HEIF/AVIF output errors'
+    );
     expect(releaseSource).toContain('## v0.2.1');
     expect(releaseSource).toContain(
       'Status: published to npm on June 30, 2026 at 09:37:20 UTC (18:37:20 KST), tagged as `v0.2.1`.'
@@ -737,7 +780,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.2 candidate notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -1127,13 +1170,22 @@ describe('Android verification scripts', () => {
       'iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports PNG input with JPEG output conversion.'
+      'iOS MVP supports PNG input and PNG output through UIKit/ImageIO.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG and PNG input with JPEG output only.'
+      'PNG output preserves alpha where the processed image contains transparency.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
+      'PNG output ignores quality and does not support target-size maxBytes.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG and PNG input with JPEG or PNG output only.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports output.maxBytes for JPEG output only.'
     );
     expect(iosSource).toContain('RCTImageCompressionKitReadMaxBytes');
     expect(iosSource).toContain(
@@ -1155,10 +1207,11 @@ describe('Android verification scripts', () => {
     );
     expect(iosSource).toContain('iOS MVP could not read the source image URI.');
     expect(iosSource).toContain('iOS MVP could not decode the source image.');
-    expect(iosSource).toContain('iOS MVP could not encode JPEG output.');
+    expect(iosSource).toContain('iOS MVP could not encode %@ output.');
     expect(iosSource).toContain('CGImageSourceCreateWithData');
     expect(iosSource).toContain('UIImage imageWithData');
     expect(iosSource).toContain('UIImageJPEGRepresentation');
+    expect(iosSource).toContain('UIImagePNGRepresentation');
     expect(iosSource).toContain('UIGraphicsImageRenderer');
     expect(iosSource).toContain('NSCachesDirectory');
     expect(iosSource).toContain('RCTImageCompressionKitRenderImage');
