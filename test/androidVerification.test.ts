@@ -97,7 +97,7 @@ describe('Android verification scripts', () => {
       'version `0.2.1` is the published iOS JPEG target-size release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.2` is the iOS PNG output candidate'
+      'version `0.2.2` adds iOS PNG output'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -310,14 +310,14 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.2 candidate notes and previous release notes', () => {
+  it('documents the v0.2.2 release notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.2');
-    expect(releaseSource).toContain('## v0.2.2 Candidate');
+    expect(releaseSource).toContain('## v0.2.2');
     expect(releaseSource).toContain(
-      'Status: prepared for local and CI validation. Not published to npm yet.'
+      'Status: prepared for npm release promotion. Not published to npm yet.'
     );
     expect(releaseSource).toContain('adding PNG output');
     expect(releaseSource).toContain(
@@ -345,15 +345,35 @@ describe('Android verification scripts', () => {
       'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG output support.'
     );
     expect(releaseSource).toContain('New public API surface.');
-    expect(releaseSource).toContain('npm publish.');
-    expect(releaseSource).toContain('### Candidate Verification');
-    expect(releaseSource).toContain('pnpm example:ios:smoke');
+    expect(releaseSource).toContain('### Release Checklist');
     expect(releaseSource).toContain(
-      'JPEG and PNG to PNG runtime compression'
+      'Actual implementation validation before the release commit:'
     );
-    expect(releaseSource).toContain('PNG `output.maxBytes` rejection');
     expect(releaseSource).toContain(
-      'unsupported WebP/HEIC/HEIF/AVIF output errors'
+      'Commit: `8ff9345a882243459bb6c1d44a2b4c1802296370`.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28436846165>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28436846207>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28436846121>.'
+    );
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS compress-jpeg-to-png'
+    );
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS compress-png-to-png'
+    );
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS reject-png-max-bytes'
+    );
+    expect(releaseSource).toContain('jpegToPngResultBytes: 805');
+    expect(releaseSource).toContain('pngToPngResultBytes: 672');
+    expect(releaseSource).toContain(
+      'unsupportedOutputs` excluding `png`'
     );
     expect(releaseSource).toContain('## v0.2.1');
     expect(releaseSource).toContain(
@@ -780,7 +800,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.2 candidate notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

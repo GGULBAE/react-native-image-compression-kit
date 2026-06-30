@@ -1,10 +1,10 @@
 # Release Notes
 
-## v0.2.2 Candidate
+## v0.2.2
 
-Status: prepared for local and CI validation. Not published to npm yet.
+Status: prepared for npm release promotion. Not published to npm yet.
 
-This candidate keeps Android runtime behavior unchanged while adding PNG output
+This release keeps Android runtime behavior unchanged while adding PNG output
 to the existing iOS JPEG/PNG input MVP.
 
 ### Goals
@@ -24,7 +24,7 @@ to the existing iOS JPEG/PNG input MVP.
 - iOS format notes now state that PNG output preserves alpha where possible and does not support target-size `maxBytes`.
 - The iOS host-app smoke validates JPEG-to-PNG and PNG-to-PNG output, plus PNG `maxBytes` rejection.
 - TypeScript native-unavailable messaging now mentions iOS JPEG/PNG output support.
-- README iOS limitation, public API, target-size mode, roadmap, and host-app validation guidance are updated for the candidate behavior.
+- README iOS limitation, public API, target-size mode, roadmap, and host-app validation guidance are updated for the release behavior.
 - Source-level tests and the Android verification doctor expectations are updated for the implemented iOS PNG output path.
 
 ### Not Included
@@ -34,11 +34,10 @@ to the existing iOS JPEG/PNG input MVP.
 - WebP, HEIC, HEIF, AVIF, or GIF input on iOS.
 - iOS metadata preservation.
 - New public API surface.
-- npm publish.
 
-### Candidate Verification
+### Release Checklist
 
-Run before promoting this candidate:
+Before npm publish:
 
 ```bash
 git status --short --branch
@@ -48,14 +47,30 @@ git diff --check
 pnpm pack --dry-run
 ```
 
-Host-app validation should also pass through either local iOS smoke or GitHub
-Actions iOS Validation:
+Actual implementation validation before the release commit:
+
+- Commit: `8ff9345a882243459bb6c1d44a2b4c1802296370`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28436846165>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28436846207>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28436846121>.
+- Runtime smoke evidence: `RNICK_IOS_SMOKE_STEP_PASS compress-jpeg-to-png`, `RNICK_IOS_SMOKE_STEP_PASS compress-png-to-png`, `RNICK_IOS_SMOKE_STEP_PASS reject-png-max-bytes`, and `RNICK_IOS_SMOKE_PASS` with `jpegToPngResultBytes: 805`, `pngToPngResultBytes: 672`, and `unsupportedOutputs` excluding `png`.
+
+### Publish Commands
+
+The npm publish step requires an authenticated npm registry session. If npm
+two-factor authentication is enabled, use a current passkey or one-time password:
 
 ```bash
-pnpm example:ios:smoke
+pnpm whoami
+pnpm publish --tag latest
 ```
 
-The iOS host-app smoke should produce `RNICK_IOS_SMOKE_PASS` after validating capability reporting, JPEG and PNG to JPEG runtime compression, JPEG and PNG to PNG runtime compression, JPEG `output.maxBytes`, PNG `output.maxBytes` rejection, unsupported WebP/HEIC/HEIF/AVIF/GIF input errors, unsupported WebP/HEIC/HEIF/AVIF output errors, and `metadata: 'preserve'`.
+After publish, verify the registry version:
+
+```bash
+pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity time --json
+npm pack react-native-image-compression-kit@0.2.2
+```
 
 ## v0.2.1
 
