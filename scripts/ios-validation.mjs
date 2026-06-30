@@ -348,12 +348,13 @@ function runSmoke(udid, metroProcess, setLogProcess) {
       'simctl',
       'launch',
       '--terminate-running-process',
-      '--env',
-      'RNICK_IOS_SMOKE',
-      '1',
       udid,
       BUNDLE_ID,
-    ]);
+    ], {
+      env: {
+        SIMCTL_CHILD_RNICK_IOS_SMOKE: '1',
+      },
+    });
   });
 }
 
