@@ -206,9 +206,9 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('public `0.1.x` package is distributed under'),
-    readmeContents.includes('The current repository package metadata is `0.2.0` for the iOS native JPEG MVP candidate'),
-    readmeContents.includes('The `0.2.0` candidate adds an iOS native MVP with JPEG/PNG input'),
+    readmeContents.includes('The public `0.2.0` package is distributed under'),
+    readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
+    readmeContents.includes('Version `0.2.0` adds an iOS native MVP with JPEG/PNG input'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -216,7 +216,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata is publish-ready for v0.2.0 candidate',
+    label: 'npm package metadata is aligned for v0.2.0 release',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json publish metadata or README release-status guidance is missing/mismatched',
@@ -458,7 +458,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.0',
-    'Status: release candidate validated. Not published to npm and not tagged.',
+    'Status: published to npm as `react-native-image-compression-kit@0.2.0`, tagged as `v0.2.0`.',
     'replacing the iOS',
     'package stub with a native iOS JPEG compression MVP',
     'Implement iOS native `compressImage()` for local JPEG and PNG input.',
@@ -475,20 +475,27 @@ function checkReleaseNotes() {
     "iOS `metadata: 'preserve'` and `output.maxBytes` reject with `ERR_NOT_IMPLEMENTED`.",
     "iOS `getImageCompressionCapabilities()` reports `metadataPolicies: ['safe', 'strip']`",
     'README iOS support matrix, public API guidance, roadmap, installation status, and release dry-run wording updates.',
-    'Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` candidate.',
+    'Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` release.',
+    'npm package publication under the `latest` dist-tag.',
+    'Git tag `v0.2.0` and GitHub Release `v0.2.0`.',
     'Android runtime behavior changes.',
     'HEIC / HEIF / AVIF / GIF / WebP input on iOS.',
     'iOS target-size compression.',
     'iOS metadata preservation.',
-    'npm publish.',
-    'Git tag creation.',
-    'Before publishing `v0.2.0`, confirm the working tree and branch are correct',
+    '### Published Artifacts',
+    'npm package: `react-native-image-compression-kit@0.2.0`',
+    'Git tag: `v0.2.0`',
+    'GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.0`',
+    'The `v0.2.0` release completed these checks before npm publish',
     'pnpm pack --dry-run',
     'native smoke test that links the pod and compresses a JPEG and PNG source to',
     'Actual iOS host-app validation result for the implementation candidate:',
     'GitHub Actions iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28424614173>.',
     'Runtime smoke evidence: `RNICK_IOS_SMOKE_PASS` with `jpegResultBytes: 946`, `pngResultBytes: 1034`',
     "unsupportedInputs: ['webp', 'heic', 'heif', 'avif', 'gif']",
+    '### Publish Commands',
+    'pnpm publish --tag latest',
+    'npm pack react-native-image-compression-kit@0.2.0',
     '## v0.1.2',
     'Status: published to npm on June 30, 2026 at 02:18:30 UTC (11:18:30 KST), tagged as `v0.1.2`.',
     'This patch keeps Android runtime behavior unchanged',
@@ -590,7 +597,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.0 candidate notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -606,9 +613,9 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.0 candidate notes and previous release notes are current',
+    label: 'v0.2.0 release notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the release scope, non-goals, validation gate, previous tag commands, and previous npm publish steps'
+      ? 'RELEASE.md documents the release scope, non-goals, validation gate, published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
           ...(packageJson.version === '0.2.0' ? [] : ['package.json version 0.2.0']),
@@ -621,7 +628,8 @@ function checkSecurityPolicy() {
   const readmeContents = readText('README.md');
   const expectedSnippets = [
     [securityContents, '# Security Policy'],
-    [securityContents, '| 0.1.x | Yes |'],
+    [securityContents, '| 0.2.x | Yes |'],
+    [securityContents, '| 0.1.x | No |'],
     [securityContents, 'Please do not include exploit details, secrets, private keys, or sensitive'],
     [securityContents, 'The npm package is intended to avoid install-time code execution.'],
     [securityContents, '`preinstall`, `install`, `postinstall`, `prepare`'],

@@ -2,9 +2,9 @@
 
 ## v0.2.0
 
-Status: release candidate validated. Not published to npm and not tagged.
+Status: published to npm as `react-native-image-compression-kit@0.2.0`, tagged as `v0.2.0`.
 
-This candidate keeps Android runtime behavior unchanged while replacing the iOS
+This release keeps Android runtime behavior unchanged while replacing the iOS
 package stub with a native iOS JPEG compression MVP.
 
 ### Goals
@@ -27,12 +27,14 @@ package stub with a native iOS JPEG compression MVP.
 - iOS `metadata: 'preserve'` and `output.maxBytes` reject with `ERR_NOT_IMPLEMENTED`.
 - iOS `getImageCompressionCapabilities()` reports `metadataPolicies: ['safe', 'strip']`, JPEG `input=true` and `output=true`, PNG `input=true` and `output=false`, `supportsTargetSizeCompression: false`, and `supportsCancellation: false`.
 - README iOS support matrix, public API guidance, roadmap, installation status, and release dry-run wording updates.
-- Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` candidate.
+- Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` release.
 - React Native iOS example host app under `example/ios`.
 - iOS example `ExampleImageSource` native module for generated JPEG, PNG, GIF, WebP, HEIC, HEIF, and AVIF smoke fixtures.
 - `scripts/ios-validation.mjs` with `pods`, `build`, and `smoke` modes.
 - `pnpm example:ios:pods`, `pnpm example:ios:build`, and `pnpm example:ios:smoke` scripts.
 - GitHub Actions iOS Validation workflow that runs the host-app smoke on a macOS runner.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.0` and GitHub Release `v0.2.0`.
 
 ### Not Included
 
@@ -41,18 +43,22 @@ package stub with a native iOS JPEG compression MVP.
 - PNG, WebP, HEIC, HEIF, AVIF, or GIF output on iOS.
 - iOS target-size compression.
 - iOS metadata preservation.
-- npm publish.
-- Git tag creation.
 
-### Candidate Checklist
+### Published Artifacts
 
-Before publishing `v0.2.0`, confirm the working tree and branch are correct:
+- npm package: `react-native-image-compression-kit@0.2.0`
+- Git tag: `v0.2.0`
+- GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.0`
+
+### Release Checklist
+
+The `v0.2.0` release completed these checks before npm publish:
 
 ```bash
 git status --short --branch
 ```
 
-Run the release validation gate:
+Release validation gate:
 
 ```bash
 pnpm verify
@@ -85,9 +91,24 @@ Actual iOS host-app validation result for the implementation candidate:
 - Native install/build evidence: CocoaPods installed 76 pods, React Native autolinked `react-native-image-compression-kit`, and `xcodebuild` completed with `BUILD SUCCEEDED`.
 - Runtime smoke evidence: `RNICK_IOS_SMOKE_PASS` with `jpegResultBytes: 946`, `pngResultBytes: 1034`, `unsupportedInputs: ['webp', 'heic', 'heif', 'avif', 'gif']`, and `unsupportedOutputs: ['png', 'webp', 'heic', 'heif', 'avif']`.
 - Same-commit CI evidence: CI passed at <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28424614148> and Android Instrumentation passed at <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28424614133>.
+- Release documentation evidence: CI passed at <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28425030936>, Android Instrumentation passed at <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28425030943>, and iOS Validation passed at <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28425030985>.
 
-Publishing and tag creation remain manual follow-up steps after this candidate
-is reviewed.
+### Publish Commands
+
+The npm publish step requires an authenticated npm registry session. If npm
+two-factor authentication is enabled, use a current passkey or one-time password:
+
+```bash
+pnpm whoami
+pnpm publish --tag latest
+```
+
+After publish, verify the registry version:
+
+```bash
+pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity time --json
+npm pack react-native-image-compression-kit@0.2.0
+```
 
 ## v0.1.2
 

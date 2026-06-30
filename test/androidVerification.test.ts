@@ -88,13 +88,13 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'public `0.1.x` package is distributed under'
+      'The public `0.2.0` package is distributed under'
     );
     expect(readmeSource).toContain(
-      'The current repository package metadata is `0.2.0` for the iOS native JPEG MVP candidate'
+      'version `0.2.0` is the published iOS native JPEG MVP release'
     );
     expect(readmeSource).toContain(
-      'The `0.2.0` candidate adds an iOS native MVP with JPEG/PNG input'
+      'Version `0.2.0` adds an iOS native MVP with JPEG/PNG input'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -277,14 +277,14 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('successful GitHub Actions CI run');
   });
 
-  it('documents the v0.2.0 candidate notes and previous release notes', () => {
+  it('documents the v0.2.0 release notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.0');
     expect(releaseSource).toContain('## v0.2.0');
     expect(releaseSource).toContain(
-      'Status: release candidate validated. Not published to npm and not tagged.'
+      'Status: published to npm as `react-native-image-compression-kit@0.2.0`, tagged as `v0.2.0`.'
     );
     expect(releaseSource).toContain('replacing the iOS');
     expect(releaseSource).toContain(
@@ -333,7 +333,13 @@ describe('Android verification scripts', () => {
       'README iOS support matrix, public API guidance, roadmap, installation status, and release dry-run wording updates.'
     );
     expect(releaseSource).toContain(
-      'Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` candidate.'
+      'Focused TypeScript and source-level native foundation test expectation updates for the `0.2.0` release.'
+    );
+    expect(releaseSource).toContain(
+      'npm package publication under the `latest` dist-tag.'
+    );
+    expect(releaseSource).toContain(
+      'Git tag `v0.2.0` and GitHub Release `v0.2.0`.'
     );
     expect(releaseSource).toContain('Android runtime behavior changes.');
     expect(releaseSource).toContain(
@@ -341,10 +347,16 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain('iOS target-size compression.');
     expect(releaseSource).toContain('iOS metadata preservation.');
-    expect(releaseSource).toContain('npm publish.');
-    expect(releaseSource).toContain('Git tag creation.');
+    expect(releaseSource).toContain('### Published Artifacts');
     expect(releaseSource).toContain(
-      'Before publishing `v0.2.0`, confirm the working tree and branch are correct'
+      'npm package: `react-native-image-compression-kit@0.2.0`'
+    );
+    expect(releaseSource).toContain('Git tag: `v0.2.0`');
+    expect(releaseSource).toContain(
+      'GitHub Release: `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.0`'
+    );
+    expect(releaseSource).toContain(
+      'The `v0.2.0` release completed these checks before npm publish'
     );
     expect(releaseSource).toContain('pnpm pack --dry-run');
     expect(releaseSource).toContain(
@@ -361,6 +373,11 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain(
       "unsupportedInputs: ['webp', 'heic', 'heif', 'avif', 'gif']"
+    );
+    expect(releaseSource).toContain('### Publish Commands');
+    expect(releaseSource).toContain('pnpm publish --tag latest');
+    expect(releaseSource).toContain(
+      'npm pack react-native-image-compression-kit@0.2.0'
     );
     expect(releaseSource).toContain('## v0.1.2');
     expect(releaseSource).toContain(
@@ -584,7 +601,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.0 candidate notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -597,7 +614,8 @@ describe('Android verification scripts', () => {
     const readmeSource = readProjectFile('README.md');
 
     expect(securitySource).toContain('# Security Policy');
-    expect(securitySource).toContain('| 0.1.x | Yes |');
+    expect(securitySource).toContain('| 0.2.x | Yes |');
+    expect(securitySource).toContain('| 0.1.x | No |');
     expect(securitySource).toContain(
       'Please do not include exploit details, secrets, private keys, or sensitive'
     );
