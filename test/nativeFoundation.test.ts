@@ -81,7 +81,7 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('UIImageJPEGRepresentation');
     expect(iosSource).toContain('UIImagePNGRepresentation');
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG, PNG, and GIF input only. GIF input is decoded as a static first frame.'
+      'iOS MVP supports JPEG, PNG, GIF, and WebP input only. GIF and WebP input are decoded as static first frames.'
     );
     expect(iosSource).toContain(
       'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'

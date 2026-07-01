@@ -1,5 +1,59 @@
 # Release Notes
 
+## v0.2.4 Candidate
+
+Status: implementation candidate. Not published to npm. Package metadata remains `0.2.3` until release promotion.
+
+This candidate keeps Android runtime behavior unchanged while adding iOS WebP
+static first-frame input to the existing iOS JPEG/PNG/GIF input and JPEG/PNG
+output MVP.
+
+### Goals
+
+- Implement iOS WebP input without changing the public TypeScript API.
+- Decode WebP input as a static first frame and route it through the existing iOS resize, JPEG quality, JPEG target-size `maxBytes`, PNG output, and metadata no-copy behavior.
+- Align iOS capability reporting, README guidance, TypeScript native-unavailable messaging, source-level expectations, and host-app smoke validation with the new WebP input support.
+
+### Included
+
+- iOS `compressImage()` now accepts WebP input for JPEG and PNG output.
+- iOS WebP input is decoded with ImageIO as a static first frame through `CGImageSourceCreateImageAtIndex`.
+- WebP input to JPEG output keeps resize, `output.quality`, and JPEG `output.maxBytes` behavior.
+- WebP input to PNG output keeps resize behavior and re-encodes without copying source metadata.
+- iOS `safe` and `strip` metadata policies continue to re-encode without copying source metadata.
+- iOS `getImageCompressionCapabilities()` reports WebP `input=true` and `output=false`.
+- iOS WebP format notes state that WebP input is static first-frame only and that WebP output and animation preservation are not implemented.
+- The iOS host-app smoke validates `compress-webp-to-jpeg` and `compress-webp-to-png`, and removes WebP from the unsupported-input rejection loop.
+- The iOS host-app smoke keeps `reject-webp-output` as an `ERR_NOT_IMPLEMENTED` native output capability check because WebP output is not implemented on iOS.
+- TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input and static first-frame GIF/WebP support.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.
+- Source-level tests and the Android verification doctor expectations are updated for the implemented iOS WebP input path.
+
+### Not Included
+
+- Android runtime behavior changes.
+- npm publish.
+- `package.json` version bump.
+- WebP output on iOS.
+- Animated WebP preservation.
+- iOS HEIC, HEIF, or AVIF input.
+- iOS HEIC, HEIF, or AVIF output.
+- iOS metadata preservation.
+- New public API surface.
+
+### Release Checklist
+
+Before release promotion:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm example:ios:smoke
+```
+
 ## v0.2.3
 
 Status: published to npm on July 1, 2026 at 06:09:45 UTC (15:09:45 KST), tagged as `v0.2.3`.

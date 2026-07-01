@@ -17,6 +17,7 @@ static NSString *const RCTImageCompressionKitNativeOperationFailedCode = @"ERR_N
 
 static NSString *const RCTImageCompressionKitJpegFormat = @"jpeg";
 static NSString *const RCTImageCompressionKitPngFormat = @"png";
+static NSString *const RCTImageCompressionKitWebPFormat = @"webp";
 static NSString *const RCTImageCompressionKitGifFormat = @"gif";
 static NSString *const RCTImageCompressionKitDefaultMetadataPolicy = @"safe";
 static NSString *const RCTImageCompressionKitStripMetadataPolicy = @"strip";
@@ -43,7 +44,7 @@ typedef struct {
 
 static NSArray<NSString *> *RCTImageCompressionKitFormats(void)
 {
-  return @[RCTImageCompressionKitJpegFormat, RCTImageCompressionKitPngFormat, @"webp", @"heic", @"heif", @"avif", RCTImageCompressionKitGifFormat];
+  return @[RCTImageCompressionKitJpegFormat, RCTImageCompressionKitPngFormat, RCTImageCompressionKitWebPFormat, @"heic", @"heif", @"avif", RCTImageCompressionKitGifFormat];
 }
 
 static BOOL RCTImageCompressionKitHasValue(NSDictionary *map, NSString *key)
@@ -136,13 +137,28 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
     );
   }
 
+  if ([format isEqualToString:RCTImageCompressionKitWebPFormat]) {
+    return RCTImageCompressionKitFormatCapability(
+      format,
+      YES,
+      NO,
+      YES,
+      NO,
+      @[
+        @"iOS MVP decodes WebP input as a static first frame through ImageIO.",
+        @"WebP input can be re-encoded to JPEG or PNG output without copying source metadata.",
+        @"Animated WebP preservation and WebP output are not implemented."
+      ]
+    );
+  }
+
   return RCTImageCompressionKitFormatCapability(
     format,
     NO,
     NO,
     NO,
     NO,
-    @[@"iOS MVP supports JPEG, PNG, and static GIF input with JPEG or PNG output only."]
+    @[@"iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG or PNG output only."]
   );
 }
 
@@ -390,17 +406,28 @@ static BOOL RCTImageCompressionKitIsGifType(NSString *imageType)
   return [imageType isEqualToString:@"com.compuserve.gif"] || [imageType isEqualToString:@"public.gif"];
 }
 
+static BOOL RCTImageCompressionKitIsWebPType(NSString *imageType)
+{
+  return [imageType isEqualToString:@"org.webmproject.webp"] || [imageType isEqualToString:@"public.webp"];
+}
+
+static BOOL RCTImageCompressionKitShouldDecodeFirstFrame(NSString *imageType)
+{
+  return RCTImageCompressionKitIsGifType(imageType) || RCTImageCompressionKitIsWebPType(imageType);
+}
+
 static BOOL RCTImageCompressionKitIsSupportedInputType(NSString *imageType)
 {
   return
     [imageType isEqualToString:@"public.jpeg"] ||
     [imageType isEqualToString:@"public.png"] ||
-    RCTImageCompressionKitIsGifType(imageType);
+    RCTImageCompressionKitIsGifType(imageType) ||
+    RCTImageCompressionKitIsWebPType(imageType);
 }
 
 static UIImage *RCTImageCompressionKitDecodeImage(NSData *sourceData, NSString *imageType)
 {
-  if (!RCTImageCompressionKitIsGifType(imageType)) {
+  if (!RCTImageCompressionKitShouldDecodeFirstFrame(imageType)) {
     return [UIImage imageWithData:sourceData];
   }
 
@@ -819,7 +846,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitUnsupportedFormatCode,
-        @"iOS MVP supports JPEG, PNG, and GIF input only. GIF input is decoded as a static first frame.",
+        @"iOS MVP supports JPEG, PNG, GIF, and WebP input only. GIF and WebP input are decoded as static first frames.",
         nil
       );
       return;
