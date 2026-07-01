@@ -70,6 +70,7 @@ describe('native module foundation', () => {
       'RCTImageCompressionKitUnsupportedFormatCode = @"ERR_UNSUPPORTED_FORMAT"'
     );
     expect(iosSource).toContain('CGImageSourceCreateWithData');
+    expect(iosSource).toContain('CGImageSourceCreateImageAtIndex');
     expect(iosSource).toContain('RCT_EXPORT_MODULE(ImageCompressionKit)');
     expect(iosSource).toContain(
       'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options'
@@ -79,7 +80,9 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('RNICK_IOS_SMOKE_NATIVE');
     expect(iosSource).toContain('UIImageJPEGRepresentation');
     expect(iosSource).toContain('UIImagePNGRepresentation');
-    expect(iosSource).toContain('iOS MVP supports JPEG and PNG input only.');
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG, PNG, and GIF input only. GIF input is decoded as a static first frame.'
+    );
     expect(iosSource).toContain(
       'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
     );

@@ -1,5 +1,69 @@
 # Release Notes
 
+## v0.2.3 Candidate
+
+Status: prepared for local and CI validation. Not published to npm yet.
+
+This candidate keeps Android runtime behavior unchanged while adding iOS GIF
+static first-frame input to the existing iOS JPEG/PNG input and JPEG/PNG output
+MVP.
+
+### Goals
+
+- Implement iOS GIF input without changing the public TypeScript API.
+- Decode GIF input as a static first frame and route it through the existing iOS resize, JPEG quality, JPEG target-size `maxBytes`, PNG output, and metadata no-copy behavior.
+- Align iOS capability reporting, README guidance, TypeScript native-unavailable messaging, source-level expectations, and host-app smoke validation with the new GIF input support.
+
+### Included
+
+- `package.json` version bump to `0.2.3`.
+- iOS `compressImage()` now accepts GIF input for JPEG and PNG output.
+- iOS GIF input is decoded with ImageIO as a static first frame through `CGImageSourceCreateImageAtIndex`.
+- GIF input to JPEG output keeps resize, `output.quality`, and JPEG `output.maxBytes` behavior.
+- GIF input to PNG output keeps resize behavior and re-encodes without copying source metadata.
+- iOS `safe` and `strip` metadata policies continue to re-encode without copying source metadata.
+- iOS `getImageCompressionCapabilities()` reports GIF `input=true` and `output=false`.
+- iOS GIF format notes state that GIF input is static first-frame only and that GIF output and animation preservation are not implemented.
+- The iOS host-app smoke validates `compress-gif-to-jpeg` and `compress-gif-to-png`, and removes GIF from the unsupported-input rejection loop.
+- The iOS host-app smoke keeps `reject-gif-output` as an `ERR_INVALID_OPTIONS` TypeScript validation check because GIF output is not part of the public output format surface.
+- TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF input and static first-frame GIF support.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.
+- Source-level tests and the Android verification doctor expectations are updated for the implemented iOS GIF input path.
+
+### Not Included
+
+- Android runtime behavior changes.
+- GIF output.
+- GIF animation preservation.
+- Animated WebP handling.
+- iOS WebP, HEIC, HEIF, or AVIF input.
+- iOS WebP, HEIC, HEIF, or AVIF output.
+- iOS metadata preservation.
+- npm publish.
+- New public API surface.
+
+### Candidate Verification
+
+Before promotion:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm example:ios:smoke
+```
+
+Expected iOS runtime smoke evidence:
+
+- `RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-jpeg`.
+- `RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-png`.
+- `RNICK_IOS_SMOKE_STEP_PASS reject-gif-output`.
+- `RNICK_IOS_SMOKE_PASS` summary includes `gifResultBytes`, `gifToPngResultBytes`, and `unsupportedInputs` excluding `gif`.
+
+Promotion also requires master CI, Android Instrumentation, and iOS Validation to be green.
+
 ## v0.2.2
 
 Status: published to npm on June 30, 2026 at 10:50:12 UTC (19:50:12 KST), tagged as `v0.2.2`.

@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.2');
+    expect(packageJson.version).toBe('0.2.3');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -88,10 +88,13 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'The latest published npm package is `react-native-image-compression-kit@0.2.2`.'
+      'This repository is prepared for a `react-native-image-compression-kit@0.2.3` release candidate.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.2` package metadata is published under'
+      'The latest published npm package remains `react-native-image-compression-kit@0.2.2`.'
+    );
+    expect(readmeSource).toContain(
+      'The `0.2.3` package metadata is prepared as a release candidate under'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -101,6 +104,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'version `0.2.2` is the published iOS PNG output release'
+    );
+    expect(readmeSource).toContain(
+      'version `0.2.3` is the iOS GIF static first-frame input candidate'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -313,11 +319,56 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.2 release notes and previous release notes', () => {
+  it('documents the v0.2.3 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.2');
+    expect(packageJson.version).toBe('0.2.3');
+    expect(releaseSource).toContain('## v0.2.3 Candidate');
+    expect(releaseSource).toContain(
+      'Status: prepared for local and CI validation. Not published to npm yet.'
+    );
+    expect(releaseSource).toContain('adding iOS GIF');
+    expect(releaseSource).toContain(
+      'static first-frame input to the existing iOS JPEG/PNG input and JPEG/PNG output'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.3`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `compressImage()` now accepts GIF input for JPEG and PNG output.'
+    );
+    expect(releaseSource).toContain(
+      'iOS GIF input is decoded with ImageIO as a static first frame through `CGImageSourceCreateImageAtIndex`.'
+    );
+    expect(releaseSource).toContain(
+      'GIF input to JPEG output keeps resize, `output.quality`, and JPEG `output.maxBytes` behavior.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `getImageCompressionCapabilities()` reports GIF `input=true` and `output=false`.'
+    );
+    expect(releaseSource).toContain(
+      'The iOS host-app smoke validates `compress-gif-to-jpeg` and `compress-gif-to-png`, and removes GIF from the unsupported-input rejection loop.'
+    );
+    expect(releaseSource).toContain(
+      'The iOS host-app smoke keeps `reject-gif-output` as an `ERR_INVALID_OPTIONS` TypeScript validation check because GIF output is not part of the public output format surface.'
+    );
+    expect(releaseSource).toContain(
+      'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF input and static first-frame GIF support.'
+    );
+    expect(releaseSource).toContain('### Candidate Verification');
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-jpeg'
+    );
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-png'
+    );
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS reject-gif-output'
+    );
+    expect(releaseSource).toContain(
+      '`RNICK_IOS_SMOKE_PASS` summary includes `gifResultBytes`, `gifToPngResultBytes`, and `unsupportedInputs` excluding `gif`.'
+    );
     expect(releaseSource).toContain('## v0.2.2');
     expect(releaseSource).toContain(
       'Status: published to npm on June 30, 2026 at 10:50:12 UTC (19:50:12 KST), tagged as `v0.2.2`.'
@@ -843,7 +894,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.3 candidate notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -1204,7 +1255,7 @@ describe('Android verification scripts', () => {
     expect(moduleSource).not.toContain('BitmapFactory.decodeFile');
   });
 
-  it('verifies the iOS native module implements the JPEG MVP path', () => {
+  it('verifies the iOS native module implements the JPEG/PNG/GIF MVP path', () => {
     const iosSource = readProjectFile('ios/RCTImageCompressionKit.mm');
     const podspecSource = readProjectFile(
       'react-native-image-compression-kit.podspec'
@@ -1220,6 +1271,7 @@ describe('Android verification scripts', () => {
     );
     expect(iosSource).toContain('RCTImageCompressionKitJpegFormat = @"jpeg"');
     expect(iosSource).toContain('RCTImageCompressionKitPngFormat = @"png"');
+    expect(iosSource).toContain('RCTImageCompressionKitGifFormat = @"gif"');
     expect(iosSource).toContain(
       'RCTImageCompressionKitDefaultMetadataPolicy = @"safe"'
     );
@@ -1242,7 +1294,16 @@ describe('Android verification scripts', () => {
       'PNG output ignores quality and does not support target-size maxBytes.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG and PNG input with JPEG or PNG output only.'
+      'iOS MVP decodes GIF input as a static first frame through ImageIO.'
+    );
+    expect(iosSource).toContain(
+      'GIF input can be re-encoded to JPEG or PNG output without copying source metadata.'
+    );
+    expect(iosSource).toContain(
+      'Animated GIF preservation and GIF output are not implemented.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG, PNG, and static GIF input with JPEG or PNG output only.'
     );
     expect(iosSource).toContain(
       'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
@@ -1269,9 +1330,17 @@ describe('Android verification scripts', () => {
       'iOS MVP supports file:// and content:// image URIs only.'
     );
     expect(iosSource).toContain('iOS MVP could not read the source image URI.');
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG, PNG, and GIF input only. GIF input is decoded as a static first frame.'
+    );
     expect(iosSource).toContain('iOS MVP could not decode the source image.');
     expect(iosSource).toContain('iOS MVP could not encode %@ output.');
     expect(iosSource).toContain('CGImageSourceCreateWithData');
+    expect(iosSource).toContain('CGImageSourceCreateImageAtIndex');
+    expect(iosSource).toContain('RCTImageCompressionKitDecodeImage');
+    expect(iosSource).toContain('RCTImageCompressionKitIsGifType');
+    expect(iosSource).toContain('com.compuserve.gif');
+    expect(iosSource).toContain('public.gif');
     expect(iosSource).toContain('UIImage imageWithData');
     expect(iosSource).toContain('UIImageJPEGRepresentation');
     expect(iosSource).toContain('UIImagePNGRepresentation');

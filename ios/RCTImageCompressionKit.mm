@@ -17,6 +17,7 @@ static NSString *const RCTImageCompressionKitNativeOperationFailedCode = @"ERR_N
 
 static NSString *const RCTImageCompressionKitJpegFormat = @"jpeg";
 static NSString *const RCTImageCompressionKitPngFormat = @"png";
+static NSString *const RCTImageCompressionKitGifFormat = @"gif";
 static NSString *const RCTImageCompressionKitDefaultMetadataPolicy = @"safe";
 static NSString *const RCTImageCompressionKitStripMetadataPolicy = @"strip";
 static NSString *const RCTImageCompressionKitPreserveMetadataPolicy = @"preserve";
@@ -42,7 +43,7 @@ typedef struct {
 
 static NSArray<NSString *> *RCTImageCompressionKitFormats(void)
 {
-  return @[@"jpeg", @"png", @"webp", @"heic", @"heif", @"avif", @"gif"];
+  return @[RCTImageCompressionKitJpegFormat, RCTImageCompressionKitPngFormat, @"webp", @"heic", @"heif", @"avif", RCTImageCompressionKitGifFormat];
 }
 
 static BOOL RCTImageCompressionKitHasValue(NSDictionary *map, NSString *key)
@@ -120,13 +121,28 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
     );
   }
 
+  if ([format isEqualToString:RCTImageCompressionKitGifFormat]) {
+    return RCTImageCompressionKitFormatCapability(
+      format,
+      YES,
+      NO,
+      YES,
+      NO,
+      @[
+        @"iOS MVP decodes GIF input as a static first frame through ImageIO.",
+        @"GIF input can be re-encoded to JPEG or PNG output without copying source metadata.",
+        @"Animated GIF preservation and GIF output are not implemented."
+      ]
+    );
+  }
+
   return RCTImageCompressionKitFormatCapability(
     format,
     NO,
     NO,
     NO,
     NO,
-    @[@"iOS MVP supports JPEG and PNG input with JPEG or PNG output only."]
+    @[@"iOS MVP supports JPEG, PNG, and static GIF input with JPEG or PNG output only."]
   );
 }
 
@@ -369,9 +385,44 @@ static NSString *RCTImageCompressionKitImageType(NSData *sourceData)
   return imageType;
 }
 
+static BOOL RCTImageCompressionKitIsGifType(NSString *imageType)
+{
+  return [imageType isEqualToString:@"com.compuserve.gif"] || [imageType isEqualToString:@"public.gif"];
+}
+
 static BOOL RCTImageCompressionKitIsSupportedInputType(NSString *imageType)
 {
-  return [imageType isEqualToString:@"public.jpeg"] || [imageType isEqualToString:@"public.png"];
+  return
+    [imageType isEqualToString:@"public.jpeg"] ||
+    [imageType isEqualToString:@"public.png"] ||
+    RCTImageCompressionKitIsGifType(imageType);
+}
+
+static UIImage *RCTImageCompressionKitDecodeImage(NSData *sourceData, NSString *imageType)
+{
+  if (!RCTImageCompressionKitIsGifType(imageType)) {
+    return [UIImage imageWithData:sourceData];
+  }
+
+  CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)sourceData, nil);
+  if (imageSource == nil) {
+    return nil;
+  }
+
+  if (CGImageSourceGetCount(imageSource) == 0) {
+    CFRelease(imageSource);
+    return nil;
+  }
+
+  CGImageRef firstFrame = CGImageSourceCreateImageAtIndex(imageSource, 0, nil);
+  CFRelease(imageSource);
+  if (firstFrame == nil) {
+    return nil;
+  }
+
+  UIImage *image = [UIImage imageWithCGImage:firstFrame scale:1.0 orientation:UIImageOrientationUp];
+  CGImageRelease(firstFrame);
+  return image;
 }
 
 static CGFloat RCTImageCompressionKitDimension(CGFloat value)
@@ -768,7 +819,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitUnsupportedFormatCode,
-        @"iOS MVP supports JPEG and PNG input only.",
+        @"iOS MVP supports JPEG, PNG, and GIF input only. GIF input is decoded as a static first frame.",
         nil
       );
       return;
@@ -779,7 +830,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     __block NSData *outputData = nil;
     RCTImageCompressionKitSmokeLog(@"image-work-start");
     RCTImageCompressionKitRunImageWork(^{
-      sourceImage = [UIImage imageWithData:sourceData];
+      sourceImage = RCTImageCompressionKitDecodeImage(sourceData, imageType);
       if (sourceImage == nil || sourceImage.size.width <= 0 || sourceImage.size.height <= 0) {
         return;
       }

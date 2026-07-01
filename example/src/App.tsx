@@ -18,6 +18,7 @@ import {
   getImageCompressionCapabilities,
   type CompressionOptions,
   type CompressionResult,
+  type ImageFormat,
   type ImageCompressionCapabilities,
   type MetadataPolicy,
   type OutputFormat,
@@ -259,7 +260,7 @@ export default function App(): React.JSX.Element {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Image Compression Kit</Text>
-        <Text style={styles.subtitle}>Android MVP / iOS JPEG+PNG MVP</Text>
+        <Text style={styles.subtitle}>Android MVP / iOS JPEG+PNG+GIF MVP</Text>
 
         <View style={styles.section}>
           <Text style={styles.label}>Source URI</Text>
@@ -485,8 +486,10 @@ type IOSHostAppSmokeSummary = {
   platform: 'ios';
   jpegResultBytes: number;
   pngResultBytes: number;
+  gifResultBytes: number;
   jpegToPngResultBytes: number;
   pngToPngResultBytes: number;
+  gifToPngResultBytes: number;
   targetSizeResultBytes: number;
   unsupportedInputs: string[];
   unsupportedOutputs: string[];
@@ -511,6 +514,7 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   );
   assertIOSFormatCapability(capabilities, 'jpeg', true, true);
   assertIOSFormatCapability(capabilities, 'png', true, true);
+  assertIOSFormatCapability(capabilities, 'gif', true, false);
   assertIOSSmoke(
     capabilities.metadataPolicies.join(',') === 'safe,strip',
     `Expected iOS metadata policies safe,strip, received ${capabilities.metadataPolicies.join(',')}.`
@@ -530,6 +534,10 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   const pngUri = await runIOSSmokeStep('copy-png-fixture', () =>
     copySamplePngToCache()
   );
+  const gifUri = await runIOSSmokeStep('copy-gif-fixture', () =>
+    copyUnsupportedImageToCache('gif')
+  );
+  const targetSizeMaxBytes = 1_000;
   const jpegResult = await runIOSSmokeStep('compress-jpeg-to-jpeg', () =>
     compressImage({
       source: { uri: jpegUri },
@@ -546,9 +554,26 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
       metadata: 'strip',
     })
   );
+  const gifResult = await runIOSSmokeStep('compress-gif-to-jpeg', () =>
+    compressImage({
+      source: { uri: gifUri },
+      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+      output: {
+        format: 'jpeg',
+        quality: 74,
+        maxBytes: targetSizeMaxBytes,
+      },
+      metadata: 'safe',
+    })
+  );
 
   assertCompressionResult(jpegResult, 'jpeg');
   assertCompressionResult(pngResult, 'jpeg');
+  assertCompressionResult(gifResult, 'jpeg');
+  assertIOSSmoke(
+    gifResult.byteSize <= targetSizeMaxBytes,
+    `Expected iOS GIF target-size output <= ${targetSizeMaxBytes} bytes, received ${gifResult.byteSize}.`
+  );
 
   const jpegToPngResult = await runIOSSmokeStep('compress-jpeg-to-png', () =>
     compressImage({
@@ -566,11 +591,19 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
       metadata: 'strip',
     })
   );
+  const gifToPngResult = await runIOSSmokeStep('compress-gif-to-png', () =>
+    compressImage({
+      source: { uri: gifUri },
+      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+      output: { format: 'png', quality: 10 },
+      metadata: 'strip',
+    })
+  );
 
   assertCompressionResult(jpegToPngResult, 'png');
   assertCompressionResult(pngToPngResult, 'png');
+  assertCompressionResult(gifToPngResult, 'png');
 
-  const targetSizeMaxBytes = 1_000;
   const targetSizeResult = await runIOSSmokeStep(
     'compress-jpeg-to-jpeg-max-bytes',
     () =>
@@ -604,7 +637,7 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     )
   );
 
-  const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif'];
+  const unsupportedInputs = ['webp', 'heic', 'heif', 'avif'];
   for (const format of unsupportedInputs) {
     const unsupportedUri = await runIOSSmokeStep(
       `copy-unsupported-${format}-fixture`,
@@ -640,6 +673,19 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     );
   }
 
+  await runIOSSmokeStep('reject-gif-output', () =>
+    expectNativeErrorCode(
+      () =>
+        compressImage({
+          source: { uri: jpegUri },
+          output: { format: 'gif' as OutputFormat, quality: 70 },
+          metadata: 'safe',
+        }),
+      'ERR_INVALID_OPTIONS',
+      'Expected GIF output to be rejected before native compression.'
+    )
+  );
+
   await runIOSSmokeStep('reject-metadata-preserve', () =>
     expectNativeErrorCode(
       () =>
@@ -657,8 +703,10 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     platform: 'ios',
     jpegResultBytes: jpegResult.byteSize,
     pngResultBytes: pngResult.byteSize,
+    gifResultBytes: gifResult.byteSize,
     jpegToPngResultBytes: jpegToPngResult.byteSize,
     pngToPngResultBytes: pngToPngResult.byteSize,
+    gifToPngResultBytes: gifToPngResult.byteSize,
     targetSizeResultBytes: targetSizeResult.byteSize,
     unsupportedInputs,
     unsupportedOutputs: [...unsupportedOutputs],
@@ -720,7 +768,7 @@ function withIOSSmokeTimeout<T>(name: string, promise: Promise<T>): Promise<T> {
 
 function assertIOSFormatCapability(
   capabilities: ImageCompressionCapabilities,
-  format: 'jpeg' | 'png',
+  format: ImageFormat,
   expectedInput: boolean,
   expectedOutput: boolean
 ): void {

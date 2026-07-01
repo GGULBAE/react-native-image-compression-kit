@@ -191,7 +191,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.2',
+    packageJson.version === '0.2.3',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -206,11 +206,13 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('The latest published npm package is `react-native-image-compression-kit@0.2.2`.'),
-    readmeContents.includes('The `0.2.2` package metadata is published under'),
+    readmeContents.includes('This repository is prepared for a `react-native-image-compression-kit@0.2.3` release candidate.'),
+    readmeContents.includes('The latest published npm package remains `react-native-image-compression-kit@0.2.2`.'),
+    readmeContents.includes('The `0.2.3` package metadata is prepared as a release candidate under'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
+    readmeContents.includes('version `0.2.3` is the iOS GIF static first-frame input candidate'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -218,7 +220,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata is aligned for v0.2.2 published release',
+    label: 'npm package metadata is aligned for v0.2.3 candidate',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json publish metadata or README release-status guidance is missing/mismatched',
@@ -459,6 +461,26 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.3 Candidate',
+    'Status: prepared for local and CI validation. Not published to npm yet.',
+    'adding iOS GIF',
+    'static first-frame input to the existing iOS JPEG/PNG input and JPEG/PNG output',
+    '`package.json` version bump to `0.2.3`.',
+    'iOS `compressImage()` now accepts GIF input for JPEG and PNG output.',
+    'iOS GIF input is decoded with ImageIO as a static first frame through `CGImageSourceCreateImageAtIndex`.',
+    'GIF input to JPEG output keeps resize, `output.quality`, and JPEG `output.maxBytes` behavior.',
+    'GIF input to PNG output keeps resize behavior and re-encodes without copying source metadata.',
+    'iOS `getImageCompressionCapabilities()` reports GIF `input=true` and `output=false`.',
+    'The iOS host-app smoke validates `compress-gif-to-jpeg` and `compress-gif-to-png`, and removes GIF from the unsupported-input rejection loop.',
+    'The iOS host-app smoke keeps `reject-gif-output` as an `ERR_INVALID_OPTIONS` TypeScript validation check because GIF output is not part of the public output format surface.',
+    'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF input and static first-frame GIF support.',
+    'npm publish.',
+    '### Candidate Verification',
+    'RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-jpeg',
+    'RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-png',
+    'RNICK_IOS_SMOKE_STEP_PASS reject-gif-output',
+    '`RNICK_IOS_SMOKE_PASS` summary includes `gifResultBytes`, `gifToPngResultBytes`, and `unsupportedInputs` excluding `gif`.',
+    'Promotion also requires master CI, Android Instrumentation, and iOS Validation to be green.',
     '## v0.2.2',
     'Status: published to npm on June 30, 2026 at 10:50:12 UTC (19:50:12 KST), tagged as `v0.2.2`.',
     'adding PNG output',
@@ -678,7 +700,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.3 candidate notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -690,16 +712,16 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.2' && missing.length === 0;
+  const ok = packageJson.version === '0.2.3' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.2 release notes and previous release notes are current',
+    label: 'v0.2.3 candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation evidence, previous published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.2' ? [] : ['package.json version 0.2.2']),
+          ...(packageJson.version === '0.2.3' ? [] : ['package.json version 0.2.3']),
         ].join(' | ')}`,
   };
 }
@@ -1057,6 +1079,7 @@ function checkIOSNativeModule() {
     'RCTImageCompressionKitNotImplementedCode = @"ERR_NOT_IMPLEMENTED"',
     'RCTImageCompressionKitJpegFormat = @"jpeg"',
     'RCTImageCompressionKitPngFormat = @"png"',
+    'RCTImageCompressionKitGifFormat = @"gif"',
     'RCTImageCompressionKitDefaultMetadataPolicy = @"safe"',
     'RCTImageCompressionKitStripMetadataPolicy = @"strip"',
     'RCTImageCompressionKitPreserveMetadataPolicy = @"preserve"',
@@ -1064,7 +1087,10 @@ function checkIOSNativeModule() {
     'iOS MVP supports PNG input and PNG output through UIKit/ImageIO.',
     'PNG output preserves alpha where the processed image contains transparency.',
     'PNG output ignores quality and does not support target-size maxBytes.',
-    'iOS MVP supports JPEG and PNG input with JPEG or PNG output only.',
+    'iOS MVP decodes GIF input as a static first frame through ImageIO.',
+    'GIF input can be re-encoded to JPEG or PNG output without copying source metadata.',
+    'Animated GIF preservation and GIF output are not implemented.',
+    'iOS MVP supports JPEG, PNG, and static GIF input with JPEG or PNG output only.',
     'RCT_EXPORT_MODULE(ImageCompressionKit)',
     'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options',
     'compressImageWithDictionary:optionsMap',
@@ -1079,9 +1105,15 @@ function checkIOSNativeModule() {
     'Compression resize.mode must be one of: contain, cover, stretch.',
     'iOS MVP supports file:// and content:// image URIs only.',
     'iOS MVP could not read the source image URI.',
+    'iOS MVP supports JPEG, PNG, and GIF input only. GIF input is decoded as a static first frame.',
     'iOS MVP could not decode the source image.',
     'iOS MVP could not encode %@ output.',
     'CGImageSourceCreateWithData',
+    'CGImageSourceCreateImageAtIndex',
+    'RCTImageCompressionKitDecodeImage',
+    'RCTImageCompressionKitIsGifType',
+    'com.compuserve.gif',
+    'public.gif',
     'UIImage imageWithData',
     'UIImageJPEGRepresentation',
     'UIImagePNGRepresentation',
@@ -1107,10 +1139,10 @@ function checkIOSNativeModule() {
 
   return {
     ok: missing.length === 0 && podspecIncludesIOS,
-    label: 'iOS native module implements the JPEG/PNG MVP path',
+    label: 'iOS native module implements the JPEG/PNG/GIF MVP path',
     detail:
       missing.length === 0 && podspecIncludesIOS
-        ? 'iOS source includes file/content URI reads, JPEG/PNG input detection, resize, quality-based and target-size JPEG output, PNG output, explicit unsupported-option errors, and iOS capability reporting'
+        ? 'iOS source includes file/content URI reads, JPEG/PNG/GIF input detection, static first-frame GIF decode, resize, quality-based and target-size JPEG output, PNG output, explicit unsupported-option errors, and iOS capability reporting'
         : `missing snippets: ${[
             ...missing,
             ...(podspecIncludesIOS ? [] : ['podspec iOS platform/source_files']),
@@ -1148,10 +1180,14 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'RNICK_IOS_POD_INSTALL_ATTEMPTS'],
     [readmeContents, 'RNICK_IOS_METRO_READY_TIMEOUT_MS'],
     [readmeContents, "metadataPolicies: ['safe', 'strip']"],
-    [readmeContents, 'JPEG and PNG fixtures compress to PNG output'],
+    [readmeContents, 'GIF input with no GIF output'],
+    [readmeContents, 'JPEG, PNG, and GIF fixtures compress to JPEG output'],
+    [readmeContents, 'JPEG, PNG, and GIF fixtures compress to PNG output'],
+    [readmeContents, 'GIF JPEG output runs through the `output.maxBytes` path'],
     [readmeContents, 'PNG `output.maxBytes` rejects with `ERR_NOT_IMPLEMENTED`'],
-    [readmeContents, 'WebP, HEIC, HEIF, AVIF, and GIF inputs reject with `ERR_UNSUPPORTED_FORMAT`'],
+    [readmeContents, 'WebP, HEIC, HEIF, and AVIF inputs reject with `ERR_UNSUPPORTED_FORMAT`'],
     [readmeContents, 'WebP, HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`'],
+    [readmeContents, 'GIF output remains rejected by TypeScript validation with `ERR_INVALID_OPTIONS`'],
     [readmeContents, 'The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner'],
     [releaseContents, 'Validate the iOS MVP through a React Native iOS host app'],
     [releaseContents, 'React Native iOS example host app under `example/ios`.'],
@@ -1184,14 +1220,23 @@ function checkIOSHostAppValidation() {
     [appContents, 'ERR_IOS_SMOKE_TIMEOUT'],
     [appContents, 'RNICK_IOS_SMOKE_PASS'],
     [appContents, 'copySamplePngToCache'],
+    [appContents, 'copy-gif-fixture'],
     [appContents, 'copyUnsupportedImageToCache'],
-    [appContents, "const unsupportedInputs = ['webp', 'heic', 'heif', 'avif', 'gif']"],
+    [appContents, "assertIOSFormatCapability(capabilities, 'gif', true, false)"],
+    [appContents, 'compress-gif-to-jpeg'],
+    [appContents, 'compress-gif-to-png'],
+    [appContents, 'reject-gif-output'],
+    [appContents, 'gifResultBytes'],
+    [appContents, 'gifToPngResultBytes'],
+    [appContents, "const unsupportedInputs = ['webp', 'heic', 'heif', 'avif']"],
     [appContents, "const unsupportedOutputs = ['webp', 'heic', 'heif', 'avif'] as const"],
     [appContents, 'Expected iOS JPEG target-size compression to be supported.'],
     [appContents, 'compress-jpeg-to-jpeg-max-bytes'],
     [appContents, 'compress-jpeg-to-png'],
     [appContents, 'compress-png-to-png'],
     [appContents, 'reject-png-max-bytes'],
+    [appContents, 'Expected iOS GIF target-size output <= ${targetSizeMaxBytes} bytes'],
+    [appContents, 'Expected GIF output to be rejected before native compression.'],
     [appContents, 'Expected iOS target-size output <= ${targetSizeMaxBytes} bytes'],
     [appContents, 'Expected PNG maxBytes to be unsupported on iOS.'],
     [appContents, "Expected metadata: 'preserve' to be unimplemented on iOS."],
