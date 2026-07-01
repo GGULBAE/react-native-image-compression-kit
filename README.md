@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Status: v0.2.4 candidate" src="https://img.shields.io/badge/Status-v0.2.4%20candidate-blue" />
+  <img alt="Status: v0.2.4 publish preflight" src="https://img.shields.io/badge/Status-v0.2.4%20publish%20preflight-blue" />
   <img alt="Platforms: Android MVP | iOS JPEG/PNG/GIF/WebP MVP" src="https://img.shields.io/badge/Platforms-Android%20MVP%20%7C%20iOS%20JPEG%2FPNG%2FGIF%2FWebP%20MVP-green" />
   <img alt="React Native: Codegen ready" src="https://img.shields.io/badge/React%20Native-Codegen%20ready-61dafb" />
   <img alt="TypeScript: API available" src="https://img.shields.io/badge/TypeScript-API%20available-3178c6" />
@@ -28,15 +28,15 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This repository is prepared as a `v0.2.4` candidate that keeps the Android MVP intact and adds iOS WebP static first-frame input on top of the published `0.2.3` iOS GIF input release. The latest published npm package remains `react-native-image-compression-kit@0.2.3`, with GitHub Release [v0.2.3](https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.3), until a later publish step promotes the candidate. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS native module, unit test foundation, and npm package metadata are in place.
+This repository is prepared for the `v0.2.4` publish preflight. It keeps the Android MVP intact and adds iOS WebP static first-frame input on top of the published `0.2.3` iOS GIF input release. The source package metadata is bumped to `0.2.4`; the latest published npm package remains `react-native-image-compression-kit@0.2.3`, with GitHub Release [v0.2.3](https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.3), until the manual publish, tag, and GitHub Release steps promote `v0.2.4`. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS native module, unit test foundation, and npm package metadata are in place.
 
-Android includes a published image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. The current iOS JPEG/PNG/GIF/WebP MVP candidate supports `file://` and `content://` JPEG, PNG, GIF, or WebP input, optional resize, quality-based JPEG output, target-size JPEG output with `output.maxBytes`, PNG output, cache-file results, and `safe` / `strip` metadata policies that re-encode without copying source metadata. GIF and WebP input are decoded as static first frames through ImageIO on iOS. iOS `getImageCompressionCapabilities()` reports JPEG input/output, PNG input/output, GIF input with no GIF output, WebP input with no WebP output, `metadataPolicies: ['safe', 'strip']`, target-size compression support, and no cancellation. GIF output, GIF animation preservation, animated WebP preservation, HEIC / HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, iOS WebP output, and broader metadata support are not implemented yet.
+Android includes a published image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. The current iOS JPEG/PNG/GIF/WebP MVP preflight supports `file://` and `content://` JPEG, PNG, GIF, or WebP input, optional resize, quality-based JPEG output, target-size JPEG output with `output.maxBytes`, PNG output, cache-file results, and `safe` / `strip` metadata policies that re-encode without copying source metadata. GIF and WebP input are decoded as static first frames through ImageIO on iOS. iOS `getImageCompressionCapabilities()` reports JPEG input/output, PNG input/output, GIF input with no GIF output, WebP input with no WebP output, `metadataPolicies: ['safe', 'strip']`, target-size compression support, and no cancellation. GIF output, GIF animation preservation, animated WebP preservation, HEIC / HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, iOS WebP output, and broader metadata support are not implemented yet.
 
 ## Current Implementation Scope
 
 The current implementation is intentionally small:
 
-- Runtime compression is implemented on Android and on the current iOS JPEG/PNG/GIF/WebP MVP candidate surface.
+- Runtime compression is implemented on Android and on the current iOS JPEG/PNG/GIF/WebP MVP preflight surface.
 - Android supports `file://` and `content://` local URI input. iOS supports `file://` and best-effort `content://` local URI input through Foundation URL loading.
 - JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input. GIF input is static first-frame only, HEIC / HEIF input depends on Android SDK and device codec support, and AVIF input requires Android 14+ baseline image support.
 - iOS input is currently JPEG, PNG, static first-frame GIF, and static first-frame WebP.
@@ -97,8 +97,8 @@ The following product features are planned or only partially implemented.
 - Automatic format detection.
 - Quality-based compression.
 - Target file size compression with `maxBytes`. Android MVP support is implemented for JPEG and WebP output; iOS support is implemented for JPEG output, while iOS PNG output intentionally rejects `maxBytes`.
-- Optional resize during compression. Android MVP and iOS JPEG/PNG/GIF/WebP MVP candidate support is implemented.
-- Output format selection. Android MVP supports JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC / HEIF, and Android 14+ AVIF input with JPEG, PNG, and WebP output. iOS MVP candidate supports JPEG and PNG output from JPEG, PNG, static GIF, and static WebP input.
+- Optional resize during compression. Android MVP and iOS JPEG/PNG/GIF/WebP MVP support is implemented.
+- Output format selection. Android MVP supports JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC / HEIF, and Android 14+ AVIF input with JPEG, PNG, and WebP output. iOS MVP supports JPEG and PNG output from JPEG, PNG, static GIF, and static WebP input.
 - Automatic EXIF orientation correction. Android MVP support is implemented for JPEG input.
 - Metadata preservation and stripping policies. Android MVP supports `preserve`, `safe`, and `strip` for JPEG source to JPEG output.
 - Alpha-channel handling.
@@ -122,13 +122,13 @@ The table below describes planned input and output support. Actual availability 
 | AVIF | Yes | Later | Android input implemented on API 34+ with ImageDecoder |
 | GIF | Yes | Later | Static first-frame support before animation preservation |
 
-Current Android MVP support is narrower than the planned table: JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC, SDK-gated HEIF, and Android 14+ AVIF input are implemented, and JPEG, PNG, and WebP output are implemented. Current iOS MVP candidate support is narrower again: JPEG, PNG, static first-frame GIF, and static first-frame WebP input are implemented, JPEG output is implemented with quality, resize, and target-size compression, and PNG output is implemented without target-size compression. GIF output, GIF animation preservation, animated WebP preservation, HEIC / HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, and iOS WebP output remain planned. HEIC / HEIF inputs on Android versions below 8.0 and AVIF inputs on Android versions below 14 reject as `ERR_UNSUPPORTED_FORMAT`. Corrupt supported-format inputs, including corrupt GIF, HEIC / HEIF, and AVIF candidates on supported SDKs, reject as `ERR_DECODE_FAILED`.
+Current Android MVP support is narrower than the planned table: JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC, SDK-gated HEIF, and Android 14+ AVIF input are implemented, and JPEG, PNG, and WebP output are implemented. Current iOS MVP support is narrower again: JPEG, PNG, static first-frame GIF, and static first-frame WebP input are implemented, JPEG output is implemented with quality, resize, and target-size compression, and PNG output is implemented without target-size compression. GIF output, GIF animation preservation, animated WebP preservation, HEIC / HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, and iOS WebP output remain planned. HEIC / HEIF inputs on Android versions below 8.0 and AVIF inputs on Android versions below 14 reject as `ERR_UNSUPPORTED_FORMAT`. Corrupt supported-format inputs, including corrupt GIF, HEIC / HEIF, and AVIF candidates on supported SDKs, reject as `ERR_DECODE_FAILED`.
 
 Animation preservation for GIF, animated WebP, and animated AVIF is not planned as an initial-version guarantee.
 
 ## iOS MVP Behavior
 
-Version `0.2.0` replaces the previous iOS package stub with a native JPEG MVP. Version `0.2.1` extends that iOS JPEG MVP with target-size compression. Version `0.2.2` adds PNG output. Version `0.2.3` adds GIF input decoded as a static first frame. The `v0.2.4` candidate adds WebP input decoded as a static first frame:
+Version `0.2.0` replaces the previous iOS package stub with a native JPEG MVP. Version `0.2.1` extends that iOS JPEG MVP with target-size compression. Version `0.2.2` adds PNG output. Version `0.2.3` adds GIF input decoded as a static first frame. Version `0.2.4` adds WebP input decoded as a static first frame:
 
 - `compressImage()` accepts `file://` and best-effort `content://` JPEG, PNG, GIF, or WebP source URIs.
 - JPEG output is encoded with `UIImageJPEGRepresentation()` into the iOS app cache directory.
@@ -197,7 +197,7 @@ For AVIF manual validation, use an API 34+ device or emulator and repeat the cop
 
 ## Public API
 
-The API below is available from the package. Runtime compression succeeds on the Android MVP. In version `0.2.3`, iOS runtime compression succeeds for JPEG, PNG, or static first-frame GIF input to JPEG or PNG output, including JPEG `output.maxBytes`; call `getImageCompressionCapabilities()` to guard platform-specific format, metadata, and target-size support before compression.
+The API below is available from the package. Runtime compression succeeds on the Android MVP. In version `0.2.4`, iOS runtime compression succeeds for JPEG, PNG, static first-frame GIF, or static first-frame WebP input to JPEG or PNG output, including JPEG `output.maxBytes`; call `getImageCompressionCapabilities()` to guard platform-specific format, metadata, and target-size support before compression.
 
 ```ts
 import { compressImage } from 'react-native-image-compression-kit';
@@ -262,7 +262,7 @@ output: {
 }
 ```
 
-Android MVP and iOS JPEG/PNG/GIF/WebP MVP candidate resize support `contain`, `cover`, and `stretch`. JPEG EXIF orientation is applied before resize, and the result `width` and `height` describe the final encoded image dimensions after orientation correction and resize.
+Android MVP and iOS JPEG/PNG/GIF/WebP MVP resize support `contain`, `cover`, and `stretch`. JPEG EXIF orientation is applied before resize, and the result `width` and `height` describe the final encoded image dimensions after orientation correction and resize.
 
 ### 3. Target-size compression
 
@@ -296,7 +296,7 @@ metadata: 'strip'
 
 Android MVP currently supports `preserve`, `safe`, and `strip` for JPEG source to JPEG output. JPEG EXIF orientation is applied to pixels before encoding, so output orientation metadata is normalized instead of preserving the original rotation flag. PNG/WebP/GIF/HEIC/HEIF/AVIF sources and PNG/WebP output do not copy source EXIF metadata.
 
-The iOS JPEG/PNG/GIF/WebP MVP candidate accepts `safe` and `strip` only. Both policies re-encode output without copying source metadata, so the default `safe` policy is privacy-preserving but narrower than Android's EXIF allowlist. `preserve` remains planned on iOS and rejects with `ERR_NOT_IMPLEMENTED`.
+The iOS JPEG/PNG/GIF/WebP MVP accepts `safe` and `strip` only. Both policies re-encode output without copying source metadata, so the default `safe` policy is privacy-preserving but narrower than Android's EXIF allowlist. `preserve` remains planned on iOS and rejects with `ERR_NOT_IMPLEMENTED`.
 
 `safe` is the default policy. In the Android MVP it copies a privacy-filtered JPEG EXIF allowlist into JPEG output, including common camera, date/time, exposure, lens, and color-space attributes. It excludes GPS/location, owner/serial identifiers, maker note, user comment, image-unique ID, XMP, and other broad free-form metadata.
 
@@ -367,7 +367,7 @@ This project is not intended to handle:
 - [x] iOS JPEG target-size compression.
 - [x] iOS PNG output.
 - [x] iOS GIF static first-frame input support.
-- [x] iOS WebP static first-frame input candidate.
+- [x] iOS WebP static first-frame input support.
 - [x] iOS capability reporting for JPEG/PNG/GIF/WebP input, JPEG/PNG output, metadata policies, target-size support, and cancellation.
 - [x] Example application.
 - [x] Example metadata policy selector and result summary.
@@ -382,9 +382,9 @@ This project is not intended to handle:
 
 ## Installation
 
-The `0.2.3` package metadata is published under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and iOS native source included in the publish tarball. Version `0.1.0` introduced the Android MVP, version `0.1.1` is the published docs-only patch for README/npm package page status, version `0.1.2` is the published iOS-stub clarity patch for native-unavailable messaging, README guidance, and iOS capability reporting, version `0.2.0` is the published iOS native JPEG MVP release, version `0.2.1` is the published iOS JPEG target-size release, version `0.2.2` is the published iOS PNG output release, and version `0.2.3` is the published iOS GIF static first-frame input release. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
+The `0.2.4` package metadata is prepared in source for the next publish under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and iOS native source included in the publish tarball. The latest published npm package remains `react-native-image-compression-kit@0.2.3` until the manual `v0.2.4` publish step completes. Version `0.1.0` introduced the Android MVP, version `0.1.1` is the published docs-only patch for README/npm package page status, version `0.1.2` is the published iOS-stub clarity patch for native-unavailable messaging, README guidance, and iOS capability reporting, version `0.2.0` is the published iOS native JPEG MVP release, version `0.2.1` is the published iOS JPEG target-size release, version `0.2.2` is the published iOS PNG output release, and version `0.2.3` is the published iOS GIF static first-frame input release. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
 
-The repository contains an initial TypeScript API scaffold, an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. Version `0.2.0` adds an iOS native MVP with JPEG/PNG input, optional resize, quality-based JPEG output, `safe` / `strip` metadata behavior, and iOS capability reporting. Version `0.2.1` adds iOS JPEG target-size compression. Version `0.2.2` adds iOS PNG output. Version `0.2.3` adds iOS GIF input decoded as a static first frame. The `v0.2.4` candidate adds iOS WebP input decoded as a static first frame. HEIC/HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, iOS WebP output, iOS metadata preservation, GIF animation preservation, and animated WebP preservation are not implemented yet.
+The repository contains an initial TypeScript API scaffold, an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. Version `0.2.0` adds an iOS native MVP with JPEG/PNG input, optional resize, quality-based JPEG output, `safe` / `strip` metadata behavior, and iOS capability reporting. Version `0.2.1` adds iOS JPEG target-size compression. Version `0.2.2` adds iOS PNG output. Version `0.2.3` adds iOS GIF input decoded as a static first frame. Version `0.2.4` adds iOS WebP input decoded as a static first frame. HEIC/HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, iOS WebP output, iOS metadata preservation, GIF animation preservation, and animated WebP preservation are not implemented yet.
 
 Install from npm:
 
@@ -394,7 +394,7 @@ npm install react-native-image-compression-kit
 
 ## Example Application
 
-The repository includes a React Native example app in `example/`. The Android app links this local package through the pnpm workspace and exercises the Android JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input MVP against a `file://` or `content://` source URI. The iOS host app under `example/ios` links the local package through CocoaPods and drives the iOS JPEG/PNG/GIF/WebP MVP candidate smoke validation.
+The repository includes a React Native example app in `example/`. The Android app links this local package through the pnpm workspace and exercises the Android JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input MVP against a `file://` or `content://` source URI. The iOS host app under `example/ios` links the local package through CocoaPods and drives the iOS JPEG/PNG/GIF/WebP MVP smoke validation.
 
 Install dependencies from the repository root:
 
@@ -498,7 +498,7 @@ pnpm smoke:consumer
 
 The separate `.github/workflows/android-instrumentation.yml` workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout, and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC, HEIF, and AVIF fixtures decode on the Android `ImageDecoder` paths and can be compressed to JPEG, PNG, and WebP. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
 
-The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner and executes `pnpm example:ios:smoke`. It validates pod install, React Native Codegen/autolinking through the iOS host app, simulator build/install/launch, JPEG and PNG to JPEG runtime compression, iOS capability reporting, and the expected iOS unsupported-option error surface. The workflow inherits the guarded CocoaPods null-byte retry behavior from `scripts/ios-validation.mjs` so one transient CocoaPods path-resolution failure does not immediately fail the validation run.
+The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner and executes `pnpm example:ios:smoke`. It validates pod install, React Native Codegen/autolinking through the iOS host app, simulator build/install/launch, JPEG/PNG/GIF/WebP input to JPEG and PNG runtime compression, iOS capability reporting, JPEG target-size behavior, and the expected iOS unsupported-option error surface. The workflow inherits the guarded CocoaPods null-byte retry behavior from `scripts/ios-validation.mjs` so one transient CocoaPods path-resolution failure does not immediately fail the validation run.
 
 ## Docker Android Build/Test Environment
 
@@ -585,7 +585,7 @@ The executable Android checks require a Java runtime, Android SDK, and a Gradle 
 
 ## Release Dry Run Checklist
 
-Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.2.4 candidate notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
+Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.2.4 preflight notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
 
 ```bash
 pnpm release:dry-run

@@ -1,10 +1,10 @@
 # Release Notes
 
-## v0.2.4 Candidate
+## v0.2.4
 
-Status: implementation candidate. Not published to npm. Package metadata remains `0.2.3` until release promotion.
+Status: release promotion preflight. Not published to npm. Source package metadata is bumped to `0.2.4`; the latest registry version remains `0.2.3` until the manual publish step.
 
-This candidate keeps Android runtime behavior unchanged while adding iOS WebP
+This release keeps Android runtime behavior unchanged while adding iOS WebP
 static first-frame input to the existing iOS JPEG/PNG/GIF input and JPEG/PNG
 output MVP.
 
@@ -16,6 +16,7 @@ output MVP.
 
 ### Included
 
+- `package.json` version bump to `0.2.4`.
 - iOS `compressImage()` now accepts WebP input for JPEG and PNG output.
 - iOS WebP input is decoded with ImageIO as a static first frame through `CGImageSourceCreateImageAtIndex`.
 - WebP input to JPEG output keeps resize, `output.quality`, and JPEG `output.maxBytes` behavior.
@@ -26,14 +27,15 @@ output MVP.
 - The iOS host-app smoke validates `compress-webp-to-jpeg` and `compress-webp-to-png`, and removes WebP from the unsupported-input rejection loop.
 - The iOS host-app smoke keeps `reject-webp-output` as an `ERR_NOT_IMPLEMENTED` native output capability check because WebP output is not implemented on iOS.
 - TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input and static first-frame GIF/WebP support.
-- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release preflight behavior.
 - Source-level tests and the Android verification doctor expectations are updated for the implemented iOS WebP input path.
 
 ### Not Included
 
 - Android runtime behavior changes.
 - npm publish.
-- `package.json` version bump.
+- Git tag creation.
+- GitHub Release creation.
 - WebP output on iOS.
 - Animated WebP preservation.
 - iOS HEIC, HEIF, or AVIF input.
@@ -43,7 +45,7 @@ output MVP.
 
 ### Release Checklist
 
-Before release promotion:
+Before npm publish:
 
 ```bash
 git status --short --branch
@@ -53,6 +55,14 @@ git diff --check
 pnpm pack --dry-run
 pnpm example:ios:smoke
 ```
+
+Candidate implementation validation before release promotion:
+
+- Commit: `7bad5ac9032aaaf8147e67572a20cda046b87c50`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28500059159>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28500059163>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28500059174>.
+- Runtime smoke evidence: `RNICK_IOS_SMOKE_STEP_PASS compress-webp-to-jpeg`, `RNICK_IOS_SMOKE_STEP_PASS compress-webp-to-png`, `RNICK_IOS_SMOKE_STEP_PASS reject-webp-output`, and `RNICK_IOS_SMOKE_PASS` with `webpResultBytes: 836`, `webpToPngResultBytes: 248`, `unsupportedInputs: ['heic', 'heif', 'avif']`, and `unsupportedOutputs: ['webp', 'heic', 'heif', 'avif']`.
 
 ## v0.2.3
 
