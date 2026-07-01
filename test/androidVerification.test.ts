@@ -88,7 +88,7 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'The latest published npm package is `react-native-image-compression-kit@0.2.3`.'
+      'The latest published npm package is `react-native-image-compression-kit@0.2.3`, with GitHub Release [v0.2.3](https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.3).'
     );
     expect(readmeSource).toContain(
       'The `0.2.3` package metadata is published under'
@@ -323,7 +323,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.version).toBe('0.2.3');
     expect(releaseSource).toContain('## v0.2.3');
     expect(releaseSource).toContain(
-      'Status: published to npm on July 1, 2026 at 06:09:45 UTC (15:09:45 KST).'
+      'Status: published to npm on July 1, 2026 at 06:09:45 UTC (15:09:45 KST), tagged as `v0.2.3`.'
     );
     expect(releaseSource).toContain('adding iOS GIF');
     expect(releaseSource).toContain(
@@ -409,7 +409,9 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'npm pack react-native-image-compression-kit@0.2.3 --json'
     );
-    expect(releaseSource).toContain('Completed after npm publish:');
+    expect(releaseSource).toContain(
+      'Completed after npm publish and GitHub Release creation:'
+    );
     expect(releaseSource).toContain(
       '`pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.3`.'
     );
@@ -434,6 +436,9 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain(
       'The published tarball includes the README, SECURITY, LICENSE, iOS native source, Android runtime source, built JS, TypeScript declarations, Codegen source, package metadata, podspec, and React Native config.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.3>.'
     );
     expect(releaseSource).toContain('## v0.2.2');
     expect(releaseSource).toContain(

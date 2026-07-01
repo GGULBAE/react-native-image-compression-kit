@@ -2,7 +2,7 @@
 
 ## v0.2.3
 
-Status: published to npm on July 1, 2026 at 06:09:45 UTC (15:09:45 KST).
+Status: published to npm on July 1, 2026 at 06:09:45 UTC (15:09:45 KST), tagged as `v0.2.3`.
 
 This release keeps Android runtime behavior unchanged while adding iOS GIF
 static first-frame input to the existing iOS JPEG/PNG input and JPEG/PNG output
@@ -87,7 +87,7 @@ pnpm view react-native-image-compression-kit version versions dist-tags dist.tar
 npm pack react-native-image-compression-kit@0.2.3 --json
 ```
 
-Completed after npm publish:
+Completed after npm publish and GitHub Release creation:
 
 - `pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.3`.
 - `pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity dist.shasum time --json` confirmed version `0.2.3`, `latest` dist-tag `0.2.3`, registry tarball URL, integrity, shasum, and publish timestamp `2026-07-01T06:09:45.481Z`.
@@ -97,6 +97,7 @@ Completed after npm publish:
 - npm shasum: `d420053faf7d4e460c4cd41c99fb489c6d017dbd`
 - `npm pack react-native-image-compression-kit@0.2.3 --json` confirmed the published tarball contains 49 files, 43.7 kB package size, and 185.0 kB unpacked size.
 - The published tarball includes the README, SECURITY, LICENSE, iOS native source, Android runtime source, built JS, TypeScript declarations, Codegen source, package metadata, podspec, and React Native config.
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.3>.
 
 ## v0.2.2
 
