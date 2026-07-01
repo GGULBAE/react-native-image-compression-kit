@@ -1,10 +1,10 @@
 # Release Notes
 
-## v0.2.3 Candidate
+## v0.2.3
 
-Status: prepared for local and CI validation. Not published to npm yet.
+Status: prepared for npm release promotion. Not published to npm yet.
 
-This candidate keeps Android runtime behavior unchanged while adding iOS GIF
+This release keeps Android runtime behavior unchanged while adding iOS GIF
 static first-frame input to the existing iOS JPEG/PNG input and JPEG/PNG output
 MVP.
 
@@ -27,7 +27,7 @@ MVP.
 - The iOS host-app smoke validates `compress-gif-to-jpeg` and `compress-gif-to-png`, and removes GIF from the unsupported-input rejection loop.
 - The iOS host-app smoke keeps `reject-gif-output` as an `ERR_INVALID_OPTIONS` TypeScript validation check because GIF output is not part of the public output format surface.
 - TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF input and static first-frame GIF support.
-- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.
 - Source-level tests and the Android verification doctor expectations are updated for the implemented iOS GIF input path.
 
 ### Not Included
@@ -39,12 +39,11 @@ MVP.
 - iOS WebP, HEIC, HEIF, or AVIF input.
 - iOS WebP, HEIC, HEIF, or AVIF output.
 - iOS metadata preservation.
-- npm publish.
 - New public API surface.
 
-### Candidate Verification
+### Release Checklist
 
-Before promotion:
+Before npm publish:
 
 ```bash
 git status --short --branch
@@ -55,14 +54,30 @@ pnpm pack --dry-run
 pnpm example:ios:smoke
 ```
 
-Expected iOS runtime smoke evidence:
+Actual implementation validation before the release commit:
 
-- `RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-jpeg`.
-- `RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-png`.
-- `RNICK_IOS_SMOKE_STEP_PASS reject-gif-output`.
-- `RNICK_IOS_SMOKE_PASS` summary includes `gifResultBytes`, `gifToPngResultBytes`, and `unsupportedInputs` excluding `gif`.
+- Commit: `62a1c3fb4763f5977592c8e7c917246ce6be2fe2`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712854>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712886>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712935>.
+- Runtime smoke evidence: `RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-jpeg`, `RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-png`, `RNICK_IOS_SMOKE_STEP_PASS reject-gif-output`, and `RNICK_IOS_SMOKE_PASS` with `gifResultBytes: 840`, `gifToPngResultBytes: 331`, and `unsupportedInputs: ['webp', 'heic', 'heif', 'avif']`.
 
-Promotion also requires master CI, Android Instrumentation, and iOS Validation to be green.
+### Publish Commands
+
+The npm publish step requires an authenticated npm registry session. If npm
+two-factor authentication is enabled, use a current passkey or one-time password:
+
+```bash
+pnpm whoami
+pnpm publish --tag latest
+```
+
+After publish, verify the registry version:
+
+```bash
+pnpm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity dist.shasum time --json
+npm pack react-native-image-compression-kit@0.2.3 --json
+```
 
 ## v0.2.2
 

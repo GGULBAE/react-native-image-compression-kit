@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img alt="Status: v0.2.3 candidate" src="https://img.shields.io/badge/Status-v0.2.3%20candidate-blue" />
+  <img alt="Status: v0.2.3 release promotion" src="https://img.shields.io/badge/Status-v0.2.3%20release%20promotion-blue" />
   <img alt="Platforms: Android MVP | iOS JPEG/PNG/GIF MVP" src="https://img.shields.io/badge/Platforms-Android%20MVP%20%7C%20iOS%20JPEG%2FPNG%2FGIF%20MVP-green" />
   <img alt="React Native: Codegen ready" src="https://img.shields.io/badge/React%20Native-Codegen%20ready-61dafb" />
   <img alt="TypeScript: API available" src="https://img.shields.io/badge/TypeScript-API%20available-3178c6" />
@@ -28,7 +28,7 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This repository is prepared for a `react-native-image-compression-kit@0.2.3` release candidate. The latest published npm package remains `react-native-image-compression-kit@0.2.2`. Version `0.2.3` keeps the Android MVP intact and adds iOS GIF static first-frame input on top of the `0.2.2` iOS PNG output release. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS native module, unit test foundation, and npm package metadata are in place.
+This repository is prepared for `react-native-image-compression-kit@0.2.3` release promotion. The latest published npm package remains `0.2.2` until the publish step completes. Version `0.2.3` keeps the Android MVP intact and adds iOS GIF static first-frame input on top of the `0.2.2` iOS PNG output release. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS native module, unit test foundation, and npm package metadata are in place.
 
 Android includes a published image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. The current iOS JPEG/PNG/GIF MVP supports `file://` and `content://` JPEG, PNG, or GIF input, optional resize, quality-based JPEG output, target-size JPEG output with `output.maxBytes`, PNG output, cache-file results, and `safe` / `strip` metadata policies that re-encode without copying source metadata. GIF input is decoded as a static first frame through ImageIO on iOS. iOS `getImageCompressionCapabilities()` reports JPEG input/output, PNG input/output, GIF input with no GIF output, `metadataPolicies: ['safe', 'strip']`, target-size compression support, and no cancellation. GIF output, GIF animation preservation, HEIC / HEIF output, AVIF output, iOS WebP/HEIC/HEIF/AVIF input, iOS WebP output, and broader metadata support are not implemented yet.
 
@@ -197,7 +197,7 @@ For AVIF manual validation, use an API 34+ device or emulator and repeat the cop
 
 ## Public API
 
-The API below is available from the package. Runtime compression succeeds on the Android MVP. In the `0.2.3` candidate, iOS runtime compression succeeds for JPEG, PNG, or static first-frame GIF input to JPEG or PNG output, including JPEG `output.maxBytes`; call `getImageCompressionCapabilities()` to guard platform-specific format, metadata, and target-size support before compression.
+The API below is available from the package. Runtime compression succeeds on the Android MVP. In version `0.2.3`, iOS runtime compression succeeds for JPEG, PNG, or static first-frame GIF input to JPEG or PNG output, including JPEG `output.maxBytes`; call `getImageCompressionCapabilities()` to guard platform-specific format, metadata, and target-size support before compression.
 
 ```ts
 import { compressImage } from 'react-native-image-compression-kit';
@@ -381,7 +381,7 @@ This project is not intended to handle:
 
 ## Installation
 
-The `0.2.3` package metadata is prepared as a release candidate under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and iOS native source included in the dry-run publish tarball. The latest published npm package remains `0.2.2`. Version `0.1.0` introduced the Android MVP, version `0.1.1` is the published docs-only patch for README/npm package page status, version `0.1.2` is the published iOS-stub clarity patch for native-unavailable messaging, README guidance, and iOS capability reporting, version `0.2.0` is the published iOS native JPEG MVP release, version `0.2.1` is the published iOS JPEG target-size release, version `0.2.2` is the published iOS PNG output release, and version `0.2.3` is the iOS GIF static first-frame input candidate. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
+The `0.2.3` package metadata is prepared under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and iOS native source included in the publish tarball. The latest published npm package remains `0.2.2` until the publish step completes. Version `0.1.0` introduced the Android MVP, version `0.1.1` is the published docs-only patch for README/npm package page status, version `0.1.2` is the published iOS-stub clarity patch for native-unavailable messaging, README guidance, and iOS capability reporting, version `0.2.0` is the published iOS native JPEG MVP release, version `0.2.1` is the published iOS JPEG target-size release, version `0.2.2` is the published iOS PNG output release, and version `0.2.3` adds iOS GIF static first-frame input. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
 
 The repository contains an initial TypeScript API scaffold, an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. Version `0.2.0` adds an iOS native MVP with JPEG/PNG input, optional resize, quality-based JPEG output, `safe` / `strip` metadata behavior, and iOS capability reporting. Version `0.2.1` adds iOS JPEG target-size compression. Version `0.2.2` adds iOS PNG output. Version `0.2.3` adds iOS GIF input decoded as a static first frame. HEIC/HEIF output, AVIF output, iOS WebP/HEIC/HEIF/AVIF input, iOS WebP output, iOS metadata preservation, and GIF animation preservation are not implemented yet.
 
@@ -584,7 +584,7 @@ The executable Android checks require a Java runtime, Android SDK, and a Gradle 
 
 ## Release Dry Run Checklist
 
-Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.2.3 candidate notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
+Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
 
 ```bash
 pnpm release:dry-run

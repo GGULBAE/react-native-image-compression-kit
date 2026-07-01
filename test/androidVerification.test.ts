@@ -88,13 +88,13 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'This repository is prepared for a `react-native-image-compression-kit@0.2.3` release candidate.'
+      'This repository is prepared for `react-native-image-compression-kit@0.2.3` release promotion.'
     );
     expect(readmeSource).toContain(
-      'The latest published npm package remains `react-native-image-compression-kit@0.2.2`.'
+      'The latest published npm package remains `0.2.2` until the publish step completes.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.3` package metadata is prepared as a release candidate under'
+      'The `0.2.3` package metadata is prepared under'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -106,7 +106,7 @@ describe('Android verification scripts', () => {
       'version `0.2.2` is the published iOS PNG output release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.3` is the iOS GIF static first-frame input candidate'
+      'version `0.2.3` adds iOS GIF static first-frame input'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -319,14 +319,14 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.3 candidate notes and previous release notes', () => {
+  it('documents the v0.2.3 release notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.3');
-    expect(releaseSource).toContain('## v0.2.3 Candidate');
+    expect(releaseSource).toContain('## v0.2.3');
     expect(releaseSource).toContain(
-      'Status: prepared for local and CI validation. Not published to npm yet.'
+      'Status: prepared for npm release promotion. Not published to npm yet.'
     );
     expect(releaseSource).toContain('adding iOS GIF');
     expect(releaseSource).toContain(
@@ -354,9 +354,28 @@ describe('Android verification scripts', () => {
       'The iOS host-app smoke keeps `reject-gif-output` as an `ERR_INVALID_OPTIONS` TypeScript validation check because GIF output is not part of the public output format surface.'
     );
     expect(releaseSource).toContain(
+      'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.'
+    );
+    expect(releaseSource).toContain(
       'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF input and static first-frame GIF support.'
     );
-    expect(releaseSource).toContain('### Candidate Verification');
+    expect(releaseSource).toContain('### Release Checklist');
+    expect(releaseSource).toContain('Before npm publish:');
+    expect(releaseSource).toContain(
+      'Actual implementation validation before the release commit:'
+    );
+    expect(releaseSource).toContain(
+      'Commit: `62a1c3fb4763f5977592c8e7c917246ce6be2fe2`.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712854>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712886>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712935>.'
+    );
     expect(releaseSource).toContain(
       'RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-jpeg'
     );
@@ -367,7 +386,16 @@ describe('Android verification scripts', () => {
       'RNICK_IOS_SMOKE_STEP_PASS reject-gif-output'
     );
     expect(releaseSource).toContain(
-      '`RNICK_IOS_SMOKE_PASS` summary includes `gifResultBytes`, `gifToPngResultBytes`, and `unsupportedInputs` excluding `gif`.'
+      'gifResultBytes: 840'
+    );
+    expect(releaseSource).toContain(
+      'gifToPngResultBytes: 331'
+    );
+    expect(releaseSource).toContain(
+      "unsupportedInputs: ['webp', 'heic', 'heif', 'avif']"
+    );
+    expect(releaseSource).toContain(
+      'npm pack react-native-image-compression-kit@0.2.3 --json'
     );
     expect(releaseSource).toContain('## v0.2.2');
     expect(releaseSource).toContain(
@@ -894,7 +922,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.3 candidate notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

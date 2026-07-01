@@ -206,13 +206,13 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('This repository is prepared for a `react-native-image-compression-kit@0.2.3` release candidate.'),
-    readmeContents.includes('The latest published npm package remains `react-native-image-compression-kit@0.2.2`.'),
-    readmeContents.includes('The `0.2.3` package metadata is prepared as a release candidate under'),
+    readmeContents.includes('This repository is prepared for `react-native-image-compression-kit@0.2.3` release promotion.'),
+    readmeContents.includes('The latest published npm package remains `0.2.2` until the publish step completes.'),
+    readmeContents.includes('The `0.2.3` package metadata is prepared under'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
-    readmeContents.includes('version `0.2.3` is the iOS GIF static first-frame input candidate'),
+    readmeContents.includes('version `0.2.3` adds iOS GIF static first-frame input'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -220,7 +220,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata is aligned for v0.2.3 candidate',
+    label: 'npm package metadata is aligned for v0.2.3 release promotion',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json publish metadata or README release-status guidance is missing/mismatched',
@@ -461,8 +461,8 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
-    '## v0.2.3 Candidate',
-    'Status: prepared for local and CI validation. Not published to npm yet.',
+    '## v0.2.3',
+    'Status: prepared for npm release promotion. Not published to npm yet.',
     'adding iOS GIF',
     'static first-frame input to the existing iOS JPEG/PNG input and JPEG/PNG output',
     '`package.json` version bump to `0.2.3`.',
@@ -474,13 +474,21 @@ function checkReleaseNotes() {
     'The iOS host-app smoke validates `compress-gif-to-jpeg` and `compress-gif-to-png`, and removes GIF from the unsupported-input rejection loop.',
     'The iOS host-app smoke keeps `reject-gif-output` as an `ERR_INVALID_OPTIONS` TypeScript validation check because GIF output is not part of the public output format surface.',
     'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF input and static first-frame GIF support.',
-    'npm publish.',
-    '### Candidate Verification',
+    'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.',
+    '### Release Checklist',
+    'Before npm publish:',
+    'Actual implementation validation before the release commit:',
+    'Commit: `62a1c3fb4763f5977592c8e7c917246ce6be2fe2`.',
+    'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712854>.',
+    'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712886>.',
+    'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28493712935>.',
     'RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-jpeg',
     'RNICK_IOS_SMOKE_STEP_PASS compress-gif-to-png',
     'RNICK_IOS_SMOKE_STEP_PASS reject-gif-output',
-    '`RNICK_IOS_SMOKE_PASS` summary includes `gifResultBytes`, `gifToPngResultBytes`, and `unsupportedInputs` excluding `gif`.',
-    'Promotion also requires master CI, Android Instrumentation, and iOS Validation to be green.',
+    'gifResultBytes: 840',
+    'gifToPngResultBytes: 331',
+    "unsupportedInputs: ['webp', 'heic', 'heif', 'avif']",
+    'npm pack react-native-image-compression-kit@0.2.3 --json',
     '## v0.2.2',
     'Status: published to npm on June 30, 2026 at 10:50:12 UTC (19:50:12 KST), tagged as `v0.2.2`.',
     'adding PNG output',
@@ -700,7 +708,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.3 candidate notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -716,7 +724,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.3 candidate notes and previous release notes are current',
+    label: 'v0.2.3 release notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation evidence, previous published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
