@@ -88,13 +88,10 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'This repository is prepared for `react-native-image-compression-kit@0.2.3` release promotion.'
+      'The latest published npm package is `react-native-image-compression-kit@0.2.3`.'
     );
     expect(readmeSource).toContain(
-      'The latest published npm package remains `0.2.2` until the publish step completes.'
-    );
-    expect(readmeSource).toContain(
-      'The `0.2.3` package metadata is prepared under'
+      'The `0.2.3` package metadata is published under'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -106,7 +103,7 @@ describe('Android verification scripts', () => {
       'version `0.2.2` is the published iOS PNG output release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.3` adds iOS GIF static first-frame input'
+      'version `0.2.3` is the published iOS GIF static first-frame input release'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -326,7 +323,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.version).toBe('0.2.3');
     expect(releaseSource).toContain('## v0.2.3');
     expect(releaseSource).toContain(
-      'Status: prepared for npm release promotion. Not published to npm yet.'
+      'Status: published to npm on July 1, 2026 at 06:09:45 UTC (15:09:45 KST).'
     );
     expect(releaseSource).toContain('adding iOS GIF');
     expect(releaseSource).toContain(
@@ -395,7 +392,48 @@ describe('Android verification scripts', () => {
       "unsupportedInputs: ['webp', 'heic', 'heif', 'avif']"
     );
     expect(releaseSource).toContain(
+      'Release commit validation before npm publish:'
+    );
+    expect(releaseSource).toContain(
+      'Commit: `8d2394dfaf4b5ba5bc322fd766328624b7abc92d`.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28496763807>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28496763836>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28496763804>.'
+    );
+    expect(releaseSource).toContain(
       'npm pack react-native-image-compression-kit@0.2.3 --json'
+    );
+    expect(releaseSource).toContain('Completed after npm publish:');
+    expect(releaseSource).toContain(
+      '`pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.3`.'
+    );
+    expect(releaseSource).toContain('`latest` dist-tag `0.2.3`');
+    expect(releaseSource).toContain(
+      'publish timestamp `2026-07-01T06:09:45.481Z`'
+    );
+    expect(releaseSource).toContain(
+      'npm package: `react-native-image-compression-kit@0.2.3`'
+    );
+    expect(releaseSource).toContain(
+      'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.3.tgz`'
+    );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-ns/m3ZmUdTyT+kVWjCWEzWMVE0Ydu9VtWkm361pg6TEpufEN6ImV9tK9e7iSmlwjvmeZESlUiduGdAr/7rJEXQ==`'
+    );
+    expect(releaseSource).toContain(
+      'npm shasum: `d420053faf7d4e460c4cd41c99fb489c6d017dbd`'
+    );
+    expect(releaseSource).toContain(
+      'contains 49 files, 43.7 kB package size, and 185.0 kB unpacked size'
+    );
+    expect(releaseSource).toContain(
+      'The published tarball includes the README, SECURITY, LICENSE, iOS native source, Android runtime source, built JS, TypeScript declarations, Codegen source, package metadata, podspec, and React Native config.'
     );
     expect(releaseSource).toContain('## v0.2.2');
     expect(releaseSource).toContain(

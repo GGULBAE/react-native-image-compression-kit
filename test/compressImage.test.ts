@@ -150,7 +150,7 @@ describe('compressImage', () => {
     ).rejects.toMatchObject({
       code: 'ERR_NATIVE_MODULE_UNAVAILABLE',
       message:
-        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS runtime compression is implemented for JPEG/PNG/GIF input with JPEG and PNG output, including JPEG target-size maxBytes and static first-frame GIF input, in the v0.2.3 candidate.',
+        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS runtime compression is implemented for JPEG/PNG/GIF input with JPEG and PNG output, including JPEG target-size maxBytes and static first-frame GIF input, in version 0.2.3 and later.',
     });
   });
 
