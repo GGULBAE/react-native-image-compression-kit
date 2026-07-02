@@ -2,7 +2,7 @@
 
 ## v0.2.4
 
-Status: release promotion preflight. Not published to npm. Source package metadata is bumped to `0.2.4`; the latest registry version remains `0.2.3` until the manual publish step.
+Status: published to npm on July 2, 2026 at 01:03:13 UTC (10:03:13 KST), tagged as `v0.2.4`.
 
 This release keeps Android runtime behavior unchanged while adding iOS WebP
 static first-frame input to the existing iOS JPEG/PNG/GIF input and JPEG/PNG
@@ -27,15 +27,14 @@ output MVP.
 - The iOS host-app smoke validates `compress-webp-to-jpeg` and `compress-webp-to-png`, and removes WebP from the unsupported-input rejection loop.
 - The iOS host-app smoke keeps `reject-webp-output` as an `ERR_NOT_IMPLEMENTED` native output capability check because WebP output is not implemented on iOS.
 - TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input and static first-frame GIF/WebP support.
-- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release preflight behavior.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.
 - Source-level tests and the Android verification doctor expectations are updated for the implemented iOS WebP input path.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.4` and GitHub Release `v0.2.4`.
 
 ### Not Included
 
 - Android runtime behavior changes.
-- npm publish.
-- Git tag creation.
-- GitHub Release creation.
 - WebP output on iOS.
 - Animated WebP preservation.
 - iOS HEIC, HEIF, or AVIF input.
@@ -63,6 +62,27 @@ Candidate implementation validation before release promotion:
 - Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28500059163>.
 - iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28500059174>.
 - Runtime smoke evidence: `RNICK_IOS_SMOKE_STEP_PASS compress-webp-to-jpeg`, `RNICK_IOS_SMOKE_STEP_PASS compress-webp-to-png`, `RNICK_IOS_SMOKE_STEP_PASS reject-webp-output`, and `RNICK_IOS_SMOKE_PASS` with `webpResultBytes: 836`, `webpToPngResultBytes: 248`, `unsupportedInputs: ['heic', 'heif', 'avif']`, and `unsupportedOutputs: ['webp', 'heic', 'heif', 'avif']`.
+
+Release commit validation before npm publish:
+
+- Commit: `e62557b99a1ebf3bcbd879af21fc2ccc163d11a2`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28557446734>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28557446741>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28557446723>.
+- `pnpm release:dry-run` completed successfully before npm publish, including `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, `pnpm pack --dry-run`, packed consumer smoke, and `pnpm publish --dry-run --no-git-checks`.
+
+Completed after npm publish and GitHub Release creation:
+
+- `pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.4`.
+- `npm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity dist.shasum time --json` confirmed version `0.2.4`, `latest` dist-tag `0.2.4`, registry tarball URL, integrity, shasum, and publish timestamp `2026-07-02T01:03:13.919Z`.
+- npm package: `react-native-image-compression-kit@0.2.4`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.4.tgz`
+- npm integrity: `sha512-f6cqSgAbvx0jg7soLOgiCWsc+e1MwpTN6/mV7T5yKbLsU64ENMmBvR6PBiW2s8KU2UxDCTUDVXU4SBRK/eC62A==`
+- npm shasum: `5fca25a4a94937e59b089b46599705af77cf2ba0`
+- `npm pack react-native-image-compression-kit@0.2.4 --json` confirmed the published tarball contains 49 files, 44.0 kB package size, and 186.9 kB unpacked size.
+- The published tarball includes the README, SECURITY, LICENSE, iOS native source, Android runtime source, built JS, TypeScript declarations, Codegen source, package metadata, podspec, and React Native config.
+- A fresh temporary consumer project installed `react-native-image-compression-kit@0.2.4` from the npm registry with `pnpm install --ignore-scripts` and completed `pnpm typecheck`.
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.4>.
 
 ## v0.2.3
 

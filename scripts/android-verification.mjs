@@ -206,14 +206,15 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('This repository is prepared for the `v0.2.4` publish preflight'),
-    readmeContents.includes('The source package metadata is bumped to `0.2.4`'),
-    readmeContents.includes('The latest published npm package remains `react-native-image-compression-kit@0.2.3`'),
-    readmeContents.includes('The `0.2.4` package metadata is prepared in source for the next publish under'),
+    readmeContents.includes('This repository is published as `v0.2.4`'),
+    readmeContents.includes('The latest published npm package is `react-native-image-compression-kit@0.2.4`'),
+    readmeContents.includes('GitHub Release [v0.2.4]'),
+    readmeContents.includes('The `0.2.4` package metadata is published under'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
     readmeContents.includes('version `0.2.3` is the published iOS GIF static first-frame input release'),
+    readmeContents.includes('version `0.2.4` is the published iOS WebP static first-frame input release'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -221,7 +222,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.4 publish preflight',
+    label: 'npm package metadata and README status are aligned for the published v0.2.4 release',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json publish metadata or README release-status guidance is missing/mismatched',
@@ -463,7 +464,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.4',
-    'Status: release promotion preflight. Not published to npm. Source package metadata is bumped to `0.2.4`; the latest registry version remains `0.2.3` until the manual publish step.',
+    'Status: published to npm on July 2, 2026 at 01:03:13 UTC (10:03:13 KST), tagged as `v0.2.4`.',
     'adding iOS WebP',
     'static first-frame input to the existing iOS JPEG/PNG/GIF input and JPEG/PNG',
     'Implement iOS WebP input without changing the public TypeScript API.',
@@ -477,11 +478,10 @@ function checkReleaseNotes() {
     'The iOS host-app smoke validates `compress-webp-to-jpeg` and `compress-webp-to-png`, and removes WebP from the unsupported-input rejection loop.',
     'The iOS host-app smoke keeps `reject-webp-output` as an `ERR_NOT_IMPLEMENTED` native output capability check because WebP output is not implemented on iOS.',
     'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input and static first-frame GIF/WebP support.',
-    'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release preflight behavior.',
+    'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.',
     'Android runtime behavior changes.',
-    'npm publish.',
-    'Git tag creation.',
-    'GitHub Release creation.',
+    'npm package publication under the `latest` dist-tag.',
+    'Git tag `v0.2.4` and GitHub Release `v0.2.4`.',
     'WebP output on iOS.',
     'Animated WebP preservation.',
     'iOS HEIC, HEIF, or AVIF input.',
@@ -498,6 +498,24 @@ function checkReleaseNotes() {
     'webpToPngResultBytes: 248',
     "unsupportedInputs: ['heic', 'heif', 'avif']",
     "unsupportedOutputs: ['webp', 'heic', 'heif', 'avif']",
+    'Release commit validation before npm publish:',
+    'Commit: `e62557b99a1ebf3bcbd879af21fc2ccc163d11a2`.',
+    'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28557446734>.',
+    'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28557446741>.',
+    'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28557446723>.',
+    '`pnpm release:dry-run` completed successfully before npm publish, including `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, `pnpm pack --dry-run`, packed consumer smoke, and `pnpm publish --dry-run --no-git-checks`.',
+    'Completed after npm publish and GitHub Release creation:',
+    '`pnpm publish --tag latest` published `react-native-image-compression-kit@0.2.4`.',
+    '`latest` dist-tag `0.2.4`',
+    'publish timestamp `2026-07-02T01:03:13.919Z`',
+    'npm package: `react-native-image-compression-kit@0.2.4`',
+    'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.4.tgz`',
+    'npm integrity: `sha512-f6cqSgAbvx0jg7soLOgiCWsc+e1MwpTN6/mV7T5yKbLsU64ENMmBvR6PBiW2s8KU2UxDCTUDVXU4SBRK/eC62A==`',
+    'npm shasum: `5fca25a4a94937e59b089b46599705af77cf2ba0`',
+    'contains 49 files, 44.0 kB package size, and 186.9 kB unpacked size',
+    'The published tarball includes the README, SECURITY, LICENSE, iOS native source, Android runtime source, built JS, TypeScript declarations, Codegen source, package metadata, podspec, and React Native config.',
+    'fresh temporary consumer project installed `react-native-image-compression-kit@0.2.4`',
+    'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.4>.',
     '## v0.2.3',
     'Status: published to npm on July 1, 2026 at 06:09:45 UTC (15:09:45 KST), tagged as `v0.2.3`.',
     'adding iOS GIF',
@@ -761,7 +779,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.4 preflight notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -777,9 +795,9 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.4 preflight notes and previous release notes are current',
+    label: 'v0.2.4 release notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the preflight scope, non-goals, validation evidence, checklist, previous published artifacts, and previous npm publish steps'
+      ? 'RELEASE.md documents the release scope, non-goals, validation evidence, published artifacts, tag, GitHub Release, post-publish verification, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
           ...(packageJson.version === '0.2.4' ? [] : ['package.json version 0.2.4']),
