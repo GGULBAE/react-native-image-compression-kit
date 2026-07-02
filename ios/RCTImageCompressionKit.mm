@@ -155,7 +155,8 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
         canEncodeWebP
           ? @"WebP output uses ImageIO CGImageDestination when the runtime advertises a WebP destination type."
           : @"This runtime does not advertise ImageIO WebP destination encoding support.",
-        @"Animated WebP preservation and WebP target-size maxBytes are not implemented."
+        @"Runtime-available WebP output supports target-size maxBytes by adjusting WebP quality.",
+        @"Animated WebP preservation is not implemented."
       ]
     );
   }
@@ -618,12 +619,25 @@ static NSData *RCTImageCompressionKitEncodeWebP(UIImage *image, NSInteger qualit
   return finalized && outputData.length > 0 ? outputData : nil;
 }
 
-static NSData *RCTImageCompressionKitEncodeJpegToTargetSize(
+static NSData *RCTImageCompressionKitEncodeQualityOutput(
   UIImage *image,
+  NSString *outputFormat,
+  NSInteger quality
+) {
+  if ([outputFormat isEqualToString:RCTImageCompressionKitWebPFormat]) {
+    return RCTImageCompressionKitEncodeWebP(image, quality);
+  }
+
+  return RCTImageCompressionKitEncodeJpeg(image, quality);
+}
+
+static NSData *RCTImageCompressionKitEncodeToTargetSize(
+  UIImage *image,
+  NSString *outputFormat,
   NSInteger qualityCap,
   NSUInteger maxBytes
 ) {
-  NSData *outputData = RCTImageCompressionKitEncodeJpeg(image, qualityCap);
+  NSData *outputData = RCTImageCompressionKitEncodeQualityOutput(image, outputFormat, qualityCap);
   if (outputData == nil || outputData.length == 0 || outputData.length <= maxBytes) {
     return outputData;
   }
@@ -636,7 +650,7 @@ static NSData *RCTImageCompressionKitEncodeJpegToTargetSize(
 
   while (low <= high) {
     NSInteger currentQuality = (low + high) / 2;
-    NSData *candidateData = RCTImageCompressionKitEncodeJpeg(image, currentQuality);
+    NSData *candidateData = RCTImageCompressionKitEncodeQualityOutput(image, outputFormat, currentQuality);
     if (candidateData == nil || candidateData.length == 0) {
       return candidateData;
     }
@@ -840,11 +854,11 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(reject, RCTImageCompressionKitInvalidOptionsCode, errorMessage, nil);
       return;
     }
-    if (hasMaxBytes && !outputIsJpeg) {
+    if (hasMaxBytes && outputIsPng) {
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitNotImplementedCode,
-        @"iOS MVP supports output.maxBytes for JPEG output only.",
+        @"iOS MVP supports output.maxBytes for JPEG and runtime-available WebP output only.",
         nil
       );
       return;
@@ -937,10 +951,12 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       if (outputIsPng) {
         outputData = RCTImageCompressionKitEncodePng(processedImage);
       } else if (outputIsWebP) {
-        outputData = RCTImageCompressionKitEncodeWebP(processedImage, quality);
+        outputData = hasMaxBytes
+          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, outputFormat, quality, maxBytes)
+          : RCTImageCompressionKitEncodeWebP(processedImage, quality);
       } else {
         outputData = hasMaxBytes
-          ? RCTImageCompressionKitEncodeJpegToTargetSize(processedImage, quality, maxBytes)
+          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, outputFormat, quality, maxBytes)
           : RCTImageCompressionKitEncodeJpeg(processedImage, quality);
       }
     });

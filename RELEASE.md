@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.2.6
+
+Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+
+This candidate keeps Android runtime behavior unchanged while adding iOS WebP
+target-size `output.maxBytes` support to the runtime-gated ImageIO-backed WebP
+output path introduced in `0.2.5`.
+
+### Goals
+
+- Support `output.format: 'webp'` with `output.maxBytes` on iOS runtimes that advertise ImageIO WebP destination encoding.
+- Reuse the existing iOS target-size quality search for both JPEG and runtime-available WebP output.
+- Keep WebP output unavailable runtimes on the existing capability-gated `ERR_NOT_IMPLEMENTED` path.
+- Align iOS capability reporting, README guidance, TypeScript native-unavailable messaging, source-level expectations, and host-app smoke validation with runtime-gated WebP target-size support.
+
+### Included
+
+- `package.json` version bump to `0.2.6`.
+- iOS WebP output now accepts `output.maxBytes` when ImageIO advertises a WebP destination type.
+- iOS target-size encoding now shares one quality-search helper for JPEG and runtime-available WebP output.
+- WebP target-size compression treats `quality` as the upper quality bound and returns the highest WebP quality that fits under `maxBytes`, or the smallest generated output when the target cannot be reached.
+- iOS PNG output still rejects `output.maxBytes` with `ERR_NOT_IMPLEMENTED`.
+- iOS runtimes without ImageIO WebP destination support still reject `output.format: 'webp'` before any WebP target-size work.
+- iOS WebP capability notes now state that runtime-available WebP output supports target-size `maxBytes` by adjusting WebP quality.
+- The iOS host-app smoke now follows the WebP output capability: it validates `compress-webp-to-webp-max-bytes` with `byteSize <= maxBytes` when WebP output is available, and keeps `reject-webp-output-unavailable` / `reject-webp-output` when it is not.
+- The example app enables the Max bytes input for WebP output on platforms where WebP output is currently reported as available.
+- TypeScript native-unavailable messaging now mentions iOS JPEG and runtime-available WebP target-size `maxBytes` in version `0.2.6`.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.
+- Source-level tests and the Android verification doctor expectations are updated for the iOS WebP target-size path.
+
+### Not Included
+
+- Android runtime behavior changes.
+- npm publication.
+- Git tag `v0.2.6`.
+- GitHub Release `v0.2.6`.
+- Animated WebP preservation.
+- GIF output on iOS.
+- iOS HEIC, HEIF, or AVIF input.
+- iOS HEIC, HEIF, or AVIF output.
+- iOS metadata preservation.
+- New public TypeScript API surface.
+
+### Release Checklist
+
+Before release promotion:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm example:ios:smoke
+```
+
 ## v0.2.5
 
 Status: published to npm on July 2, 2026 at 02:14:56 UTC (11:14:56 KST), tagged as `v0.2.5`.

@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.5');
+    expect(packageJson.version).toBe('0.2.6');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -88,11 +88,14 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'This repository is published as `react-native-image-compression-kit@0.2.5`'
+      'This repository is preparing the `react-native-image-compression-kit@0.2.6` candidate.'
+    );
+    expect(readmeSource).toContain(
+      'The latest published package remains `react-native-image-compression-kit@0.2.5`'
     );
     expect(readmeSource).toContain('GitHub Release [v0.2.5]');
     expect(readmeSource).toContain(
-      'The `0.2.5` package is published under `react-native-image-compression-kit`'
+      'The `0.2.6` package metadata is prepared as a candidate under `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -111,6 +114,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'version `0.2.5` is the published iOS runtime-gated WebP output release'
+    );
+    expect(readmeSource).toContain(
+      'version `0.2.6` is the candidate iOS runtime-gated WebP target-size release'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -323,11 +329,68 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.5 release notes and previous release notes', () => {
+  it('documents the v0.2.6 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.5');
+    expect(packageJson.version).toBe('0.2.6');
+    expect(releaseSource).toContain('## v0.2.6');
+    expect(releaseSource).toContain(
+      'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.'
+    );
+    expect(releaseSource).toContain('adding iOS WebP');
+    expect(releaseSource).toContain(
+      'target-size `output.maxBytes` support to the runtime-gated ImageIO-backed WebP'
+    );
+    expect(releaseSource).toContain(
+      "Support `output.format: 'webp'` with `output.maxBytes` on iOS runtimes that advertise ImageIO WebP destination encoding."
+    );
+    expect(releaseSource).toContain(
+      'Reuse the existing iOS target-size quality search for both JPEG and runtime-available WebP output.'
+    );
+    expect(releaseSource).toContain(
+      'Keep WebP output unavailable runtimes on the existing capability-gated `ERR_NOT_IMPLEMENTED` path.'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.6`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS WebP output now accepts `output.maxBytes` when ImageIO advertises a WebP destination type.'
+    );
+    expect(releaseSource).toContain(
+      'iOS target-size encoding now shares one quality-search helper for JPEG and runtime-available WebP output.'
+    );
+    expect(releaseSource).toContain(
+      'WebP target-size compression treats `quality` as the upper quality bound and returns the highest WebP quality that fits under `maxBytes`'
+    );
+    expect(releaseSource).toContain(
+      'iOS PNG output still rejects `output.maxBytes` with `ERR_NOT_IMPLEMENTED`.'
+    );
+    expect(releaseSource).toContain(
+      "iOS runtimes without ImageIO WebP destination support still reject `output.format: 'webp'` before any WebP target-size work."
+    );
+    expect(releaseSource).toContain(
+      'iOS WebP capability notes now state that runtime-available WebP output supports target-size `maxBytes` by adjusting WebP quality.'
+    );
+    expect(releaseSource).toContain(
+      'The iOS host-app smoke now follows the WebP output capability: it validates `compress-webp-to-webp-max-bytes`'
+    );
+    expect(releaseSource).toContain(
+      'The example app enables the Max bytes input for WebP output on platforms where WebP output is currently reported as available.'
+    );
+    expect(releaseSource).toContain(
+      'TypeScript native-unavailable messaging now mentions iOS JPEG and runtime-available WebP target-size `maxBytes` in version `0.2.6`.'
+    );
+    expect(releaseSource).toContain(
+      'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.'
+    );
+    expect(releaseSource).toContain(
+      'Source-level tests and the Android verification doctor expectations are updated for the iOS WebP target-size path.'
+    );
+    expect(releaseSource).toContain('npm publication.');
+    expect(releaseSource).toContain('Git tag `v0.2.6`.');
+    expect(releaseSource).toContain('GitHub Release `v0.2.6`.');
+    expect(releaseSource).toContain('Before release promotion:');
     expect(releaseSource).toContain('## v0.2.5');
     expect(releaseSource).toContain(
       'Status: published to npm on July 2, 2026 at 02:14:56 UTC (11:14:56 KST), tagged as `v0.2.5`.'
@@ -1184,7 +1247,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.6 candidate notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -1603,7 +1666,10 @@ describe('Android verification scripts', () => {
       'WebP output uses ImageIO CGImageDestination when the runtime advertises a WebP destination type.'
     );
     expect(iosSource).toContain(
-      'Animated WebP preservation and WebP target-size maxBytes are not implemented.'
+      'Runtime-available WebP output supports target-size maxBytes by adjusting WebP quality.'
+    );
+    expect(iosSource).toContain(
+      'Animated WebP preservation is not implemented.'
     );
     expect(iosSource).toContain(
       'iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG, PNG, or runtime ImageIO-backed WebP output only.'
@@ -1615,13 +1681,14 @@ describe('Android verification scripts', () => {
       'iOS MVP requires ImageIO WebP destination support for WebP output on this runtime.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports output.maxBytes for JPEG output only.'
+      'iOS MVP supports output.maxBytes for JPEG and runtime-available WebP output only.'
     );
     expect(iosSource).toContain('RCTImageCompressionKitReadMaxBytes');
     expect(iosSource).toContain(
       'Compression output.maxBytes must be a positive integer.'
     );
-    expect(iosSource).toContain('RCTImageCompressionKitEncodeJpegToTargetSize');
+    expect(iosSource).toContain('RCTImageCompressionKitEncodeToTargetSize');
+    expect(iosSource).toContain('RCTImageCompressionKitEncodeQualityOutput');
     expect(iosSource).toContain('bestWithinTargetData');
     expect(iosSource).toContain('RCTImageCompressionKitWebPOutputTypeIdentifier');
     expect(iosSource).toContain('RCTImageCompressionKitCanEncodeWebP');

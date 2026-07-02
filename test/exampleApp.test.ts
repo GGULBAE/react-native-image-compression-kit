@@ -65,7 +65,7 @@ describe('example app', () => {
     expect(appSource).toContain('compress-webp-to-webp');
     expect(appSource).toContain('reject-webp-output-unavailable');
     expect(appSource).toContain('reject-gif-output');
-    expect(appSource).toContain('reject-webp-max-bytes');
+    expect(appSource).toContain('compress-webp-to-webp-max-bytes');
     expect(appSource).toContain('gifResultBytes');
     expect(appSource).toContain('gifToPngResultBytes');
     expect(appSource).toContain('webpResultBytes');
@@ -74,6 +74,7 @@ describe('example app', () => {
     expect(appSource).toContain('pngToWebPResultBytes');
     expect(appSource).toContain('gifToWebPResultBytes');
     expect(appSource).toContain('webpToWebPResultBytes');
+    expect(appSource).toContain('webpTargetSizeResultBytes');
     expect(appSource).toContain(
       'Expected iOS target-size output <= ${targetSizeMaxBytes} bytes'
     );
@@ -81,7 +82,7 @@ describe('example app', () => {
       'Expected iOS GIF target-size output <= ${targetSizeMaxBytes} bytes'
     );
     expect(appSource).toContain(
-      'Expected iOS WebP target-size output <= ${targetSizeMaxBytes} bytes'
+      'Expected iOS WebP output target-size <= ${targetSizeMaxBytes} bytes'
     );
     expect(appSource).toContain(
       'Expected GIF output to be rejected before native compression.'
@@ -92,7 +93,6 @@ describe('example app', () => {
     expect(appSource).toContain('compress-png-to-png');
     expect(appSource).toContain('reject-png-max-bytes');
     expect(appSource).toContain('Expected PNG maxBytes to be unsupported on iOS.');
-    expect(appSource).toContain('Expected WebP maxBytes to be unsupported on iOS.');
     expect(appSource).toContain("Expected metadata: 'preserve' to be unimplemented on iOS.");
     expect(iosModuleSource).toContain('RCT_EXPORT_MODULE();');
     expect(iosModuleSource).toContain('copySampleJpegToCache');

@@ -93,11 +93,12 @@ describe('native module foundation', () => {
       'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports output.maxBytes for JPEG output only.'
+      'iOS MVP supports output.maxBytes for JPEG and runtime-available WebP output only.'
     );
     expect(iosSource).toContain('RCTImageCompressionKitReadMaxBytes');
     expect(iosSource).toContain('Compression output.maxBytes must be a positive integer.');
-    expect(iosSource).toContain('RCTImageCompressionKitEncodeJpegToTargetSize');
+    expect(iosSource).toContain('RCTImageCompressionKitEncodeToTargetSize');
+    expect(iosSource).toContain('RCTImageCompressionKitEncodeQualityOutput');
     expect(iosSource).toContain('bestWithinTargetData');
     expect(iosSource).toContain(
       '@"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy]'
