@@ -4,16 +4,16 @@
 
 Status: implementation candidate. Not published to npm. Source package metadata is bumped to `0.2.5`; the latest registry version remains `0.2.4` until the manual publish step.
 
-This candidate keeps Android runtime behavior unchanged while adding iOS
-ImageIO-backed WebP output to the existing iOS JPEG/PNG/GIF/WebP input and
-JPEG/PNG output MVP.
+This candidate keeps Android runtime behavior unchanged while adding a
+runtime-gated iOS ImageIO-backed WebP output path to the existing iOS
+JPEG/PNG/GIF/WebP input and JPEG/PNG output MVP.
 
 ### Goals
 
 - Verify that iOS can advertise WebP destination support through ImageIO before enabling WebP output.
 - Implement iOS WebP output for JPEG, PNG, static first-frame GIF, and static first-frame WebP input when the runtime supports WebP destination encoding.
 - Keep iOS WebP target-size `maxBytes`, animated WebP preservation, HEIC/HEIF/AVIF input, and Android runtime behavior outside this candidate.
-- Align iOS capability reporting, README guidance, TypeScript native-unavailable messaging, source-level expectations, and host-app smoke validation with the new WebP output support.
+- Align iOS capability reporting, README guidance, TypeScript native-unavailable messaging, source-level expectations, and host-app smoke validation with runtime-gated WebP output support.
 
 ### Included
 
@@ -21,13 +21,14 @@ JPEG/PNG output MVP.
 - iOS `compressImage()` now accepts `output.format: 'webp'` when ImageIO advertises a WebP destination type through `CGImageDestinationCopyTypeIdentifiers()`.
 - iOS WebP output is encoded with ImageIO `CGImageDestinationCreateWithData`, `CGImageDestinationAddImage`, and `CGImageDestinationFinalize`.
 - WebP output keeps existing iOS resize behavior, honors `output.quality`, writes `.webp` cache files, and re-encodes without copying source metadata under `safe` and `strip`.
-- JPEG, PNG, GIF, and WebP input can be re-encoded to WebP output on the validated iOS runtime.
+- JPEG, PNG, GIF, and WebP input can be re-encoded to WebP output on runtimes that advertise an ImageIO WebP destination type.
+- The GitHub Actions iOS Validation runner with Xcode 16.4 and the iPhoneSimulator18.5 SDK currently does not advertise a WebP destination type, so WebP reports `input=true` and `output=false` there.
 - iOS WebP output rejects `output.maxBytes` with `ERR_NOT_IMPLEMENTED` because target-size WebP compression remains outside this candidate.
-- iOS `getImageCompressionCapabilities()` reports WebP `input=true` and runtime WebP `output=true` when ImageIO destination encoding is available.
-- The iOS host-app smoke validates `compress-jpeg-to-webp`, `compress-png-to-webp`, `compress-gif-to-webp`, `compress-webp-to-webp`, and `reject-webp-max-bytes`.
-- TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input with JPEG, PNG, and ImageIO-backed WebP output in version `0.2.5`.
+- iOS `getImageCompressionCapabilities()` reports WebP `input=true` and runtime WebP `output=true` only when ImageIO destination encoding is available.
+- The iOS host-app smoke now follows the WebP output capability: it validates `compress-jpeg-to-webp`, `compress-png-to-webp`, `compress-gif-to-webp`, `compress-webp-to-webp`, and `reject-webp-max-bytes` when WebP output is available, and validates `reject-webp-output-unavailable` / `reject-webp-output` when it is not.
+- TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input with JPEG, PNG, and runtime-gated ImageIO-backed WebP output in version `0.2.5`.
 - README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.
-- Source-level tests and the Android verification doctor expectations are updated for the implemented iOS WebP output path.
+- Source-level tests and the Android verification doctor expectations are updated for the runtime-gated iOS WebP output path.
 
 ### Not Included
 
@@ -58,7 +59,8 @@ pnpm example:ios:smoke
 
 Candidate implementation validation before release promotion:
 
-- Pending local and GitHub Actions validation for the final `v0.2.5` candidate commit.
+- Local candidate validation: `pnpm test`, `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, and `pnpm pack --dry-run`.
+- GitHub Actions release gate: main CI, Android Instrumentation, and iOS Validation must be green on the final `v0.2.5` candidate commit before publish.
 
 ## v0.2.4
 

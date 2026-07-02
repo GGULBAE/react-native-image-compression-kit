@@ -106,7 +106,8 @@ export default function App(): React.JSX.Element {
   const supportsSelectedTargetSize =
     capabilities?.supportsTargetSizeCompression === true &&
     supportedOutputFormats.includes(outputFormat) &&
-    outputFormat !== 'png';
+    (outputFormat === 'jpeg' ||
+      (capabilities?.platform === 'android' && outputFormat === 'webp'));
 
   const loadSample = useCallback(async () => {
     if (!SAMPLE_MODULE) {
@@ -260,7 +261,7 @@ export default function App(): React.JSX.Element {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Image Compression Kit</Text>
-        <Text style={styles.subtitle}>Android MVP / iOS JPEG+PNG+WebP output MVP</Text>
+        <Text style={styles.subtitle}>Android MVP / iOS JPEG+PNG+runtime WebP</Text>
 
         <View style={styles.section}>
           <Text style={styles.label}>Source URI</Text>
@@ -492,10 +493,11 @@ type IOSHostAppSmokeSummary = {
   pngToPngResultBytes: number;
   gifToPngResultBytes: number;
   webpToPngResultBytes: number;
-  jpegToWebPResultBytes: number;
-  pngToWebPResultBytes: number;
-  gifToWebPResultBytes: number;
-  webpToWebPResultBytes: number;
+  webpOutputAvailable: boolean;
+  jpegToWebPResultBytes?: number;
+  pngToWebPResultBytes?: number;
+  gifToWebPResultBytes?: number;
+  webpToWebPResultBytes?: number;
   targetSizeResultBytes: number;
   unsupportedInputs: string[];
   unsupportedOutputs: string[];
@@ -521,7 +523,8 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   assertIOSFormatCapability(capabilities, 'jpeg', true, true);
   assertIOSFormatCapability(capabilities, 'png', true, true);
   assertIOSFormatCapability(capabilities, 'gif', true, false);
-  assertIOSFormatCapability(capabilities, 'webp', true, true);
+  const webpCapability = assertIOSFormatCapability(capabilities, 'webp', true);
+  const webpOutputAvailable = webpCapability.output === true;
   assertIOSSmoke(
     capabilities.metadataPolicies.join(',') === 'safe,strip',
     `Expected iOS metadata policies safe,strip, received ${capabilities.metadataPolicies.join(',')}.`
@@ -640,43 +643,63 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   assertCompressionResult(gifToPngResult, 'png');
   assertCompressionResult(webpToPngResult, 'png');
 
-  const jpegToWebPResult = await runIOSSmokeStep('compress-jpeg-to-webp', () =>
-    compressImage({
-      source: { uri: jpegUri },
-      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
-      output: { format: 'webp', quality: 72 },
-      metadata: 'safe',
-    })
-  );
-  const pngToWebPResult = await runIOSSmokeStep('compress-png-to-webp', () =>
-    compressImage({
-      source: { uri: pngUri },
-      resize: { maxWidth: 18, maxHeight: 12, mode: 'cover' },
-      output: { format: 'webp', quality: 72 },
-      metadata: 'strip',
-    })
-  );
-  const gifToWebPResult = await runIOSSmokeStep('compress-gif-to-webp', () =>
-    compressImage({
-      source: { uri: gifUri },
-      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
-      output: { format: 'webp', quality: 72 },
-      metadata: 'safe',
-    })
-  );
-  const webpToWebPResult = await runIOSSmokeStep('compress-webp-to-webp', () =>
-    compressImage({
-      source: { uri: webpUri },
-      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
-      output: { format: 'webp', quality: 72 },
-      metadata: 'strip',
-    })
-  );
+  let jpegToWebPResult: CompressionResult | undefined;
+  let pngToWebPResult: CompressionResult | undefined;
+  let gifToWebPResult: CompressionResult | undefined;
+  let webpToWebPResult: CompressionResult | undefined;
 
-  assertCompressionResult(jpegToWebPResult, 'webp');
-  assertCompressionResult(pngToWebPResult, 'webp');
-  assertCompressionResult(gifToWebPResult, 'webp');
-  assertCompressionResult(webpToWebPResult, 'webp');
+  if (webpOutputAvailable) {
+    jpegToWebPResult = await runIOSSmokeStep('compress-jpeg-to-webp', () =>
+      compressImage({
+        source: { uri: jpegUri },
+        resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+        output: { format: 'webp', quality: 72 },
+        metadata: 'safe',
+      })
+    );
+    pngToWebPResult = await runIOSSmokeStep('compress-png-to-webp', () =>
+      compressImage({
+        source: { uri: pngUri },
+        resize: { maxWidth: 18, maxHeight: 12, mode: 'cover' },
+        output: { format: 'webp', quality: 72 },
+        metadata: 'strip',
+      })
+    );
+    gifToWebPResult = await runIOSSmokeStep('compress-gif-to-webp', () =>
+      compressImage({
+        source: { uri: gifUri },
+        resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+        output: { format: 'webp', quality: 72 },
+        metadata: 'safe',
+      })
+    );
+    webpToWebPResult = await runIOSSmokeStep('compress-webp-to-webp', () =>
+      compressImage({
+        source: { uri: webpUri },
+        resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+        output: { format: 'webp', quality: 72 },
+        metadata: 'strip',
+      })
+    );
+
+    assertCompressionResult(jpegToWebPResult, 'webp');
+    assertCompressionResult(pngToWebPResult, 'webp');
+    assertCompressionResult(gifToWebPResult, 'webp');
+    assertCompressionResult(webpToWebPResult, 'webp');
+  } else {
+    await runIOSSmokeStep('reject-webp-output-unavailable', () =>
+      expectNativeErrorCode(
+        () =>
+          compressImage({
+            source: { uri: jpegUri },
+            output: { format: 'webp', quality: 70 },
+            metadata: 'safe',
+          }),
+        'ERR_NOT_IMPLEMENTED',
+        'Expected WebP output to require ImageIO destination support on this iOS runtime.'
+      )
+    );
+  }
 
   const targetSizeResult = await runIOSSmokeStep(
     'compress-jpeg-to-jpeg-max-bytes',
@@ -710,18 +733,24 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
       'Expected PNG maxBytes to be unsupported on iOS.'
     )
   );
-  await runIOSSmokeStep('reject-webp-max-bytes', () =>
-    expectNativeErrorCode(
-      () =>
-        compressImage({
-          source: { uri: webpUri },
-          output: { format: 'webp', quality: 70, maxBytes: targetSizeMaxBytes },
-          metadata: 'safe',
-        }),
-      'ERR_NOT_IMPLEMENTED',
-      'Expected WebP maxBytes to be unsupported on iOS.'
-    )
-  );
+  if (webpOutputAvailable) {
+    await runIOSSmokeStep('reject-webp-max-bytes', () =>
+      expectNativeErrorCode(
+        () =>
+          compressImage({
+            source: { uri: webpUri },
+            output: {
+              format: 'webp',
+              quality: 70,
+              maxBytes: targetSizeMaxBytes,
+            },
+            metadata: 'safe',
+          }),
+        'ERR_NOT_IMPLEMENTED',
+        'Expected WebP maxBytes to be unsupported on iOS.'
+      )
+    );
+  }
 
   const unsupportedInputs = ['heic', 'heif', 'avif'];
   for (const format of unsupportedInputs) {
@@ -744,6 +773,9 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   }
 
   const unsupportedOutputCases = [
+    ...(webpOutputAvailable
+      ? []
+      : [{ format: 'webp', step: 'reject-webp-output' } as const]),
     { format: 'heic', step: 'reject-heic-output' },
     { format: 'heif', step: 'reject-heif-output' },
     { format: 'avif', step: 'reject-avif-output' },
@@ -799,10 +831,19 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     pngToPngResultBytes: pngToPngResult.byteSize,
     gifToPngResultBytes: gifToPngResult.byteSize,
     webpToPngResultBytes: webpToPngResult.byteSize,
-    jpegToWebPResultBytes: jpegToWebPResult.byteSize,
-    pngToWebPResultBytes: pngToWebPResult.byteSize,
-    gifToWebPResultBytes: gifToWebPResult.byteSize,
-    webpToWebPResultBytes: webpToWebPResult.byteSize,
+    webpOutputAvailable,
+    ...(jpegToWebPResult
+      ? { jpegToWebPResultBytes: jpegToWebPResult.byteSize }
+      : {}),
+    ...(pngToWebPResult
+      ? { pngToWebPResultBytes: pngToWebPResult.byteSize }
+      : {}),
+    ...(gifToWebPResult
+      ? { gifToWebPResultBytes: gifToWebPResult.byteSize }
+      : {}),
+    ...(webpToWebPResult
+      ? { webpToWebPResultBytes: webpToWebPResult.byteSize }
+      : {}),
     targetSizeResultBytes: targetSizeResult.byteSize,
     unsupportedInputs,
     unsupportedOutputs: unsupportedOutputCases.map(({ format }) => format),
@@ -866,8 +907,8 @@ function assertIOSFormatCapability(
   capabilities: ImageCompressionCapabilities,
   format: ImageFormat,
   expectedInput: boolean,
-  expectedOutput: boolean
-): void {
+  expectedOutput?: boolean
+): ImageCompressionCapabilities['formats'][number] {
   const capability = capabilities.formats.find(
     (candidate) => candidate.format === format
   );
@@ -877,10 +918,14 @@ function assertIOSFormatCapability(
     capability.input === expectedInput,
     `Expected ${format} input=${expectedInput}, received ${capability.input}.`
   );
-  assertIOSSmoke(
-    capability.output === expectedOutput,
-    `Expected ${format} output=${expectedOutput}, received ${capability.output}.`
-  );
+  if (expectedOutput !== undefined) {
+    assertIOSSmoke(
+      capability.output === expectedOutput,
+      `Expected ${format} output=${expectedOutput}, received ${capability.output}.`
+    );
+  }
+
+  return capability;
 }
 
 function assertCompressionResult(

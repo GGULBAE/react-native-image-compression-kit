@@ -5,12 +5,12 @@
 </p>
 
 <p align="center">
-  A React Native image compression MVP with Android broad-format support, iOS JPEG/PNG/GIF/WebP input and WebP output candidate support, and TypeScript exports.
+  A React Native image compression MVP with Android broad-format support, iOS JPEG/PNG/GIF/WebP input, a runtime-gated iOS WebP output path, and TypeScript exports.
 </p>
 
 <p align="center">
   <img alt="Status: v0.2.5 candidate" src="https://img.shields.io/badge/Status-v0.2.5%20candidate-blue" />
-  <img alt="Platforms: Android MVP | iOS JPEG/PNG/GIF/WebP MVP" src="https://img.shields.io/badge/Platforms-Android%20MVP%20%7C%20iOS%20JPEG%2FPNG%2FGIF%2FWebP%20MVP-green" />
+  <img alt="Platforms: Android MVP | iOS runtime-gated WebP" src="https://img.shields.io/badge/Platforms-Android%20MVP%20%7C%20iOS%20runtime--gated%20WebP-green" />
   <img alt="React Native: Codegen ready" src="https://img.shields.io/badge/React%20Native-Codegen%20ready-61dafb" />
   <img alt="TypeScript: API available" src="https://img.shields.io/badge/TypeScript-API%20available-3178c6" />
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow" />
@@ -28,9 +28,9 @@ Format conversion is treated as part of the compression result. Developers choos
 
 ## Status
 
-This repository is prepared as the `v0.2.5` candidate. It keeps the Android MVP intact and adds iOS ImageIO-backed WebP output on top of the published `0.2.4` iOS WebP static first-frame input release. The source package metadata is bumped to `0.2.5`; the latest published npm package remains `react-native-image-compression-kit@0.2.4`, with GitHub Release [v0.2.4](https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.4), until the manual publish, tag, and GitHub Release steps promote `v0.2.5`. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS native module, unit test foundation, and npm package metadata are in place.
+This repository is prepared as the `v0.2.5` candidate. It keeps the Android MVP intact and adds a runtime-gated iOS ImageIO-backed WebP output path on top of the published `0.2.4` iOS WebP static first-frame input release. The source package metadata is bumped to `0.2.5`; the latest published npm package remains `react-native-image-compression-kit@0.2.4`, with GitHub Release [v0.2.4](https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.4), until the manual publish, tag, and GitHub Release steps promote `v0.2.5`. The TypeScript API contract, React Native Codegen spec, Android native module, Android example app, iOS native module, unit test foundation, and npm package metadata are in place.
 
-Android includes a published image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. The current iOS JPEG/PNG/GIF/WebP MVP candidate supports `file://` and `content://` JPEG, PNG, GIF, or WebP input, optional resize, quality-based JPEG output, target-size JPEG output with `output.maxBytes`, PNG output, runtime ImageIO-backed WebP output when `CGImageDestination` advertises WebP destination support, cache-file results, and `safe` / `strip` metadata policies that re-encode without copying source metadata. GIF and WebP input are decoded as static first frames through ImageIO on iOS. iOS `getImageCompressionCapabilities()` reports JPEG input/output, PNG input/output, GIF input with no GIF output, WebP input with WebP output on the validated ImageIO runtime, `metadataPolicies: ['safe', 'strip']`, target-size compression support for JPEG output, and no cancellation. GIF output, GIF animation preservation, animated WebP preservation, WebP target-size `maxBytes`, HEIC / HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, and broader metadata support are not implemented yet.
+Android includes a published image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. The current iOS JPEG/PNG/GIF/WebP MVP candidate supports `file://` and `content://` JPEG, PNG, GIF, or WebP input, optional resize, quality-based JPEG output, target-size JPEG output with `output.maxBytes`, PNG output, runtime ImageIO-backed WebP output when `CGImageDestination` advertises WebP destination support, cache-file results, and `safe` / `strip` metadata policies that re-encode without copying source metadata. GIF and WebP input are decoded as static first frames through ImageIO on iOS. iOS `getImageCompressionCapabilities()` reports JPEG input/output, PNG input/output, GIF input with no GIF output, WebP input with runtime-gated WebP output, `metadataPolicies: ['safe', 'strip']`, target-size compression support for JPEG output, and no cancellation. The GitHub Actions iOS Validation runner with Xcode 16.4 and the iPhoneSimulator18.5 SDK currently reports WebP `output=false` because ImageIO does not advertise a WebP destination type there. GIF output, GIF animation preservation, animated WebP preservation, WebP target-size `maxBytes`, HEIC / HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, and broader metadata support are not implemented yet.
 
 ## Current Implementation Scope
 
@@ -40,9 +40,9 @@ The current implementation is intentionally small:
 - Android supports `file://` and `content://` local URI input. iOS supports `file://` and best-effort `content://` local URI input through Foundation URL loading.
 - JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input. GIF input is static first-frame only, HEIC / HEIF input depends on Android SDK and device codec support, and AVIF input requires Android 14+ baseline image support.
 - iOS input is currently JPEG, PNG, static first-frame GIF, and static first-frame WebP.
-- Android output is JPEG, PNG, and WebP. iOS output is JPEG, PNG, and runtime ImageIO-backed WebP.
-- Quality-based compression for JPEG and WebP output. PNG output ignores `quality`.
-- Target-size compression with `maxBytes` for Android JPEG and WebP output and iOS JPEG output. Android PNG output and iOS PNG/WebP output reject `maxBytes`.
+- Android output is JPEG, PNG, and WebP. iOS output is JPEG, PNG, and WebP only when ImageIO advertises a WebP destination type at runtime.
+- Quality-based compression for JPEG and Android WebP output. iOS WebP output honors `quality` only on runtimes where ImageIO WebP destination encoding is available. PNG output ignores `quality`.
+- Target-size compression with `maxBytes` for Android JPEG and WebP output and iOS JPEG output. Android PNG output rejects `maxBytes`; iOS PNG rejects `maxBytes`, and iOS WebP target-size compression remains unsupported.
 - JPEG EXIF orientation correction before resize and selected output encoding.
 - Optional resize with `maxWidth`, `maxHeight`, and `contain`, `cover`, or `stretch` mode.
 - Android supports metadata `preserve`, privacy-filtered `safe`, and `strip` policies for JPEG source to JPEG output. PNG/WebP/GIF/HEIC/HEIF/AVIF sources and PNG/WebP output do not preserve source EXIF metadata. iOS accepts `safe` and `strip`; both re-encode without copying source metadata, and `preserve` rejects with `ERR_NOT_IMPLEMENTED`.
@@ -98,7 +98,7 @@ The following product features are planned or only partially implemented.
 - Quality-based compression.
 - Target file size compression with `maxBytes`. Android MVP support is implemented for JPEG and WebP output; iOS support is implemented for JPEG output, while iOS PNG and WebP output intentionally reject `maxBytes`.
 - Optional resize during compression. Android MVP and iOS JPEG/PNG/GIF/WebP MVP support is implemented.
-- Output format selection. Android MVP supports JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC / HEIF, and Android 14+ AVIF input with JPEG, PNG, and WebP output. iOS MVP supports JPEG, PNG, and runtime ImageIO-backed WebP output from JPEG, PNG, static GIF, and static WebP input.
+- Output format selection. Android MVP supports JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC / HEIF, and Android 14+ AVIF input with JPEG, PNG, and WebP output. iOS MVP supports JPEG, PNG, and runtime-gated ImageIO-backed WebP output from JPEG, PNG, static GIF, and static WebP input.
 - Automatic EXIF orientation correction. Android MVP support is implemented for JPEG input.
 - Metadata preservation and stripping policies. Android MVP supports `preserve`, `safe`, and `strip` for JPEG source to JPEG output.
 - Alpha-channel handling.
@@ -106,7 +106,7 @@ The following product features are planned or only partially implemented.
 - Compression statistics.
 - Cancellation.
 - Runtime capability inspection.
-- Android and iOS support. Android has the broader MVP; iOS currently supports JPEG/PNG/GIF/WebP input to JPEG, PNG, or runtime ImageIO-backed WebP output, with GIF and WebP decoded as static first frames.
+- Android and iOS support. Android has the broader MVP; iOS currently supports JPEG/PNG/GIF/WebP input to JPEG, PNG, or runtime-gated ImageIO-backed WebP output, with GIF and WebP decoded as static first frames.
 - React Native New Architecture-first design.
 
 ## Planned Format Support
@@ -128,18 +128,19 @@ Animation preservation for GIF, animated WebP, and animated AVIF is not planned 
 
 ## iOS MVP Behavior
 
-Version `0.2.0` replaces the previous iOS package stub with a native JPEG MVP. Version `0.2.1` extends that iOS JPEG MVP with target-size compression. Version `0.2.2` adds PNG output. Version `0.2.3` adds GIF input decoded as a static first frame. Version `0.2.4` adds WebP input decoded as a static first frame. Version `0.2.5` adds runtime ImageIO-backed WebP output:
+Version `0.2.0` replaces the previous iOS package stub with a native JPEG MVP. Version `0.2.1` extends that iOS JPEG MVP with target-size compression. Version `0.2.2` adds PNG output. Version `0.2.3` adds GIF input decoded as a static first frame. Version `0.2.4` adds WebP input decoded as a static first frame. Version `0.2.5` adds a runtime-gated ImageIO-backed WebP output path:
 
 - `compressImage()` accepts `file://` and best-effort `content://` JPEG, PNG, GIF, or WebP source URIs.
 - JPEG output is encoded with `UIImageJPEGRepresentation()` into the iOS app cache directory.
 - PNG output is encoded with `UIImagePNGRepresentation()` into the iOS app cache directory.
 - WebP output is encoded with ImageIO `CGImageDestination` into the iOS app cache directory when `CGImageDestinationCopyTypeIdentifiers()` advertises a WebP destination type.
+- On the current GitHub Actions iOS Validation runner with Xcode 16.4 and the iPhoneSimulator18.5 SDK, ImageIO does not advertise a WebP destination type. In that environment WebP reports `input=true` and `output=false`, and `output.format: 'webp'` rejects with `ERR_NOT_IMPLEMENTED`.
 - GIF and WebP input are decoded through ImageIO as static first frames before resize and output encoding; animation preservation is not implemented.
 - `resize.maxWidth`, `resize.maxHeight`, and `contain`, `cover`, or `stretch` mode are supported before output encoding.
-- `output.quality` controls JPEG and WebP quality from `0` to `100`; when omitted, iOS uses the same default quality of `80`.
+- `output.quality` controls JPEG quality and runtime-available WebP quality from `0` to `100`; when omitted, iOS uses the same default quality of `80`.
 - PNG output ignores `quality`.
-- `output.maxBytes` is supported for JPEG output. iOS treats `quality` as the upper quality bound and searches for the highest JPEG quality that fits under `maxBytes`; if even the lowest quality cannot fit, it returns the smallest generated JPEG output. PNG and WebP output reject `maxBytes` with `ERR_NOT_IMPLEMENTED`.
-- PNG and WebP output preserve alpha where the processed image contains transparency. JPEG output still composites alpha over white.
+- `output.maxBytes` is supported for JPEG output. iOS treats `quality` as the upper quality bound and searches for the highest JPEG quality that fits under `maxBytes`; if even the lowest quality cannot fit, it returns the smallest generated JPEG output. PNG output rejects `maxBytes` with `ERR_NOT_IMPLEMENTED`; WebP target-size compression remains unsupported and rejects after WebP output capability is available.
+- PNG output preserves alpha where the processed image contains transparency. Runtime-available WebP output uses the processed image alpha as provided by ImageIO. JPEG output still composites alpha over white.
 - `metadata: 'safe'` and `metadata: 'strip'` are accepted and both re-encode without copying source metadata. `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED`.
 - `getImageCompressionCapabilities()` resolves with `platform: 'ios'`, JPEG `input=true` and `output=true`, PNG `input=true` and `output=true`, GIF `input=true` and `output=false`, WebP `input=true` and WebP `output=true` when the runtime advertises ImageIO WebP destination support, `metadataPolicies: ['safe', 'strip']`, `supportsTargetSizeCompression: true`, and `supportsCancellation: false`.
 - If the TypeScript API throws `ERR_NATIVE_MODULE_UNAVAILABLE`, the native module was not found by React Native. Rebuild the app after installing or linking the package; this is separate from platform capability errors returned by the native implementation.
@@ -198,7 +199,7 @@ For AVIF manual validation, use an API 34+ device or emulator and repeat the cop
 
 ## Public API
 
-The API below is available from the package. Runtime compression succeeds on the Android MVP. In the `0.2.5` candidate, iOS runtime compression succeeds for JPEG, PNG, static first-frame GIF, or static first-frame WebP input to JPEG, PNG, or runtime ImageIO-backed WebP output, including JPEG `output.maxBytes`; call `getImageCompressionCapabilities()` to guard platform-specific format, metadata, and target-size support before compression.
+The API below is available from the package. Runtime compression succeeds on the Android MVP. In the `0.2.5` candidate, iOS runtime compression succeeds for JPEG, PNG, static first-frame GIF, or static first-frame WebP input to JPEG, PNG, or runtime-gated ImageIO-backed WebP output, including JPEG `output.maxBytes`; call `getImageCompressionCapabilities()` to guard platform-specific format, metadata, and target-size support before compression.
 
 ```ts
 import { compressImage } from 'react-native-image-compression-kit';
@@ -369,8 +370,8 @@ This project is not intended to handle:
 - [x] iOS PNG output.
 - [x] iOS GIF static first-frame input support.
 - [x] iOS WebP static first-frame input support.
-- [x] iOS WebP output through runtime ImageIO destination support.
-- [x] iOS capability reporting for JPEG/PNG/GIF/WebP input, JPEG/PNG/WebP output, metadata policies, target-size support, and cancellation.
+- [x] iOS runtime-gated WebP output path through ImageIO destination support.
+- [x] iOS capability reporting for JPEG/PNG/GIF/WebP input, JPEG/PNG/runtime-gated WebP output, metadata policies, target-size support, and cancellation.
 - [x] Example application.
 - [x] Example metadata policy selector and result summary.
 - [x] Example output format selector for JPEG, PNG, and WebP.
@@ -386,7 +387,7 @@ This project is not intended to handle:
 
 The `0.2.5` package metadata is prepared in source for the next publish under `react-native-image-compression-kit`, with repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and iOS native source included in the publish tarball. The latest published npm package remains `react-native-image-compression-kit@0.2.4` until the manual `v0.2.5` publish step completes. Version `0.1.0` introduced the Android MVP, version `0.1.1` is the published docs-only patch for README/npm package page status, version `0.1.2` is the published iOS-stub clarity patch for native-unavailable messaging, README guidance, and iOS capability reporting, version `0.2.0` is the published iOS native JPEG MVP release, version `0.2.1` is the published iOS JPEG target-size release, version `0.2.2` is the published iOS PNG output release, version `0.2.3` is the published iOS GIF static first-frame input release, version `0.2.4` is the published iOS WebP static first-frame input release, and version `0.2.5` is the iOS WebP output candidate. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
 
-The repository contains an initial TypeScript API scaffold, an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. Version `0.2.0` adds an iOS native MVP with JPEG/PNG input, optional resize, quality-based JPEG output, `safe` / `strip` metadata behavior, and iOS capability reporting. Version `0.2.1` adds iOS JPEG target-size compression. Version `0.2.2` adds iOS PNG output. Version `0.2.3` adds iOS GIF input decoded as a static first frame. Version `0.2.4` adds iOS WebP input decoded as a static first frame. Version `0.2.5` adds iOS WebP output through ImageIO destination encoding. HEIC/HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, iOS metadata preservation, GIF animation preservation, animated WebP preservation, and iOS WebP target-size compression are not implemented yet.
+The repository contains an initial TypeScript API scaffold, an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output. Version `0.2.0` adds an iOS native MVP with JPEG/PNG input, optional resize, quality-based JPEG output, `safe` / `strip` metadata behavior, and iOS capability reporting. Version `0.2.1` adds iOS JPEG target-size compression. Version `0.2.2` adds iOS PNG output. Version `0.2.3` adds iOS GIF input decoded as a static first frame. Version `0.2.4` adds iOS WebP input decoded as a static first frame. Version `0.2.5` adds a runtime-gated iOS WebP output path through ImageIO destination encoding. HEIC/HEIF output, AVIF output, iOS HEIC/HEIF/AVIF input, iOS metadata preservation, GIF animation preservation, animated WebP preservation, and iOS WebP target-size compression are not implemented yet.
 
 Install from npm:
 
@@ -476,7 +477,7 @@ The pod install path treats CocoaPods `pathname contains null byte` as an extern
 
 Metro startup waits up to 180 seconds by default to tolerate cold macOS CI runners. Override `RNICK_IOS_METRO_READY_TIMEOUT_MS` when a local machine or CI image needs a shorter or longer readiness window.
 
-The smoke path validates the native module link plus runtime behavior from the React Native host app: iOS capabilities report JPEG input/output, PNG input/output, GIF input with no GIF output, WebP input/output on the validated ImageIO runtime, `metadataPolicies: ['safe', 'strip']`, target-size compression support, and no cancellation; JPEG, PNG, GIF, and WebP fixtures compress to JPEG output; JPEG, PNG, GIF, and WebP fixtures compress to PNG output; JPEG, PNG, GIF, and WebP fixtures compress to WebP output; GIF and WebP JPEG output run through the `output.maxBytes` path and return `byteSize <= maxBytes` for the smoke target; JPEG `output.maxBytes` succeeds and returns `byteSize <= maxBytes` for the smoke target; PNG and WebP `output.maxBytes` reject with `ERR_NOT_IMPLEMENTED`; HEIC, HEIF, and AVIF inputs reject with `ERR_UNSUPPORTED_FORMAT`; HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`; GIF output remains rejected by TypeScript validation with `ERR_INVALID_OPTIONS`; and `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED`.
+The smoke path validates the native module link plus runtime behavior from the React Native host app: iOS capabilities report JPEG input/output, PNG input/output, GIF input with no GIF output, WebP input with capability-driven output, `metadataPolicies: ['safe', 'strip']`, target-size compression support, and no cancellation; JPEG, PNG, GIF, and WebP fixtures compress to JPEG output; JPEG, PNG, GIF, and WebP fixtures compress to PNG output; GIF and WebP JPEG output run through the `output.maxBytes` path and return `byteSize <= maxBytes` for the smoke target; JPEG `output.maxBytes` succeeds and returns `byteSize <= maxBytes` for the smoke target; PNG `output.maxBytes` rejects with `ERR_NOT_IMPLEMENTED`; when ImageIO advertises a WebP destination type, JPEG, PNG, GIF, and WebP fixtures also compress to WebP output and WebP `output.maxBytes` rejects with `ERR_NOT_IMPLEMENTED`; when ImageIO does not advertise a WebP destination type, `output.format: 'webp'` rejects with `ERR_NOT_IMPLEMENTED`; HEIC, HEIF, and AVIF inputs reject with `ERR_UNSUPPORTED_FORMAT`; HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`; GIF output remains rejected by TypeScript validation with `ERR_INVALID_OPTIONS`; and `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED`.
 
 ## Continuous Integration
 

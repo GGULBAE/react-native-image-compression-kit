@@ -340,7 +340,7 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain('adding iOS');
     expect(releaseSource).toContain(
-      'ImageIO-backed WebP output to the existing iOS JPEG/PNG/GIF/WebP input and'
+      'runtime-gated iOS ImageIO-backed WebP output path to the existing iOS'
     );
     expect(releaseSource).toContain(
       'Verify that iOS can advertise WebP destination support through ImageIO before enabling WebP output.'
@@ -361,19 +361,22 @@ describe('Android verification scripts', () => {
       'WebP output keeps existing iOS resize behavior, honors `output.quality`, writes `.webp` cache files, and re-encodes without copying source metadata under `safe` and `strip`.'
     );
     expect(releaseSource).toContain(
-      'JPEG, PNG, GIF, and WebP input can be re-encoded to WebP output on the validated iOS runtime.'
+      'JPEG, PNG, GIF, and WebP input can be re-encoded to WebP output on runtimes that advertise an ImageIO WebP destination type.'
+    );
+    expect(releaseSource).toContain(
+      'The GitHub Actions iOS Validation runner with Xcode 16.4 and the iPhoneSimulator18.5 SDK currently does not advertise a WebP destination type'
     );
     expect(releaseSource).toContain(
       'iOS WebP output rejects `output.maxBytes` with `ERR_NOT_IMPLEMENTED` because target-size WebP compression remains outside this candidate.'
     );
     expect(releaseSource).toContain(
-      'iOS `getImageCompressionCapabilities()` reports WebP `input=true` and runtime WebP `output=true` when ImageIO destination encoding is available.'
+      'iOS `getImageCompressionCapabilities()` reports WebP `input=true` and runtime WebP `output=true` only when ImageIO destination encoding is available.'
     );
     expect(releaseSource).toContain(
-      'The iOS host-app smoke validates `compress-jpeg-to-webp`, `compress-png-to-webp`, `compress-gif-to-webp`, `compress-webp-to-webp`, and `reject-webp-max-bytes`.'
+      'The iOS host-app smoke now follows the WebP output capability'
     );
     expect(releaseSource).toContain(
-      'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input with JPEG, PNG, and ImageIO-backed WebP output in version `0.2.5`.'
+      'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input with JPEG, PNG, and runtime-gated ImageIO-backed WebP output in version `0.2.5`.'
     );
     expect(releaseSource).toContain(
       'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.'

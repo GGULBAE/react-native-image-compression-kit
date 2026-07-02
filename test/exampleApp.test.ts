@@ -19,7 +19,7 @@ describe('example app', () => {
     expect(appSource).toContain("useState<OutputFormat>('jpeg')");
     expect(appSource).toContain('format: outputFormat');
     expect(appSource).toContain('supportsSelectedTargetSize');
-    expect(appSource).toContain('Android MVP / iOS JPEG+PNG+WebP output MVP');
+    expect(appSource).toContain('Android MVP / iOS JPEG+PNG+runtime WebP');
     expect(appSource).toContain('editable={supportsSelectedTargetSize}');
     expect(appSource).toContain('label="selected output"');
     expect(appSource).toContain('label="output formats"');
@@ -47,7 +47,8 @@ describe('example app', () => {
     expect(appSource).toContain("capabilities.platform === 'ios'");
     expect(appSource).toContain("metadataPolicies.join(',') === 'safe,strip'");
     expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'gif', true, false)");
-    expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'webp', true, true)");
+    expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'webp', true)");
+    expect(appSource).toContain('webpOutputAvailable');
     expect(appSource).toContain(
       'Expected iOS JPEG target-size compression to be supported.'
     );
@@ -62,6 +63,7 @@ describe('example app', () => {
     expect(appSource).toContain('compress-png-to-webp');
     expect(appSource).toContain('compress-gif-to-webp');
     expect(appSource).toContain('compress-webp-to-webp');
+    expect(appSource).toContain('reject-webp-output-unavailable');
     expect(appSource).toContain('reject-gif-output');
     expect(appSource).toContain('reject-webp-max-bytes');
     expect(appSource).toContain('gifResultBytes');
