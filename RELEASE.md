@@ -2,7 +2,7 @@
 
 ## v0.2.11
 
-Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.
+Status: published to npm on July 2, 2026 at 08:49:37 UTC (17:49:37 KST), tagged as `v0.2.11`.
 
 This docs-only patch corrects the README that is shown on the npm package page
 after the `0.2.10` tarball shipped release-ready/pre-publish status text. It
@@ -73,6 +73,28 @@ git push origin v0.2.11
 ```
 
 The release dry run includes a packed README stale status check before the consumer smoke and publish dry run. Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-ready commit. After npm publish, the registry smoke must confirm the real `0.2.11` tarball README no longer includes the stale `0.2.10` release-ready/pre-publish package-page status snippets.
+
+Release commit validation before npm publish:
+
+- Commit: `be8344f7b5dd884e5d44d9da9ae934976c50d581`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28576768326>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28576768289>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28576768307>.
+- Local pre-publish gate completed successfully before npm publish: `pnpm release:dry-run`, including `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, `pnpm pack --dry-run`, packed README stale-status check, packed consumer smoke, and publish dry run.
+
+Completed after npm publish and GitHub Release creation:
+
+- `npm publish --tag latest` published `react-native-image-compression-kit@0.2.11`.
+- `npm view react-native-image-compression-kit@0.2.11 version dist.tarball dist.integrity dist.shasum time.modified --json` confirmed version `0.2.11`, registry tarball URL, integrity `sha512-JMBebCxcpwdiLspK8s8pIF8xIEpgqxWjO5BZEkBEoCdRp09wvqj8b3UXLczGqXSgcAZtTL+UuE2mF+nptKWDpw==`, shasum `e3c067a00949e93f29f80dee5eabfaaf4bf1fa72`, and publish timestamp `2026-07-02T08:49:36.915Z`.
+- `npm view react-native-image-compression-kit dist-tags version --json` confirmed `latest` dist-tag `0.2.11`.
+- npm package: `react-native-image-compression-kit@0.2.11`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.11.tgz`
+- npm integrity: `sha512-JMBebCxcpwdiLspK8s8pIF8xIEpgqxWjO5BZEkBEoCdRp09wvqj8b3UXLczGqXSgcAZtTL+UuE2mF+nptKWDpw==`
+- npm shasum: `e3c067a00949e93f29f80dee5eabfaaf4bf1fa72`
+- Git tag: `v0.2.11`
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.11>.
+- Registry smoke confirmed 49 files, 46.4 kB package size, 204.3 kB unpacked size, clean `npm install --ignore-scripts --legacy-peer-deps`, and public TypeScript import/typecheck success.
+- Registry tarball README stale-status check passed for the `0.2.11` package-page status.
 
 ## v0.2.10
 

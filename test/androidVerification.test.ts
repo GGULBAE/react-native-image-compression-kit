@@ -456,7 +456,7 @@ describe('Android verification scripts', () => {
     expect(packageJson.version).toBe('0.2.11');
     expect(releaseSource).toContain('## v0.2.11');
     expect(releaseSource).toContain(
-      'Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.'
+      'Status: published to npm on July 2, 2026 at 08:49:37 UTC (17:49:37 KST), tagged as `v0.2.11`.'
     );
     expect(releaseSource).toContain(
       'This docs-only patch corrects the README that is shown on the npm package page'
@@ -520,6 +520,48 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain('pnpm smoke:registry -- --version 0.2.11');
     expect(releaseSource).toContain(
       'After npm publish, the registry smoke must confirm the real `0.2.11` tarball README no longer includes the stale `0.2.10` release-ready/pre-publish package-page status snippets.'
+    );
+    expect(releaseSource).toContain('Release commit validation before npm publish:');
+    expect(releaseSource).toContain(
+      'Commit: `be8344f7b5dd884e5d44d9da9ae934976c50d581`.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28576768326>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28576768289>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28576768307>.'
+    );
+    expect(releaseSource).toContain(
+      'Local pre-publish gate completed successfully before npm publish: `pnpm release:dry-run`, including `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, `pnpm pack --dry-run`, packed README stale-status check, packed consumer smoke, and publish dry run.'
+    );
+    expect(releaseSource).toContain(
+      'Completed after npm publish and GitHub Release creation:'
+    );
+    expect(releaseSource).toContain(
+      '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.11`.'
+    );
+    expect(releaseSource).toContain('`latest` dist-tag `0.2.11`');
+    expect(releaseSource).toContain(
+      'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.11.tgz`'
+    );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-JMBebCxcpwdiLspK8s8pIF8xIEpgqxWjO5BZEkBEoCdRp09wvqj8b3UXLczGqXSgcAZtTL+UuE2mF+nptKWDpw==`'
+    );
+    expect(releaseSource).toContain(
+      'npm shasum: `e3c067a00949e93f29f80dee5eabfaaf4bf1fa72`'
+    );
+    expect(releaseSource).toContain('Git tag: `v0.2.11`');
+    expect(releaseSource).toContain(
+      'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.11>.'
+    );
+    expect(releaseSource).toContain(
+      'Registry smoke confirmed 49 files, 46.4 kB package size, 204.3 kB unpacked size'
+    );
+    expect(releaseSource).toContain(
+      'Registry tarball README stale-status check passed for the `0.2.11` package-page status.'
     );
     expect(releaseSource).toContain('## v0.2.10');
     expect(releaseSource).toContain(
