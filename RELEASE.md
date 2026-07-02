@@ -2,9 +2,9 @@
 
 ## v0.2.7
 
-Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+Status: published to npm on July 2, 2026, tagged as `v0.2.7`.
 
-This candidate keeps Android runtime behavior unchanged while adding iOS
+This release keeps Android runtime behavior unchanged while adding iOS
 HEIC/HEIF input support to the existing iOS ImageIO-backed static decode path.
 HEIC and HEIF inputs are decoded as static images and then routed through the
 existing JPEG, PNG, or runtime-gated WebP output paths.
@@ -14,7 +14,7 @@ existing JPEG, PNG, or runtime-gated WebP output paths.
 - Support HEIC/HEIF input on iOS through ImageIO static image decode.
 - Reuse the existing iOS resize, JPEG quality, JPEG `output.maxBytes`, PNG output, runtime-gated WebP output, and runtime-available WebP `output.maxBytes` paths.
 - Report iOS HEIC and HEIF capabilities as `input=true` and `output=false`.
-- Keep HEIC/HEIF output, iOS AVIF input/output, Live Photo/depth/burst/animation handling, iOS metadata preservation, and Android runtime behavior outside this candidate.
+- Keep HEIC/HEIF output, iOS AVIF input/output, Live Photo/depth/burst/animation handling, iOS metadata preservation, and Android runtime behavior outside this release.
 - Align README guidance, TypeScript native-unavailable messaging, native error surfaces, source-level expectations, Android verification doctor expectations, and iOS host-app smoke validation with the new iOS HEIC/HEIF input path.
 
 ### Included
@@ -30,13 +30,13 @@ existing JPEG, PNG, or runtime-gated WebP output paths.
 - The iOS host-app smoke validates `compress-heic-to-jpeg`, `compress-heif-to-jpeg`, `compress-heic-to-png`, `compress-heif-to-png`, and capability-gated HEIC/HEIF to WebP output when WebP output is available.
 - The iOS host-app smoke removes HEIC and HEIF from the unsupported-input rejection loop and keeps AVIF input rejected with `ERR_UNSUPPORTED_FORMAT`.
 - TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP/HEIC/HEIF input with JPEG, PNG, and runtime-gated ImageIO-backed WebP output in version `0.2.7`.
-- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.
 - Source-level tests and the Android verification doctor expectations are updated for the iOS HEIC/HEIF input path.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.7` and GitHub Release `v0.2.7`.
 
 ### Not Included
 
-- npm package publication under the `latest` dist-tag.
-- Git tag `v0.2.7` or GitHub Release `v0.2.7`.
 - Android runtime behavior changes.
 - HEIC/HEIF output on iOS.
 - AVIF input or output on iOS.
@@ -57,7 +57,20 @@ pnpm pack --dry-run
 pnpm example:ios:smoke
 ```
 
-Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.
+Release commit validation before npm publish:
+
+- Commit: `0cb815e3e584f53688e264398b61028ba307eca9`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28564636404>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28564636383>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28564636447>.
+- Runtime smoke evidence: `RNICK_IOS_SMOKE_PASS` with JPEG, PNG, GIF, WebP, HEIC, and HEIF input coverage, HEIC/HEIF capability reporting, AVIF input rejection, and capability-gated WebP output behavior.
+
+Completed after npm publish and GitHub Release creation:
+
+- `npm publish --tag latest` published `react-native-image-compression-kit@0.2.7`.
+- npm package: `react-native-image-compression-kit@0.2.7`
+- Git tag: `v0.2.7`
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.7>.
 
 ## v0.2.6
 

@@ -207,10 +207,9 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('This repository is preparing `react-native-image-compression-kit@0.2.7` as an unpublished candidate.'),
-    readmeContents.includes('The latest npm `latest` dist-tag remains `react-native-image-compression-kit@0.2.6`'),
-    readmeContents.includes('GitHub Release [v0.2.6]'),
-    readmeContents.includes('The `0.2.7` package metadata is prepared as an unpublished candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('The latest npm `latest` dist-tag is `react-native-image-compression-kit@0.2.7`'),
+    readmeContents.includes('GitHub Release [v0.2.7]'),
+    readmeContents.includes('The `0.2.7` package is published for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -218,7 +217,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.4` is the published iOS WebP static first-frame input release'),
     readmeContents.includes('version `0.2.5` is the published iOS runtime-gated WebP output release'),
     readmeContents.includes('version `0.2.6` is the published iOS runtime-gated WebP target-size release'),
-    readmeContents.includes('version `0.2.7` is the unpublished iOS HEIC/HEIF static input candidate'),
+    readmeContents.includes('version `0.2.7` is the published iOS HEIC/HEIF static input release'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -226,7 +225,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.7 candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.7 release',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
@@ -468,8 +467,8 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.7',
-    'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.',
-    'adding iOS',
+    'Status: published to npm on July 2, 2026, tagged as `v0.2.7`.',
+    'This release keeps Android runtime behavior unchanged while adding iOS',
     'HEIC/HEIF input support to the existing iOS ImageIO-backed static decode path',
     'Support HEIC/HEIF input on iOS through ImageIO static image decode.',
     'Reuse the existing iOS resize, JPEG quality, JPEG `output.maxBytes`, PNG output, runtime-gated WebP output, and runtime-available WebP `output.maxBytes` paths.',
@@ -487,7 +486,15 @@ function checkReleaseNotes() {
     'HEIC/HEIF output on iOS.',
     'AVIF input or output on iOS.',
     'Live Photo, depth, burst, or animation handling.',
-    'Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.',
+    'Release commit validation before npm publish:',
+    'Commit: `0cb815e3e584f53688e264398b61028ba307eca9`.',
+    'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28564636404>.',
+    'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28564636383>.',
+    'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28564636447>.',
+    'Completed after npm publish and GitHub Release creation:',
+    '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.7`.',
+    'Git tag: `v0.2.7`',
+    'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.7>.',
     '## v0.2.6',
     'Status: published to npm on July 2, 2026 at 03:36:53 UTC (12:36:53 KST), tagged as `v0.2.6`.',
     'adding iOS WebP',
@@ -879,7 +886,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.7 candidate notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -895,7 +902,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.7 candidate notes and previous release notes are current',
+    label: 'v0.2.7 release notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation checklist, published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
