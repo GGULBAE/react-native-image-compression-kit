@@ -2,13 +2,13 @@
 
 ## v0.2.10
 
-Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.
+Status: published to npm on July 2, 2026 at 07:52:44 UTC (16:52:44 KST), tagged as `v0.2.10`.
 
-This release-ready update adds capability-gated iOS AVIF input. iOS decodes AVIF
-as a static image through ImageIO only when the runtime advertises AVIF source
-support, then routes the decoded image through the existing JPEG, PNG, or
-runtime-gated WebP output paths. Runtimes without ImageIO AVIF source support
-keep the explicit `ERR_UNSUPPORTED_FORMAT` path.
+This release adds capability-gated iOS AVIF input. iOS decodes AVIF as a static
+image through ImageIO only when the runtime advertises AVIF source support, then
+routes the decoded image through the existing JPEG, PNG, or runtime-gated WebP
+output paths. Runtimes without ImageIO AVIF source support keep the explicit
+`ERR_UNSUPPORTED_FORMAT` path.
 
 ### Goals
 
@@ -30,6 +30,8 @@ keep the explicit `ERR_UNSUPPORTED_FORMAT` path.
 - The iOS host-app smoke validates both the AVIF-supported branch and the AVIF-unavailable rejection branch through runtime capabilities.
 - README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.
 - Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input release.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.10` and GitHub Release `v0.2.10`.
 
 ### Not Included
 
@@ -56,6 +58,27 @@ pnpm example:ios:smoke
 ```
 
 The release dry run includes a packed README stale status check before the consumer smoke and publish dry run. Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-ready commit.
+
+Release commit validation before npm publish:
+
+- Commit: `d8d3232d74e66158d1de297783e3fc39448f1684`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553093>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553082>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553073>.
+- Local pre-publish gate completed successfully before npm publish: `pnpm release:dry-run`, including `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, `pnpm pack --dry-run`, packed README stale-status check, packed consumer smoke, and publish dry run.
+
+Completed after npm publish and GitHub Release creation:
+
+- `npm publish --tag latest` published `react-native-image-compression-kit@0.2.10`.
+- `npm view react-native-image-compression-kit@0.2.10 version dist.tarball dist.integrity dist.shasum time.modified --json` confirmed version `0.2.10`, registry tarball URL, integrity `sha512-73bAB8tcLrQ7o2iletdLYWEry1VRn3vIWyhYy+/RDGAj9MLho5aKJJtnx92eDgtQOW3s9r48qtCcJByPVwnfxw==`, shasum `1890e78917538d2e27d3274e97a0820c5597a827`, and publish timestamp `2026-07-02T07:52:43.911Z`.
+- `npm view react-native-image-compression-kit dist-tags version --json` confirmed `latest` dist-tag `0.2.10`.
+- npm package: `react-native-image-compression-kit@0.2.10`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.10.tgz`
+- npm integrity: `sha512-73bAB8tcLrQ7o2iletdLYWEry1VRn3vIWyhYy+/RDGAj9MLho5aKJJtnx92eDgtQOW3s9r48qtCcJByPVwnfxw==`
+- npm shasum: `1890e78917538d2e27d3274e97a0820c5597a827`
+- Git tag: `v0.2.10`
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.10>.
+- Registry smoke confirmed 49 files, 46.4 kB package size, 204.3 kB unpacked size, clean `npm install --ignore-scripts --legacy-peer-deps`, and public TypeScript import/typecheck success.
 
 ## v0.2.9
 

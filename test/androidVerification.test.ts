@@ -42,7 +42,7 @@ function extractKotlinArray(source: string, arrayName: string): string {
 }
 
 describe('Android verification scripts', () => {
-  it('declares npm publish-ready package metadata', () => {
+  it('declares npm published package metadata', () => {
     const readmeSource = readProjectFile('README.md');
     const staleReadmeSnippets = [
       'Status: v0.2.8 candidate',
@@ -62,6 +62,15 @@ describe('Android verification scripts', () => {
       'The `0.2.10` package metadata is prepared as an unpublished AVIF input candidate',
       'version `0.2.10` is the unpublished iOS AVIF input capability-gated static decode candidate',
       'v0.2.10 candidate notes',
+      'Status: v0.2.10 release-ready',
+      'v0.2.10%20release--ready',
+      'Version `0.2.10` is release-ready',
+      'It has not been published to npm yet',
+      'until that publish happens, the latest published npm package remains `0.2.9`',
+      'The `0.2.10` package metadata is release-ready',
+      'Version `0.2.10` has not been published to npm yet',
+      'version `0.2.10` is the release-ready iOS AVIF input capability-gated static decode release',
+      'v0.2.10 release-ready notes',
     ];
     const expectedKeywords = [
       'react-native',
@@ -107,17 +116,17 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.10` is release-ready for `react-native-image-compression-kit`'
+      'Version `0.2.10` is published for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'capability-gated iOS AVIF input through ImageIO static decode'
     );
     expect(readmeSource).toContain(
-      'until that publish happens, the latest published npm package remains `0.2.9`'
+      'The latest published npm package is `0.2.10`'
     );
-    expect(readmeSource).toContain('GitHub Release [v0.2.9]');
+    expect(readmeSource).toContain('GitHub Release [v0.2.10]');
     expect(readmeSource).toContain(
-      'The `0.2.10` package metadata is release-ready for `react-native-image-compression-kit`'
+      'The `0.2.10` package metadata is published for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -150,7 +159,7 @@ describe('Android verification scripts', () => {
       'version `0.2.9` is the published docs-only npm package page README correction release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.10` is the release-ready iOS AVIF input capability-gated static decode release'
+      'version `0.2.10` is the published iOS AVIF input capability-gated static decode release'
     );
     expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
@@ -333,7 +342,7 @@ describe('Android verification scripts', () => {
     expect(registrySmokeScriptSource).toContain('RNICK_REGISTRY_SMOKE_KEEP');
     expect(registrySmokeScriptSource).toContain('compressImage(options)');
     expect(registrySmokeScriptSource).toContain('getImageCompressionCapabilities()');
-    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.9');
+    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.10');
     expect(readmeSource).toContain('published npm registry package');
     expect(readmeSource).toContain('npm install --ignore-scripts --legacy-peer-deps');
     expect(readmeSource).toContain(
@@ -363,7 +372,7 @@ describe('Android verification scripts', () => {
     expect(releaseScriptSource).toContain('checkPackedReadmeStatus');
     expect(releaseScriptSource).toContain('package/README.md');
     expect(releaseScriptSource).toContain(
-      'Packed README release-ready status check completed.'
+      'Packed README published status check completed.'
     );
     expect(releaseScriptSource).toContain("args: ['smoke:consumer']");
     expect(releaseScriptSource).toContain(
@@ -425,23 +434,23 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.10 release-ready notes and previous release notes', () => {
+  it('documents the v0.2.10 published notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.10');
     expect(releaseSource).toContain('## v0.2.10');
     expect(releaseSource).toContain(
-      'Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.'
+      'Status: published to npm on July 2, 2026 at 07:52:44 UTC (16:52:44 KST), tagged as `v0.2.10`.'
     );
     expect(releaseSource).toContain(
-      'This release-ready update adds capability-gated iOS AVIF input.'
+      'This release adds capability-gated iOS AVIF input.'
     );
     expect(releaseSource).toContain('iOS decodes AVIF');
     expect(releaseSource).toContain(
-      'as a static image through ImageIO only when the runtime advertises AVIF source'
+      'image through ImageIO only when the runtime advertises AVIF source'
     );
-    expect(releaseSource).toContain('keep the explicit `ERR_UNSUPPORTED_FORMAT` path.');
+    expect(releaseSource).toContain('`ERR_UNSUPPORTED_FORMAT` path.');
     expect(releaseSource).toContain(
       'Support iOS AVIF input through runtime ImageIO source capability reporting.'
     );
@@ -476,6 +485,8 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input release.'
     );
+    expect(releaseSource).toContain('npm package publication under the `latest` dist-tag.');
+    expect(releaseSource).toContain('Git tag `v0.2.10` and GitHub Release `v0.2.10`.');
     expect(releaseSource).toContain('Android runtime behavior changes.');
     expect(releaseSource).toContain('Animated AVIF preservation.');
     expect(releaseSource).toContain(
@@ -483,6 +494,38 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain(
       'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-ready commit.'
+    );
+    expect(releaseSource).toContain(
+      'Commit: `d8d3232d74e66158d1de297783e3fc39448f1684`.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553093>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553082>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553073>.'
+    );
+    expect(releaseSource).toContain(
+      '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.10`.'
+    );
+    expect(releaseSource).toContain('`latest` dist-tag `0.2.10`');
+    expect(releaseSource).toContain(
+      'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.10.tgz`'
+    );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-73bAB8tcLrQ7o2iletdLYWEry1VRn3vIWyhYy+/RDGAj9MLho5aKJJtnx92eDgtQOW3s9r48qtCcJByPVwnfxw==`'
+    );
+    expect(releaseSource).toContain(
+      'npm shasum: `1890e78917538d2e27d3274e97a0820c5597a827`'
+    );
+    expect(releaseSource).toContain('Git tag: `v0.2.10`');
+    expect(releaseSource).toContain(
+      'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.10>.'
+    );
+    expect(releaseSource).toContain(
+      'Registry smoke confirmed 49 files, 46.4 kB package size, 204.3 kB unpacked size'
     );
     expect(releaseSource).toContain('## v0.2.9');
     expect(releaseSource).toContain(
@@ -1722,7 +1765,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.10 release-ready notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

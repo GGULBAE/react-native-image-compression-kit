@@ -196,6 +196,15 @@ function checkPackageMetadata() {
     'The `0.2.10` package metadata is prepared as an unpublished AVIF input candidate',
     'version `0.2.10` is the unpublished iOS AVIF input capability-gated static decode candidate',
     'v0.2.10 candidate notes',
+    'Status: v0.2.10 release-ready',
+    'v0.2.10%20release--ready',
+    'Version `0.2.10` is release-ready',
+    'It has not been published to npm yet',
+    'until that publish happens, the latest published npm package remains `0.2.9`',
+    'The `0.2.10` package metadata is release-ready',
+    'Version `0.2.10` has not been published to npm yet',
+    'version `0.2.10` is the release-ready iOS AVIF input capability-gated static decode release',
+    'v0.2.10 release-ready notes',
   ];
   const expectedKeywords = [
     'react-native',
@@ -228,11 +237,11 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.10` is release-ready for `react-native-image-compression-kit`'),
+    readmeContents.includes('Version `0.2.10` is published for `react-native-image-compression-kit`'),
     readmeContents.includes('capability-gated iOS AVIF input through ImageIO static decode'),
-    readmeContents.includes('until that publish happens, the latest published npm package remains `0.2.9`'),
-    readmeContents.includes('GitHub Release [v0.2.9]'),
-    readmeContents.includes('The `0.2.10` package metadata is release-ready for `react-native-image-compression-kit`'),
+    readmeContents.includes('The latest published npm package is `0.2.10`'),
+    readmeContents.includes('GitHub Release [v0.2.10]'),
+    readmeContents.includes('The `0.2.10` package metadata is published for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -243,7 +252,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.7` is the published iOS HEIC/HEIF static input release'),
     readmeContents.includes('version `0.2.8` is the published post-publish registry smoke automation release'),
     readmeContents.includes('version `0.2.9` is the published docs-only npm package page README correction release'),
-    readmeContents.includes('version `0.2.10` is the release-ready iOS AVIF input capability-gated static decode release'),
+    readmeContents.includes('version `0.2.10` is the published iOS AVIF input capability-gated static decode release'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     staleReadmeSnippets.every((snippet) => !readmeContents.includes(snippet)),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
@@ -253,7 +262,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.10 release-ready package',
+    label: 'npm package metadata and README status are aligned for the v0.2.10 published package',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
@@ -460,7 +469,7 @@ function checkRegistrySmokeTestEnvironment() {
     [registryScriptContents, 'RNICK_REGISTRY_SMOKE_KEEP'],
     [registryScriptContents, 'compressImage(options)'],
     [registryScriptContents, 'getImageCompressionCapabilities()'],
-    [readmeContents, 'pnpm smoke:registry -- --version 0.2.9'],
+    [readmeContents, 'pnpm smoke:registry -- --version 0.2.10'],
     [readmeContents, 'published npm registry package'],
     [readmeContents, 'npm install --ignore-scripts --legacy-peer-deps'],
     [readmeContents, 'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'],
@@ -503,7 +512,7 @@ function checkReleaseDryRunChecklist() {
     [releaseScriptContents, 'STALE_PACKED_README_SNIPPETS'],
     [releaseScriptContents, 'checkPackedReadmeStatus'],
     [releaseScriptContents, 'package/README.md'],
-    [releaseScriptContents, 'Packed README release-ready status check completed.'],
+    [releaseScriptContents, 'Packed README published status check completed.'],
     [releaseScriptContents, "args: ['smoke:consumer']"],
     [releaseScriptContents, "args: ['publish', '--dry-run', '--no-git-checks']"],
     [readmeContents, '## Release Dry Run Checklist'],
@@ -543,11 +552,11 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.10',
-    'Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.',
-    'This release-ready update adds capability-gated iOS AVIF input.',
+    'Status: published to npm on July 2, 2026 at 07:52:44 UTC (16:52:44 KST), tagged as `v0.2.10`.',
+    'This release adds capability-gated iOS AVIF input.',
     'iOS decodes AVIF',
-    'as a static image through ImageIO only when the runtime advertises AVIF source',
-    'keep the explicit `ERR_UNSUPPORTED_FORMAT` path.',
+    'image through ImageIO only when the runtime advertises AVIF source',
+    '`ERR_UNSUPPORTED_FORMAT` path.',
     'Support iOS AVIF input through runtime ImageIO source capability reporting.',
     'Decode supported AVIF inputs as static images before resize and output encoding.',
     'Keep unsupported iOS AVIF runtimes on a clear `ERR_UNSUPPORTED_FORMAT` path.',
@@ -560,10 +569,24 @@ function checkReleaseNotes() {
     'iOS unsupported-input errors keep AVIF on `ERR_UNSUPPORTED_FORMAT` when ImageIO AVIF source support is unavailable.',
     'The iOS host-app smoke validates both the AVIF-supported branch and the AVIF-unavailable rejection branch through runtime capabilities.',
     'Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input release.',
+    'npm package publication under the `latest` dist-tag.',
+    'Git tag `v0.2.10` and GitHub Release `v0.2.10`.',
     'Android runtime behavior changes.',
     'Animated AVIF preservation.',
     'The release dry run includes a packed README stale status check before the consumer smoke and publish dry run.',
     'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-ready commit.',
+    'Commit: `d8d3232d74e66158d1de297783e3fc39448f1684`.',
+    'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553093>.',
+    'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553082>.',
+    'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28573553073>.',
+    '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.10`.',
+    '`latest` dist-tag `0.2.10`',
+    'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.10.tgz`',
+    'npm integrity: `sha512-73bAB8tcLrQ7o2iletdLYWEry1VRn3vIWyhYy+/RDGAj9MLho5aKJJtnx92eDgtQOW3s9r48qtCcJByPVwnfxw==`',
+    'npm shasum: `1890e78917538d2e27d3274e97a0820c5597a827`',
+    'Git tag: `v0.2.10`',
+    'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.10>.',
+    'Registry smoke confirmed 49 files, 46.4 kB package size, 204.3 kB unpacked size',
     '## v0.2.9',
     'Status: published to npm on July 2, 2026 at 06:24:49 UTC (15:24:49 KST), tagged as `v0.2.9`.',
     'This docs-only patch corrects the README that is shown on the npm package',
@@ -1054,7 +1077,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.10 release-ready notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1070,7 +1093,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.10 release-ready notes and previous release notes are current',
+    label: 'v0.2.10 published notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation checklist, published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[

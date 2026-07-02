@@ -17,6 +17,15 @@ const STALE_PACKED_README_SNIPPETS = [
   'The `0.2.10` package metadata is prepared as an unpublished AVIF input candidate',
   'version `0.2.10` is the unpublished iOS AVIF input capability-gated static decode candidate',
   'v0.2.10 candidate notes',
+  'Status: v0.2.10 release-ready',
+  'v0.2.10%20release--ready',
+  'Version `0.2.10` is release-ready',
+  'It has not been published to npm yet',
+  'until that publish happens, the latest published npm package remains `0.2.9`',
+  'The `0.2.10` package metadata is release-ready',
+  'Version `0.2.10` has not been published to npm yet',
+  'version `0.2.10` is the release-ready iOS AVIF input capability-gated static decode release',
+  'v0.2.10 release-ready notes',
 ];
 
 const STEPS = [
@@ -82,13 +91,13 @@ function checkPackedReadmeStatus() {
 
     if (staleSnippets.length > 0) {
       fail(
-        `Packed README contains stale v0.2.10 candidate snippets: ${staleSnippets.join(
+        `Packed README contains stale v0.2.10 pre-publish snippets: ${staleSnippets.join(
           ' | '
         )}`
       );
     }
 
-    console.log('Packed README release-ready status check completed.');
+    console.log('Packed README published status check completed.');
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }
