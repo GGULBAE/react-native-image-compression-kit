@@ -26,6 +26,12 @@ const STALE_PACKED_README_SNIPPETS = [
   'Version `0.2.10` has not been published to npm yet',
   'version `0.2.10` is the release-ready iOS AVIF input capability-gated static decode release',
   'v0.2.10 release-ready notes',
+  'Status: v0.2.10 published',
+  'v0.2.10%20published',
+  'Version `0.2.10` is published for `react-native-image-compression-kit`',
+  'The latest published npm package is `0.2.10`',
+  'GitHub Release [v0.2.10]',
+  'The `0.2.10` package metadata is published for `react-native-image-compression-kit`',
 ];
 
 const STEPS = [
@@ -91,7 +97,7 @@ function checkPackedReadmeStatus() {
 
     if (staleSnippets.length > 0) {
       fail(
-        `Packed README contains stale v0.2.10 pre-publish snippets: ${staleSnippets.join(
+        `Packed README contains stale v0.2.10 package-page status snippets: ${staleSnippets.join(
           ' | '
         )}`
       );

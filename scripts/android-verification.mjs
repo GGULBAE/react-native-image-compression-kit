@@ -205,6 +205,12 @@ function checkPackageMetadata() {
     'Version `0.2.10` has not been published to npm yet',
     'version `0.2.10` is the release-ready iOS AVIF input capability-gated static decode release',
     'v0.2.10 release-ready notes',
+    'Status: v0.2.10 published',
+    'v0.2.10%20published',
+    'Version `0.2.10` is published for `react-native-image-compression-kit`',
+    'The latest published npm package is `0.2.10`',
+    'GitHub Release [v0.2.10]',
+    'The `0.2.10` package metadata is published for `react-native-image-compression-kit`',
   ];
   const expectedKeywords = [
     'react-native',
@@ -222,7 +228,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.10',
+    packageJson.version === '0.2.11',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -237,11 +243,12 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.10` is published for `react-native-image-compression-kit`'),
-    readmeContents.includes('capability-gated iOS AVIF input through ImageIO static decode'),
-    readmeContents.includes('The latest published npm package is `0.2.10`'),
-    readmeContents.includes('GitHub Release [v0.2.10]'),
-    readmeContents.includes('The `0.2.10` package metadata is published for `react-native-image-compression-kit`'),
+    readmeContents.includes('Version `0.2.11` is a docs-only npm README correction for `react-native-image-compression-kit`'),
+    readmeContents.includes('keeps Android and iOS runtime behavior unchanged from `0.2.10`'),
+    readmeContents.includes('stale `0.2.10` release-ready/pre-publish status shipped in the `0.2.10` tarball'),
+    readmeContents.includes('The latest published npm package is `0.2.11`'),
+    readmeContents.includes('GitHub Release [v0.2.11]'),
+    readmeContents.includes('The `0.2.11` package metadata is published for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -253,7 +260,9 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.8` is the published post-publish registry smoke automation release'),
     readmeContents.includes('version `0.2.9` is the published docs-only npm package page README correction release'),
     readmeContents.includes('version `0.2.10` is the published iOS AVIF input capability-gated static decode release'),
+    readmeContents.includes('version `0.2.11` is the published docs-only npm README correction release'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
+    readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     staleReadmeSnippets.every((snippet) => !readmeContents.includes(snippet)),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
@@ -262,7 +271,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.10 published package',
+    label: 'npm package metadata and README status are aligned for the v0.2.11 docs-only package',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
@@ -469,7 +478,7 @@ function checkRegistrySmokeTestEnvironment() {
     [registryScriptContents, 'RNICK_REGISTRY_SMOKE_KEEP'],
     [registryScriptContents, 'compressImage(options)'],
     [registryScriptContents, 'getImageCompressionCapabilities()'],
-    [readmeContents, 'pnpm smoke:registry -- --version 0.2.10'],
+    [readmeContents, 'pnpm smoke:registry -- --version 0.2.11'],
     [readmeContents, 'published npm registry package'],
     [readmeContents, 'npm install --ignore-scripts --legacy-peer-deps'],
     [readmeContents, 'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'],
@@ -551,6 +560,35 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.11',
+    'Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.',
+    'This docs-only patch corrects the README that is shown on the npm package page',
+    'after the `0.2.10` tarball shipped release-ready/pre-publish status text.',
+    'version whose packaged README reports the `0.2.11` published package state.',
+    'Publish a docs-only package version so the npm package page reflects the published state after `0.2.11` is released.',
+    'Remove stale `0.2.10` release-ready/pre-publish package-page status wording from the packaged README.',
+    'Keep Android runtime behavior, iOS runtime behavior, and the public TypeScript API unchanged.',
+    'Verify the `0.2.10` registry tarball README before preparation and the `0.2.11` registry tarball README after publish.',
+    'Keep the release dry-run packed README stale-status check and post-publish registry smoke flow in place.',
+    '`package.json` version bump to `0.2.11`.',
+    'README status, installation, release guidance, and registry smoke examples updated for the docs-only npm README correction.',
+    'README copy now describes `0.2.11` as a docs-only README correction while preserving the `0.2.10` runtime behavior surface.',
+    'Source-level tests and Android verification doctor expectations are updated for the `0.2.11` docs-only status.',
+    'Release dry-run packed README stale checks now reject the stale `0.2.10` release-ready/pre-publish snippets and old `0.2.10` package-page status snippets.',
+    'npm package publication under the `latest` dist-tag.',
+    'Git tag `v0.2.11` and GitHub Release `v0.2.11`.',
+    'Android or iOS runtime behavior changes.',
+    'Native code changes.',
+    'New public TypeScript API surface.',
+    'AVIF output, animated AVIF preservation, HEIC/HEIF output, iOS metadata preservation, cancellation, or progress support.',
+    '### v0.2.10 Registry README Inspection',
+    'npm pack react-native-image-compression-kit@0.2.10 --pack-destination "$tmpdir"',
+    'react-native-image-compression-kit-0.2.10.tgz',
+    'Status: v0\\.2\\.10 release-ready|It has not been published to npm yet|latest published npm package remains `0\\.2\\.9`|v0\\.2\\.10 release-ready notes',
+    'The inspection found `Status: v0.2.10 release-ready`',
+    'published to npm yet`, the "latest published npm package remains `0.2.9`"',
+    'pnpm smoke:registry -- --version 0.2.11',
+    'After npm publish, the registry smoke must confirm the real `0.2.11` tarball README no longer includes the stale `0.2.10` release-ready/pre-publish package-page status snippets.',
     '## v0.2.10',
     'Status: published to npm on July 2, 2026 at 07:52:44 UTC (16:52:44 KST), tagged as `v0.2.10`.',
     'This release adds capability-gated iOS AVIF input.',
@@ -1077,7 +1115,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1089,16 +1127,16 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.10' && missing.length === 0;
+  const ok = packageJson.version === '0.2.11' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.10 published notes and previous release notes are current',
+    label: 'v0.2.11 docs-only notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation checklist, published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.10' ? [] : ['package.json version 0.2.10']),
+          ...(packageJson.version === '0.2.11' ? [] : ['package.json version 0.2.11']),
         ].join(' | ')}`,
   };
 }

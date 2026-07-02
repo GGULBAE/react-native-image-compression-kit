@@ -1,5 +1,79 @@
 # Release Notes
 
+## v0.2.11
+
+Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.
+
+This docs-only patch corrects the README that is shown on the npm package page
+after the `0.2.10` tarball shipped release-ready/pre-publish status text. It
+keeps Android and iOS runtime behavior unchanged while publishing a new package
+version whose packaged README reports the `0.2.11` published package state.
+
+### Goals
+
+- Publish a docs-only package version so the npm package page reflects the published state after `0.2.11` is released.
+- Remove stale `0.2.10` release-ready/pre-publish package-page status wording from the packaged README.
+- Keep Android runtime behavior, iOS runtime behavior, and the public TypeScript API unchanged.
+- Verify the `0.2.10` registry tarball README before preparation and the `0.2.11` registry tarball README after publish.
+- Keep the release dry-run packed README stale-status check and post-publish registry smoke flow in place.
+
+### Included
+
+- `package.json` version bump to `0.2.11`.
+- README status, installation, release guidance, and registry smoke examples updated for the docs-only npm README correction.
+- README copy now describes `0.2.11` as a docs-only README correction while preserving the `0.2.10` runtime behavior surface.
+- Source-level tests and Android verification doctor expectations are updated for the `0.2.11` docs-only status.
+- Release dry-run packed README stale checks now reject the stale `0.2.10` release-ready/pre-publish snippets and old `0.2.10` package-page status snippets.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.11` and GitHub Release `v0.2.11`.
+
+### Not Included
+
+- Android or iOS runtime behavior changes.
+- Native code changes.
+- New public TypeScript API surface.
+- AVIF output, animated AVIF preservation, HEIC/HEIF output, iOS metadata preservation, cancellation, or progress support.
+
+### v0.2.10 Registry README Inspection
+
+Before preparing this patch, the published `0.2.10` registry tarball README was
+checked explicitly:
+
+```bash
+tmpdir=$(mktemp -d)
+npm pack react-native-image-compression-kit@0.2.10 --pack-destination "$tmpdir"
+tar -xOf "$tmpdir"/react-native-image-compression-kit-0.2.10.tgz package/README.md | rg -n 'Status: v0\.2\.10 release-ready|It has not been published to npm yet|latest published npm package remains `0\.2\.9`|v0\.2\.10 release-ready notes'
+rm -rf "$tmpdir"
+```
+
+The inspection found `Status: v0.2.10 release-ready`, `It has not been
+published to npm yet`, the "latest published npm package remains `0.2.9`"
+wording, and `v0.2.10 release-ready notes` in the published `0.2.10` README.
+
+### Release Checklist
+
+Before npm publish:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+After npm publish:
+
+```bash
+npm publish --tag latest
+pnpm smoke:registry -- --version 0.2.11
+git tag -a v0.2.11 -m "v0.2.11"
+git push origin v0.2.11
+```
+
+The release dry run includes a packed README stale status check before the consumer smoke and publish dry run. Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-ready commit. After npm publish, the registry smoke must confirm the real `0.2.11` tarball README no longer includes the stale `0.2.10` release-ready/pre-publish package-page status snippets.
+
 ## v0.2.10
 
 Status: published to npm on July 2, 2026 at 07:52:44 UTC (16:52:44 KST), tagged as `v0.2.10`.
