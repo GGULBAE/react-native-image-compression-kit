@@ -71,7 +71,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.9');
+    expect(packageJson.version).toBe('0.2.10');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -99,11 +99,17 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.9` is a docs-only npm package page correction for `react-native-image-compression-kit`'
+      'Version `0.2.10` is an unpublished release candidate for `react-native-image-compression-kit`'
+    );
+    expect(readmeSource).toContain(
+      'capability-gated iOS AVIF input through ImageIO static decode'
+    );
+    expect(readmeSource).toContain(
+      'The latest published npm package remains `0.2.9`'
     );
     expect(readmeSource).toContain('GitHub Release [v0.2.9]');
     expect(readmeSource).toContain(
-      'The `0.2.9` package is a docs-only README correction for `react-native-image-compression-kit`'
+      'The `0.2.10` package metadata is prepared as an unpublished AVIF input candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -133,10 +139,13 @@ describe('Android verification scripts', () => {
       'version `0.2.8` is the published post-publish registry smoke automation release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.9` is the docs-only npm package page README correction release'
+      'version `0.2.9` is the published docs-only npm package page README correction release'
     );
     expect(readmeSource).toContain(
-      'Version `0.2.9` corrects the packaged npm README without runtime behavior changes.'
+      'version `0.2.10` is the unpublished iOS AVIF input capability-gated static decode candidate'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     for (const snippet of staleReadmeSnippets) {
       expect(readmeSource).not.toContain(snippet);
@@ -400,11 +409,62 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.9 published notes and previous release notes', () => {
+  it('documents the v0.2.10 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.9');
+    expect(packageJson.version).toBe('0.2.10');
+    expect(releaseSource).toContain('## v0.2.10');
+    expect(releaseSource).toContain(
+      'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.'
+    );
+    expect(releaseSource).toContain(
+      'This release candidate adds capability-gated iOS AVIF input.'
+    );
+    expect(releaseSource).toContain('iOS decodes AVIF');
+    expect(releaseSource).toContain(
+      'as a static image through ImageIO only when the runtime advertises AVIF source'
+    );
+    expect(releaseSource).toContain('keep the explicit `ERR_UNSUPPORTED_FORMAT` path.');
+    expect(releaseSource).toContain(
+      'Support iOS AVIF input through runtime ImageIO source capability reporting.'
+    );
+    expect(releaseSource).toContain(
+      'Decode supported AVIF inputs as static images before resize and output encoding.'
+    );
+    expect(releaseSource).toContain(
+      'Keep unsupported iOS AVIF runtimes on a clear `ERR_UNSUPPORTED_FORMAT` path.'
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.10`.');
+    expect(releaseSource).toContain(
+      'iOS `getImageCompressionCapabilities()` reports AVIF `input=true` only when `CGImageSourceCopyTypeIdentifiers()` advertises an AVIF source type, and always reports AVIF `output=false`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `compressImage()` accepts AVIF input only on runtimes with ImageIO AVIF source support.'
+    );
+    expect(releaseSource).toContain(
+      'Supported iOS AVIF input is decoded as a static image with `CGImageSourceCreateImageAtIndex`.'
+    );
+    expect(releaseSource).toContain(
+      'AVIF input can be re-encoded to JPEG or PNG output without copying source metadata.'
+    );
+    expect(releaseSource).toContain(
+      'AVIF input can be re-encoded to WebP output when the runtime also advertises ImageIO WebP destination support.'
+    );
+    expect(releaseSource).toContain(
+      'iOS unsupported-input errors keep AVIF on `ERR_UNSUPPORTED_FORMAT` when ImageIO AVIF source support is unavailable.'
+    );
+    expect(releaseSource).toContain(
+      'The iOS host-app smoke validates both the AVIF-supported branch and the AVIF-unavailable rejection branch through runtime capabilities.'
+    );
+    expect(releaseSource).toContain(
+      'Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input candidate.'
+    );
+    expect(releaseSource).toContain('Android runtime behavior changes.');
+    expect(releaseSource).toContain('Animated AVIF preservation.');
+    expect(releaseSource).toContain(
+      'Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.'
+    );
     expect(releaseSource).toContain('## v0.2.9');
     expect(releaseSource).toContain(
       'Status: published to npm on July 2, 2026 at 06:24:49 UTC (15:24:49 KST), tagged as `v0.2.9`.'
@@ -1643,7 +1703,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.10 candidate notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -2083,7 +2143,25 @@ describe('Android verification scripts', () => {
       '%@ output is not implemented.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG, PNG, static GIF, static WebP, static HEIC, and static HEIF input with JPEG, PNG, or runtime ImageIO-backed WebP output only.'
+      'This runtime advertises ImageIO AVIF source support, so iOS MVP decodes AVIF input as a static image through ImageIO.'
+    );
+    expect(iosSource).toContain(
+      'This runtime does not advertise ImageIO AVIF source support, so AVIF input rejects with ERR_UNSUPPORTED_FORMAT.'
+    );
+    expect(iosSource).toContain(
+      'Call getImageCompressionCapabilities() before accepting AVIF input on iOS.'
+    );
+    expect(iosSource).toContain(
+      'AVIF input can be re-encoded to JPEG or PNG output without copying source metadata.'
+    );
+    expect(iosSource).toContain(
+      'AVIF input can also be re-encoded to runtime-available WebP output.'
+    );
+    expect(iosSource).toContain(
+      'Animated AVIF preservation and AVIF output are not implemented.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG, PNG, static GIF, static WebP, static HEIC, static HEIF, and runtime-available static AVIF input with JPEG, PNG, or runtime ImageIO-backed WebP output only.'
     );
     expect(iosSource).toContain(
       'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
@@ -2123,7 +2201,10 @@ describe('Android verification scripts', () => {
     );
     expect(iosSource).toContain('iOS MVP could not read the source image URI.');
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG, PNG, GIF, WebP, HEIC, and HEIF input only. GIF, WebP, HEIC, and HEIF input are decoded as static images through ImageIO.'
+      'iOS AVIF input requires runtime ImageIO AVIF source support.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG, PNG, GIF, WebP, HEIC, HEIF, and runtime-available AVIF input only. GIF, WebP, HEIC, HEIF, and AVIF input are decoded as static images through ImageIO.'
     );
     expect(iosSource).toContain('iOS MVP could not decode the source image.');
     expect(iosSource).toContain('iOS MVP could not encode %@ output.');
@@ -2135,6 +2216,12 @@ describe('Android verification scripts', () => {
     expect(iosSource).toContain('RCTImageCompressionKitIsHeicType');
     expect(iosSource).toContain('RCTImageCompressionKitIsHeifType');
     expect(iosSource).toContain('RCTImageCompressionKitIsHeicHeifType');
+    expect(iosSource).toContain('RCTImageCompressionKitAvifTypeIdentifiers');
+    expect(iosSource).toContain('RCTImageCompressionKitIsAvifType');
+    expect(iosSource).toContain('RCTImageCompressionKitAvailableImageSourceTypeIdentifier');
+    expect(iosSource).toContain('RCTImageCompressionKitCanDecodeAVIF');
+    expect(iosSource).toContain('CGImageSourceCopyTypeIdentifiers');
+    expect(iosSource).toContain('RCTImageCompressionKitLooksLikeAVIFData');
     expect(iosSource).toContain('RCTImageCompressionKitShouldDecodeFirstFrame');
     expect(iosSource).toContain('com.compuserve.gif');
     expect(iosSource).toContain('public.gif');
@@ -2148,6 +2235,12 @@ describe('Android verification scripts', () => {
     expect(iosSource).toContain('public.heifs');
     expect(iosSource).toContain('org.iso.heif');
     expect(iosSource).toContain('org.iso.heifs');
+    expect(iosSource).toContain('public.avif');
+    expect(iosSource).toContain('public.avifs');
+    expect(iosSource).toContain('org.aomedia.avif');
+    expect(iosSource).toContain('org.aomedia.avifs');
+    expect(iosSource).toContain('ftyp');
+    expect(iosSource).toContain('avis');
     expect(iosSource).toContain('UIImage imageWithData');
     expect(iosSource).toContain('UIImageJPEGRepresentation');
     expect(iosSource).toContain('UIImagePNGRepresentation');

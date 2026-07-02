@@ -70,6 +70,15 @@ RCT_EXPORT_METHOD(copySampleHeifToCache:(RCTPromiseResolveBlock)resolve
                        reject:reject];
 }
 
+RCT_EXPORT_METHOD(copySampleAvifToCache:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  [self writeSampleWithFormat:@"avif"
+                         data:ExampleImageSourceUnsupportedData(@"avif")
+                      resolve:resolve
+                       reject:reject];
+}
+
 RCT_EXPORT_METHOD(copyUnsupportedImageToCache:(NSString *)format
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)

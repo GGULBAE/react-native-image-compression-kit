@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include <memory>
+#include <string.h>
 
 static NSString *const RCTImageCompressionKitInvalidOptionsCode = @"ERR_INVALID_OPTIONS";
 static NSString *const RCTImageCompressionKitUnsupportedSourceCode = @"ERR_UNSUPPORTED_SOURCE";
@@ -83,6 +84,7 @@ static NSNumber *RCTImageCompressionKitNumberValue(NSDictionary *map, NSString *
 }
 
 static BOOL RCTImageCompressionKitCanEncodeWebP(void);
+static BOOL RCTImageCompressionKitCanDecodeAVIF(void);
 
 static NSDictionary *RCTImageCompressionKitFormatCapability(
   NSString *format,
@@ -192,13 +194,37 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
     );
   }
 
+  if ([format isEqualToString:RCTImageCompressionKitAvifFormat]) {
+    BOOL canDecodeAVIF = RCTImageCompressionKitCanDecodeAVIF();
+    BOOL canEncodeWebP = RCTImageCompressionKitCanEncodeWebP();
+    return RCTImageCompressionKitFormatCapability(
+      format,
+      canDecodeAVIF,
+      NO,
+      canDecodeAVIF,
+      NO,
+      @[
+        canDecodeAVIF
+          ? @"This runtime advertises ImageIO AVIF source support, so iOS MVP decodes AVIF input as a static image through ImageIO."
+          : @"This runtime does not advertise ImageIO AVIF source support, so AVIF input rejects with ERR_UNSUPPORTED_FORMAT.",
+        canDecodeAVIF
+          ? @"AVIF input can be re-encoded to JPEG or PNG output without copying source metadata."
+          : @"Call getImageCompressionCapabilities() before accepting AVIF input on iOS.",
+        canDecodeAVIF && canEncodeWebP
+          ? @"AVIF input can also be re-encoded to runtime-available WebP output."
+          : @"WebP output still requires runtime ImageIO WebP destination support.",
+        @"Animated AVIF preservation and AVIF output are not implemented."
+      ]
+    );
+  }
+
   return RCTImageCompressionKitFormatCapability(
     format,
     NO,
     NO,
     NO,
     NO,
-    @[@"iOS MVP supports JPEG, PNG, static GIF, static WebP, static HEIC, and static HEIF input with JPEG, PNG, or runtime ImageIO-backed WebP output only."]
+    @[@"iOS MVP supports JPEG, PNG, static GIF, static WebP, static HEIC, static HEIF, and runtime-available static AVIF input with JPEG, PNG, or runtime ImageIO-backed WebP output only."]
   );
 }
 
@@ -474,12 +500,62 @@ static BOOL RCTImageCompressionKitIsHeicHeifType(NSString *imageType)
   return RCTImageCompressionKitIsHeicType(imageType) || RCTImageCompressionKitIsHeifType(imageType);
 }
 
+static NSArray<NSString *> *RCTImageCompressionKitAvifTypeIdentifiers(void)
+{
+  return @[@"public.avif", @"public.avifs", @"org.aomedia.avif", @"org.aomedia.avifs"];
+}
+
+static BOOL RCTImageCompressionKitIsAvifType(NSString *imageType)
+{
+  return [RCTImageCompressionKitAvifTypeIdentifiers() containsObject:imageType];
+}
+
+static NSString *RCTImageCompressionKitAvailableImageSourceTypeIdentifier(NSArray<NSString *> *candidateTypes)
+{
+  NSArray<NSString *> *supportedTypes = CFBridgingRelease(CGImageSourceCopyTypeIdentifiers());
+
+  for (NSString *candidateType in candidateTypes) {
+    if ([supportedTypes containsObject:candidateType]) {
+      return candidateType;
+    }
+  }
+
+  return nil;
+}
+
+static BOOL RCTImageCompressionKitCanDecodeAVIF(void)
+{
+  return RCTImageCompressionKitAvailableImageSourceTypeIdentifier(RCTImageCompressionKitAvifTypeIdentifiers()) != nil;
+}
+
+static BOOL RCTImageCompressionKitLooksLikeAVIFData(NSData *sourceData)
+{
+  if (sourceData.length < 12) {
+    return NO;
+  }
+
+  const unsigned char *bytes = (const unsigned char *)sourceData.bytes;
+  if (memcmp(bytes + 4, "ftyp", 4) != 0) {
+    return NO;
+  }
+
+  NSUInteger searchLength = MIN(sourceData.length, (NSUInteger)64);
+  for (NSUInteger offset = 8; offset + 4 <= searchLength; offset += 4) {
+    if (memcmp(bytes + offset, "avif", 4) == 0 || memcmp(bytes + offset, "avis", 4) == 0) {
+      return YES;
+    }
+  }
+
+  return NO;
+}
+
 static BOOL RCTImageCompressionKitShouldDecodeFirstFrame(NSString *imageType)
 {
   return
     RCTImageCompressionKitIsGifType(imageType) ||
     RCTImageCompressionKitIsWebPType(imageType) ||
-    RCTImageCompressionKitIsHeicHeifType(imageType);
+    RCTImageCompressionKitIsHeicHeifType(imageType) ||
+    RCTImageCompressionKitIsAvifType(imageType);
 }
 
 static BOOL RCTImageCompressionKitIsSupportedInputType(NSString *imageType)
@@ -489,7 +565,8 @@ static BOOL RCTImageCompressionKitIsSupportedInputType(NSString *imageType)
     [imageType isEqualToString:@"public.png"] ||
     RCTImageCompressionKitIsGifType(imageType) ||
     RCTImageCompressionKitIsWebPType(imageType) ||
-    RCTImageCompressionKitIsHeicHeifType(imageType);
+    RCTImageCompressionKitIsHeicHeifType(imageType) ||
+    (RCTImageCompressionKitIsAvifType(imageType) && RCTImageCompressionKitCanDecodeAVIF());
 }
 
 static UIImage *RCTImageCompressionKitDecodeImage(NSData *sourceData, NSString *imageType)
@@ -981,6 +1058,18 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     }
     RCTImageCompressionKitSmokeLog(@"source-read");
 
+    BOOL sourceLooksLikeAVIF = RCTImageCompressionKitLooksLikeAVIFData(sourceData);
+    BOOL canDecodeAVIF = RCTImageCompressionKitCanDecodeAVIF();
+    if (sourceLooksLikeAVIF && !canDecodeAVIF) {
+      RCTImageCompressionKitReject(
+        reject,
+        RCTImageCompressionKitUnsupportedFormatCode,
+        @"iOS AVIF input requires runtime ImageIO AVIF source support.",
+        nil
+      );
+      return;
+    }
+
     NSString *imageType = RCTImageCompressionKitImageType(sourceData);
     if (imageType == nil) {
       RCTImageCompressionKitReject(
@@ -993,10 +1082,19 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     }
     RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"image-type-%@", imageType]);
     if (!RCTImageCompressionKitIsSupportedInputType(imageType)) {
+      if (RCTImageCompressionKitIsAvifType(imageType) || sourceLooksLikeAVIF) {
+        RCTImageCompressionKitReject(
+          reject,
+          RCTImageCompressionKitUnsupportedFormatCode,
+          @"iOS AVIF input requires runtime ImageIO AVIF source support.",
+          nil
+        );
+        return;
+      }
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitUnsupportedFormatCode,
-        @"iOS MVP supports JPEG, PNG, GIF, WebP, HEIC, and HEIF input only. GIF, WebP, HEIC, and HEIF input are decoded as static images through ImageIO.",
+        @"iOS MVP supports JPEG, PNG, GIF, WebP, HEIC, HEIF, and runtime-available AVIF input only. GIF, WebP, HEIC, HEIF, and AVIF input are decoded as static images through ImageIO.",
         nil
       );
       return;

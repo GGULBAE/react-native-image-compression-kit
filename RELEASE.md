@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.2.10
+
+Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+
+This release candidate adds capability-gated iOS AVIF input. iOS decodes AVIF
+as a static image through ImageIO only when the runtime advertises AVIF source
+support, then routes the decoded image through the existing JPEG, PNG, or
+runtime-gated WebP output paths. Runtimes without ImageIO AVIF source support
+keep the explicit `ERR_UNSUPPORTED_FORMAT` path.
+
+### Goals
+
+- Support iOS AVIF input through runtime ImageIO source capability reporting.
+- Decode supported AVIF inputs as static images before resize and output encoding.
+- Reuse the existing iOS JPEG, PNG, runtime-gated WebP, target-size, and metadata no-copy paths.
+- Keep unsupported iOS AVIF runtimes on a clear `ERR_UNSUPPORTED_FORMAT` path.
+- Align TypeScript native-unavailable messaging, README guidance, release notes, source-level expectations, Android verification doctor checks, and iOS host-app smoke validation with the capability-gated AVIF input behavior.
+
+### Included
+
+- `package.json` version bump to `0.2.10`.
+- iOS `getImageCompressionCapabilities()` reports AVIF `input=true` only when `CGImageSourceCopyTypeIdentifiers()` advertises an AVIF source type, and always reports AVIF `output=false`.
+- iOS `compressImage()` accepts AVIF input only on runtimes with ImageIO AVIF source support.
+- Supported iOS AVIF input is decoded as a static image with `CGImageSourceCreateImageAtIndex`.
+- AVIF input can be re-encoded to JPEG or PNG output without copying source metadata.
+- AVIF input can be re-encoded to WebP output when the runtime also advertises ImageIO WebP destination support.
+- iOS unsupported-input errors keep AVIF on `ERR_UNSUPPORTED_FORMAT` when ImageIO AVIF source support is unavailable.
+- The iOS host-app smoke validates both the AVIF-supported branch and the AVIF-unavailable rejection branch through runtime capabilities.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.
+- Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input candidate.
+
+### Not Included
+
+- Android runtime behavior changes.
+- AVIF output.
+- Animated AVIF preservation.
+- HEIC/HEIF output.
+- iOS metadata preservation.
+- Cancellation or progress support.
+- New public TypeScript API surface.
+
+### Release Checklist
+
+Before npm publish:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm example:ios:smoke
+```
+
+Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.
+
 ## v0.2.9
 
 Status: published to npm on July 2, 2026 at 06:24:49 UTC (15:24:49 KST), tagged as `v0.2.9`.
