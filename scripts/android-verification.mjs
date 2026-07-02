@@ -191,7 +191,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.4',
+    packageJson.version === '0.2.5',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -206,15 +206,17 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('This repository is published as `v0.2.4`'),
-    readmeContents.includes('The latest published npm package is `react-native-image-compression-kit@0.2.4`'),
+    readmeContents.includes('This repository is prepared as the `v0.2.5` candidate'),
+    readmeContents.includes('The source package metadata is bumped to `0.2.5`'),
+    readmeContents.includes('The latest published npm package remains `react-native-image-compression-kit@0.2.4`'),
     readmeContents.includes('GitHub Release [v0.2.4]'),
-    readmeContents.includes('The `0.2.4` package metadata is published under'),
+    readmeContents.includes('The `0.2.5` package metadata is prepared in source for the next publish under'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
     readmeContents.includes('version `0.2.3` is the published iOS GIF static first-frame input release'),
     readmeContents.includes('version `0.2.4` is the published iOS WebP static first-frame input release'),
+    readmeContents.includes('version `0.2.5` is the iOS WebP output candidate'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -222,7 +224,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the published v0.2.4 release',
+    label: 'npm package metadata and README status are aligned for the v0.2.5 candidate',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json publish metadata or README release-status guidance is missing/mismatched',
@@ -463,6 +465,30 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.5',
+    'Status: implementation candidate. Not published to npm. Source package metadata is bumped to `0.2.5`; the latest registry version remains `0.2.4` until the manual publish step.',
+    'adding iOS',
+    'ImageIO-backed WebP output to the existing iOS JPEG/PNG/GIF/WebP input and',
+    'Verify that iOS can advertise WebP destination support through ImageIO before enabling WebP output.',
+    'Implement iOS WebP output for JPEG, PNG, static first-frame GIF, and static first-frame WebP input when the runtime supports WebP destination encoding.',
+    '`package.json` version bump to `0.2.5`.',
+    "iOS `compressImage()` now accepts `output.format: 'webp'` when ImageIO advertises a WebP destination type through `CGImageDestinationCopyTypeIdentifiers()`.",
+    'iOS WebP output is encoded with ImageIO `CGImageDestinationCreateWithData`, `CGImageDestinationAddImage`, and `CGImageDestinationFinalize`.',
+    'WebP output keeps existing iOS resize behavior, honors `output.quality`, writes `.webp` cache files, and re-encodes without copying source metadata under `safe` and `strip`.',
+    'JPEG, PNG, GIF, and WebP input can be re-encoded to WebP output on the validated iOS runtime.',
+    'iOS WebP output rejects `output.maxBytes` with `ERR_NOT_IMPLEMENTED` because target-size WebP compression remains outside this candidate.',
+    'iOS `getImageCompressionCapabilities()` reports WebP `input=true` and runtime WebP `output=true` when ImageIO destination encoding is available.',
+    'The iOS host-app smoke validates `compress-jpeg-to-webp`, `compress-png-to-webp`, `compress-gif-to-webp`, `compress-webp-to-webp`, and `reject-webp-max-bytes`.',
+    'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input with JPEG, PNG, and ImageIO-backed WebP output in version `0.2.5`.',
+    'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.',
+    'Android runtime behavior changes.',
+    'npm publish.',
+    'Git tag creation.',
+    'GitHub Release creation.',
+    'WebP target-size `maxBytes` on iOS.',
+    'Animated WebP preservation.',
+    'iOS HEIC, HEIF, or AVIF input.',
+    'Candidate implementation validation before release promotion:',
     '## v0.2.4',
     'Status: published to npm on July 2, 2026 at 01:03:13 UTC (10:03:13 KST), tagged as `v0.2.4`.',
     'adding iOS WebP',
@@ -779,7 +805,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.5 candidate notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -791,16 +817,16 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.4' && missing.length === 0;
+  const ok = packageJson.version === '0.2.5' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.4 release notes and previous release notes are current',
+    label: 'v0.2.5 candidate notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the release scope, non-goals, validation evidence, published artifacts, tag, GitHub Release, post-publish verification, and previous npm publish steps'
+      ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, previous published artifacts, tag, GitHub Release, post-publish verification, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.4' ? [] : ['package.json version 0.2.4']),
+          ...(packageJson.version === '0.2.5' ? [] : ['package.json version 0.2.5']),
         ].join(' | ')}`,
   };
 }
@@ -1171,18 +1197,28 @@ function checkIOSNativeModule() {
     'GIF input can be re-encoded to JPEG or PNG output without copying source metadata.',
     'Animated GIF preservation and GIF output are not implemented.',
     'iOS MVP decodes WebP input as a static first frame through ImageIO.',
-    'WebP input can be re-encoded to JPEG or PNG output without copying source metadata.',
-    'Animated WebP preservation and WebP output are not implemented.',
-    'iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG or PNG output only.',
+    'WebP input can be re-encoded to JPEG, PNG, or WebP output without copying source metadata.',
+    'WebP output uses ImageIO CGImageDestination when the runtime advertises a WebP destination type.',
+    'Animated WebP preservation and WebP target-size maxBytes are not implemented.',
+    'iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG, PNG, or runtime ImageIO-backed WebP output only.',
     'RCT_EXPORT_MODULE(ImageCompressionKit)',
     'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options',
     'compressImageWithDictionary:optionsMap',
-    'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
+    'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
+    'iOS MVP requires ImageIO WebP destination support for WebP output on this runtime.',
     'iOS MVP supports output.maxBytes for JPEG output only.',
     'RCTImageCompressionKitReadMaxBytes',
     'Compression output.maxBytes must be a positive integer.',
     'RCTImageCompressionKitEncodeJpegToTargetSize',
     'bestWithinTargetData',
+    'RCTImageCompressionKitWebPOutputTypeIdentifier',
+    'RCTImageCompressionKitCanEncodeWebP',
+    'CGImageDestinationCopyTypeIdentifiers',
+    'CGImageDestinationCreateWithData',
+    'CGImageDestinationAddImage',
+    'CGImageDestinationFinalize',
+    'kCGImageDestinationLossyCompressionQuality',
+    'RCTImageCompressionKitEncodeWebP',
     'iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.',
     'Compression output.quality must be an integer from 0 to 100.',
     'Compression resize.mode must be one of: contain, cover, stretch.',
@@ -1229,7 +1265,7 @@ function checkIOSNativeModule() {
     label: 'iOS native module implements the JPEG/PNG/GIF/WebP MVP path',
     detail:
       missing.length === 0 && podspecIncludesIOS
-        ? 'iOS source includes file/content URI reads, JPEG/PNG/GIF/WebP input detection, static first-frame GIF/WebP decode, resize, quality-based and target-size JPEG output, PNG output, explicit unsupported-option errors, and iOS capability reporting'
+        ? 'iOS source includes file/content URI reads, JPEG/PNG/GIF/WebP input detection, static first-frame GIF/WebP decode, resize, quality-based and target-size JPEG output, PNG output, ImageIO-backed WebP output, explicit unsupported-option errors, and iOS capability reporting'
         : `missing snippets: ${[
             ...missing,
             ...(podspecIncludesIOS ? [] : ['podspec iOS platform/source_files']),
@@ -1267,13 +1303,14 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'RNICK_IOS_POD_INSTALL_ATTEMPTS'],
     [readmeContents, 'RNICK_IOS_METRO_READY_TIMEOUT_MS'],
     [readmeContents, "metadataPolicies: ['safe', 'strip']"],
-    [readmeContents, 'GIF input with no GIF output, WebP input with no WebP output'],
+    [readmeContents, 'GIF input with no GIF output, WebP input/output on the validated ImageIO runtime'],
     [readmeContents, 'JPEG, PNG, GIF, and WebP fixtures compress to JPEG output'],
     [readmeContents, 'JPEG, PNG, GIF, and WebP fixtures compress to PNG output'],
+    [readmeContents, 'JPEG, PNG, GIF, and WebP fixtures compress to WebP output'],
     [readmeContents, 'GIF and WebP JPEG output run through the `output.maxBytes` path'],
-    [readmeContents, 'PNG `output.maxBytes` rejects with `ERR_NOT_IMPLEMENTED`'],
+    [readmeContents, 'PNG and WebP `output.maxBytes` reject with `ERR_NOT_IMPLEMENTED`'],
     [readmeContents, 'HEIC, HEIF, and AVIF inputs reject with `ERR_UNSUPPORTED_FORMAT`'],
-    [readmeContents, 'WebP, HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`'],
+    [readmeContents, 'HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`'],
     [readmeContents, 'GIF output remains rejected by TypeScript validation with `ERR_INVALID_OPTIONS`'],
     [readmeContents, 'The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner'],
     [releaseContents, 'Validate the iOS MVP through a React Native iOS host app'],
@@ -1311,20 +1348,27 @@ function checkIOSHostAppValidation() {
     [appContents, 'copy-webp-fixture'],
     [appContents, 'copyUnsupportedImageToCache'],
     [appContents, "assertIOSFormatCapability(capabilities, 'gif', true, false)"],
-    [appContents, "assertIOSFormatCapability(capabilities, 'webp', true, false)"],
+    [appContents, "assertIOSFormatCapability(capabilities, 'webp', true, true)"],
     [appContents, 'compress-gif-to-jpeg'],
     [appContents, 'compress-gif-to-png'],
     [appContents, 'compress-webp-to-jpeg'],
     [appContents, 'compress-webp-to-png'],
+    [appContents, 'compress-jpeg-to-webp'],
+    [appContents, 'compress-png-to-webp'],
+    [appContents, 'compress-gif-to-webp'],
+    [appContents, 'compress-webp-to-webp'],
     [appContents, 'reject-gif-output'],
-    [appContents, 'reject-webp-output'],
+    [appContents, 'reject-webp-max-bytes'],
     [appContents, 'gifResultBytes'],
     [appContents, 'gifToPngResultBytes'],
     [appContents, 'webpResultBytes'],
     [appContents, 'webpToPngResultBytes'],
+    [appContents, 'jpegToWebPResultBytes'],
+    [appContents, 'pngToWebPResultBytes'],
+    [appContents, 'gifToWebPResultBytes'],
+    [appContents, 'webpToWebPResultBytes'],
     [appContents, "const unsupportedInputs = ['heic', 'heif', 'avif']"],
     [appContents, 'const unsupportedOutputCases = ['],
-    [appContents, "{ format: 'webp', step: 'reject-webp-output' }"],
     [appContents, 'Expected iOS JPEG target-size compression to be supported.'],
     [appContents, 'compress-jpeg-to-jpeg-max-bytes'],
     [appContents, 'compress-jpeg-to-png'],
@@ -1335,6 +1379,7 @@ function checkIOSHostAppValidation() {
     [appContents, 'Expected GIF output to be rejected before native compression.'],
     [appContents, 'Expected iOS target-size output <= ${targetSizeMaxBytes} bytes'],
     [appContents, 'Expected PNG maxBytes to be unsupported on iOS.'],
+    [appContents, 'Expected WebP maxBytes to be unsupported on iOS.'],
     [appContents, "Expected metadata: 'preserve' to be unimplemented on iOS."],
     [iosModuleContents, 'RCT_EXPORT_MODULE();'],
     [iosModuleContents, 'isSmokeTestEnabled'],

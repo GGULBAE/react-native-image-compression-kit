@@ -80,11 +80,17 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('RNICK_IOS_SMOKE_NATIVE');
     expect(iosSource).toContain('UIImageJPEGRepresentation');
     expect(iosSource).toContain('UIImagePNGRepresentation');
+    expect(iosSource).toContain('CGImageDestinationCopyTypeIdentifiers');
+    expect(iosSource).toContain('CGImageDestinationCreateWithData');
+    expect(iosSource).toContain('CGImageDestinationAddImage');
+    expect(iosSource).toContain('CGImageDestinationFinalize');
+    expect(iosSource).toContain('kCGImageDestinationLossyCompressionQuality');
+    expect(iosSource).toContain('RCTImageCompressionKitEncodeWebP');
     expect(iosSource).toContain(
       'iOS MVP supports JPEG, PNG, GIF, and WebP input only. GIF and WebP input are decoded as static first frames.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
+      'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
     );
     expect(iosSource).toContain(
       'iOS MVP supports output.maxBytes for JPEG output only.'

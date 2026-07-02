@@ -150,7 +150,7 @@ describe('compressImage', () => {
     ).rejects.toMatchObject({
       code: 'ERR_NATIVE_MODULE_UNAVAILABLE',
       message:
-        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS runtime compression is implemented for JPEG/PNG/GIF/WebP input with JPEG and PNG output, including JPEG target-size maxBytes and static first-frame GIF/WebP input, in version 0.2.4.',
+        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS runtime compression is implemented for JPEG/PNG/GIF/WebP input with JPEG, PNG, and ImageIO-backed WebP output, including JPEG target-size maxBytes and static first-frame GIF/WebP input, in version 0.2.5.',
     });
   });
 
@@ -178,7 +178,7 @@ describe('compressImage', () => {
       compressImage: vi.fn().mockRejectedValue({
         code: 'ERR_NOT_IMPLEMENTED',
         message:
-          'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
+          'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
       }),
     });
     setNativeModuleForTesting(nativeModule);
@@ -191,7 +191,7 @@ describe('compressImage', () => {
     ).rejects.toMatchObject({
       code: 'ERR_NOT_IMPLEMENTED',
       message:
-        'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
+        'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
     });
   });
 

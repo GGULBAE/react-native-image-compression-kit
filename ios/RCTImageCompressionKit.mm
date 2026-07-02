@@ -71,6 +71,8 @@ static NSNumber *RCTImageCompressionKitNumberValue(NSDictionary *map, NSString *
   return [value isKindOfClass:[NSNumber class]] ? value : nil;
 }
 
+static BOOL RCTImageCompressionKitCanEncodeWebP(void);
+
 static NSDictionary *RCTImageCompressionKitFormatCapability(
   NSString *format,
   BOOL input,
@@ -138,16 +140,22 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
   }
 
   if ([format isEqualToString:RCTImageCompressionKitWebPFormat]) {
+    BOOL canEncodeWebP = RCTImageCompressionKitCanEncodeWebP();
     return RCTImageCompressionKitFormatCapability(
       format,
       YES,
-      NO,
+      canEncodeWebP,
       YES,
       NO,
       @[
         @"iOS MVP decodes WebP input as a static first frame through ImageIO.",
-        @"WebP input can be re-encoded to JPEG or PNG output without copying source metadata.",
-        @"Animated WebP preservation and WebP output are not implemented."
+        canEncodeWebP
+          ? @"WebP input can be re-encoded to JPEG, PNG, or WebP output without copying source metadata."
+          : @"WebP input can be re-encoded to JPEG or PNG output without copying source metadata.",
+        canEncodeWebP
+          ? @"WebP output uses ImageIO CGImageDestination when the runtime advertises a WebP destination type."
+          : @"This runtime does not advertise ImageIO WebP destination encoding support.",
+        @"Animated WebP preservation and WebP target-size maxBytes are not implemented."
       ]
     );
   }
@@ -158,7 +166,7 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
     NO,
     NO,
     NO,
-    @[@"iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG or PNG output only."]
+    @[@"iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG, PNG, or runtime ImageIO-backed WebP output only."]
   );
 }
 
@@ -562,6 +570,54 @@ static NSData *RCTImageCompressionKitEncodePng(UIImage *image)
   return UIImagePNGRepresentation(image);
 }
 
+static NSString *RCTImageCompressionKitWebPOutputTypeIdentifier(void)
+{
+  NSArray<NSString *> *supportedTypes = CFBridgingRelease(CGImageDestinationCopyTypeIdentifiers());
+  NSArray<NSString *> *webpTypes = @[@"org.webmproject.webp", @"public.webp"];
+
+  for (NSString *webpType in webpTypes) {
+    if ([supportedTypes containsObject:webpType]) {
+      return webpType;
+    }
+  }
+
+  return nil;
+}
+
+static BOOL RCTImageCompressionKitCanEncodeWebP(void)
+{
+  return RCTImageCompressionKitWebPOutputTypeIdentifier() != nil;
+}
+
+static NSData *RCTImageCompressionKitEncodeWebP(UIImage *image, NSInteger quality)
+{
+  NSString *typeIdentifier = RCTImageCompressionKitWebPOutputTypeIdentifier();
+  CGImageRef cgImage = image.CGImage;
+  if (typeIdentifier == nil || cgImage == nil) {
+    return nil;
+  }
+
+  NSMutableData *outputData = [NSMutableData data];
+  CGImageDestinationRef destination = CGImageDestinationCreateWithData(
+    (__bridge CFMutableDataRef)outputData,
+    (__bridge CFStringRef)typeIdentifier,
+    1,
+    nil
+  );
+  if (destination == nil) {
+    return nil;
+  }
+
+  NSDictionary *properties = @{
+    (__bridge NSString *)kCGImageDestinationLossyCompressionQuality : @((CGFloat)quality / 100.0)
+  };
+  CGImageDestinationAddImage(destination, cgImage, (__bridge CFDictionaryRef)properties);
+  BOOL finalized = CGImageDestinationFinalize(destination);
+  CFRelease(destination);
+
+  return finalized && outputData.length > 0 ? outputData : nil;
+}
+
 static NSData *RCTImageCompressionKitEncodeJpegToTargetSize(
   UIImage *image,
   NSInteger qualityCap,
@@ -614,7 +670,12 @@ static NSString *RCTImageCompressionKitOutputPath(NSString *outputFormat, NSErro
     }
   }
 
-  NSString *extension = [outputFormat isEqualToString:RCTImageCompressionKitPngFormat] ? @"png" : @"jpg";
+  NSString *extension = @"jpg";
+  if ([outputFormat isEqualToString:RCTImageCompressionKitPngFormat]) {
+    extension = @"png";
+  } else if ([outputFormat isEqualToString:RCTImageCompressionKitWebPFormat]) {
+    extension = @"webp";
+  }
   NSString *fileName = [NSString stringWithFormat:
     @"compressed-%lld-%@.%@",
     (long long)([NSDate date].timeIntervalSince1970 * 1000.0),
@@ -746,11 +807,21 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
 
     BOOL outputIsJpeg = [outputFormat isEqualToString:RCTImageCompressionKitJpegFormat];
     BOOL outputIsPng = [outputFormat isEqualToString:RCTImageCompressionKitPngFormat];
-    if (!outputIsJpeg && !outputIsPng) {
+    BOOL outputIsWebP = [outputFormat isEqualToString:RCTImageCompressionKitWebPFormat];
+    if (!outputIsJpeg && !outputIsPng && !outputIsWebP) {
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitNotImplementedCode,
-        @"iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.",
+        @"iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.",
+        nil
+      );
+      return;
+    }
+    if (outputIsWebP && !RCTImageCompressionKitCanEncodeWebP()) {
+      RCTImageCompressionKitReject(
+        reject,
+        RCTImageCompressionKitNotImplementedCode,
+        @"iOS MVP requires ImageIO WebP destination support for WebP output on this runtime.",
         nil
       );
       return;
@@ -769,7 +840,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(reject, RCTImageCompressionKitInvalidOptionsCode, errorMessage, nil);
       return;
     }
-    if (hasMaxBytes && outputIsPng) {
+    if (hasMaxBytes && !outputIsJpeg) {
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitNotImplementedCode,
@@ -865,6 +936,8 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       processedImage = RCTImageCompressionKitRenderImage(sourceImage, resizeOptions, outputIsJpeg);
       if (outputIsPng) {
         outputData = RCTImageCompressionKitEncodePng(processedImage);
+      } else if (outputIsWebP) {
+        outputData = RCTImageCompressionKitEncodeWebP(processedImage, quality);
       } else {
         outputData = hasMaxBytes
           ? RCTImageCompressionKitEncodeJpegToTargetSize(processedImage, quality, maxBytes)

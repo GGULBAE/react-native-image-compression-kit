@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.4');
+    expect(packageJson.version).toBe('0.2.5');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -87,13 +87,18 @@ describe('Android verification scripts', () => {
       expect(packageJson.keywords).toContain(keyword);
     }
 
-    expect(readmeSource).toContain('This repository is published as `v0.2.4`');
     expect(readmeSource).toContain(
-      'The latest published npm package is `react-native-image-compression-kit@0.2.4`'
+      'This repository is prepared as the `v0.2.5` candidate'
+    );
+    expect(readmeSource).toContain(
+      'The source package metadata is bumped to `0.2.5`'
+    );
+    expect(readmeSource).toContain(
+      'The latest published npm package remains `react-native-image-compression-kit@0.2.4`'
     );
     expect(readmeSource).toContain('GitHub Release [v0.2.4]');
     expect(readmeSource).toContain(
-      'The `0.2.4` package metadata is published under'
+      'The `0.2.5` package metadata is prepared in source for the next publish under'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -109,6 +114,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'version `0.2.4` is the published iOS WebP static first-frame input release'
+    );
+    expect(readmeSource).toContain(
+      'version `0.2.5` is the iOS WebP output candidate'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -321,11 +329,65 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.4 release notes and previous release notes', () => {
+  it('documents the v0.2.5 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.4');
+    expect(packageJson.version).toBe('0.2.5');
+    expect(releaseSource).toContain('## v0.2.5');
+    expect(releaseSource).toContain(
+      'Status: implementation candidate. Not published to npm. Source package metadata is bumped to `0.2.5`; the latest registry version remains `0.2.4` until the manual publish step.'
+    );
+    expect(releaseSource).toContain('adding iOS');
+    expect(releaseSource).toContain(
+      'ImageIO-backed WebP output to the existing iOS JPEG/PNG/GIF/WebP input and'
+    );
+    expect(releaseSource).toContain(
+      'Verify that iOS can advertise WebP destination support through ImageIO before enabling WebP output.'
+    );
+    expect(releaseSource).toContain(
+      'Implement iOS WebP output for JPEG, PNG, static first-frame GIF, and static first-frame WebP input when the runtime supports WebP destination encoding.'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.5`.'
+    );
+    expect(releaseSource).toContain(
+      "iOS `compressImage()` now accepts `output.format: 'webp'` when ImageIO advertises a WebP destination type through `CGImageDestinationCopyTypeIdentifiers()`."
+    );
+    expect(releaseSource).toContain(
+      'iOS WebP output is encoded with ImageIO `CGImageDestinationCreateWithData`, `CGImageDestinationAddImage`, and `CGImageDestinationFinalize`.'
+    );
+    expect(releaseSource).toContain(
+      'WebP output keeps existing iOS resize behavior, honors `output.quality`, writes `.webp` cache files, and re-encodes without copying source metadata under `safe` and `strip`.'
+    );
+    expect(releaseSource).toContain(
+      'JPEG, PNG, GIF, and WebP input can be re-encoded to WebP output on the validated iOS runtime.'
+    );
+    expect(releaseSource).toContain(
+      'iOS WebP output rejects `output.maxBytes` with `ERR_NOT_IMPLEMENTED` because target-size WebP compression remains outside this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'iOS `getImageCompressionCapabilities()` reports WebP `input=true` and runtime WebP `output=true` when ImageIO destination encoding is available.'
+    );
+    expect(releaseSource).toContain(
+      'The iOS host-app smoke validates `compress-jpeg-to-webp`, `compress-png-to-webp`, `compress-gif-to-webp`, `compress-webp-to-webp`, and `reject-webp-max-bytes`.'
+    );
+    expect(releaseSource).toContain(
+      'TypeScript native-unavailable messaging now mentions iOS JPEG/PNG/GIF/WebP input with JPEG, PNG, and ImageIO-backed WebP output in version `0.2.5`.'
+    );
+    expect(releaseSource).toContain(
+      'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.'
+    );
+    expect(releaseSource).toContain('Android runtime behavior changes.');
+    expect(releaseSource).toContain('npm publish.');
+    expect(releaseSource).toContain('Git tag creation.');
+    expect(releaseSource).toContain('GitHub Release creation.');
+    expect(releaseSource).toContain('WebP target-size `maxBytes` on iOS.');
+    expect(releaseSource).toContain('Animated WebP preservation.');
+    expect(releaseSource).toContain('iOS HEIC, HEIF, or AVIF input.');
+    expect(releaseSource).toContain(
+      'Candidate implementation validation before release promotion:'
+    );
     expect(releaseSource).toContain('## v0.2.4');
     expect(releaseSource).toContain(
       'Status: published to npm on July 2, 2026 at 01:03:13 UTC (10:03:13 KST), tagged as `v0.2.4`.'
@@ -1108,7 +1170,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.5 candidate notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -1521,16 +1583,22 @@ describe('Android verification scripts', () => {
       'iOS MVP decodes WebP input as a static first frame through ImageIO.'
     );
     expect(iosSource).toContain(
-      'WebP input can be re-encoded to JPEG or PNG output without copying source metadata.'
+      'WebP input can be re-encoded to JPEG, PNG, or WebP output without copying source metadata.'
     );
     expect(iosSource).toContain(
-      'Animated WebP preservation and WebP output are not implemented.'
+      'WebP output uses ImageIO CGImageDestination when the runtime advertises a WebP destination type.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG or PNG output only.'
+      'Animated WebP preservation and WebP target-size maxBytes are not implemented.'
     );
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG and PNG output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
+      'iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG, PNG, or runtime ImageIO-backed WebP output only.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
+    );
+    expect(iosSource).toContain(
+      'iOS MVP requires ImageIO WebP destination support for WebP output on this runtime.'
     );
     expect(iosSource).toContain(
       'iOS MVP supports output.maxBytes for JPEG output only.'
@@ -1541,6 +1609,14 @@ describe('Android verification scripts', () => {
     );
     expect(iosSource).toContain('RCTImageCompressionKitEncodeJpegToTargetSize');
     expect(iosSource).toContain('bestWithinTargetData');
+    expect(iosSource).toContain('RCTImageCompressionKitWebPOutputTypeIdentifier');
+    expect(iosSource).toContain('RCTImageCompressionKitCanEncodeWebP');
+    expect(iosSource).toContain('CGImageDestinationCopyTypeIdentifiers');
+    expect(iosSource).toContain('CGImageDestinationCreateWithData');
+    expect(iosSource).toContain('CGImageDestinationAddImage');
+    expect(iosSource).toContain('CGImageDestinationFinalize');
+    expect(iosSource).toContain('kCGImageDestinationLossyCompressionQuality');
+    expect(iosSource).toContain('RCTImageCompressionKitEncodeWebP');
     expect(iosSource).toContain(
       'iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.'
     );
