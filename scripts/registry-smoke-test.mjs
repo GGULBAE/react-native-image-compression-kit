@@ -107,7 +107,7 @@ function parseArgs(args) {
     }
 
     if (arg === '--help' || arg === '-h') {
-      console.log(`Usage: pnpm smoke:registry -- [--version 0.2.7 | --tag latest]
+      console.log(`Usage: pnpm smoke:registry -- [--version 0.2.8 | --tag latest]
 
 Options:
   --version <version>  Smoke-test an exact published version.

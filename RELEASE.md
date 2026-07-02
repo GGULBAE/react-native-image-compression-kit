@@ -2,9 +2,9 @@
 
 ## v0.2.8
 
-Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+Status: published to npm on July 2, 2026 at 05:07:49 UTC (14:07:49 KST), tagged as `v0.2.8`.
 
-This candidate keeps Android and iOS runtime behavior unchanged while adding a
+This release keeps Android and iOS runtime behavior unchanged while adding a
 repeatable post-publish npm registry smoke test for the manual checks that were
 used after the `0.2.7` publish.
 
@@ -24,11 +24,11 @@ used after the `0.2.7` publish.
 - Registry smoke runs `npm view` for registry metadata, `npm pack <package>@<version> --json` for tarball inspection, required/forbidden file assertions, clean `npm install --ignore-scripts --legacy-peer-deps`, installed package file assertions, and `npm run typecheck` against public imports and exported types.
 - README development verification and release dry-run guidance now document when to run `pnpm smoke:registry -- --version <published-version>` and why it is post-publish only.
 - Source-level tests and the Android verification doctor expectations are updated for the registry smoke script and documentation.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.8` and GitHub Release `v0.2.8`.
 
 ### Not Included
 
-- npm package publication under the `latest` dist-tag.
-- Git tag `v0.2.8` or GitHub Release `v0.2.8`.
 - Android or iOS runtime behavior changes.
 - New public TypeScript API surface.
 - Adding registry smoke to default CI or `pnpm release:dry-run`.
@@ -46,7 +46,26 @@ pnpm pack --dry-run
 pnpm smoke:registry -- --version 0.2.7
 ```
 
-Candidate promotion also requires GitHub Actions CI to pass on the pushed release-candidate commit. After npm publish, run `pnpm smoke:registry -- --version 0.2.8` to validate the real registry tarball and clean consumer install before recording post-publish evidence.
+Release commit validation before npm publish:
+
+- Commit: `9c2ea1cc12d666c73e8809b33b575f527bb465dc`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28566423923>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28566423970>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28566423928>.
+- Local pre-publish gate completed successfully before npm publish: `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, and `pnpm pack --dry-run`.
+
+Completed after npm publish and GitHub Release creation:
+
+- `npm publish --tag latest` published `react-native-image-compression-kit@0.2.8`.
+- `npm view react-native-image-compression-kit@0.2.8 version dist.tarball dist.integrity dist.shasum time.modified --json` confirmed version `0.2.8`, registry tarball URL, integrity `sha512-zMnehpDnojrjeanfTz8I+DpXz32ON2p5i1wdKYJWC4/WD/IVc3PARz2itBpMepLFwlxIeBQ89blbmns/dI+eBg==`, shasum `5417ad397b69a0301da57d8e23ec9cc3546862fa`, and publish timestamp `2026-07-02T05:07:49.047Z`.
+- `npm view react-native-image-compression-kit dist-tags version --json` confirmed `latest` dist-tag `0.2.8`.
+- npm package: `react-native-image-compression-kit@0.2.8`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.8.tgz`
+- npm integrity: `sha512-zMnehpDnojrjeanfTz8I+DpXz32ON2p5i1wdKYJWC4/WD/IVc3PARz2itBpMepLFwlxIeBQ89blbmns/dI+eBg==`
+- npm shasum: `5417ad397b69a0301da57d8e23ec9cc3546862fa`
+- Git tag: `v0.2.8`
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.8>.
+- Registry smoke confirmed 49 files, 45.5 kB package size, 198.3 kB unpacked size, clean `npm install --ignore-scripts --legacy-peer-deps`, and public TypeScript import/typecheck success.
 
 ## v0.2.7
 

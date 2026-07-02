@@ -209,10 +209,9 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('This repository is preparing `react-native-image-compression-kit@0.2.8` as an unpublished tooling candidate.'),
-    readmeContents.includes('The latest npm `latest` dist-tag remains `react-native-image-compression-kit@0.2.7`'),
-    readmeContents.includes('GitHub Release [v0.2.7]'),
-    readmeContents.includes('The `0.2.8` package metadata is prepared as an unpublished tooling candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('This repository publishes `react-native-image-compression-kit@0.2.8` as the current npm `latest` dist-tag'),
+    readmeContents.includes('GitHub Release [v0.2.8]'),
+    readmeContents.includes('The `0.2.8` package is published as the current npm `latest` release for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -221,7 +220,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.5` is the published iOS runtime-gated WebP output release'),
     readmeContents.includes('version `0.2.6` is the published iOS runtime-gated WebP target-size release'),
     readmeContents.includes('version `0.2.7` is the published iOS HEIC/HEIF static input release'),
-    readmeContents.includes('version `0.2.8` is the unpublished post-publish registry smoke automation candidate'),
+    readmeContents.includes('version `0.2.8` is the published post-publish registry smoke automation release'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -229,7 +228,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.8 candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.8 release',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
@@ -436,7 +435,7 @@ function checkRegistrySmokeTestEnvironment() {
     [registryScriptContents, 'RNICK_REGISTRY_SMOKE_KEEP'],
     [registryScriptContents, 'compressImage(options)'],
     [registryScriptContents, 'getImageCompressionCapabilities()'],
-    [readmeContents, 'pnpm smoke:registry -- --version 0.2.7'],
+    [readmeContents, 'pnpm smoke:registry -- --version 0.2.8'],
     [readmeContents, 'published npm registry package'],
     [readmeContents, 'npm install --ignore-scripts --legacy-peer-deps'],
     [readmeContents, 'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'],
@@ -513,7 +512,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.8',
-    'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.',
+    'Status: published to npm on July 2, 2026 at 05:07:49 UTC (14:07:49 KST), tagged as `v0.2.8`.',
     'repeatable post-publish npm registry smoke test',
     'Automate npm registry tarball inspection for a published package version.',
     'Automate required runtime file and forbidden development-only file checks for the registry tarball.',
@@ -524,9 +523,23 @@ function checkReleaseNotes() {
     'Registry smoke supports `--version <version>`, `--tag <tag>`, `RNICK_REGISTRY_SMOKE_VERSION`, `RNICK_REGISTRY_SMOKE_TAG`, `RNICK_REGISTRY_SMOKE_KEEP`, and `RNICK_REGISTRY_SMOKE_TMPDIR`.',
     'Registry smoke runs `npm view` for registry metadata, `npm pack <package>@<version> --json` for tarball inspection',
     'README development verification and release dry-run guidance now document when to run `pnpm smoke:registry -- --version <published-version>`',
+    'npm package publication under the `latest` dist-tag.',
+    'Git tag `v0.2.8` and GitHub Release `v0.2.8`.',
     'Adding registry smoke to default CI or `pnpm release:dry-run`.',
     'pnpm smoke:registry -- --version 0.2.7',
-    'Candidate promotion also requires GitHub Actions CI to pass on the pushed release-candidate commit.',
+    'Release commit validation before npm publish:',
+    'Commit: `9c2ea1cc12d666c73e8809b33b575f527bb465dc`.',
+    'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28566423923>.',
+    'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28566423970>.',
+    'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28566423928>.',
+    '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.8`.',
+    '`latest` dist-tag `0.2.8`',
+    'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.8.tgz`',
+    'npm integrity: `sha512-zMnehpDnojrjeanfTz8I+DpXz32ON2p5i1wdKYJWC4/WD/IVc3PARz2itBpMepLFwlxIeBQ89blbmns/dI+eBg==`',
+    'npm shasum: `5417ad397b69a0301da57d8e23ec9cc3546862fa`',
+    'Git tag: `v0.2.8`',
+    'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.8>.',
+    'Registry smoke confirmed 49 files, 45.5 kB package size, 198.3 kB unpacked size',
     '## v0.2.7',
     'Status: published to npm on July 2, 2026 at 04:38:13 UTC (13:38:13 KST), tagged as `v0.2.7`.',
     'This release keeps Android runtime behavior unchanged while adding iOS',
@@ -954,7 +967,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.8 candidate notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -970,7 +983,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.8 candidate notes and previous release notes are current',
+    label: 'v0.2.8 release notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation checklist, published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
