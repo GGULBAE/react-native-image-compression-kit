@@ -19,6 +19,9 @@ static NSString *const RCTImageCompressionKitJpegFormat = @"jpeg";
 static NSString *const RCTImageCompressionKitPngFormat = @"png";
 static NSString *const RCTImageCompressionKitWebPFormat = @"webp";
 static NSString *const RCTImageCompressionKitGifFormat = @"gif";
+static NSString *const RCTImageCompressionKitHeicFormat = @"heic";
+static NSString *const RCTImageCompressionKitHeifFormat = @"heif";
+static NSString *const RCTImageCompressionKitAvifFormat = @"avif";
 static NSString *const RCTImageCompressionKitDefaultMetadataPolicy = @"safe";
 static NSString *const RCTImageCompressionKitStripMetadataPolicy = @"strip";
 static NSString *const RCTImageCompressionKitPreserveMetadataPolicy = @"preserve";
@@ -44,7 +47,15 @@ typedef struct {
 
 static NSArray<NSString *> *RCTImageCompressionKitFormats(void)
 {
-  return @[RCTImageCompressionKitJpegFormat, RCTImageCompressionKitPngFormat, RCTImageCompressionKitWebPFormat, @"heic", @"heif", @"avif", RCTImageCompressionKitGifFormat];
+  return @[
+    RCTImageCompressionKitJpegFormat,
+    RCTImageCompressionKitPngFormat,
+    RCTImageCompressionKitWebPFormat,
+    RCTImageCompressionKitHeicFormat,
+    RCTImageCompressionKitHeifFormat,
+    RCTImageCompressionKitAvifFormat,
+    RCTImageCompressionKitGifFormat
+  ];
 }
 
 static BOOL RCTImageCompressionKitHasValue(NSDictionary *map, NSString *key)
@@ -161,13 +172,33 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
     );
   }
 
+  if ([format isEqualToString:RCTImageCompressionKitHeicFormat] || [format isEqualToString:RCTImageCompressionKitHeifFormat]) {
+    BOOL canEncodeWebP = RCTImageCompressionKitCanEncodeWebP();
+    NSString *formatLabel = [format uppercaseString];
+    return RCTImageCompressionKitFormatCapability(
+      format,
+      YES,
+      NO,
+      YES,
+      NO,
+      @[
+        [NSString stringWithFormat:@"iOS MVP decodes %@ input as a static image through ImageIO.", formatLabel],
+        [NSString stringWithFormat:@"%@ input can be re-encoded to JPEG or PNG output without copying source metadata.", formatLabel],
+        canEncodeWebP
+          ? [NSString stringWithFormat:@"%@ input can also be re-encoded to runtime-available WebP output.", formatLabel]
+          : @"WebP output still requires runtime ImageIO WebP destination support.",
+        [NSString stringWithFormat:@"%@ output is not implemented.", formatLabel]
+      ]
+    );
+  }
+
   return RCTImageCompressionKitFormatCapability(
     format,
     NO,
     NO,
     NO,
     NO,
-    @[@"iOS MVP supports JPEG, PNG, static GIF, and static WebP input with JPEG, PNG, or runtime ImageIO-backed WebP output only."]
+    @[@"iOS MVP supports JPEG, PNG, static GIF, static WebP, static HEIC, and static HEIF input with JPEG, PNG, or runtime ImageIO-backed WebP output only."]
   );
 }
 
@@ -420,9 +451,35 @@ static BOOL RCTImageCompressionKitIsWebPType(NSString *imageType)
   return [imageType isEqualToString:@"org.webmproject.webp"] || [imageType isEqualToString:@"public.webp"];
 }
 
+static BOOL RCTImageCompressionKitIsHeicType(NSString *imageType)
+{
+  return
+    [imageType isEqualToString:@"public.heic"] ||
+    [imageType isEqualToString:@"public.heics"] ||
+    [imageType isEqualToString:@"org.iso.heic"] ||
+    [imageType isEqualToString:@"org.iso.heics"];
+}
+
+static BOOL RCTImageCompressionKitIsHeifType(NSString *imageType)
+{
+  return
+    [imageType isEqualToString:@"public.heif"] ||
+    [imageType isEqualToString:@"public.heifs"] ||
+    [imageType isEqualToString:@"org.iso.heif"] ||
+    [imageType isEqualToString:@"org.iso.heifs"];
+}
+
+static BOOL RCTImageCompressionKitIsHeicHeifType(NSString *imageType)
+{
+  return RCTImageCompressionKitIsHeicType(imageType) || RCTImageCompressionKitIsHeifType(imageType);
+}
+
 static BOOL RCTImageCompressionKitShouldDecodeFirstFrame(NSString *imageType)
 {
-  return RCTImageCompressionKitIsGifType(imageType) || RCTImageCompressionKitIsWebPType(imageType);
+  return
+    RCTImageCompressionKitIsGifType(imageType) ||
+    RCTImageCompressionKitIsWebPType(imageType) ||
+    RCTImageCompressionKitIsHeicHeifType(imageType);
 }
 
 static BOOL RCTImageCompressionKitIsSupportedInputType(NSString *imageType)
@@ -431,7 +488,8 @@ static BOOL RCTImageCompressionKitIsSupportedInputType(NSString *imageType)
     [imageType isEqualToString:@"public.jpeg"] ||
     [imageType isEqualToString:@"public.png"] ||
     RCTImageCompressionKitIsGifType(imageType) ||
-    RCTImageCompressionKitIsWebPType(imageType);
+    RCTImageCompressionKitIsWebPType(imageType) ||
+    RCTImageCompressionKitIsHeicHeifType(imageType);
 }
 
 static UIImage *RCTImageCompressionKitDecodeImage(NSData *sourceData, NSString *imageType)
@@ -809,7 +867,14 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     }
 
     NSString *outputFormat = RCTImageCompressionKitStringValue(output, @"format");
-    if (outputFormat == nil || ![@[@"jpeg", @"png", @"webp", @"heic", @"heif", @"avif"] containsObject:outputFormat]) {
+    if (outputFormat == nil || ![@[
+      RCTImageCompressionKitJpegFormat,
+      RCTImageCompressionKitPngFormat,
+      RCTImageCompressionKitWebPFormat,
+      RCTImageCompressionKitHeicFormat,
+      RCTImageCompressionKitHeifFormat,
+      RCTImageCompressionKitAvifFormat
+    ] containsObject:outputFormat]) {
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitInvalidOptionsCode,
@@ -931,7 +996,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitUnsupportedFormatCode,
-        @"iOS MVP supports JPEG, PNG, GIF, and WebP input only. GIF and WebP input are decoded as static first frames.",
+        @"iOS MVP supports JPEG, PNG, GIF, WebP, HEIC, and HEIF input only. GIF, WebP, HEIC, and HEIF input are decoded as static images through ImageIO.",
         nil
       );
       return;

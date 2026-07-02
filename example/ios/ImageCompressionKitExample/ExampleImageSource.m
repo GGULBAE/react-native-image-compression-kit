@@ -52,6 +52,24 @@ RCT_EXPORT_METHOD(copySamplePngToCache:(RCTPromiseResolveBlock)resolve
                        reject:reject];
 }
 
+RCT_EXPORT_METHOD(copySampleHeicToCache:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  [self writeSampleWithFormat:@"heic"
+                         data:ExampleImageSourceUnsupportedData(@"heic")
+                      resolve:resolve
+                       reject:reject];
+}
+
+RCT_EXPORT_METHOD(copySampleHeifToCache:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  [self writeSampleWithFormat:@"heif"
+                         data:ExampleImageSourceUnsupportedData(@"heif")
+                      resolve:resolve
+                       reject:reject];
+}
+
 RCT_EXPORT_METHOD(copyUnsupportedImageToCache:(NSString *)format
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)

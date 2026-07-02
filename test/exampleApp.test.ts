@@ -19,14 +19,14 @@ describe('example app', () => {
     expect(appSource).toContain("useState<OutputFormat>('jpeg')");
     expect(appSource).toContain('format: outputFormat');
     expect(appSource).toContain('supportsSelectedTargetSize');
-    expect(appSource).toContain('Android MVP / iOS JPEG+PNG+runtime WebP');
+    expect(appSource).toContain('Android MVP / iOS HEIC+HEIF input');
     expect(appSource).toContain('editable={supportsSelectedTargetSize}');
     expect(appSource).toContain('label="selected output"');
     expect(appSource).toContain('label="output formats"');
     expect(appSource).toContain('label="format"');
   });
 
-  it('wires an iOS host-app smoke runner for native JPEG/PNG/GIF/WebP MVP validation', () => {
+  it('wires an iOS host-app smoke runner for native JPEG/PNG/GIF/WebP/HEIC/HEIF MVP validation', () => {
     const appSource = readProjectFile('example/src/App.tsx');
     const iosModuleSource = readProjectFile(
       'example/ios/ImageCompressionKitExample/ExampleImageSource.m'
@@ -43,11 +43,15 @@ describe('example app', () => {
     expect(appSource).toContain('RNICK_IOS_SMOKE_PASS');
     expect(appSource).toContain('RNICK_IOS_SMOKE_FAIL');
     expect(appSource).toContain('copySamplePngToCache');
+    expect(appSource).toContain('copySampleHeicToCache');
+    expect(appSource).toContain('copySampleHeifToCache');
     expect(appSource).toContain('copyUnsupportedImageToCache');
     expect(appSource).toContain("capabilities.platform === 'ios'");
     expect(appSource).toContain("metadataPolicies.join(',') === 'safe,strip'");
     expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'gif', true, false)");
     expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'webp', true)");
+    expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'heic', true, false)");
+    expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'heif', true, false)");
     expect(appSource).toContain('webpOutputAvailable');
     expect(appSource).toContain(
       'Expected iOS JPEG target-size compression to be supported.'
@@ -55,14 +59,22 @@ describe('example app', () => {
     expect(appSource).toContain('compress-jpeg-to-jpeg-max-bytes');
     expect(appSource).toContain('copy-gif-fixture');
     expect(appSource).toContain('copy-webp-fixture');
+    expect(appSource).toContain('copy-heic-fixture');
+    expect(appSource).toContain('copy-heif-fixture');
     expect(appSource).toContain('compress-gif-to-jpeg');
     expect(appSource).toContain('compress-gif-to-png');
     expect(appSource).toContain('compress-webp-to-jpeg');
     expect(appSource).toContain('compress-webp-to-png');
+    expect(appSource).toContain('compress-heic-to-jpeg');
+    expect(appSource).toContain('compress-heif-to-jpeg');
+    expect(appSource).toContain('compress-heic-to-png');
+    expect(appSource).toContain('compress-heif-to-png');
     expect(appSource).toContain('compress-jpeg-to-webp');
     expect(appSource).toContain('compress-png-to-webp');
     expect(appSource).toContain('compress-gif-to-webp');
     expect(appSource).toContain('compress-webp-to-webp');
+    expect(appSource).toContain('compress-heic-to-webp');
+    expect(appSource).toContain('compress-heif-to-webp');
     expect(appSource).toContain('reject-webp-output-unavailable');
     expect(appSource).toContain('reject-gif-output');
     expect(appSource).toContain('compress-webp-to-webp-max-bytes');
@@ -70,10 +82,16 @@ describe('example app', () => {
     expect(appSource).toContain('gifToPngResultBytes');
     expect(appSource).toContain('webpResultBytes');
     expect(appSource).toContain('webpToPngResultBytes');
+    expect(appSource).toContain('heicResultBytes');
+    expect(appSource).toContain('heifResultBytes');
+    expect(appSource).toContain('heicToPngResultBytes');
+    expect(appSource).toContain('heifToPngResultBytes');
     expect(appSource).toContain('jpegToWebPResultBytes');
     expect(appSource).toContain('pngToWebPResultBytes');
     expect(appSource).toContain('gifToWebPResultBytes');
     expect(appSource).toContain('webpToWebPResultBytes');
+    expect(appSource).toContain('heicToWebPResultBytes');
+    expect(appSource).toContain('heifToWebPResultBytes');
     expect(appSource).toContain('webpTargetSizeResultBytes');
     expect(appSource).toContain(
       'Expected iOS target-size output <= ${targetSizeMaxBytes} bytes'
@@ -85,9 +103,15 @@ describe('example app', () => {
       'Expected iOS WebP output target-size <= ${targetSizeMaxBytes} bytes'
     );
     expect(appSource).toContain(
+      'Expected iOS HEIC target-size output <= ${targetSizeMaxBytes} bytes'
+    );
+    expect(appSource).toContain(
+      'Expected iOS HEIF target-size output <= ${targetSizeMaxBytes} bytes'
+    );
+    expect(appSource).toContain(
       'Expected GIF output to be rejected before native compression.'
     );
-    expect(appSource).toContain("const unsupportedInputs = ['heic', 'heif', 'avif']");
+    expect(appSource).toContain("const unsupportedInputs = ['avif']");
     expect(appSource).toContain('const unsupportedOutputCases = [');
     expect(appSource).toContain('compress-jpeg-to-png');
     expect(appSource).toContain('compress-png-to-png');
@@ -97,6 +121,8 @@ describe('example app', () => {
     expect(iosModuleSource).toContain('RCT_EXPORT_MODULE();');
     expect(iosModuleSource).toContain('copySampleJpegToCache');
     expect(iosModuleSource).toContain('copySamplePngToCache');
+    expect(iosModuleSource).toContain('copySampleHeicToCache');
+    expect(iosModuleSource).toContain('copySampleHeifToCache');
     expect(iosModuleSource).toContain('copyUnsupportedImageToCache');
     expect(iosModuleSource).toContain('logSmokeEvent');
     expect(iosModuleSource).toContain('RNICK_IOS_SMOKE');

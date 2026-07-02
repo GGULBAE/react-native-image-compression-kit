@@ -87,8 +87,9 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('kCGImageDestinationLossyCompressionQuality');
     expect(iosSource).toContain('RCTImageCompressionKitEncodeWebP');
     expect(iosSource).toContain(
-      'iOS MVP supports JPEG, PNG, GIF, and WebP input only. GIF and WebP input are decoded as static first frames.'
+      'iOS MVP supports JPEG, PNG, GIF, WebP, HEIC, and HEIF input only. GIF, WebP, HEIC, and HEIF input are decoded as static images through ImageIO.'
     );
+    expect(iosSource).toContain('RCTImageCompressionKitIsHeicHeifType');
     expect(iosSource).toContain(
       'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.'
     );

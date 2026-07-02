@@ -33,6 +33,8 @@ type ErrorState = {
 type ExampleImageSourceModule = {
   copySampleJpegToCache: () => Promise<string>;
   copySamplePngToCache?: () => Promise<string>;
+  copySampleHeicToCache?: () => Promise<string>;
+  copySampleHeifToCache?: () => Promise<string>;
   copyUnsupportedImageToCache?: (format: string) => Promise<string>;
   isSmokeTestEnabled?: () => Promise<boolean>;
   logSmokeEvent?: (message: string) => Promise<void>;
@@ -40,6 +42,8 @@ type ExampleImageSourceModule = {
 
 type IOSSmokeSampleModule = ExampleImageSourceModule & {
   copySamplePngToCache: () => Promise<string>;
+  copySampleHeicToCache: () => Promise<string>;
+  copySampleHeifToCache: () => Promise<string>;
   copyUnsupportedImageToCache: (format: string) => Promise<string>;
 };
 
@@ -260,7 +264,7 @@ export default function App(): React.JSX.Element {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.title}>Image Compression Kit</Text>
-        <Text style={styles.subtitle}>Android MVP / iOS JPEG+PNG+runtime WebP</Text>
+        <Text style={styles.subtitle}>Android MVP / iOS HEIC+HEIF input</Text>
 
         <View style={styles.section}>
           <Text style={styles.label}>Source URI</Text>
@@ -488,15 +492,21 @@ type IOSHostAppSmokeSummary = {
   pngResultBytes: number;
   gifResultBytes: number;
   webpResultBytes: number;
+  heicResultBytes: number;
+  heifResultBytes: number;
   jpegToPngResultBytes: number;
   pngToPngResultBytes: number;
   gifToPngResultBytes: number;
   webpToPngResultBytes: number;
+  heicToPngResultBytes: number;
+  heifToPngResultBytes: number;
   webpOutputAvailable: boolean;
   jpegToWebPResultBytes?: number;
   pngToWebPResultBytes?: number;
   gifToWebPResultBytes?: number;
   webpToWebPResultBytes?: number;
+  heicToWebPResultBytes?: number;
+  heifToWebPResultBytes?: number;
   webpTargetSizeResultBytes?: number;
   targetSizeResultBytes: number;
   unsupportedInputs: string[];
@@ -510,6 +520,8 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   assertIOSSmokeSampleModule(sampleModule);
   const copySampleJpegToCache = sampleModule.copySampleJpegToCache;
   const copySamplePngToCache = sampleModule.copySamplePngToCache;
+  const copySampleHeicToCache = sampleModule.copySampleHeicToCache;
+  const copySampleHeifToCache = sampleModule.copySampleHeifToCache;
   const copyUnsupportedImageToCache =
     sampleModule.copyUnsupportedImageToCache;
 
@@ -523,6 +535,8 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   assertIOSFormatCapability(capabilities, 'jpeg', true, true);
   assertIOSFormatCapability(capabilities, 'png', true, true);
   assertIOSFormatCapability(capabilities, 'gif', true, false);
+  assertIOSFormatCapability(capabilities, 'heic', true, false);
+  assertIOSFormatCapability(capabilities, 'heif', true, false);
   const webpCapability = assertIOSFormatCapability(capabilities, 'webp', true);
   const webpOutputAvailable = webpCapability.output === true;
   assertIOSSmoke(
@@ -549,6 +563,12 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   );
   const webpUri = await runIOSSmokeStep('copy-webp-fixture', () =>
     copyUnsupportedImageToCache('webp')
+  );
+  const heicUri = await runIOSSmokeStep('copy-heic-fixture', () =>
+    copySampleHeicToCache()
+  );
+  const heifUri = await runIOSSmokeStep('copy-heif-fixture', () =>
+    copySampleHeifToCache()
   );
   const targetSizeMaxBytes = 1_000;
   const jpegResult = await runIOSSmokeStep('compress-jpeg-to-jpeg', () =>
@@ -591,11 +611,37 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
       metadata: 'safe',
     })
   );
+  const heicResult = await runIOSSmokeStep('compress-heic-to-jpeg', () =>
+    compressImage({
+      source: { uri: heicUri },
+      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+      output: {
+        format: 'jpeg',
+        quality: 74,
+        maxBytes: targetSizeMaxBytes,
+      },
+      metadata: 'safe',
+    })
+  );
+  const heifResult = await runIOSSmokeStep('compress-heif-to-jpeg', () =>
+    compressImage({
+      source: { uri: heifUri },
+      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+      output: {
+        format: 'jpeg',
+        quality: 74,
+        maxBytes: targetSizeMaxBytes,
+      },
+      metadata: 'safe',
+    })
+  );
 
   assertCompressionResult(jpegResult, 'jpeg');
   assertCompressionResult(pngResult, 'jpeg');
   assertCompressionResult(gifResult, 'jpeg');
   assertCompressionResult(webpResult, 'jpeg');
+  assertCompressionResult(heicResult, 'jpeg');
+  assertCompressionResult(heifResult, 'jpeg');
   assertIOSSmoke(
     gifResult.byteSize <= targetSizeMaxBytes,
     `Expected iOS GIF target-size output <= ${targetSizeMaxBytes} bytes, received ${gifResult.byteSize}.`
@@ -603,6 +649,14 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   assertIOSSmoke(
     webpResult.byteSize <= targetSizeMaxBytes,
     `Expected iOS WebP target-size output <= ${targetSizeMaxBytes} bytes, received ${webpResult.byteSize}.`
+  );
+  assertIOSSmoke(
+    heicResult.byteSize <= targetSizeMaxBytes,
+    `Expected iOS HEIC target-size output <= ${targetSizeMaxBytes} bytes, received ${heicResult.byteSize}.`
+  );
+  assertIOSSmoke(
+    heifResult.byteSize <= targetSizeMaxBytes,
+    `Expected iOS HEIF target-size output <= ${targetSizeMaxBytes} bytes, received ${heifResult.byteSize}.`
   );
 
   const jpegToPngResult = await runIOSSmokeStep('compress-jpeg-to-png', () =>
@@ -637,16 +691,36 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
       metadata: 'strip',
     })
   );
+  const heicToPngResult = await runIOSSmokeStep('compress-heic-to-png', () =>
+    compressImage({
+      source: { uri: heicUri },
+      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+      output: { format: 'png', quality: 10 },
+      metadata: 'strip',
+    })
+  );
+  const heifToPngResult = await runIOSSmokeStep('compress-heif-to-png', () =>
+    compressImage({
+      source: { uri: heifUri },
+      resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+      output: { format: 'png', quality: 10 },
+      metadata: 'strip',
+    })
+  );
 
   assertCompressionResult(jpegToPngResult, 'png');
   assertCompressionResult(pngToPngResult, 'png');
   assertCompressionResult(gifToPngResult, 'png');
   assertCompressionResult(webpToPngResult, 'png');
+  assertCompressionResult(heicToPngResult, 'png');
+  assertCompressionResult(heifToPngResult, 'png');
 
   let jpegToWebPResult: CompressionResult | undefined;
   let pngToWebPResult: CompressionResult | undefined;
   let gifToWebPResult: CompressionResult | undefined;
   let webpToWebPResult: CompressionResult | undefined;
+  let heicToWebPResult: CompressionResult | undefined;
+  let heifToWebPResult: CompressionResult | undefined;
   let webpTargetSizeResult: CompressionResult | undefined;
 
   if (webpOutputAvailable) {
@@ -682,11 +756,29 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
         metadata: 'strip',
       })
     );
+    heicToWebPResult = await runIOSSmokeStep('compress-heic-to-webp', () =>
+      compressImage({
+        source: { uri: heicUri },
+        resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+        output: { format: 'webp', quality: 72 },
+        metadata: 'safe',
+      })
+    );
+    heifToWebPResult = await runIOSSmokeStep('compress-heif-to-webp', () =>
+      compressImage({
+        source: { uri: heifUri },
+        resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+        output: { format: 'webp', quality: 72 },
+        metadata: 'strip',
+      })
+    );
 
     assertCompressionResult(jpegToWebPResult, 'webp');
     assertCompressionResult(pngToWebPResult, 'webp');
     assertCompressionResult(gifToWebPResult, 'webp');
     assertCompressionResult(webpToWebPResult, 'webp');
+    assertCompressionResult(heicToWebPResult, 'webp');
+    assertCompressionResult(heifToWebPResult, 'webp');
 
     webpTargetSizeResult = await runIOSSmokeStep(
       'compress-webp-to-webp-max-bytes',
@@ -755,7 +847,7 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     )
   );
 
-  const unsupportedInputs = ['heic', 'heif', 'avif'];
+  const unsupportedInputs = ['avif'];
   for (const format of unsupportedInputs) {
     const unsupportedUri = await runIOSSmokeStep(
       `copy-unsupported-${format}-fixture`,
@@ -830,10 +922,14 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     pngResultBytes: pngResult.byteSize,
     gifResultBytes: gifResult.byteSize,
     webpResultBytes: webpResult.byteSize,
+    heicResultBytes: heicResult.byteSize,
+    heifResultBytes: heifResult.byteSize,
     jpegToPngResultBytes: jpegToPngResult.byteSize,
     pngToPngResultBytes: pngToPngResult.byteSize,
     gifToPngResultBytes: gifToPngResult.byteSize,
     webpToPngResultBytes: webpToPngResult.byteSize,
+    heicToPngResultBytes: heicToPngResult.byteSize,
+    heifToPngResultBytes: heifToPngResult.byteSize,
     webpOutputAvailable,
     ...(jpegToWebPResult
       ? { jpegToWebPResultBytes: jpegToWebPResult.byteSize }
@@ -846,6 +942,12 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
       : {}),
     ...(webpToWebPResult
       ? { webpToWebPResultBytes: webpToWebPResult.byteSize }
+      : {}),
+    ...(heicToWebPResult
+      ? { heicToWebPResultBytes: heicToWebPResult.byteSize }
+      : {}),
+    ...(heifToWebPResult
+      ? { heifToWebPResultBytes: heifToWebPResult.byteSize }
       : {}),
     ...(webpTargetSizeResult
       ? { webpTargetSizeResultBytes: webpTargetSizeResult.byteSize }
@@ -862,6 +964,8 @@ function assertIOSSmokeSampleModule(
   if (
     !module?.copySampleJpegToCache ||
     !module.copySamplePngToCache ||
+    !module.copySampleHeicToCache ||
+    !module.copySampleHeifToCache ||
     !module.copyUnsupportedImageToCache
   ) {
     throw new Error('iOS smoke sample module methods are unavailable.');
