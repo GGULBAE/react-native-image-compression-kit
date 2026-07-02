@@ -1,5 +1,54 @@
 # Release Notes
 
+## v0.2.9
+
+Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+
+This docs-only candidate corrects the README that is shown on the npm package
+page. It keeps Android and iOS runtime behavior unchanged while preparing a
+new package version whose packaged README no longer carries the stale
+pre-release status text that shipped in the `0.2.8` tarball.
+
+### Goals
+
+- Publish a docs-only package version so the npm package page reflects the current release state.
+- Remove stale `0.2.8` package-page status wording from the packaged README.
+- Keep Android runtime behavior, iOS runtime behavior, and the public TypeScript API unchanged.
+- Align README guidance, release notes, package metadata, source-level expectations, and Android verification doctor checks with the docs-only correction.
+- Verify the packed tarball README before publish and the registry tarball README after publish.
+
+### Included
+
+- `package.json` version bump to `0.2.9`.
+- README status, installation, release guidance, and registry smoke examples updated for the docs-only package-page correction.
+- README copy now describes `0.2.9` as a docs-only README correction while preserving the `0.2.8` runtime behavior surface.
+- Source-level tests and the Android verification doctor expectations are updated for the `0.2.9` docs-only status.
+
+### Not Included
+
+- Android or iOS runtime behavior changes.
+- New public TypeScript API surface.
+- AVIF output, HEIC/HEIF output, iOS metadata preservation, cancellation, or progress support.
+- Changes to npm package file globs or install-time lifecycle behavior.
+
+### Release Checklist
+
+Before npm publish:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+tmpdir=$(mktemp -d)
+pnpm pack --pack-destination "$tmpdir"
+if tar -xOf "$tmpdir"/react-native-image-compression-kit-0.2.9.tgz package/README.md | rg -n 'v0\.2\.8 candidate|unpublished tooling candidate|latest npm `latest` dist-tag remains|latest published npm package remains `0\.2\.7`|version `0\.2\.8` is the unpublished|v0\.2\.8 candidate notes|GitHub Release \[v0\.2\.7\]'; then exit 1; fi
+pnpm smoke:registry -- --version 0.2.8
+```
+
+Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit. After npm publish, run `pnpm smoke:registry -- --version 0.2.9` and repeat the registry tarball README stale-status check before recording post-publish evidence.
+
 ## v0.2.8
 
 Status: published to npm on July 2, 2026 at 05:07:49 UTC (14:07:49 KST), tagged as `v0.2.8`.

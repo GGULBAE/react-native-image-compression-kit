@@ -44,6 +44,17 @@ function extractKotlinArray(source: string, arrayName: string): string {
 describe('Android verification scripts', () => {
   it('declares npm publish-ready package metadata', () => {
     const readmeSource = readProjectFile('README.md');
+    const staleReadmeSnippets = [
+      'Status: v0.2.8 candidate',
+      'v0.2.8%20candidate',
+      'This repository is preparing `react-native-image-compression-kit@0.2.8` as an unpublished tooling candidate.',
+      'The latest npm `latest` dist-tag remains `react-native-image-compression-kit@0.2.7`',
+      'GitHub Release [v0.2.7]',
+      'The `0.2.8` package metadata is prepared as an unpublished tooling candidate for `react-native-image-compression-kit`',
+      'The latest published npm package remains `0.2.7`',
+      'version `0.2.8` is the unpublished post-publish registry smoke automation candidate',
+      'v0.2.8 candidate notes',
+    ];
     const expectedKeywords = [
       'react-native',
       'image',
@@ -60,7 +71,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.8');
+    expect(packageJson.version).toBe('0.2.9');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -88,11 +99,11 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'This repository publishes `react-native-image-compression-kit@0.2.8` as the current npm `latest` dist-tag'
+      'Version `0.2.9` is a docs-only npm package page correction for `react-native-image-compression-kit`'
     );
-    expect(readmeSource).toContain('GitHub Release [v0.2.8]');
+    expect(readmeSource).toContain('GitHub Release [v0.2.9]');
     expect(readmeSource).toContain(
-      'The `0.2.8` package is published as the current npm `latest` release for `react-native-image-compression-kit`'
+      'The `0.2.9` package is a docs-only README correction for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -121,6 +132,15 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       'version `0.2.8` is the published post-publish registry smoke automation release'
     );
+    expect(readmeSource).toContain(
+      'version `0.2.9` is the docs-only npm package page README correction release'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.9` corrects the packaged npm README without runtime behavior changes.'
+    );
+    for (const snippet of staleReadmeSnippets) {
+      expect(readmeSource).not.toContain(snippet);
+    }
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
     );
@@ -296,7 +316,7 @@ describe('Android verification scripts', () => {
     expect(registrySmokeScriptSource).toContain('RNICK_REGISTRY_SMOKE_KEEP');
     expect(registrySmokeScriptSource).toContain('compressImage(options)');
     expect(registrySmokeScriptSource).toContain('getImageCompressionCapabilities()');
-    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.8');
+    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.9');
     expect(readmeSource).toContain('published npm registry package');
     expect(readmeSource).toContain('npm install --ignore-scripts --legacy-peer-deps');
     expect(readmeSource).toContain(
@@ -380,11 +400,61 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.8 release notes and previous release notes', () => {
+  it('documents the v0.2.9 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.8');
+    expect(packageJson.version).toBe('0.2.9');
+    expect(releaseSource).toContain('## v0.2.9');
+    expect(releaseSource).toContain(
+      'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.'
+    );
+    expect(releaseSource).toContain(
+      'This docs-only candidate corrects the README that is shown on the npm package'
+    );
+    expect(releaseSource).toContain(
+      'Publish a docs-only package version so the npm package page reflects the current release state.'
+    );
+    expect(releaseSource).toContain(
+      'Remove stale `0.2.8` package-page status wording from the packaged README.'
+    );
+    expect(releaseSource).toContain(
+      'Keep Android runtime behavior, iOS runtime behavior, and the public TypeScript API unchanged.'
+    );
+    expect(releaseSource).toContain(
+      'Verify the packed tarball README before publish and the registry tarball README after publish.'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.9`.'
+    );
+    expect(releaseSource).toContain(
+      'README status, installation, release guidance, and registry smoke examples updated for the docs-only package-page correction.'
+    );
+    expect(releaseSource).toContain(
+      'README copy now describes `0.2.9` as a docs-only README correction while preserving the `0.2.8` runtime behavior surface.'
+    );
+    expect(releaseSource).toContain(
+      'Source-level tests and the Android verification doctor expectations are updated for the `0.2.9` docs-only status.'
+    );
+    expect(releaseSource).toContain('Android or iOS runtime behavior changes.');
+    expect(releaseSource).toContain('New public TypeScript API surface.');
+    expect(releaseSource).toContain(
+      'AVIF output, HEIC/HEIF output, iOS metadata preservation, cancellation, or progress support.'
+    );
+    expect(releaseSource).toContain('tmpdir=$(mktemp -d)');
+    expect(releaseSource).toContain(
+      'react-native-image-compression-kit-0.2.9.tgz'
+    );
+    expect(releaseSource).toContain(
+      'v0\\.2\\.8 candidate|unpublished tooling candidate|latest npm `latest` dist-tag remains'
+    );
+    expect(releaseSource).toContain('pnpm smoke:registry -- --version 0.2.8');
+    expect(releaseSource).toContain(
+      'Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.'
+    );
+    expect(releaseSource).toContain(
+      'After npm publish, run `pnpm smoke:registry -- --version 0.2.9`'
+    );
     expect(releaseSource).toContain('## v0.2.8');
     expect(releaseSource).toContain(
       'Status: published to npm on July 2, 2026 at 05:07:49 UTC (14:07:49 KST), tagged as `v0.2.8`.'
@@ -1541,7 +1611,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
