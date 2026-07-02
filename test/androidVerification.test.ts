@@ -88,14 +88,11 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'This repository is preparing the `react-native-image-compression-kit@0.2.6` candidate.'
+      'This repository is published as `react-native-image-compression-kit@0.2.6`'
     );
+    expect(readmeSource).toContain('GitHub Release [v0.2.6]');
     expect(readmeSource).toContain(
-      'The latest published package remains `react-native-image-compression-kit@0.2.5`'
-    );
-    expect(readmeSource).toContain('GitHub Release [v0.2.5]');
-    expect(readmeSource).toContain(
-      'The `0.2.6` package metadata is prepared as a candidate under `react-native-image-compression-kit`'
+      'The `0.2.6` package is published under `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -116,7 +113,7 @@ describe('Android verification scripts', () => {
       'version `0.2.5` is the published iOS runtime-gated WebP output release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.6` is the candidate iOS runtime-gated WebP target-size release'
+      'version `0.2.6` is the published iOS runtime-gated WebP target-size release'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -329,14 +326,14 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.6 candidate notes and previous release notes', () => {
+  it('documents the v0.2.6 release notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.6');
     expect(releaseSource).toContain('## v0.2.6');
     expect(releaseSource).toContain(
-      'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.'
+      'Status: published to npm on July 2, 2026 at 03:36:53 UTC (12:36:53 KST), tagged as `v0.2.6`.'
     );
     expect(releaseSource).toContain('adding iOS WebP');
     expect(releaseSource).toContain(
@@ -382,15 +379,81 @@ describe('Android verification scripts', () => {
       'TypeScript native-unavailable messaging now mentions iOS JPEG and runtime-available WebP target-size `maxBytes` in version `0.2.6`.'
     );
     expect(releaseSource).toContain(
-      'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.'
+      'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.'
     );
     expect(releaseSource).toContain(
       'Source-level tests and the Android verification doctor expectations are updated for the iOS WebP target-size path.'
     );
-    expect(releaseSource).toContain('npm publication.');
-    expect(releaseSource).toContain('Git tag `v0.2.6`.');
-    expect(releaseSource).toContain('GitHub Release `v0.2.6`.');
-    expect(releaseSource).toContain('Before release promotion:');
+    expect(releaseSource).toContain(
+      'npm package publication under the `latest` dist-tag.'
+    );
+    expect(releaseSource).toContain(
+      'Git tag `v0.2.6` and GitHub Release `v0.2.6`.'
+    );
+    expect(releaseSource).toContain('Before npm publish:');
+    expect(releaseSource).toContain(
+      'Candidate implementation validation before release promotion:'
+    );
+    expect(releaseSource).toContain(
+      'Commit: `bd4003f18b705416b8d662ca837d8746656fe706`.'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479567>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479544>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479519>.'
+    );
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS reject-webp-output-unavailable'
+    );
+    expect(releaseSource).toContain(
+      'RNICK_IOS_SMOKE_STEP_PASS reject-webp-output'
+    );
+    expect(releaseSource).toContain('webpOutputAvailable: false');
+    expect(releaseSource).toContain('targetSizeResultBytes: 996');
+    expect(releaseSource).toContain(
+      "unsupportedOutputs: ['webp', 'heic', 'heif', 'avif']"
+    );
+    expect(releaseSource).toContain(
+      'The `compress-webp-to-webp-max-bytes` success branch remains capability-gated'
+    );
+    expect(releaseSource).toContain(
+      'Local pre-publish gate completed successfully before npm publish'
+    );
+    expect(releaseSource).toContain(
+      'Completed after npm publish and GitHub Release creation:'
+    );
+    expect(releaseSource).toContain(
+      '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.6`.'
+    );
+    expect(releaseSource).toContain('`latest` dist-tag `0.2.6`');
+    expect(releaseSource).toContain(
+      'publish timestamp `2026-07-02T03:36:53.452Z`'
+    );
+    expect(releaseSource).toContain(
+      'npm package: `react-native-image-compression-kit@0.2.6`'
+    );
+    expect(releaseSource).toContain(
+      'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.6.tgz`'
+    );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-WbGBG6LnOHEKaWSVhSG0dC+fe8PTs5DxQUAw+kmI69MhHZCLlGfsDNBmYGs4YYQKCsGT7peglmBWVPwduD9ILg==`'
+    );
+    expect(releaseSource).toContain(
+      'npm shasum: `3d978c4650c854dbd18115fb9062e909b9eb63f3`'
+    );
+    expect(releaseSource).toContain(
+      'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.6>.'
+    );
+    expect(releaseSource).toContain(
+      'Registry tarball dry-run confirmed 49 files, 44.6 kB package size, and 193.1 kB unpacked size.'
+    );
+    expect(releaseSource).toContain(
+      'External registry install smoke installed `react-native-image-compression-kit@0.2.6`'
+    );
     expect(releaseSource).toContain('## v0.2.5');
     expect(releaseSource).toContain(
       'Status: published to npm on July 2, 2026 at 02:14:56 UTC (11:14:56 KST), tagged as `v0.2.5`.'
@@ -1247,7 +1310,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.6 candidate notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

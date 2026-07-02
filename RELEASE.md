@@ -2,9 +2,9 @@
 
 ## v0.2.6
 
-Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+Status: published to npm on July 2, 2026 at 03:36:53 UTC (12:36:53 KST), tagged as `v0.2.6`.
 
-This candidate keeps Android runtime behavior unchanged while adding iOS WebP
+This release keeps Android runtime behavior unchanged while adding iOS WebP
 target-size `output.maxBytes` support to the runtime-gated ImageIO-backed WebP
 output path introduced in `0.2.5`.
 
@@ -27,15 +27,14 @@ output path introduced in `0.2.5`.
 - The iOS host-app smoke now follows the WebP output capability: it validates `compress-webp-to-webp-max-bytes` with `byteSize <= maxBytes` when WebP output is available, and keeps `reject-webp-output-unavailable` / `reject-webp-output` when it is not.
 - The example app enables the Max bytes input for WebP output on platforms where WebP output is currently reported as available.
 - TypeScript native-unavailable messaging now mentions iOS JPEG and runtime-available WebP target-size `maxBytes` in version `0.2.6`.
-- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.
+- README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.
 - Source-level tests and the Android verification doctor expectations are updated for the iOS WebP target-size path.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.6` and GitHub Release `v0.2.6`.
 
 ### Not Included
 
 - Android runtime behavior changes.
-- npm publication.
-- Git tag `v0.2.6`.
-- GitHub Release `v0.2.6`.
 - Animated WebP preservation.
 - GIF output on iOS.
 - iOS HEIC, HEIF, or AVIF input.
@@ -45,7 +44,7 @@ output path introduced in `0.2.5`.
 
 ### Release Checklist
 
-Before release promotion:
+Before npm publish:
 
 ```bash
 git status --short --branch
@@ -55,6 +54,29 @@ git diff --check
 pnpm pack --dry-run
 pnpm example:ios:smoke
 ```
+
+Candidate implementation validation before release promotion:
+
+- Commit: `bd4003f18b705416b8d662ca837d8746656fe706`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479567>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479544>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479519>.
+- Runtime smoke evidence: `RNICK_IOS_SMOKE_STEP_PASS reject-webp-output-unavailable`, `RNICK_IOS_SMOKE_STEP_PASS reject-webp-output`, and `RNICK_IOS_SMOKE_PASS` with `webpOutputAvailable: false`, `targetSizeResultBytes: 996`, `unsupportedInputs: ['heic', 'heif', 'avif']`, and `unsupportedOutputs: ['webp', 'heic', 'heif', 'avif']`.
+- The `compress-webp-to-webp-max-bytes` success branch remains capability-gated for iOS runtimes that report WebP `output=true`.
+- Local pre-publish gate completed successfully before npm publish: `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, and `pnpm pack --dry-run`.
+
+Completed after npm publish and GitHub Release creation:
+
+- `npm publish --tag latest` published `react-native-image-compression-kit@0.2.6`.
+- `npm view react-native-image-compression-kit version versions dist-tags dist.tarball dist.integrity dist.shasum time --json` confirmed version `0.2.6`, `latest` dist-tag `0.2.6`, registry tarball URL, integrity `sha512-WbGBG6LnOHEKaWSVhSG0dC+fe8PTs5DxQUAw+kmI69MhHZCLlGfsDNBmYGs4YYQKCsGT7peglmBWVPwduD9ILg==`, shasum `3d978c4650c854dbd18115fb9062e909b9eb63f3`, and publish timestamp `2026-07-02T03:36:53.452Z`.
+- npm package: `react-native-image-compression-kit@0.2.6`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.6.tgz`
+- npm integrity: `sha512-WbGBG6LnOHEKaWSVhSG0dC+fe8PTs5DxQUAw+kmI69MhHZCLlGfsDNBmYGs4YYQKCsGT7peglmBWVPwduD9ILg==`
+- npm shasum: `3d978c4650c854dbd18115fb9062e909b9eb63f3`
+- Git tag: `v0.2.6`
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.6>.
+- Registry tarball dry-run confirmed 49 files, 44.6 kB package size, and 193.1 kB unpacked size.
+- External registry install smoke installed `react-native-image-compression-kit@0.2.6` with `npm install --ignore-scripts --legacy-peer-deps`, confirmed package version `0.2.6`, verified required runtime files, and confirmed development-only verification files were absent.
 
 ## v0.2.5
 

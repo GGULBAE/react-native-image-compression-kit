@@ -206,17 +206,16 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('This repository is preparing the `react-native-image-compression-kit@0.2.6` candidate.'),
-    readmeContents.includes('The latest published package remains `react-native-image-compression-kit@0.2.5`'),
-    readmeContents.includes('GitHub Release [v0.2.5]'),
-    readmeContents.includes('The `0.2.6` package metadata is prepared as a candidate under `react-native-image-compression-kit`'),
+    readmeContents.includes('This repository is published as `react-native-image-compression-kit@0.2.6`'),
+    readmeContents.includes('GitHub Release [v0.2.6]'),
+    readmeContents.includes('The `0.2.6` package is published under `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
     readmeContents.includes('version `0.2.3` is the published iOS GIF static first-frame input release'),
     readmeContents.includes('version `0.2.4` is the published iOS WebP static first-frame input release'),
     readmeContents.includes('version `0.2.5` is the published iOS runtime-gated WebP output release'),
-    readmeContents.includes('version `0.2.6` is the candidate iOS runtime-gated WebP target-size release'),
+    readmeContents.includes('version `0.2.6` is the published iOS runtime-gated WebP target-size release'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -224,10 +223,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.6 candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.6 release',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
-      : 'expected package.json candidate metadata or README release-status guidance is missing/mismatched',
+      : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
   };
 }
 
@@ -466,7 +465,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.6',
-    'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.',
+    'Status: published to npm on July 2, 2026 at 03:36:53 UTC (12:36:53 KST), tagged as `v0.2.6`.',
     'adding iOS WebP',
     'target-size `output.maxBytes` support to the runtime-gated ImageIO-backed WebP',
     "Support `output.format: 'webp'` with `output.maxBytes` on iOS runtimes that advertise ImageIO WebP destination encoding.",
@@ -482,12 +481,34 @@ function checkReleaseNotes() {
     'The iOS host-app smoke now follows the WebP output capability: it validates `compress-webp-to-webp-max-bytes`',
     'The example app enables the Max bytes input for WebP output on platforms where WebP output is currently reported as available.',
     'TypeScript native-unavailable messaging now mentions iOS JPEG and runtime-available WebP target-size `maxBytes` in version `0.2.6`.',
-    'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the candidate behavior.',
+    'README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.',
     'Source-level tests and the Android verification doctor expectations are updated for the iOS WebP target-size path.',
-    'npm publication.',
-    'Git tag `v0.2.6`.',
-    'GitHub Release `v0.2.6`.',
-    'Before release promotion:',
+    'npm package publication under the `latest` dist-tag.',
+    'Git tag `v0.2.6` and GitHub Release `v0.2.6`.',
+    'Before npm publish:',
+    'Candidate implementation validation before release promotion:',
+    'Commit: `bd4003f18b705416b8d662ca837d8746656fe706`.',
+    'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479567>.',
+    'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479544>.',
+    'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28561479519>.',
+    'RNICK_IOS_SMOKE_STEP_PASS reject-webp-output-unavailable',
+    'RNICK_IOS_SMOKE_STEP_PASS reject-webp-output',
+    'webpOutputAvailable: false',
+    'targetSizeResultBytes: 996',
+    "unsupportedOutputs: ['webp', 'heic', 'heif', 'avif']",
+    'The `compress-webp-to-webp-max-bytes` success branch remains capability-gated',
+    'Local pre-publish gate completed successfully before npm publish',
+    'Completed after npm publish and GitHub Release creation:',
+    '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.6`.',
+    '`latest` dist-tag `0.2.6`',
+    'publish timestamp `2026-07-02T03:36:53.452Z`',
+    'npm package: `react-native-image-compression-kit@0.2.6`',
+    'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.6.tgz`',
+    'npm integrity: `sha512-WbGBG6LnOHEKaWSVhSG0dC+fe8PTs5DxQUAw+kmI69MhHZCLlGfsDNBmYGs4YYQKCsGT7peglmBWVPwduD9ILg==`',
+    'npm shasum: `3d978c4650c854dbd18115fb9062e909b9eb63f3`',
+    'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.6>.',
+    'Registry tarball dry-run confirmed 49 files, 44.6 kB package size, and 193.1 kB unpacked size.',
+    'External registry install smoke installed `react-native-image-compression-kit@0.2.6`',
     '## v0.2.5',
     'Status: published to npm on July 2, 2026 at 02:14:56 UTC (11:14:56 KST), tagged as `v0.2.5`.',
     'adding iOS',
@@ -834,7 +855,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.6 candidate notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -850,9 +871,9 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.6 candidate notes and previous release notes are current',
+    label: 'v0.2.6 release notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, non-publish boundary, and previous npm publish steps'
+      ? 'RELEASE.md documents the release scope, non-goals, validation checklist, published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
           ...(packageJson.version === '0.2.6' ? [] : ['package.json version 0.2.6']),
