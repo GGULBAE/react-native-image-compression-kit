@@ -54,6 +54,14 @@ describe('Android verification scripts', () => {
       'The latest published npm package remains `0.2.7`',
       'version `0.2.8` is the unpublished post-publish registry smoke automation candidate',
       'v0.2.8 candidate notes',
+      'Status: v0.2.10 candidate',
+      'v0.2.10%20candidate',
+      'Version `0.2.10` is an unpublished release candidate',
+      'outside this candidate',
+      'As of version `0.2.10` candidate',
+      'The `0.2.10` package metadata is prepared as an unpublished AVIF input candidate',
+      'version `0.2.10` is the unpublished iOS AVIF input capability-gated static decode candidate',
+      'v0.2.10 candidate notes',
     ];
     const expectedKeywords = [
       'react-native',
@@ -99,17 +107,17 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.10` is an unpublished release candidate for `react-native-image-compression-kit`'
+      'Version `0.2.10` is release-ready for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'capability-gated iOS AVIF input through ImageIO static decode'
     );
     expect(readmeSource).toContain(
-      'The latest published npm package remains `0.2.9`'
+      'until that publish happens, the latest published npm package remains `0.2.9`'
     );
     expect(readmeSource).toContain('GitHub Release [v0.2.9]');
     expect(readmeSource).toContain(
-      'The `0.2.10` package metadata is prepared as an unpublished AVIF input candidate for `react-native-image-compression-kit`'
+      'The `0.2.10` package metadata is release-ready for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -142,7 +150,7 @@ describe('Android verification scripts', () => {
       'version `0.2.9` is the published docs-only npm package page README correction release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.10` is the unpublished iOS AVIF input capability-gated static decode candidate'
+      'version `0.2.10` is the release-ready iOS AVIF input capability-gated static decode release'
     );
     expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
@@ -350,6 +358,13 @@ describe('Android verification scripts', () => {
     expect(releaseScriptSource).toContain("args: ['example:typecheck']");
     expect(releaseScriptSource).toContain("args: ['diff', '--check']");
     expect(releaseScriptSource).toContain("args: ['pack', '--dry-run']");
+    expect(releaseScriptSource).toContain('Check packed README status');
+    expect(releaseScriptSource).toContain('STALE_PACKED_README_SNIPPETS');
+    expect(releaseScriptSource).toContain('checkPackedReadmeStatus');
+    expect(releaseScriptSource).toContain('package/README.md');
+    expect(releaseScriptSource).toContain(
+      'Packed README release-ready status check completed.'
+    );
     expect(releaseScriptSource).toContain("args: ['smoke:consumer']");
     expect(releaseScriptSource).toContain(
       "args: ['publish', '--dry-run', '--no-git-checks']"
@@ -363,6 +378,7 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('pnpm example:typecheck');
     expect(readmeSource).toContain('git diff --check');
     expect(readmeSource).toContain('pnpm pack --dry-run');
+    expect(readmeSource).toContain('packed README stale status check');
     expect(readmeSource).toContain('pnpm smoke:consumer');
     expect(readmeSource).toContain('pnpm publish --dry-run --no-git-checks');
     expect(readmeSource).toContain('successful GitHub Actions CI run');
@@ -409,17 +425,17 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.10 candidate notes and previous release notes', () => {
+  it('documents the v0.2.10 release-ready notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.10');
     expect(releaseSource).toContain('## v0.2.10');
     expect(releaseSource).toContain(
-      'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.'
+      'Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.'
     );
     expect(releaseSource).toContain(
-      'This release candidate adds capability-gated iOS AVIF input.'
+      'This release-ready update adds capability-gated iOS AVIF input.'
     );
     expect(releaseSource).toContain('iOS decodes AVIF');
     expect(releaseSource).toContain(
@@ -458,12 +474,15 @@ describe('Android verification scripts', () => {
       'The iOS host-app smoke validates both the AVIF-supported branch and the AVIF-unavailable rejection branch through runtime capabilities.'
     );
     expect(releaseSource).toContain(
-      'Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input candidate.'
+      'Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input release.'
     );
     expect(releaseSource).toContain('Android runtime behavior changes.');
     expect(releaseSource).toContain('Animated AVIF preservation.');
     expect(releaseSource).toContain(
-      'Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.'
+      'The release dry run includes a packed README stale status check before the consumer smoke and publish dry run.'
+    );
+    expect(releaseSource).toContain(
+      'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-ready commit.'
     );
     expect(releaseSource).toContain('## v0.2.9');
     expect(releaseSource).toContain(
@@ -1703,7 +1722,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.10 candidate notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.10 release-ready notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

@@ -2,9 +2,9 @@
 
 ## v0.2.10
 
-Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+Status: release-ready. Not published to npm, not tagged, and no GitHub Release has been created.
 
-This release candidate adds capability-gated iOS AVIF input. iOS decodes AVIF
+This release-ready update adds capability-gated iOS AVIF input. iOS decodes AVIF
 as a static image through ImageIO only when the runtime advertises AVIF source
 support, then routes the decoded image through the existing JPEG, PNG, or
 runtime-gated WebP output paths. Runtimes without ImageIO AVIF source support
@@ -29,7 +29,7 @@ keep the explicit `ERR_UNSUPPORTED_FORMAT` path.
 - iOS unsupported-input errors keep AVIF on `ERR_UNSUPPORTED_FORMAT` when ImageIO AVIF source support is unavailable.
 - The iOS host-app smoke validates both the AVIF-supported branch and the AVIF-unavailable rejection branch through runtime capabilities.
 - README iOS limitation, public API, roadmap, package metadata, and host-app validation guidance are updated for the release behavior.
-- Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input candidate.
+- Source-level tests and Android verification doctor expectations are updated for the iOS AVIF input release.
 
 ### Not Included
 
@@ -51,10 +51,11 @@ pnpm verify
 pnpm example:typecheck
 git diff --check
 pnpm pack --dry-run
+pnpm release:dry-run
 pnpm example:ios:smoke
 ```
 
-Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.
+The release dry run includes a packed README stale status check before the consumer smoke and publish dry run. Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-ready commit.
 
 ## v0.2.9
 

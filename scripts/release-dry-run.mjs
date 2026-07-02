@@ -1,10 +1,23 @@
 #!/usr/bin/env node
 
 import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const STALE_PACKED_README_SNIPPETS = [
+  'Status: v0.2.10 candidate',
+  'v0.2.10%20candidate',
+  'Version `0.2.10` is an unpublished release candidate',
+  'outside this candidate',
+  'As of version `0.2.10` candidate',
+  'The `0.2.10` package metadata is prepared as an unpublished AVIF input candidate',
+  'version `0.2.10` is the unpublished iOS AVIF input capability-gated static decode candidate',
+  'v0.2.10 candidate notes',
+];
 
 const STEPS = [
   {
@@ -28,6 +41,10 @@ const STEPS = [
     args: ['pack', '--dry-run'],
   },
   {
+    name: 'Check packed README status',
+    run: checkPackedReadmeStatus,
+  },
+  {
     name: 'Run packed consumer smoke test',
     command: 'pnpm',
     args: ['smoke:consumer'],
@@ -43,10 +60,69 @@ console.log('Release dry run only validates publish readiness. It does not publi
 
 for (const step of STEPS) {
   console.log(`\n> ${step.name}`);
-  run(step.command, step.args);
+  if (step.run) {
+    step.run();
+  } else {
+    run(step.command, step.args);
+  }
 }
 
 console.log('\nRelease dry run completed.');
+
+function checkPackedReadmeStatus() {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), 'rnick-release-readme-'));
+
+  try {
+    run('pnpm', ['pack', '--pack-destination', tempDir]);
+    const tarballPath = findPackedTarball(tempDir);
+    const readmeContents = extractTarballFile(tarballPath, 'package/README.md');
+    const staleSnippets = STALE_PACKED_README_SNIPPETS.filter((snippet) =>
+      readmeContents.includes(snippet)
+    );
+
+    if (staleSnippets.length > 0) {
+      fail(
+        `Packed README contains stale v0.2.10 candidate snippets: ${staleSnippets.join(
+          ' | '
+        )}`
+      );
+    }
+
+    console.log('Packed README release-ready status check completed.');
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+function findPackedTarball(directory) {
+  const tarballs = readdirSync(directory)
+    .filter((fileName) => /^react-native-image-compression-kit-.*\.tgz$/.test(fileName))
+    .sort();
+
+  if (tarballs.length !== 1) {
+    fail(`Expected exactly one packed tarball in ${directory}, found ${tarballs.length}.`);
+  }
+
+  return path.join(directory, tarballs[0]);
+}
+
+function extractTarballFile(tarballPath, filePath) {
+  const result = spawnSync('tar', ['-xOf', tarballPath, filePath], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+  });
+
+  if (result.error) {
+    fail(result.error.message);
+  }
+
+  if (result.status !== 0) {
+    fail(result.stderr || `Could not extract ${filePath} from ${tarballPath}.`);
+  }
+
+  return result.stdout;
+}
 
 function run(command, args) {
   const result = spawnSync(command, args, {
