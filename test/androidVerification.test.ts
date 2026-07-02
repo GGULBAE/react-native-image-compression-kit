@@ -400,17 +400,17 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.9 candidate notes and previous release notes', () => {
+  it('documents the v0.2.9 published notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.9');
     expect(releaseSource).toContain('## v0.2.9');
     expect(releaseSource).toContain(
-      'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.'
+      'Status: published to npm on July 2, 2026 at 06:24:49 UTC (15:24:49 KST), tagged as `v0.2.9`.'
     );
     expect(releaseSource).toContain(
-      'This docs-only candidate corrects the README that is shown on the npm package'
+      'This docs-only patch corrects the README that is shown on the npm package'
     );
     expect(releaseSource).toContain(
       'Publish a docs-only package version so the npm package page reflects the current release state.'
@@ -436,6 +436,8 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'Source-level tests and the Android verification doctor expectations are updated for the `0.2.9` docs-only status.'
     );
+    expect(releaseSource).toContain('npm package publication under the `latest` dist-tag.');
+    expect(releaseSource).toContain('Git tag `v0.2.9` and GitHub Release `v0.2.9`.');
     expect(releaseSource).toContain('Android or iOS runtime behavior changes.');
     expect(releaseSource).toContain('New public TypeScript API surface.');
     expect(releaseSource).toContain(
@@ -450,11 +452,41 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain('pnpm smoke:registry -- --version 0.2.8');
     expect(releaseSource).toContain(
-      'Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.'
+      'Release commit validation before npm publish:'
     );
     expect(releaseSource).toContain(
-      'After npm publish, run `pnpm smoke:registry -- --version 0.2.9`'
+      'Commit: `770bb06b2c0dc8b2e186cd799e647f6fdcac9fa8`.'
     );
+    expect(releaseSource).toContain(
+      'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919988>.'
+    );
+    expect(releaseSource).toContain(
+      'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919982>.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919984>.'
+    );
+    expect(releaseSource).toContain(
+      '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.9`.'
+    );
+    expect(releaseSource).toContain('`latest` dist-tag `0.2.9`');
+    expect(releaseSource).toContain(
+      'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.9.tgz`'
+    );
+    expect(releaseSource).toContain(
+      'npm integrity: `sha512-Q/z8QZdsEl85Q9IhO31gv3/OAfGXh5FS7O3kBKJouzlnvtbTYCS+zgGYKrDNNq7x1rIVHQAxKXmeNJpoMwxWqw==`'
+    );
+    expect(releaseSource).toContain(
+      'npm shasum: `11882a2c1fff4b21648ebbfb773c6ae5aabad638`'
+    );
+    expect(releaseSource).toContain('Git tag: `v0.2.9`');
+    expect(releaseSource).toContain(
+      'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.9>.'
+    );
+    expect(releaseSource).toContain(
+      'Registry smoke confirmed 49 files, 45.4 kB package size, 198.3 kB unpacked size'
+    );
+    expect(releaseSource).toContain('Registry tarball README stale-status check passed.');
     expect(releaseSource).toContain('## v0.2.8');
     expect(releaseSource).toContain(
       'Status: published to npm on July 2, 2026 at 05:07:49 UTC (14:07:49 KST), tagged as `v0.2.8`.'

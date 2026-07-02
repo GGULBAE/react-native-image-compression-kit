@@ -2,10 +2,10 @@
 
 ## v0.2.9
 
-Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+Status: published to npm on July 2, 2026 at 06:24:49 UTC (15:24:49 KST), tagged as `v0.2.9`.
 
-This docs-only candidate corrects the README that is shown on the npm package
-page. It keeps Android and iOS runtime behavior unchanged while preparing a
+This docs-only patch corrects the README that is shown on the npm package
+page. It keeps Android and iOS runtime behavior unchanged while publishing a
 new package version whose packaged README no longer carries the stale
 pre-release status text that shipped in the `0.2.8` tarball.
 
@@ -23,6 +23,8 @@ pre-release status text that shipped in the `0.2.8` tarball.
 - README status, installation, release guidance, and registry smoke examples updated for the docs-only package-page correction.
 - README copy now describes `0.2.9` as a docs-only README correction while preserving the `0.2.8` runtime behavior surface.
 - Source-level tests and the Android verification doctor expectations are updated for the `0.2.9` docs-only status.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.9` and GitHub Release `v0.2.9`.
 
 ### Not Included
 
@@ -47,7 +49,27 @@ if tar -xOf "$tmpdir"/react-native-image-compression-kit-0.2.9.tgz package/READM
 pnpm smoke:registry -- --version 0.2.8
 ```
 
-Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit. After npm publish, run `pnpm smoke:registry -- --version 0.2.9` and repeat the registry tarball README stale-status check before recording post-publish evidence.
+Release commit validation before npm publish:
+
+- Commit: `770bb06b2c0dc8b2e186cd799e647f6fdcac9fa8`.
+- GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919988>.
+- Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919982>.
+- iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919984>.
+- Local pre-publish gate completed successfully before npm publish: `pnpm verify`, `pnpm example:typecheck`, `git diff --check`, `pnpm pack --dry-run`, packed tarball README stale-status check, and `pnpm smoke:registry -- --version 0.2.8`.
+
+Completed after npm publish and GitHub Release creation:
+
+- `npm publish --tag latest` published `react-native-image-compression-kit@0.2.9`.
+- `npm view react-native-image-compression-kit@0.2.9 version dist.tarball dist.integrity dist.shasum time.modified --json` confirmed version `0.2.9`, registry tarball URL, integrity `sha512-Q/z8QZdsEl85Q9IhO31gv3/OAfGXh5FS7O3kBKJouzlnvtbTYCS+zgGYKrDNNq7x1rIVHQAxKXmeNJpoMwxWqw==`, shasum `11882a2c1fff4b21648ebbfb773c6ae5aabad638`, and publish timestamp `2026-07-02T06:24:49.065Z`.
+- `npm view react-native-image-compression-kit dist-tags version --json` confirmed `latest` dist-tag `0.2.9`.
+- npm package: `react-native-image-compression-kit@0.2.9`
+- npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.9.tgz`
+- npm integrity: `sha512-Q/z8QZdsEl85Q9IhO31gv3/OAfGXh5FS7O3kBKJouzlnvtbTYCS+zgGYKrDNNq7x1rIVHQAxKXmeNJpoMwxWqw==`
+- npm shasum: `11882a2c1fff4b21648ebbfb773c6ae5aabad638`
+- Git tag: `v0.2.9`
+- GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.9>.
+- Registry smoke confirmed 49 files, 45.4 kB package size, 198.3 kB unpacked size, clean `npm install --ignore-scripts --legacy-peer-deps`, and public TypeScript import/typecheck success.
+- Registry tarball README stale-status check passed.
 
 ## v0.2.8
 

@@ -526,8 +526,8 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.9',
-    'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.',
-    'This docs-only candidate corrects the README that is shown on the npm package',
+    'Status: published to npm on July 2, 2026 at 06:24:49 UTC (15:24:49 KST), tagged as `v0.2.9`.',
+    'This docs-only patch corrects the README that is shown on the npm package',
     'Publish a docs-only package version so the npm package page reflects the current release state.',
     'Remove stale `0.2.8` package-page status wording from the packaged README.',
     'Keep Android runtime behavior, iOS runtime behavior, and the public TypeScript API unchanged.',
@@ -536,6 +536,8 @@ function checkReleaseNotes() {
     'README status, installation, release guidance, and registry smoke examples updated for the docs-only package-page correction.',
     'README copy now describes `0.2.9` as a docs-only README correction while preserving the `0.2.8` runtime behavior surface.',
     'Source-level tests and the Android verification doctor expectations are updated for the `0.2.9` docs-only status.',
+    'npm package publication under the `latest` dist-tag.',
+    'Git tag `v0.2.9` and GitHub Release `v0.2.9`.',
     'Android or iOS runtime behavior changes.',
     'New public TypeScript API surface.',
     'AVIF output, HEIC/HEIF output, iOS metadata preservation, cancellation, or progress support.',
@@ -543,8 +545,20 @@ function checkReleaseNotes() {
     'react-native-image-compression-kit-0.2.9.tgz',
     'v0\\.2\\.8 candidate|unpublished tooling candidate|latest npm `latest` dist-tag remains',
     'pnpm smoke:registry -- --version 0.2.8',
-    'Candidate promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release-candidate commit.',
-    'After npm publish, run `pnpm smoke:registry -- --version 0.2.9`',
+    'Release commit validation before npm publish:',
+    'Commit: `770bb06b2c0dc8b2e186cd799e647f6fdcac9fa8`.',
+    'GitHub Actions CI: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919988>.',
+    'Android Instrumentation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919982>.',
+    'iOS Validation: <https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28568919984>.',
+    '`npm publish --tag latest` published `react-native-image-compression-kit@0.2.9`.',
+    '`latest` dist-tag `0.2.9`',
+    'npm tarball: `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.9.tgz`',
+    'npm integrity: `sha512-Q/z8QZdsEl85Q9IhO31gv3/OAfGXh5FS7O3kBKJouzlnvtbTYCS+zgGYKrDNNq7x1rIVHQAxKXmeNJpoMwxWqw==`',
+    'npm shasum: `11882a2c1fff4b21648ebbfb773c6ae5aabad638`',
+    'Git tag: `v0.2.9`',
+    'GitHub Release: <https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.9>.',
+    'Registry smoke confirmed 49 files, 45.4 kB package size, 198.3 kB unpacked size',
+    'Registry tarball README stale-status check passed.',
     '## v0.2.8',
     'Status: published to npm on July 2, 2026 at 05:07:49 UTC (14:07:49 KST), tagged as `v0.2.8`.',
     'repeatable post-publish npm registry smoke test',
@@ -1017,7 +1031,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.9 candidate notes and previous release notes are current',
+    label: 'v0.2.9 published notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation checklist, published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
