@@ -45,6 +45,7 @@ const REQUIRED_FILES = [
   'scripts/release-dry-run.mjs',
   'example/Gemfile',
   'example/ios/Podfile',
+  'example/ios/cocoapods_pathname_workaround.rb',
   'example/ios/ImageCompressionKitExample.xcodeproj/project.pbxproj',
   'example/ios/ImageCompressionKitExample/AppDelegate.swift',
   'example/ios/ImageCompressionKitExample/ExampleImageSource.m',
@@ -1336,6 +1337,7 @@ function checkIOSHostAppValidation() {
   const iosModuleContents = readText('example/ios/ImageCompressionKitExample/ExampleImageSource.m');
   const projectContents = readText('example/ios/ImageCompressionKitExample.xcodeproj/project.pbxproj');
   const podfileContents = readText('example/ios/Podfile');
+  const podfileWorkaroundContents = readText('example/ios/cocoapods_pathname_workaround.rb');
   const gemfileContents = readText('example/Gemfile');
   const expectedScripts = {
     'example:ios': 'pnpm --filter image-compression-kit-example ios',
@@ -1352,6 +1354,7 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'pnpm example:ios:smoke'],
     [readmeContents, 'RNICK_IOS_SMOKE_PASS'],
     [readmeContents, 'pathname contains null byte'],
+    [readmeContents, 'local CocoaPods pathname workaround for pnpm-symlinked pods'],
     [readmeContents, 'RNICK_IOS_POD_INSTALL_ATTEMPTS'],
     [readmeContents, 'RNICK_IOS_METRO_READY_TIMEOUT_MS'],
     [readmeContents, "metadataPolicies: ['safe', 'strip']"],
@@ -1452,8 +1455,12 @@ function checkIOSHostAppValidation() {
     [iosModuleContents, '"heif"'],
     [iosModuleContents, '"avif"'],
     [projectContents, 'ExampleImageSource.m in Sources'],
+    [podfileContents, "require_relative './cocoapods_pathname_workaround'"],
     [podfileContents, 'use_native_modules!'],
     [podfileContents, 'use_react_native!'],
+    [podfileWorkaroundContents, 'module RNICKCocoaPodsPathnameWorkaround'],
+    [podfileWorkaroundContents, 'base_path.cleanpath'],
+    [podfileWorkaroundContents, 'Pod::Project.prepend'],
     [gemfileContents, "ruby '>= 3.1.0'"],
     [gemfileContents, "gem 'cocoapods'"],
     [gemfileContents, "gem 'activesupport', '>= 7.2.3.1'"],

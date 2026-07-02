@@ -299,6 +299,10 @@ describe('Android verification scripts', () => {
   it('documents and guards iOS host-app validation stability', () => {
     const readmeSource = readProjectFile('README.md');
     const gemfileSource = readProjectFile('example/Gemfile');
+    const podfileSource = readProjectFile('example/ios/Podfile');
+    const podfileWorkaroundSource = readProjectFile(
+      'example/ios/cocoapods_pathname_workaround.rb'
+    );
     const validationScriptSource = readProjectFile('scripts/ios-validation.mjs');
 
     expect(packageJson.scripts['example:ios:pods']).toBe(
@@ -316,7 +320,14 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('Ruby 3.1 or newer');
     expect(readmeSource).toContain('patched ActiveSupport and Concurrent Ruby ranges');
     expect(readmeSource).toContain('pathname contains null byte');
+    expect(readmeSource).toContain(
+      'local CocoaPods pathname workaround for pnpm-symlinked pods'
+    );
     expect(readmeSource).toContain('RNICK_IOS_POD_INSTALL_ATTEMPTS');
+    expect(podfileSource).toContain("require_relative './cocoapods_pathname_workaround'");
+    expect(podfileWorkaroundSource).toContain('module RNICKCocoaPodsPathnameWorkaround');
+    expect(podfileWorkaroundSource).toContain('base_path.cleanpath');
+    expect(podfileWorkaroundSource).toContain('Pod::Project.prepend');
     expect(gemfileSource).toContain("ruby '>= 3.1.0'");
     expect(gemfileSource).toContain("gem 'activesupport', '>= 7.2.3.1'");
     expect(gemfileSource).toContain("gem 'concurrent-ruby', '>= 1.3.7'");
