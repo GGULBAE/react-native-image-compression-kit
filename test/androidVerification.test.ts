@@ -60,7 +60,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.7');
+    expect(packageJson.version).toBe('0.2.8');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -88,11 +88,14 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'The latest npm `latest` dist-tag is `react-native-image-compression-kit@0.2.7`'
+      'This repository is preparing `react-native-image-compression-kit@0.2.8` as an unpublished tooling candidate.'
+    );
+    expect(readmeSource).toContain(
+      'The latest npm `latest` dist-tag remains `react-native-image-compression-kit@0.2.7`'
     );
     expect(readmeSource).toContain('GitHub Release [v0.2.7]');
     expect(readmeSource).toContain(
-      'The `0.2.7` package is published for `react-native-image-compression-kit`'
+      'The `0.2.8` package metadata is prepared as an unpublished tooling candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -117,6 +120,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'version `0.2.7` is the published iOS HEIC/HEIF static input release'
+    );
+    expect(readmeSource).toContain(
+      'version `0.2.8` is the unpublished post-publish registry smoke automation candidate'
     );
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -267,6 +273,43 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('without publishing to npm');
   });
 
+  it('wires the post-publish registry package smoke test', () => {
+    const registrySmokeScriptSource = readProjectFile('scripts/registry-smoke-test.mjs');
+    const readmeSource = readProjectFile('README.md');
+
+    expect(packageJson.scripts['smoke:registry']).toBe(
+      'node scripts/registry-smoke-test.mjs'
+    );
+    expect(registrySmokeScriptSource).toContain('npmView(requestedSpec)');
+    expect(registrySmokeScriptSource).toContain('npmPack(publishedSpec, packDir)');
+    expect(registrySmokeScriptSource).toContain(
+      "run('npm', ['install', '--ignore-scripts', '--legacy-peer-deps'], consumerDir)"
+    );
+    expect(registrySmokeScriptSource).toContain(
+      "run('npm', ['run', 'typecheck'], consumerDir)"
+    );
+    expect(registrySmokeScriptSource).toContain("'scripts/registry-smoke-test.mjs'");
+    expect(registrySmokeScriptSource).toContain(
+      "'android/src/test/assets/heic-heif/sample.heic'"
+    );
+    expect(registrySmokeScriptSource).toContain(
+      "const REACT_NATIVE_VERSION = '0.86.0'"
+    );
+    expect(registrySmokeScriptSource).toContain('RNICK_REGISTRY_SMOKE_VERSION');
+    expect(registrySmokeScriptSource).toContain('RNICK_REGISTRY_SMOKE_KEEP');
+    expect(registrySmokeScriptSource).toContain('compressImage(options)');
+    expect(registrySmokeScriptSource).toContain('getImageCompressionCapabilities()');
+    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.7');
+    expect(readmeSource).toContain('published npm registry package');
+    expect(readmeSource).toContain('npm install --ignore-scripts --legacy-peer-deps');
+    expect(readmeSource).toContain(
+      'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'
+    );
+    expect(readmeSource).toContain(
+      'After npm publish, run `pnpm smoke:registry -- --version <published-version>`'
+    );
+  });
+
   it('documents and wires the release dry-run checklist', () => {
     const releaseScriptSource = readProjectFile('scripts/release-dry-run.mjs');
     const readmeSource = readProjectFile('README.md');
@@ -340,11 +383,52 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.7 release notes and previous release notes', () => {
+  it('documents the v0.2.8 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.7');
+    expect(packageJson.version).toBe('0.2.8');
+    expect(releaseSource).toContain('## v0.2.8');
+    expect(releaseSource).toContain(
+      'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.'
+    );
+    expect(releaseSource).toContain(
+      'repeatable post-publish npm registry smoke test'
+    );
+    expect(releaseSource).toContain(
+      'Automate npm registry tarball inspection for a published package version.'
+    );
+    expect(releaseSource).toContain(
+      'Automate required runtime file and forbidden development-only file checks for the registry tarball.'
+    );
+    expect(releaseSource).toContain(
+      'Automate clean temporary consumer installation from npm with public TypeScript import/typecheck coverage.'
+    );
+    expect(releaseSource).toContain(
+      'Keep the registry smoke outside pre-publish `pnpm release:dry-run` and default CI because it requires an already published npm version.'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.8`.'
+    );
+    expect(releaseSource).toContain(
+      'New `pnpm smoke:registry` package script backed by `scripts/registry-smoke-test.mjs`.'
+    );
+    expect(releaseSource).toContain(
+      'Registry smoke supports `--version <version>`, `--tag <tag>`, `RNICK_REGISTRY_SMOKE_VERSION`, `RNICK_REGISTRY_SMOKE_TAG`, `RNICK_REGISTRY_SMOKE_KEEP`, and `RNICK_REGISTRY_SMOKE_TMPDIR`.'
+    );
+    expect(releaseSource).toContain(
+      'Registry smoke runs `npm view` for registry metadata, `npm pack <package>@<version> --json` for tarball inspection'
+    );
+    expect(releaseSource).toContain(
+      'README development verification and release dry-run guidance now document when to run `pnpm smoke:registry -- --version <published-version>`'
+    );
+    expect(releaseSource).toContain(
+      'Adding registry smoke to default CI or `pnpm release:dry-run`.'
+    );
+    expect(releaseSource).toContain('pnpm smoke:registry -- --version 0.2.7');
+    expect(releaseSource).toContain(
+      'Candidate promotion also requires GitHub Actions CI to pass on the pushed release-candidate commit.'
+    );
     expect(releaseSource).toContain('## v0.2.7');
     expect(releaseSource).toContain(
       'Status: published to npm on July 2, 2026 at 04:38:13 UTC (13:38:13 KST), tagged as `v0.2.7`.'
@@ -1422,11 +1506,11 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.8 candidate notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
-      'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`'
+      'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`'
     );
   });
 

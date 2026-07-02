@@ -38,6 +38,7 @@ const REQUIRED_FILES = [
   'android/src/test/assets/avif/manifest.json',
   '.github/workflows/android-instrumentation.yml',
   'scripts/consumer-smoke-test.mjs',
+  'scripts/registry-smoke-test.mjs',
   'scripts/docker-android.mjs',
   'scripts/ios-validation.mjs',
   'scripts/generate-avif-fixtures.mjs',
@@ -79,6 +80,7 @@ function runDoctor() {
     checkDockerAndroidEnvironment(),
     checkPackageFiles(),
     checkConsumerSmokeTestEnvironment(),
+    checkRegistrySmokeTestEnvironment(),
     checkReleaseDryRunChecklist(),
     checkReleaseNotes(),
     checkSecurityPolicy(),
@@ -192,7 +194,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.7',
+    packageJson.version === '0.2.8',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -207,9 +209,10 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('The latest npm `latest` dist-tag is `react-native-image-compression-kit@0.2.7`'),
+    readmeContents.includes('This repository is preparing `react-native-image-compression-kit@0.2.8` as an unpublished tooling candidate.'),
+    readmeContents.includes('The latest npm `latest` dist-tag remains `react-native-image-compression-kit@0.2.7`'),
     readmeContents.includes('GitHub Release [v0.2.7]'),
-    readmeContents.includes('The `0.2.7` package is published for `react-native-image-compression-kit`'),
+    readmeContents.includes('The `0.2.8` package metadata is prepared as an unpublished tooling candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -218,6 +221,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.5` is the published iOS runtime-gated WebP output release'),
     readmeContents.includes('version `0.2.6` is the published iOS runtime-gated WebP target-size release'),
     readmeContents.includes('version `0.2.7` is the published iOS HEIC/HEIF static input release'),
+    readmeContents.includes('version `0.2.8` is the unpublished post-publish registry smoke automation candidate'),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
     readmeContents.includes('- [x] Public npm release.'),
@@ -225,7 +229,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.7 release',
+    label: 'npm package metadata and README status are aligned for the v0.2.8 candidate',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
       : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
@@ -416,6 +420,48 @@ function checkConsumerSmokeTestEnvironment() {
   };
 }
 
+function checkRegistrySmokeTestEnvironment() {
+  const packageJson = readJson('package.json');
+  const registryScriptContents = readText('scripts/registry-smoke-test.mjs');
+  const readmeContents = readText('README.md');
+  const expectedSnippets = [
+    [registryScriptContents, "npmView(requestedSpec)"],
+    [registryScriptContents, "npmPack(publishedSpec, packDir)"],
+    [registryScriptContents, "run('npm', ['install', '--ignore-scripts', '--legacy-peer-deps'], consumerDir)"],
+    [registryScriptContents, "run('npm', ['run', 'typecheck'], consumerDir)"],
+    [registryScriptContents, "'scripts/registry-smoke-test.mjs'"],
+    [registryScriptContents, "'android/src/test/assets/heic-heif/sample.heic'"],
+    [registryScriptContents, "const REACT_NATIVE_VERSION = '0.86.0'"],
+    [registryScriptContents, 'RNICK_REGISTRY_SMOKE_VERSION'],
+    [registryScriptContents, 'RNICK_REGISTRY_SMOKE_KEEP'],
+    [registryScriptContents, 'compressImage(options)'],
+    [registryScriptContents, 'getImageCompressionCapabilities()'],
+    [readmeContents, 'pnpm smoke:registry -- --version 0.2.7'],
+    [readmeContents, 'published npm registry package'],
+    [readmeContents, 'npm install --ignore-scripts --legacy-peer-deps'],
+    [readmeContents, 'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'],
+    [readmeContents, 'After npm publish, run `pnpm smoke:registry -- --version <published-version>`'],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => !contents.includes(snippet))
+    .map(([, snippet]) => snippet);
+  const hasScript =
+    packageJson.scripts?.['smoke:registry'] ===
+    'node scripts/registry-smoke-test.mjs';
+
+  return {
+    ok: hasScript && missing.length === 0,
+    label: 'registry package smoke test is wired',
+    detail:
+      hasScript && missing.length === 0
+        ? 'package script, registry tarball checks, clean npm install, public typecheck smoke, and README guidance are present'
+        : `missing snippets or package script: ${[
+            ...missing,
+            ...(hasScript ? [] : ['package.json smoke:registry script']),
+          ].join(' | ')}`,
+  };
+}
+
 function checkReleaseDryRunChecklist() {
   const packageJson = readJson('package.json');
   const releaseScriptContents = readText('scripts/release-dry-run.mjs');
@@ -466,6 +512,21 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.8',
+    'Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.',
+    'repeatable post-publish npm registry smoke test',
+    'Automate npm registry tarball inspection for a published package version.',
+    'Automate required runtime file and forbidden development-only file checks for the registry tarball.',
+    'Automate clean temporary consumer installation from npm with public TypeScript import/typecheck coverage.',
+    'Keep the registry smoke outside pre-publish `pnpm release:dry-run` and default CI because it requires an already published npm version.',
+    '`package.json` version bump to `0.2.8`.',
+    'New `pnpm smoke:registry` package script backed by `scripts/registry-smoke-test.mjs`.',
+    'Registry smoke supports `--version <version>`, `--tag <tag>`, `RNICK_REGISTRY_SMOKE_VERSION`, `RNICK_REGISTRY_SMOKE_TAG`, `RNICK_REGISTRY_SMOKE_KEEP`, and `RNICK_REGISTRY_SMOKE_TMPDIR`.',
+    'Registry smoke runs `npm view` for registry metadata, `npm pack <package>@<version> --json` for tarball inspection',
+    'README development verification and release dry-run guidance now document when to run `pnpm smoke:registry -- --version <published-version>`',
+    'Adding registry smoke to default CI or `pnpm release:dry-run`.',
+    'pnpm smoke:registry -- --version 0.2.7',
+    'Candidate promotion also requires GitHub Actions CI to pass on the pushed release-candidate commit.',
     '## v0.2.7',
     'Status: published to npm on July 2, 2026 at 04:38:13 UTC (13:38:13 KST), tagged as `v0.2.7`.',
     'This release keeps Android runtime behavior unchanged while adding iOS',
@@ -893,9 +954,9 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.8 candidate notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
-    'Tag, npm publish, and post-publish security review commands are documented in `RELEASE.md`',
+    'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
   const missing = [
     ...releaseSnippets
@@ -905,16 +966,16 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.7' && missing.length === 0;
+  const ok = packageJson.version === '0.2.8' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.7 release notes and previous release notes are current',
+    label: 'v0.2.8 candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation checklist, published artifacts, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.7' ? [] : ['package.json version 0.2.7']),
+          ...(packageJson.version === '0.2.8' ? [] : ['package.json version 0.2.8']),
         ].join(' | ')}`,
   };
 }

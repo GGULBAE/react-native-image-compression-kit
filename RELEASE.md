@@ -1,5 +1,53 @@
 # Release Notes
 
+## v0.2.8
+
+Status: candidate. Not published to npm, not tagged, and no GitHub Release has been created.
+
+This candidate keeps Android and iOS runtime behavior unchanged while adding a
+repeatable post-publish npm registry smoke test for the manual checks that were
+used after the `0.2.7` publish.
+
+### Goals
+
+- Automate npm registry tarball inspection for a published package version.
+- Automate required runtime file and forbidden development-only file checks for the registry tarball.
+- Automate clean temporary consumer installation from npm with public TypeScript import/typecheck coverage.
+- Keep the registry smoke outside pre-publish `pnpm release:dry-run` and default CI because it requires an already published npm version.
+- Align README guidance, release notes, package scripts, source-level expectations, and Android verification doctor checks with the new post-publish registry smoke workflow.
+
+### Included
+
+- `package.json` version bump to `0.2.8`.
+- New `pnpm smoke:registry` package script backed by `scripts/registry-smoke-test.mjs`.
+- Registry smoke supports `--version <version>`, `--tag <tag>`, `RNICK_REGISTRY_SMOKE_VERSION`, `RNICK_REGISTRY_SMOKE_TAG`, `RNICK_REGISTRY_SMOKE_KEEP`, and `RNICK_REGISTRY_SMOKE_TMPDIR`.
+- Registry smoke runs `npm view` for registry metadata, `npm pack <package>@<version> --json` for tarball inspection, required/forbidden file assertions, clean `npm install --ignore-scripts --legacy-peer-deps`, installed package file assertions, and `npm run typecheck` against public imports and exported types.
+- README development verification and release dry-run guidance now document when to run `pnpm smoke:registry -- --version <published-version>` and why it is post-publish only.
+- Source-level tests and the Android verification doctor expectations are updated for the registry smoke script and documentation.
+
+### Not Included
+
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.8` or GitHub Release `v0.2.8`.
+- Android or iOS runtime behavior changes.
+- New public TypeScript API surface.
+- Adding registry smoke to default CI or `pnpm release:dry-run`.
+
+### Release Checklist
+
+Before npm publish:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm smoke:registry -- --version 0.2.7
+```
+
+Candidate promotion also requires GitHub Actions CI to pass on the pushed release-candidate commit. After npm publish, run `pnpm smoke:registry -- --version 0.2.8` to validate the real registry tarball and clean consumer install before recording post-publish evidence.
+
 ## v0.2.7
 
 Status: published to npm on July 2, 2026 at 04:38:13 UTC (13:38:13 KST), tagged as `v0.2.7`.
