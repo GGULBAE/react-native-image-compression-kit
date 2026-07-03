@@ -86,8 +86,13 @@ describe('Android verification scripts', () => {
       'v0.2.13%20published',
       'Version `0.2.13` is published for `react-native-image-compression-kit`',
       'The `0.2.13` package metadata is published for `react-native-image-compression-kit`',
-      'Status: v0.2.14 published',
-      'v0.2.14%20published',
+      'Status: v0.2.14 candidate',
+      'v0.2.14%20candidate',
+      'Version `0.2.14` is an unpublished release candidate for `react-native-image-compression-kit`',
+      'latest published npm package is `0.2.13`',
+      'The `0.2.14` package metadata is prepared as an unpublished AVIF output capability/error surface candidate',
+      'version `0.2.14` is the unpublished AVIF output capability/error surface candidate',
+      'v0.2.14 AVIF output capability/error surface candidate notes',
     ];
     const expectedKeywords = [
       'react-native',
@@ -133,15 +138,15 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.14` is an unpublished release candidate for `react-native-image-compression-kit`'
+      'Version `0.2.14` is published for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       "It keeps AVIF output unsupported while aligning Android and iOS capability notes, `ERR_NOT_IMPLEMENTED` messages, TypeScript guidance, README guidance, and release checks for `output.format: 'avif'`."
     );
-    expect(readmeSource).toContain('The latest published npm package is `0.2.13`');
-    expect(readmeSource).toContain('GitHub Release [v0.2.13]');
+    expect(readmeSource).toContain('The latest published npm package is `0.2.14`');
+    expect(readmeSource).toContain('GitHub Release [v0.2.14]');
     expect(readmeSource).toContain(
-      'The `0.2.14` package metadata is prepared as an unpublished AVIF output capability/error surface candidate for `react-native-image-compression-kit`'
+      'The `0.2.14` package metadata is published for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -186,7 +191,7 @@ describe('Android verification scripts', () => {
       'version `0.2.13` is the published iOS JPEG metadata preserve hardening release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.14` is the unpublished AVIF output capability/error surface candidate'
+      'version `0.2.14` is the published AVIF output capability/error surface release'
     );
     expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
@@ -480,17 +485,17 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.14 candidate notes and previous release notes', () => {
+  it('documents the v0.2.14 published notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.14');
     expect(releaseSource).toContain('## v0.2.14');
     expect(releaseSource).toContain(
-      'Status: unpublished release candidate for AVIF output capability/error surface alignment. npm `latest` remains `0.2.13`; no `v0.2.14` git tag, GitHub Release, or npm publish has been created.'
+      'Status: published to npm as the `0.2.14` latest release, tagged as `v0.2.14`.'
     );
     expect(releaseSource).toContain(
-      "This candidate keeps AVIF output unimplemented while making Android and iOS capability reporting, unsupported-output messages, TypeScript guidance, README guidance, and verification checks agree on the same boundary: AVIF input can be supported, but `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
+      "This release keeps AVIF output unimplemented while making Android and iOS capability reporting, unsupported-output messages, TypeScript guidance, README guidance, and verification checks agree on the same boundary: AVIF input can be supported, but `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
     );
     expect(releaseSource).toContain(
       'Keep AVIF output out of scope while making the unsupported output path explicit.'
@@ -530,20 +535,54 @@ describe('Android verification scripts', () => {
       'TypeScript native-unavailable guidance now describes the current Android/iOS input/output matrix and calls out HEIC, HEIF, and AVIF output as unsupported.'
     );
     expect(releaseSource).toContain(
-      'README status, implementation scope, iOS behavior, Android AVIF input/output guidance, installation/package status, and release dry-run guidance are updated for the `0.2.14` candidate.'
+      'README status, implementation scope, iOS behavior, Android AVIF input/output guidance, installation/package status, and release dry-run guidance are updated for the `0.2.14` release.'
     );
     expect(releaseSource).toContain(
-      'Source-level tests and Android verification doctor expectations are updated for the AVIF output unsupported surface candidate.'
+      'Source-level tests and Android verification doctor expectations are updated for the AVIF output unsupported surface release.'
     );
+    expect(releaseSource).toContain('npm package publication under the `latest` dist-tag.');
+    expect(releaseSource).toContain('Git tag `v0.2.14` and GitHub Release `v0.2.14`.');
     expect(releaseSource).toContain('AVIF output encoding.');
     expect(releaseSource).toContain('HEIC / HEIF output encoding.');
     expect(releaseSource).toContain('Animated AVIF preservation.');
     expect(releaseSource).toContain('Android or iOS decode behavior changes.');
+    expect(releaseSource).toContain('pnpm smoke:registry -- --version 0.2.14');
+    expect(releaseSource).toContain('git tag -a v0.2.14 -m "v0.2.14"');
+    expect(releaseSource).toContain('git push origin v0.2.14');
     expect(releaseSource).toContain(
-      'npm package publication, `v0.2.14` git tag, or GitHub Release creation.'
+      'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release commit.'
+    );
+    expect(releaseSource).toContain('### Publication Results');
+    expect(releaseSource).toContain(
+      'confirmed package version `0.2.14`, `latest: 0.2.14`, and registry modified time `2026-07-03T07:12:58.753Z`.'
     );
     expect(releaseSource).toContain(
-      'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.'
+      'https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.14.tgz'
+    );
+    expect(releaseSource).toContain(
+      'sha512-/rdbK4BvVQZkGKYhUkutQn4z9NwCD4n+9a2cmHxVdE61YTp0+TWOhpDQHVmOmAjA4mwqjXykn2RPimAZ8FOweA=='
+    );
+    expect(releaseSource).toContain('d49f394ad95935f7326d33e9fb9efeb5cc276f2d');
+    expect(releaseSource).toContain(
+      '`pnpm smoke:registry -- --version 0.2.14` passed against the real registry tarball with `fileCount: 49`, `packageSize: 47733`, `unpackedSize: 213156`, and a clean consumer `tsc --noEmit`.'
+    );
+    expect(releaseSource).toContain(
+      'The published tarball README stale-candidate scan found no `v0.2.14 candidate`, unpublished release-candidate, `latest published npm package is 0.2.13`, or unpublished AVIF output capability/error surface candidate package-page snippets.'
+    );
+    expect(releaseSource).toContain(
+      'Release promotion gate passed on commit `2d3d4732f6b2ddc5bb58c100c810e7befb5d539d`'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28643843274'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28643843263'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28643843264'
+    );
+    expect(releaseSource).toContain(
+      'Git tag and GitHub Release: `v0.2.14` at `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.14`.'
     );
     expect(releaseSource).toContain('## v0.2.13');
     expect(releaseSource).toContain(
@@ -2110,7 +2149,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.14 AVIF output capability/error surface candidate notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

@@ -45,8 +45,13 @@ const STALE_PACKED_README_SNIPPETS = [
   'v0.2.13%20published',
   'Version `0.2.13` is published for `react-native-image-compression-kit`',
   'The `0.2.13` package metadata is published for `react-native-image-compression-kit`',
-  'Status: v0.2.14 published',
-  'v0.2.14%20published',
+  'Status: v0.2.14 candidate',
+  'v0.2.14%20candidate',
+  'Version `0.2.14` is an unpublished release candidate for `react-native-image-compression-kit`',
+  'latest published npm package is `0.2.13`',
+  'The `0.2.14` package metadata is prepared as an unpublished AVIF output capability/error surface candidate',
+  'version `0.2.14` is the unpublished AVIF output capability/error surface candidate',
+  'v0.2.14 AVIF output capability/error surface candidate notes',
 ];
 
 const STEPS = [

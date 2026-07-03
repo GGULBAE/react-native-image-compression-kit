@@ -2,9 +2,9 @@
 
 ## v0.2.14
 
-Status: unpublished release candidate for AVIF output capability/error surface alignment. npm `latest` remains `0.2.13`; no `v0.2.14` git tag, GitHub Release, or npm publish has been created.
+Status: published to npm as the `0.2.14` latest release, tagged as `v0.2.14`.
 
-This candidate keeps AVIF output unimplemented while making Android and iOS capability reporting, unsupported-output messages, TypeScript guidance, README guidance, and verification checks agree on the same boundary: AVIF input can be supported, but `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`.
+This release keeps AVIF output unimplemented while making Android and iOS capability reporting, unsupported-output messages, TypeScript guidance, README guidance, and verification checks agree on the same boundary: AVIF input can be supported, but `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`.
 
 ### Goals
 
@@ -24,8 +24,10 @@ This candidate keeps AVIF output unimplemented while making Android and iOS capa
 - iOS `compressImage()` now uses an AVIF-specific unsupported-output message for `output.format: 'avif'`.
 - iOS host-app smoke now asserts the AVIF capability note documents the unsupported AVIF output path.
 - TypeScript native-unavailable guidance now describes the current Android/iOS input/output matrix and calls out HEIC, HEIF, and AVIF output as unsupported.
-- README status, implementation scope, iOS behavior, Android AVIF input/output guidance, installation/package status, and release dry-run guidance are updated for the `0.2.14` candidate.
-- Source-level tests and Android verification doctor expectations are updated for the AVIF output unsupported surface candidate.
+- README status, implementation scope, iOS behavior, Android AVIF input/output guidance, installation/package status, and release dry-run guidance are updated for the `0.2.14` release.
+- Source-level tests and Android verification doctor expectations are updated for the AVIF output unsupported surface release.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.14` and GitHub Release `v0.2.14`.
 
 ### Not Included
 
@@ -33,11 +35,10 @@ This candidate keeps AVIF output unimplemented while making Android and iOS capa
 - HEIC / HEIF output encoding.
 - Animated AVIF preservation.
 - Android or iOS decode behavior changes.
-- npm package publication, `v0.2.14` git tag, or GitHub Release creation.
 
 ### Release Checklist
 
-Before any publish:
+Before npm publish:
 
 ```bash
 git status --short --branch
@@ -48,7 +49,27 @@ pnpm pack --dry-run
 pnpm release:dry-run
 ```
 
-Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.
+After npm publish:
+
+```bash
+npm publish --tag latest
+pnpm smoke:registry -- --version 0.2.14
+git tag -a v0.2.14 -m "v0.2.14"
+git push origin v0.2.14
+```
+
+Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release commit. After npm publish, the registry smoke must confirm the real `0.2.14` tarball README no longer includes stale candidate package-page status snippets.
+
+### Publication Results
+
+- `npm view react-native-image-compression-kit version dist-tags time.modified --json` confirmed package version `0.2.14`, `latest: 0.2.14`, and registry modified time `2026-07-03T07:12:58.753Z`.
+- `npm view react-native-image-compression-kit@0.2.14 version dist.tarball dist.integrity dist.shasum time.modified --json` confirmed tarball `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.14.tgz`.
+- Registry integrity is `sha512-/rdbK4BvVQZkGKYhUkutQn4z9NwCD4n+9a2cmHxVdE61YTp0+TWOhpDQHVmOmAjA4mwqjXykn2RPimAZ8FOweA==`.
+- Registry shasum is `d49f394ad95935f7326d33e9fb9efeb5cc276f2d`.
+- `pnpm smoke:registry -- --version 0.2.14` passed against the real registry tarball with `fileCount: 49`, `packageSize: 47733`, `unpackedSize: 213156`, and a clean consumer `tsc --noEmit`.
+- The published tarball README stale-candidate scan found no `v0.2.14 candidate`, unpublished release-candidate, `latest published npm package is 0.2.13`, or unpublished AVIF output capability/error surface candidate package-page snippets.
+- Release promotion gate passed on commit `2d3d4732f6b2ddc5bb58c100c810e7befb5d539d`: [CI](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28643843274), [Android Instrumentation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28643843263), and [iOS Validation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28643843264).
+- Git tag and GitHub Release: `v0.2.14` at `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.14`.
 
 ## v0.2.13
 
