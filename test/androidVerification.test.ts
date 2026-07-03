@@ -524,6 +524,35 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release commit.'
     );
+    expect(releaseSource).toContain('### Publication Results');
+    expect(releaseSource).toContain(
+      'confirmed package version `0.2.13`, `latest: 0.2.13`, and registry modified time `2026-07-03T06:21:08.749Z`.'
+    );
+    expect(releaseSource).toContain(
+      'https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.13.tgz'
+    );
+    expect(releaseSource).toContain(
+      'sha512-1XklGCG2cUQaXuw7z1AeNxJekleC5IUyCVWRnNWekJAbpae3uXnX1Fa0c43J5w5werqnHSs7kUGcAxcmSo0qEQ=='
+    );
+    expect(releaseSource).toContain('59af2dc4682fe8445c5f7f02b886f56cd799bb09');
+    expect(releaseSource).toContain(
+      '`pnpm smoke:registry -- --version 0.2.13` passed against the real registry tarball with `fileCount: 49`, `packageSize: 47296`, `unpackedSize: 210816`, and a clean consumer `tsc --noEmit`.'
+    );
+    expect(releaseSource).toContain(
+      'Release promotion gate passed on commit `dfaa3763fc3d3a223a6672dbfa934e6bc8100443`'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28641938227'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28641938248'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28641938240'
+    );
+    expect(releaseSource).toContain(
+      'Git tag and GitHub Release: `v0.2.13` at `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.13`.'
+    );
     expect(releaseSource).toContain('## v0.2.12');
     expect(releaseSource).toContain(
       'Status: published to npm as the `0.2.12` latest release, tagged as `v0.2.12`.'
