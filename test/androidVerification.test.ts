@@ -82,10 +82,13 @@ describe('Android verification scripts', () => {
       'Version `0.2.12` is published for `react-native-image-compression-kit`',
       'The latest published npm package is `0.2.12`',
       'The `0.2.12` package metadata is published for `react-native-image-compression-kit`',
-      'Status: v0.2.13 published',
-      'v0.2.13%20published',
-      'Version `0.2.13` is published for `react-native-image-compression-kit`',
-      'The `0.2.13` package metadata is published for `react-native-image-compression-kit`',
+      'Status: v0.2.13 candidate',
+      'v0.2.13%20candidate',
+      'Version `0.2.13` is an unpublished release candidate for `react-native-image-compression-kit`',
+      'latest published npm package at `0.2.12`',
+      'The `0.2.13` package metadata is prepared as an unpublished iOS JPEG metadata preserve hardening candidate',
+      'version `0.2.13` is the unpublished iOS JPEG metadata preserve hardening candidate',
+      'v0.2.13 iOS JPEG metadata preserve hardening candidate notes',
     ];
     const expectedKeywords = [
       'react-native',
@@ -131,15 +134,15 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.13` is an unpublished release candidate for `react-native-image-compression-kit`'
+      'Version `0.2.13` is published for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       "It hardens iOS `metadata: 'preserve'` for JPEG source to JPEG output by normalizing preserved orientation and pixel dimension metadata"
     );
-    expect(readmeSource).toContain('keeping the latest published npm package at `0.2.12`');
-    expect(readmeSource).toContain('GitHub Release [v0.2.12]');
+    expect(readmeSource).toContain('The latest published npm package is `0.2.13`');
+    expect(readmeSource).toContain('GitHub Release [v0.2.13]');
     expect(readmeSource).toContain(
-      'The `0.2.13` package metadata is prepared as an unpublished iOS JPEG metadata preserve hardening candidate'
+      'The `0.2.13` package metadata is published for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -181,7 +184,7 @@ describe('Android verification scripts', () => {
       'version `0.2.12` is the published iOS JPEG metadata preserve release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.13` is the unpublished iOS JPEG metadata preserve hardening candidate'
+      'version `0.2.13` is the published iOS JPEG metadata preserve hardening release'
     );
     expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
@@ -374,7 +377,7 @@ describe('Android verification scripts', () => {
     expect(registrySmokeScriptSource).toContain('RNICK_REGISTRY_SMOKE_KEEP');
     expect(registrySmokeScriptSource).toContain('compressImage(options)');
     expect(registrySmokeScriptSource).toContain('getImageCompressionCapabilities()');
-    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.11');
+    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.13');
     expect(readmeSource).toContain('published npm registry package');
     expect(readmeSource).toContain('npm install --ignore-scripts --legacy-peer-deps');
     expect(readmeSource).toContain(
@@ -404,7 +407,7 @@ describe('Android verification scripts', () => {
     expect(releaseScriptSource).toContain('checkPackedReadmeStatus');
     expect(releaseScriptSource).toContain('package/README.md');
     expect(releaseScriptSource).toContain(
-      'Packed README candidate status check completed.'
+      'Packed README published status check completed.'
     );
     expect(releaseScriptSource).toContain("args: ['smoke:consumer']");
     expect(releaseScriptSource).toContain(
@@ -466,17 +469,17 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.13 candidate notes and previous release notes', () => {
+  it('documents the v0.2.13 published notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.13');
     expect(releaseSource).toContain('## v0.2.13');
     expect(releaseSource).toContain(
-      'Status: unpublished release candidate for iOS JPEG metadata preserve hardening. npm `latest` remains `0.2.12`; no `v0.2.13` git tag, GitHub Release, or npm publish has been created.'
+      'Status: published to npm as the `0.2.13` latest release, tagged as `v0.2.13`.'
     );
     expect(releaseSource).toContain(
-      "This candidate hardens the iOS JPEG source to JPEG output `metadata: 'preserve'`"
+      "This release hardens the iOS JPEG source to JPEG output `metadata: 'preserve'`"
     );
     expect(releaseSource).toContain(
       'Normalize iOS preserved JPEG output orientation metadata to `1` after rendering.'
@@ -504,17 +507,22 @@ describe('Android verification scripts', () => {
       'iOS smoke fixture writes stale TIFF orientation and source-size EXIF pixel dimensions, then verifies preserve output normalizes them to the compressed JPEG result.'
     );
     expect(releaseSource).toContain(
-      'README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.13` candidate.'
+      'README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.13` release.'
     );
     expect(releaseSource).toContain(
-      'Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve hardening candidate.'
+      'Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve hardening release.'
     );
+    expect(releaseSource).toContain('npm package publication under the `latest` dist-tag.');
     expect(releaseSource).toContain(
-      'npm package publication, `v0.2.13` git tag, or GitHub Release creation.'
+      'Git tag `v0.2.13` and GitHub Release `v0.2.13`.'
     );
     expect(releaseSource).toContain('pnpm release:dry-run');
+    expect(releaseSource).toContain('npm publish --tag latest');
+    expect(releaseSource).toContain('pnpm smoke:registry -- --version 0.2.13');
+    expect(releaseSource).toContain('git tag -a v0.2.13 -m "v0.2.13"');
+    expect(releaseSource).toContain('git push origin v0.2.13');
     expect(releaseSource).toContain(
-      'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.'
+      'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release commit.'
     );
     expect(releaseSource).toContain('## v0.2.12');
     expect(releaseSource).toContain(
@@ -2002,7 +2010,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.13 iOS JPEG metadata preserve hardening candidate notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
