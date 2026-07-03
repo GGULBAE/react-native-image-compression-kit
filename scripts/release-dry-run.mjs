@@ -32,6 +32,10 @@ const STALE_PACKED_README_SNIPPETS = [
   'The latest published npm package is `0.2.10`',
   'GitHub Release [v0.2.10]',
   'The `0.2.10` package metadata is published for `react-native-image-compression-kit`',
+  'Status: v0.2.11 docs-only correction',
+  'v0.2.11%20docs--only',
+  'Version `0.2.11` is a docs-only npm README correction for `react-native-image-compression-kit`',
+  'The `0.2.11` package metadata is published for `react-native-image-compression-kit`',
 ];
 
 const STEPS = [
@@ -97,13 +101,13 @@ function checkPackedReadmeStatus() {
 
     if (staleSnippets.length > 0) {
       fail(
-        `Packed README contains stale v0.2.10 package-page status snippets: ${staleSnippets.join(
+        `Packed README contains stale package-page status snippets: ${staleSnippets.join(
           ' | '
         )}`
       );
     }
 
-    console.log('Packed README published status check completed.');
+    console.log('Packed README candidate status check completed.');
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }

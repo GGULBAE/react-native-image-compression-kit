@@ -228,7 +228,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.11',
+    packageJson.version === '0.2.12',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -243,12 +243,11 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.11` is a docs-only npm README correction for `react-native-image-compression-kit`'),
-    readmeContents.includes('keeps Android and iOS runtime behavior unchanged from `0.2.10`'),
-    readmeContents.includes('stale `0.2.10` release-ready/pre-publish status shipped in the `0.2.10` tarball'),
-    readmeContents.includes('The latest published npm package is `0.2.11`'),
+    readmeContents.includes('Version `0.2.12` is an unpublished release candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes("It adds iOS `metadata: 'preserve'` support for the narrow JPEG source to JPEG output path"),
+    readmeContents.includes('latest published npm package at `0.2.11`'),
     readmeContents.includes('GitHub Release [v0.2.11]'),
-    readmeContents.includes('The `0.2.11` package metadata is published for `react-native-image-compression-kit`'),
+    readmeContents.includes('The `0.2.12` package metadata is prepared as an unpublished iOS JPEG metadata preserve candidate'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -261,8 +260,11 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.9` is the published docs-only npm package page README correction release'),
     readmeContents.includes('version `0.2.10` is the published iOS AVIF input capability-gated static decode release'),
     readmeContents.includes('version `0.2.11` is the published docs-only npm README correction release'),
+    readmeContents.includes('version `0.2.12` is the unpublished iOS JPEG metadata preserve candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
+    readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
+    readmeContents.includes("metadataPolicies: ['preserve', 'safe', 'strip']"),
     staleReadmeSnippets.every((snippet) => !readmeContents.includes(snippet)),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
     readmeContents.includes('Install from npm:'),
@@ -271,10 +273,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.11 docs-only package',
+    label: 'npm package metadata and README status are aligned for the v0.2.12 iOS JPEG metadata preserve candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README publish status are aligned'
-      : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README candidate status are aligned'
+      : 'expected package.json release metadata or README candidate-status guidance is missing/mismatched',
   };
 }
 
@@ -521,7 +523,7 @@ function checkReleaseDryRunChecklist() {
     [releaseScriptContents, 'STALE_PACKED_README_SNIPPETS'],
     [releaseScriptContents, 'checkPackedReadmeStatus'],
     [releaseScriptContents, 'package/README.md'],
-    [releaseScriptContents, 'Packed README published status check completed.'],
+    [releaseScriptContents, 'Packed README candidate status check completed.'],
     [releaseScriptContents, "args: ['smoke:consumer']"],
     [releaseScriptContents, "args: ['publish', '--dry-run', '--no-git-checks']"],
     [readmeContents, '## Release Dry Run Checklist'],
@@ -560,6 +562,24 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.12',
+    'Status: unpublished release candidate for iOS JPEG metadata preserve. npm `latest` remains `0.2.11`; no `v0.2.12` git tag, GitHub Release, or npm publish has been created.',
+    "This candidate adds the narrow iOS `metadata: 'preserve'` MVP for JPEG source",
+    'Support iOS JPEG source to JPEG output with `metadata: \'preserve\'`.',
+    'Keep resize, `output.quality`, and `output.maxBytes` JPEG output paths aligned with metadata preserve.',
+    "Report iOS `metadataPolicies: ['preserve', 'safe', 'strip']` while documenting that preserve is JPEG-to-JPEG only.",
+    'Keep PNG/WebP/GIF/HEIC/HEIF/AVIF metadata preservation out of scope.',
+    '`package.json` version bump to `0.2.12`.',
+    'iOS JPEG output now uses ImageIO `CGImageDestination`, allowing source JPEG metadata to be copied for JPEG source to JPEG output.',
+    'iOS `metadata: \'preserve\'` rejects with `ERR_NOT_IMPLEMENTED` unless both input and output are JPEG.',
+    'iOS capability reporting now includes `preserve`, `safe`, and `strip` metadata policies.',
+    'iOS smoke fixtures include a JPEG TIFF Software metadata marker and read it back after preserve compression.',
+    'README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.12` candidate.',
+    'Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve candidate.',
+    'Android runtime behavior changes.',
+    'PNG, WebP, GIF, HEIC, HEIF, or AVIF metadata preserve on iOS.',
+    'npm package publication, `v0.2.12` git tag, or GitHub Release creation.',
+    'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.',
     '## v0.2.11',
     'Status: published to npm on July 2, 2026 at 08:49:37 UTC (17:49:37 KST), tagged as `v0.2.11`.',
     'This docs-only patch corrects the README that is shown on the npm package page',
@@ -1131,7 +1151,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.12 iOS JPEG metadata preserve candidate notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1143,16 +1163,16 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.11' && missing.length === 0;
+  const ok = packageJson.version === '0.2.12' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.11 docs-only notes and previous release notes are current',
+    label: 'v0.2.12 candidate notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the release scope, non-goals, validation checklist, published artifacts, and previous npm publish steps'
+      ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.11' ? [] : ['package.json version 0.2.11']),
+          ...(packageJson.version === '0.2.12' ? [] : ['package.json version 0.2.12']),
         ].join(' | ')}`,
   };
 }
@@ -1519,6 +1539,9 @@ function checkIOSNativeModule() {
     'RCTImageCompressionKitStripMetadataPolicy = @"strip"',
     'RCTImageCompressionKitPreserveMetadataPolicy = @"preserve"',
     'iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.',
+    'Metadata preserve copies source JPEG metadata for JPEG input to JPEG output.',
+    'Metadata safe and strip re-encode without copying source metadata.',
+    'Non-JPEG input or non-JPEG output rejects metadata preserve with ERR_NOT_IMPLEMENTED.',
     'iOS MVP supports PNG input and PNG output through UIKit/ImageIO.',
     'PNG output preserves alpha where the processed image contains transparency.',
     'PNG output ignores quality and does not support target-size maxBytes.',
@@ -1559,8 +1582,10 @@ function checkIOSNativeModule() {
     'CGImageDestinationAddImage',
     'CGImageDestinationFinalize',
     'kCGImageDestinationLossyCompressionQuality',
+    'RCTImageCompressionKitSourceImageProperties',
+    'RCTImageCompressionKitJpegDestinationProperties',
     'RCTImageCompressionKitEncodeWebP',
-    'iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.',
+    'iOS metadata preserve is supported only for JPEG input to JPEG output. Use safe or strip metadata for other iOS format conversions.',
     'Compression output.quality must be an integer from 0 to 100.',
     'Compression resize.mode must be one of: contain, cover, stretch.',
     'iOS MVP supports file:// and content:// image URIs only.',
@@ -1603,7 +1628,7 @@ function checkIOSNativeModule() {
     'ftyp',
     'avis',
     'UIImage imageWithData',
-    'UIImageJPEGRepresentation',
+    'RCTImageCompressionKitEncodeJpeg',
     'UIImagePNGRepresentation',
     'UIGraphicsImageRenderer',
     'dispatch_get_main_queue()',
@@ -1616,7 +1641,7 @@ function checkIOSNativeModule() {
     'RCTImageCompressionKitResizeModeStretch',
     'RCTImageCompressionKitReadSourceData',
     'RCTImageCompressionKitIsSupportedInputType',
-    '@"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy]',
+    '@"metadataPolicies" : @[',
     '@"supportsTargetSizeCompression" : @YES',
     '@"supportsCancellation" : @NO',
   ];
@@ -1669,7 +1694,7 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'local CocoaPods pathname workaround for pnpm-symlinked pods'],
     [readmeContents, 'RNICK_IOS_POD_INSTALL_ATTEMPTS'],
     [readmeContents, 'RNICK_IOS_METRO_READY_TIMEOUT_MS'],
-    [readmeContents, "metadataPolicies: ['safe', 'strip']"],
+    [readmeContents, "metadataPolicies: ['preserve', 'safe', 'strip']"],
     [readmeContents, 'GIF input with no GIF output, WebP input with capability-driven output'],
     [readmeContents, 'HEIC input with no HEIC output, HEIF input with no HEIF output'],
     [readmeContents, 'AVIF input only when ImageIO advertises AVIF source support and no AVIF output'],
@@ -1772,6 +1797,10 @@ function checkIOSHostAppValidation() {
     [appContents, 'const unsupportedOutputCases = ['],
     [appContents, 'Expected iOS JPEG target-size compression to be supported.'],
     [appContents, 'compress-jpeg-to-jpeg-max-bytes'],
+    [appContents, 'compress-jpeg-to-jpeg-preserve-metadata'],
+    [appContents, 'read-jpeg-source-metadata'],
+    [appContents, 'read-jpeg-preserve-metadata'],
+    [appContents, 'jpegPreserveResultBytes'],
     [appContents, 'compress-jpeg-to-png'],
     [appContents, 'compress-png-to-png'],
     [appContents, 'reject-png-max-bytes'],
@@ -1783,8 +1812,9 @@ function checkIOSHostAppValidation() {
     [appContents, 'Expected GIF output to be rejected before native compression.'],
     [appContents, 'Expected AVIF input to require ImageIO source support on this iOS runtime.'],
     [appContents, 'Expected iOS target-size output <= ${targetSizeMaxBytes} bytes'],
+    [appContents, 'Expected iOS JPEG preserve target-size output <= ${metadataPreserveMaxBytes} bytes'],
     [appContents, 'Expected PNG maxBytes to be unsupported on iOS.'],
-    [appContents, "Expected metadata: 'preserve' to be unimplemented on iOS."],
+    [appContents, "Expected metadata: 'preserve' to require JPEG input and JPEG output on iOS."],
     [iosModuleContents, 'RCT_EXPORT_MODULE();'],
     [iosModuleContents, 'isSmokeTestEnabled'],
     [iosModuleContents, 'copySampleJpegToCache'],
@@ -1793,11 +1823,13 @@ function checkIOSHostAppValidation() {
     [iosModuleContents, 'copySampleHeifToCache'],
     [iosModuleContents, 'copySampleAvifToCache'],
     [iosModuleContents, 'copyUnsupportedImageToCache'],
+    [iosModuleContents, 'readJpegSoftwareMetadata'],
     [iosModuleContents, 'logSmokeEvent'],
     [iosModuleContents, 'RNICK_IOS_SMOKE'],
     [iosModuleContents, '--rnick-ios-smoke'],
     [iosModuleContents, 'NSLog'],
-    [iosModuleContents, 'UIImageJPEGRepresentation'],
+    [iosModuleContents, 'CGImageDestinationCreateWithData'],
+    [iosModuleContents, 'ExampleImageSourceJpegSoftwareMetadata'],
     [iosModuleContents, 'PNGDataWithActions'],
     [iosModuleContents, '"gif"'],
     [iosModuleContents, '"webp"'],

@@ -37,6 +37,7 @@ type ExampleImageSourceModule = {
   copySampleHeifToCache?: () => Promise<string>;
   copySampleAvifToCache?: () => Promise<string>;
   copyUnsupportedImageToCache?: (format: string) => Promise<string>;
+  readJpegSoftwareMetadata?: (uri: string) => Promise<string | null>;
   isSmokeTestEnabled?: () => Promise<boolean>;
   logSmokeEvent?: (message: string) => Promise<void>;
 };
@@ -47,12 +48,14 @@ type IOSSmokeSampleModule = ExampleImageSourceModule & {
   copySampleHeifToCache: () => Promise<string>;
   copySampleAvifToCache: () => Promise<string>;
   copyUnsupportedImageToCache: (format: string) => Promise<string>;
+  readJpegSoftwareMetadata: (uri: string) => Promise<string | null>;
 };
 
 const DEFAULT_QUALITY = '72';
 const EXAMPLE_OUTPUT_FORMATS: OutputFormat[] = ['jpeg', 'png', 'webp'];
 const RESIZE_MODES: ResizeMode[] = ['contain', 'cover', 'stretch'];
 const IOS_SMOKE_STEP_TIMEOUT_MS = 30_000;
+const IOS_JPEG_METADATA_SOFTWARE = 'RNICK iOS metadata preserve fixture';
 const SAMPLE_MODULE = NativeModules.ExampleImageSource as
   | ExampleImageSourceModule
   | undefined;
@@ -491,6 +494,7 @@ async function emitIOSSmokeLog(message: string): Promise<void> {
 type IOSHostAppSmokeSummary = {
   platform: 'ios';
   jpegResultBytes: number;
+  jpegPreserveResultBytes: number;
   pngResultBytes: number;
   gifResultBytes: number;
   webpResultBytes: number;
@@ -531,6 +535,7 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   const copySampleAvifToCache = sampleModule.copySampleAvifToCache;
   const copyUnsupportedImageToCache =
     sampleModule.copyUnsupportedImageToCache;
+  const readJpegSoftwareMetadata = sampleModule.readJpegSoftwareMetadata;
 
   const capabilities = await runIOSSmokeStep('capabilities', () =>
     getImageCompressionCapabilities()
@@ -554,8 +559,8 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   const webpOutputAvailable = webpCapability.output === true;
   const avifInputAvailable = avifCapability.input === true;
   assertIOSSmoke(
-    capabilities.metadataPolicies.join(',') === 'safe,strip',
-    `Expected iOS metadata policies safe,strip, received ${capabilities.metadataPolicies.join(',')}.`
+    capabilities.metadataPolicies.join(',') === 'preserve,safe,strip',
+    `Expected iOS metadata policies preserve,safe,strip, received ${capabilities.metadataPolicies.join(',')}.`
   );
   assertIOSSmoke(
     capabilities.supportsTargetSizeCompression === true,
@@ -588,6 +593,15 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     copySampleAvifToCache()
   );
   const targetSizeMaxBytes = 1_000;
+  const metadataPreserveMaxBytes = 3_000;
+  const jpegSourceSoftware = await runIOSSmokeStep(
+    'read-jpeg-source-metadata',
+    () => readJpegSoftwareMetadata(jpegUri)
+  );
+  assertIOSSmoke(
+    jpegSourceSoftware === IOS_JPEG_METADATA_SOFTWARE,
+    `Expected source JPEG metadata software ${IOS_JPEG_METADATA_SOFTWARE}, received ${jpegSourceSoftware}.`
+  );
   const jpegResult = await runIOSSmokeStep('compress-jpeg-to-jpeg', () =>
     compressImage({
       source: { uri: jpegUri },
@@ -595,6 +609,24 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
       output: { format: 'jpeg', quality: 68 },
       metadata: 'safe',
     })
+  );
+  const jpegPreserveResult = await runIOSSmokeStep(
+    'compress-jpeg-to-jpeg-preserve-metadata',
+    () =>
+      compressImage({
+        source: { uri: jpegUri },
+        resize: { maxWidth: 16, maxHeight: 16, mode: 'contain' },
+        output: {
+          format: 'jpeg',
+          quality: 90,
+          maxBytes: metadataPreserveMaxBytes,
+        },
+        metadata: 'preserve',
+      })
+  );
+  const jpegPreservedSoftware = await runIOSSmokeStep(
+    'read-jpeg-preserve-metadata',
+    () => readJpegSoftwareMetadata(jpegPreserveResult.uri)
   );
   const pngResult = await runIOSSmokeStep('compress-png-to-jpeg', () =>
     compressImage({
@@ -669,6 +701,7 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   }
 
   assertCompressionResult(jpegResult, 'jpeg');
+  assertCompressionResult(jpegPreserveResult, 'jpeg');
   assertCompressionResult(pngResult, 'jpeg');
   assertCompressionResult(gifResult, 'jpeg');
   assertCompressionResult(webpResult, 'jpeg');
@@ -677,6 +710,14 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   if (avifResult) {
     assertCompressionResult(avifResult, 'jpeg');
   }
+  assertIOSSmoke(
+    jpegPreserveResult.byteSize <= metadataPreserveMaxBytes,
+    `Expected iOS JPEG preserve target-size output <= ${metadataPreserveMaxBytes} bytes, received ${jpegPreserveResult.byteSize}.`
+  );
+  assertIOSSmoke(
+    jpegPreservedSoftware === IOS_JPEG_METADATA_SOFTWARE,
+    `Expected preserved JPEG metadata software ${IOS_JPEG_METADATA_SOFTWARE}, received ${jpegPreservedSoftware}.`
+  );
   assertIOSSmoke(
     gifResult.byteSize <= targetSizeMaxBytes,
     `Expected iOS GIF target-size output <= ${targetSizeMaxBytes} bytes, received ${gifResult.byteSize}.`
@@ -968,22 +1009,23 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     )
   );
 
-  await runIOSSmokeStep('reject-metadata-preserve', () =>
+  await runIOSSmokeStep('reject-png-metadata-preserve', () =>
     expectNativeErrorCode(
       () =>
         compressImage({
           source: { uri: jpegUri },
-          output: { format: 'jpeg', quality: 70 },
+          output: { format: 'png', quality: 70 },
           metadata: 'preserve',
         }),
       'ERR_NOT_IMPLEMENTED',
-      "Expected metadata: 'preserve' to be unimplemented on iOS."
+      "Expected metadata: 'preserve' to require JPEG input and JPEG output on iOS."
     )
   );
 
   return {
     platform: 'ios',
     jpegResultBytes: jpegResult.byteSize,
+    jpegPreserveResultBytes: jpegPreserveResult.byteSize,
     pngResultBytes: pngResult.byteSize,
     gifResultBytes: gifResult.byteSize,
     webpResultBytes: webpResult.byteSize,
@@ -1040,7 +1082,8 @@ function assertIOSSmokeSampleModule(
     !module.copySampleHeicToCache ||
     !module.copySampleHeifToCache ||
     !module.copySampleAvifToCache ||
-    !module.copyUnsupportedImageToCache
+    !module.copyUnsupportedImageToCache ||
+    !module.readJpegSoftwareMetadata
   ) {
     throw new Error('iOS smoke sample module methods are unavailable.');
   }

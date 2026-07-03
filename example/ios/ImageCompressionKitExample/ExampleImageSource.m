@@ -1,13 +1,17 @@
 #import <React/RCTBridgeModule.h>
+#import <ImageIO/ImageIO.h>
 #import <UIKit/UIKit.h>
 
 @interface ExampleImageSource : NSObject <RCTBridgeModule>
 @end
 
+static NSString *const ExampleImageSourceJpegSoftwareMetadata = @"RNICK iOS metadata preserve fixture";
+
 static UIImage *ExampleImageSourceImage(void);
 static NSData *ExampleImageSourceJpegData(void);
 static NSData *ExampleImageSourcePngData(void);
 static NSData *ExampleImageSourceUnsupportedData(NSString *format);
+static NSString *ExampleImageSourceReadJpegSoftwareMetadata(NSData *data);
 
 @implementation ExampleImageSource
 
@@ -87,6 +91,34 @@ RCT_EXPORT_METHOD(copyUnsupportedImageToCache:(NSString *)format
   [self writeSampleWithFormat:format data:data resolve:resolve reject:reject];
 }
 
+RCT_EXPORT_METHOD(readJpegSoftwareMetadata:(NSString *)uri
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSURL *url = [NSURL URLWithString:uri];
+  if (url == nil) {
+    reject(
+      @"ERR_SAMPLE_METADATA_READ_FAILED",
+      @"The iOS example could not read the JPEG metadata URI.",
+      nil
+    );
+    return;
+  }
+
+  NSError *error = nil;
+  NSData *data = [NSData dataWithContentsOfURL:url options:NSDataReadingMappedIfSafe error:&error];
+  if (data == nil || data.length == 0) {
+    reject(
+      @"ERR_SAMPLE_METADATA_READ_FAILED",
+      @"The iOS example could not read the JPEG metadata file.",
+      error
+    );
+    return;
+  }
+
+  resolve(ExampleImageSourceReadJpegSoftwareMetadata(data) ?: [NSNull null]);
+}
+
 - (void)writeSampleWithFormat:(NSString *)format
                          data:(NSData *)data
                       resolve:(RCTPromiseResolveBlock)resolve
@@ -140,7 +172,55 @@ static UIImage *ExampleImageSourceImage(void)
 
 static NSData *ExampleImageSourceJpegData(void)
 {
-  return UIImageJPEGRepresentation(ExampleImageSourceImage(), 0.82);
+  CGImageRef image = ExampleImageSourceImage().CGImage;
+  if (image == nil) {
+    return nil;
+  }
+
+  NSMutableData *data = [NSMutableData data];
+  CGImageDestinationRef destination = CGImageDestinationCreateWithData(
+    (__bridge CFMutableDataRef)data,
+    (__bridge CFStringRef)@"public.jpeg",
+    1,
+    nil
+  );
+  if (destination == nil) {
+    return nil;
+  }
+
+  NSDictionary *properties = @{
+    (__bridge NSString *)kCGImageDestinationLossyCompressionQuality : @0.82,
+    (__bridge NSString *)kCGImagePropertyTIFFDictionary : @{
+      (__bridge NSString *)kCGImagePropertyTIFFSoftware : ExampleImageSourceJpegSoftwareMetadata
+    }
+  };
+  CGImageDestinationAddImage(destination, image, (__bridge CFDictionaryRef)properties);
+  BOOL finalized = CGImageDestinationFinalize(destination);
+  CFRelease(destination);
+
+  return finalized && data.length > 0 ? data : nil;
+}
+
+static NSString *ExampleImageSourceReadJpegSoftwareMetadata(NSData *data)
+{
+  CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, nil);
+  if (source == nil || CGImageSourceGetCount(source) == 0) {
+    if (source != nil) {
+      CFRelease(source);
+    }
+    return nil;
+  }
+
+  NSDictionary *properties = CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source, 0, nil));
+  CFRelease(source);
+
+  NSDictionary *tiffProperties = properties[(__bridge NSString *)kCGImagePropertyTIFFDictionary];
+  if (![tiffProperties isKindOfClass:[NSDictionary class]]) {
+    return nil;
+  }
+
+  NSString *software = tiffProperties[(__bridge NSString *)kCGImagePropertyTIFFSoftware];
+  return [software isKindOfClass:[NSString class]] ? software : nil;
 }
 
 static NSData *ExampleImageSourcePngData(void)

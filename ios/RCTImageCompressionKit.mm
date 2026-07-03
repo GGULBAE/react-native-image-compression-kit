@@ -117,7 +117,9 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
         @"iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.",
         @"JPEG output supports quality-based compression and optional resize.",
         @"Target-size compression supports maxBytes by adjusting JPEG quality.",
-        @"Metadata preserve is not implemented; safe and strip re-encode without copying source metadata."
+        @"Metadata preserve copies source JPEG metadata for JPEG input to JPEG output.",
+        @"Metadata safe and strip re-encode without copying source metadata.",
+        @"Non-JPEG input or non-JPEG output rejects metadata preserve with ERR_NOT_IMPLEMENTED."
       ]
     );
   }
@@ -467,6 +469,14 @@ static NSString *RCTImageCompressionKitImageType(NSData *sourceData)
   return imageType;
 }
 
+static BOOL RCTImageCompressionKitIsJpegType(NSString *imageType)
+{
+  return
+    [imageType isEqualToString:@"public.jpeg"] ||
+    [imageType isEqualToString:@"public.jpg"] ||
+    [imageType isEqualToString:@"image/jpeg"];
+}
+
 static BOOL RCTImageCompressionKitIsGifType(NSString *imageType)
 {
   return [imageType isEqualToString:@"com.compuserve.gif"] || [imageType isEqualToString:@"public.gif"];
@@ -561,7 +571,7 @@ static BOOL RCTImageCompressionKitShouldDecodeFirstFrame(NSString *imageType)
 static BOOL RCTImageCompressionKitIsSupportedInputType(NSString *imageType)
 {
   return
-    [imageType isEqualToString:@"public.jpeg"] ||
+    RCTImageCompressionKitIsJpegType(imageType) ||
     [imageType isEqualToString:@"public.png"] ||
     RCTImageCompressionKitIsGifType(imageType) ||
     RCTImageCompressionKitIsWebPType(imageType) ||
@@ -696,9 +706,74 @@ static UIImage *RCTImageCompressionKitRenderImage(
   }];
 }
 
-static NSData *RCTImageCompressionKitEncodeJpeg(UIImage *image, NSInteger quality)
+static NSDictionary *RCTImageCompressionKitSourceImageProperties(NSData *sourceData)
 {
-  return UIImageJPEGRepresentation(image, (CGFloat)quality / 100.0);
+  CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)sourceData, nil);
+  if (imageSource == nil) {
+    return nil;
+  }
+
+  NSDictionary *properties = nil;
+  if (CGImageSourceGetCount(imageSource) > 0) {
+    properties = CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil));
+  }
+
+  CFRelease(imageSource);
+  return properties;
+}
+
+static NSDictionary *RCTImageCompressionKitJpegDestinationProperties(
+  NSInteger quality,
+  NSDictionary *sourceProperties
+) {
+  NSMutableDictionary *properties = sourceProperties != nil
+    ? [sourceProperties mutableCopy]
+    : [NSMutableDictionary dictionary];
+
+  properties[(__bridge NSString *)kCGImageDestinationLossyCompressionQuality] = @((CGFloat)quality / 100.0);
+  if (sourceProperties != nil) {
+    [properties removeObjectForKey:(__bridge NSString *)kCGImagePropertyPixelWidth];
+    [properties removeObjectForKey:(__bridge NSString *)kCGImagePropertyPixelHeight];
+    properties[(__bridge NSString *)kCGImagePropertyOrientation] = @1;
+
+    NSDictionary *tiffProperties = properties[(__bridge NSString *)kCGImagePropertyTIFFDictionary];
+    if ([tiffProperties isKindOfClass:[NSDictionary class]]) {
+      NSMutableDictionary *mutableTiffProperties = [tiffProperties mutableCopy];
+      mutableTiffProperties[(__bridge NSString *)kCGImagePropertyTIFFOrientation] = @1;
+      properties[(__bridge NSString *)kCGImagePropertyTIFFDictionary] = mutableTiffProperties;
+    }
+  }
+
+  return properties;
+}
+
+static NSData *RCTImageCompressionKitEncodeJpeg(
+  UIImage *image,
+  NSInteger quality,
+  NSDictionary *sourceProperties
+) {
+  CGImageRef cgImage = image.CGImage;
+  if (cgImage == nil) {
+    return nil;
+  }
+
+  NSMutableData *outputData = [NSMutableData data];
+  CGImageDestinationRef destination = CGImageDestinationCreateWithData(
+    (__bridge CFMutableDataRef)outputData,
+    (__bridge CFStringRef)@"public.jpeg",
+    1,
+    nil
+  );
+  if (destination == nil) {
+    return nil;
+  }
+
+  NSDictionary *properties = RCTImageCompressionKitJpegDestinationProperties(quality, sourceProperties);
+  CGImageDestinationAddImage(destination, cgImage, (__bridge CFDictionaryRef)properties);
+  BOOL finalized = CGImageDestinationFinalize(destination);
+  CFRelease(destination);
+
+  return finalized && outputData.length > 0 ? outputData : nil;
 }
 
 static NSData *RCTImageCompressionKitEncodePng(UIImage *image)
@@ -757,22 +832,29 @@ static NSData *RCTImageCompressionKitEncodeWebP(UIImage *image, NSInteger qualit
 static NSData *RCTImageCompressionKitEncodeQualityOutput(
   UIImage *image,
   NSString *outputFormat,
-  NSInteger quality
+  NSInteger quality,
+  NSDictionary *jpegSourceProperties
 ) {
   if ([outputFormat isEqualToString:RCTImageCompressionKitWebPFormat]) {
     return RCTImageCompressionKitEncodeWebP(image, quality);
   }
 
-  return RCTImageCompressionKitEncodeJpeg(image, quality);
+  return RCTImageCompressionKitEncodeJpeg(image, quality, jpegSourceProperties);
 }
 
 static NSData *RCTImageCompressionKitEncodeToTargetSize(
   UIImage *image,
   NSString *outputFormat,
   NSInteger qualityCap,
-  NSUInteger maxBytes
+  NSUInteger maxBytes,
+  NSDictionary *jpegSourceProperties
 ) {
-  NSData *outputData = RCTImageCompressionKitEncodeQualityOutput(image, outputFormat, qualityCap);
+  NSData *outputData = RCTImageCompressionKitEncodeQualityOutput(
+    image,
+    outputFormat,
+    qualityCap,
+    jpegSourceProperties
+  );
   if (outputData == nil || outputData.length == 0 || outputData.length <= maxBytes) {
     return outputData;
   }
@@ -785,7 +867,12 @@ static NSData *RCTImageCompressionKitEncodeToTargetSize(
 
   while (low <= high) {
     NSInteger currentQuality = (low + high) / 2;
-    NSData *candidateData = RCTImageCompressionKitEncodeQualityOutput(image, outputFormat, currentQuality);
+    NSData *candidateData = RCTImageCompressionKitEncodeQualityOutput(
+      image,
+      outputFormat,
+      currentQuality,
+      jpegSourceProperties
+    );
     if (candidateData == nil || candidateData.length == 0) {
       return candidateData;
     }
@@ -1016,15 +1103,6 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       );
       return;
     }
-    if ([metadataPolicy isEqualToString:RCTImageCompressionKitPreserveMetadataPolicy]) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitNotImplementedCode,
-        @"iOS MVP does not support metadata preserve yet. Use safe or strip metadata on iOS.",
-        nil
-      );
-      return;
-    }
 
     RCTImageCompressionKitResizeOptions resizeOptions;
     if (!RCTImageCompressionKitReadResizeOptions(options, &resizeOptions, &errorMessage)) {
@@ -1100,6 +1178,22 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       return;
     }
 
+    BOOL metadataPreserveRequested = [metadataPolicy isEqualToString:RCTImageCompressionKitPreserveMetadataPolicy];
+    BOOL canPreserveJpegMetadata = metadataPreserveRequested && outputIsJpeg && RCTImageCompressionKitIsJpegType(imageType);
+    if (metadataPreserveRequested && !canPreserveJpegMetadata) {
+      RCTImageCompressionKitReject(
+        reject,
+        RCTImageCompressionKitNotImplementedCode,
+        @"iOS metadata preserve is supported only for JPEG input to JPEG output. Use safe or strip metadata for other iOS format conversions.",
+        nil
+      );
+      return;
+    }
+
+    NSDictionary *jpegSourceProperties = canPreserveJpegMetadata
+      ? RCTImageCompressionKitSourceImageProperties(sourceData)
+      : nil;
+
     __block UIImage *sourceImage = nil;
     __block UIImage *processedImage = nil;
     __block NSData *outputData = nil;
@@ -1115,12 +1209,12 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
         outputData = RCTImageCompressionKitEncodePng(processedImage);
       } else if (outputIsWebP) {
         outputData = hasMaxBytes
-          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, outputFormat, quality, maxBytes)
+          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, outputFormat, quality, maxBytes, nil)
           : RCTImageCompressionKitEncodeWebP(processedImage, quality);
       } else {
         outputData = hasMaxBytes
-          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, outputFormat, quality, maxBytes)
-          : RCTImageCompressionKitEncodeJpeg(processedImage, quality);
+          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, outputFormat, quality, maxBytes, jpegSourceProperties)
+          : RCTImageCompressionKitEncodeJpeg(processedImage, quality, jpegSourceProperties);
       }
     });
     RCTImageCompressionKitSmokeLog(@"image-work-finished");
@@ -1208,7 +1302,11 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
   resolve(@{
     @"platform" : @"ios",
     @"formats" : formats,
-    @"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy],
+    @"metadataPolicies" : @[
+      RCTImageCompressionKitPreserveMetadataPolicy,
+      RCTImageCompressionKitDefaultMetadataPolicy,
+      RCTImageCompressionKitStripMetadataPolicy
+    ],
     @"supportsTargetSizeCompression" : @YES,
     @"supportsCancellation" : @NO
   });

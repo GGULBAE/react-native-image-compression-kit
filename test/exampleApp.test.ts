@@ -48,7 +48,7 @@ describe('example app', () => {
     expect(appSource).toContain('copySampleAvifToCache');
     expect(appSource).toContain('copyUnsupportedImageToCache');
     expect(appSource).toContain("capabilities.platform === 'ios'");
-    expect(appSource).toContain("metadataPolicies.join(',') === 'safe,strip'");
+    expect(appSource).toContain("metadataPolicies.join(',') === 'preserve,safe,strip'");
     expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'gif', true, false)");
     expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'webp', true)");
     expect(appSource).toContain("assertIOSFormatCapability(capabilities, 'heic', true, false)");
@@ -60,6 +60,10 @@ describe('example app', () => {
       'Expected iOS JPEG target-size compression to be supported.'
     );
     expect(appSource).toContain('compress-jpeg-to-jpeg-max-bytes');
+    expect(appSource).toContain('compress-jpeg-to-jpeg-preserve-metadata');
+    expect(appSource).toContain('read-jpeg-source-metadata');
+    expect(appSource).toContain('read-jpeg-preserve-metadata');
+    expect(appSource).toContain('jpegPreserveResultBytes');
     expect(appSource).toContain('copy-gif-fixture');
     expect(appSource).toContain('copy-webp-fixture');
     expect(appSource).toContain('copy-heic-fixture');
@@ -134,7 +138,9 @@ describe('example app', () => {
     expect(appSource).toContain('compress-png-to-png');
     expect(appSource).toContain('reject-png-max-bytes');
     expect(appSource).toContain('Expected PNG maxBytes to be unsupported on iOS.');
-    expect(appSource).toContain("Expected metadata: 'preserve' to be unimplemented on iOS.");
+    expect(appSource).toContain(
+      "Expected metadata: 'preserve' to require JPEG input and JPEG output on iOS."
+    );
     expect(iosModuleSource).toContain('RCT_EXPORT_MODULE();');
     expect(iosModuleSource).toContain('copySampleJpegToCache');
     expect(iosModuleSource).toContain('copySamplePngToCache');
@@ -142,11 +148,13 @@ describe('example app', () => {
     expect(iosModuleSource).toContain('copySampleHeifToCache');
     expect(iosModuleSource).toContain('copySampleAvifToCache');
     expect(iosModuleSource).toContain('copyUnsupportedImageToCache');
+    expect(iosModuleSource).toContain('readJpegSoftwareMetadata');
     expect(iosModuleSource).toContain('logSmokeEvent');
     expect(iosModuleSource).toContain('RNICK_IOS_SMOKE');
     expect(iosModuleSource).toContain('--rnick-ios-smoke');
     expect(iosModuleSource).toContain('NSLog');
-    expect(iosModuleSource).toContain('UIImageJPEGRepresentation');
+    expect(iosModuleSource).toContain('CGImageDestinationCreateWithData');
+    expect(iosModuleSource).toContain('ExampleImageSourceJpegSoftwareMetadata');
     expect(iosModuleSource).toContain('PNGDataWithActions');
     expect(iosModuleSource).toContain('"gif"');
     expect(iosModuleSource).toContain('"webp"');

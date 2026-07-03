@@ -1,5 +1,53 @@
 # Release Notes
 
+## v0.2.12
+
+Status: unpublished release candidate for iOS JPEG metadata preserve. npm `latest` remains `0.2.11`; no `v0.2.12` git tag, GitHub Release, or npm publish has been created.
+
+This candidate adds the narrow iOS `metadata: 'preserve'` MVP for JPEG source
+to JPEG output. Other iOS format conversions keep the explicit
+`ERR_NOT_IMPLEMENTED` preserve boundary.
+
+### Goals
+
+- Support iOS JPEG source to JPEG output with `metadata: 'preserve'`.
+- Keep resize, `output.quality`, and `output.maxBytes` JPEG output paths aligned with metadata preserve.
+- Report iOS `metadataPolicies: ['preserve', 'safe', 'strip']` while documenting that preserve is JPEG-to-JPEG only.
+- Keep PNG/WebP/GIF/HEIC/HEIF/AVIF metadata preservation out of scope.
+- Align TypeScript/native error surface, README guidance, release notes, source-level expectations, Android verification doctor checks, and iOS host-app smoke validation.
+
+### Included
+
+- `package.json` version bump to `0.2.12`.
+- iOS JPEG output now uses ImageIO `CGImageDestination`, allowing source JPEG metadata to be copied for JPEG source to JPEG output.
+- iOS `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED` unless both input and output are JPEG.
+- iOS capability reporting now includes `preserve`, `safe`, and `strip` metadata policies.
+- iOS smoke fixtures include a JPEG TIFF Software metadata marker and read it back after preserve compression.
+- README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.12` candidate.
+- Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve candidate.
+
+### Not Included
+
+- Android runtime behavior changes.
+- PNG, WebP, GIF, HEIC, HEIF, or AVIF metadata preserve on iOS.
+- AVIF output, animated AVIF preservation, HEIC/HEIF output, GIF animation preservation, animated WebP preservation, cancellation, or progress support.
+- npm package publication, `v0.2.12` git tag, or GitHub Release creation.
+
+### Release Checklist
+
+Before any publish:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.
+
 ## v0.2.11
 
 Status: published to npm on July 2, 2026 at 08:49:37 UTC (17:49:37 KST), tagged as `v0.2.11`.

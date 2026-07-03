@@ -78,7 +78,8 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('compressImageWithDictionary:optionsMap');
     expect(iosSource).toContain('dispatch_get_main_queue()');
     expect(iosSource).toContain('RNICK_IOS_SMOKE_NATIVE');
-    expect(iosSource).toContain('UIImageJPEGRepresentation');
+    expect(iosSource).toContain('RCTImageCompressionKitSourceImageProperties');
+    expect(iosSource).toContain('RCTImageCompressionKitJpegDestinationProperties');
     expect(iosSource).toContain('UIImagePNGRepresentation');
     expect(iosSource).toContain('CGImageDestinationCopyTypeIdentifiers');
     expect(iosSource).toContain('CGImageDestinationCreateWithData');
@@ -108,8 +109,15 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('RCTImageCompressionKitEncodeQualityOutput');
     expect(iosSource).toContain('bestWithinTargetData');
     expect(iosSource).toContain(
-      '@"metadataPolicies" : @[RCTImageCompressionKitDefaultMetadataPolicy, RCTImageCompressionKitStripMetadataPolicy]'
+      'Metadata preserve copies source JPEG metadata for JPEG input to JPEG output.'
     );
+    expect(iosSource).toContain(
+      'iOS metadata preserve is supported only for JPEG input to JPEG output. Use safe or strip metadata for other iOS format conversions.'
+    );
+    expect(iosSource).toContain(
+      '@"metadataPolicies" : @['
+    );
+    expect(iosSource).toContain('RCTImageCompressionKitPreserveMetadataPolicy');
     expect(iosSource).toContain('@"supportsTargetSizeCompression" : @YES');
     expect(iosSource).toContain('@"supportsCancellation" : @NO');
   });
