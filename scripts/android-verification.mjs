@@ -216,13 +216,12 @@ function checkPackageMetadata() {
     'Version `0.2.12` is published for `react-native-image-compression-kit`',
     'The latest published npm package is `0.2.12`',
     'The `0.2.12` package metadata is published for `react-native-image-compression-kit`',
-    'Status: v0.2.13 candidate',
-    'v0.2.13%20candidate',
-    'Version `0.2.13` is an unpublished release candidate for `react-native-image-compression-kit`',
-    'latest published npm package at `0.2.12`',
-    'The `0.2.13` package metadata is prepared as an unpublished iOS JPEG metadata preserve hardening candidate',
-    'version `0.2.13` is the unpublished iOS JPEG metadata preserve hardening candidate',
-    'v0.2.13 iOS JPEG metadata preserve hardening candidate notes',
+    'Status: v0.2.13 published',
+    'v0.2.13%20published',
+    'Version `0.2.13` is published for `react-native-image-compression-kit`',
+    'The `0.2.13` package metadata is published for `react-native-image-compression-kit`',
+    'Status: v0.2.14 published',
+    'v0.2.14%20published',
   ];
   const expectedKeywords = [
     'react-native',
@@ -240,7 +239,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.13',
+    packageJson.version === '0.2.14',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -255,11 +254,11 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.13` is published for `react-native-image-compression-kit`'),
-    readmeContents.includes("It hardens iOS `metadata: 'preserve'` for JPEG source to JPEG output by normalizing preserved orientation and pixel dimension metadata"),
+    readmeContents.includes('Version `0.2.14` is an unpublished release candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes("It keeps AVIF output unsupported while aligning Android and iOS capability notes, `ERR_NOT_IMPLEMENTED` messages, TypeScript guidance, README guidance, and release checks for `output.format: 'avif'`."),
     readmeContents.includes('The latest published npm package is `0.2.13`'),
     readmeContents.includes('GitHub Release [v0.2.13]'),
-    readmeContents.includes('The `0.2.13` package metadata is published for `react-native-image-compression-kit`'),
+    readmeContents.includes('The `0.2.14` package metadata is prepared as an unpublished AVIF output capability/error surface candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -274,10 +273,14 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.11` is the published docs-only npm README correction release'),
     readmeContents.includes('version `0.2.12` is the published iOS JPEG metadata preserve release'),
     readmeContents.includes('version `0.2.13` is the published iOS JPEG metadata preserve hardening release'),
+    readmeContents.includes('version `0.2.14` is the unpublished AVIF output capability/error surface candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
     readmeContents.includes('Version `0.2.13` hardens that iOS preserve path by normalizing output orientation and pixel dimension metadata.'),
+    readmeContents.includes('Version `0.2.14` aligns AVIF output unsupported capability notes and `ERR_NOT_IMPLEMENTED` messages without adding AVIF encoding.'),
+    readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
+    readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
     readmeContents.includes("metadataPolicies: ['preserve', 'safe', 'strip']"),
     staleReadmeSnippets.every((snippet) => !readmeContents.includes(snippet)),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
@@ -287,10 +290,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.13 iOS JPEG metadata preserve hardening release',
+    label: 'npm package metadata and README status are aligned for the v0.2.14 AVIF output unsupported candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README published status are aligned'
-      : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README candidate status are aligned'
+      : 'expected package.json candidate metadata or README AVIF output guidance is missing/mismatched',
   };
 }
 
@@ -576,6 +579,30 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.14',
+    'Status: unpublished release candidate for AVIF output capability/error surface alignment. npm `latest` remains `0.2.13`; no `v0.2.14` git tag, GitHub Release, or npm publish has been created.',
+    "This candidate keeps AVIF output unimplemented while making Android and iOS capability reporting, unsupported-output messages, TypeScript guidance, README guidance, and verification checks agree on the same boundary: AVIF input can be supported, but `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`.",
+    'Keep AVIF output out of scope while making the unsupported output path explicit.',
+    'Align Android and iOS AVIF capability notes around `output=false`.',
+    "Make native `ERR_NOT_IMPLEMENTED` messages clear when callers select `output.format: 'avif'`.",
+    'Keep TypeScript validation accepting `avif` as a planned output format so native platform capability errors surface intact.',
+    'Align README guidance, release notes, Android verification doctor checks, Vitest expectations, Android JVM tests, and iOS host-app smoke assertions.',
+    '`package.json` version bump to `0.2.14`.',
+    'Android AVIF capability notes now say AVIF output reports `output=false` and selecting `output.format: \'avif\'` rejects with `ERR_NOT_IMPLEMENTED`.',
+    'Android `compressImage()` now rejects HEIC, HEIF, and AVIF output with an explicit unsupported-output message naming JPEG, PNG, and WebP as the supported output formats.',
+    'Android module tests now assert AVIF output rejects with `ERR_NOT_IMPLEMENTED`.',
+    'iOS AVIF capability notes now separate animated AVIF preservation from AVIF output, report AVIF output as unsupported, and state that selecting `output.format: \'avif\'` rejects with `ERR_NOT_IMPLEMENTED`.',
+    'iOS `compressImage()` now uses an AVIF-specific unsupported-output message for `output.format: \'avif\'`.',
+    'iOS host-app smoke now asserts the AVIF capability note documents the unsupported AVIF output path.',
+    'TypeScript native-unavailable guidance now describes the current Android/iOS input/output matrix and calls out HEIC, HEIF, and AVIF output as unsupported.',
+    'README status, implementation scope, iOS behavior, Android AVIF input/output guidance, installation/package status, and release dry-run guidance are updated for the `0.2.14` candidate.',
+    'Source-level tests and Android verification doctor expectations are updated for the AVIF output unsupported surface candidate.',
+    'AVIF output encoding.',
+    'HEIC / HEIF output encoding.',
+    'Animated AVIF preservation.',
+    'Android or iOS decode behavior changes.',
+    'npm package publication, `v0.2.14` git tag, or GitHub Release creation.',
+    'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.',
     '## v0.2.13',
     'Status: published to npm as the `0.2.13` latest release, tagged as `v0.2.13`.',
     "This release hardens the iOS JPEG source to JPEG output `metadata: 'preserve'`",
@@ -1203,7 +1230,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.14 AVIF output capability/error surface candidate notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1215,16 +1242,16 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.13' && missing.length === 0;
+  const ok = packageJson.version === '0.2.14' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.13 published notes and previous release notes are current',
+    label: 'v0.2.14 candidate notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the release scope, non-goals, validation checklist, and previous npm publish steps'
+      ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.13' ? [] : ['package.json version 0.2.13']),
+    ...(packageJson.version === '0.2.14' ? [] : ['package.json version 0.2.14']),
         ].join(' | ')}`,
   };
 }
@@ -1439,7 +1466,7 @@ function checkAndroidNativeModule() {
     'HEIF_FORMAT',
     'AVIF_FORMAT',
     'output = outputFormat != null',
-    'supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input with JPEG, PNG, and WebP output only',
+    'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED.',
     'readMetadataPolicy(options)',
     'MetadataPolicy.PRESERVE',
     'createCopiedExifMetadata',
@@ -1463,6 +1490,9 @@ function checkAndroidNativeModule() {
     'Android API 34+ uses ImageDecoder for AVIF input.',
     'AVIF inputs are decoded without copying EXIF metadata.',
     'AVIF output is not implemented.',
+    "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED.",
+    'UNSUPPORTED_OUTPUT_FORMAT_MESSAGE',
+    'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED.',
     'Android MVP decodes GIF file:// and content:// sources as a static first frame.',
     'Animated GIF preservation is not implemented.',
     'GIF output is not implemented.',
@@ -1614,12 +1644,15 @@ function checkIOSNativeModule() {
     'Call getImageCompressionCapabilities() before accepting AVIF input on iOS.',
     'AVIF input can be re-encoded to JPEG or PNG output without copying source metadata.',
     'AVIF input can also be re-encoded to runtime-available WebP output.',
-    'Animated AVIF preservation and AVIF output are not implemented.',
+    'Animated AVIF preservation is not implemented.',
+    'AVIF output is not implemented.',
+    'AVIF capability reports output=false; selecting output.format: \'avif\' rejects with ERR_NOT_IMPLEMENTED.',
     'iOS MVP supports JPEG, PNG, static GIF, static WebP, static HEIC, static HEIF, and runtime-available static AVIF input with JPEG, PNG, or runtime ImageIO-backed WebP output only.',
     'RCT_EXPORT_MODULE(ImageCompressionKit)',
     'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options',
     'compressImageWithDictionary:optionsMap',
-    'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
+    'iOS MVP supports AVIF input when ImageIO source decoding is available, but AVIF output is not implemented. Supported output formats are JPEG, PNG, and runtime-available WebP; output.format: \'avif\' rejects with ERR_NOT_IMPLEMENTED.',
+    'iOS MVP supports JPEG, PNG, and runtime-available WebP output only. HEIC and HEIF output are not implemented. Call getImageCompressionCapabilities() before selecting a platform output format.',
     'iOS MVP requires ImageIO WebP destination support for WebP output on this runtime.',
     'iOS MVP supports output.maxBytes for JPEG and runtime-available WebP output only.',
     'RCTImageCompressionKitReadMaxBytes',

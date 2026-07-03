@@ -69,7 +69,7 @@ class ImageCompressionKitModule(
         reject(
           promise,
           ERR_NOT_IMPLEMENTED,
-          "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input with JPEG, PNG, and WebP output only."
+          ImageCompressionOutput.UNSUPPORTED_OUTPUT_FORMAT_MESSAGE
         )
         return
       }

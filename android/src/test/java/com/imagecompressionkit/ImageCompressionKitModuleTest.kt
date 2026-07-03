@@ -121,6 +121,29 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
+  fun compressImageRejectsAvifOutputWithExplicitNotImplementedMessage() {
+    val module = createModule()
+    val promise = RecordingPromise()
+
+    module.compressImage(
+      compressionOptions(
+        sourceFile = createSampleJpegFile(),
+        output = JavaOnlyMap.of(
+          "format",
+          "avif",
+          "quality",
+          72
+        )
+      ),
+      promise
+    )
+
+    assertNull(promise.resolvedValue)
+    assertEquals(ImageCompressionKitModule.ERR_NOT_IMPLEMENTED, promise.rejectionCode)
+    assertEquals(ImageCompressionOutput.UNSUPPORTED_OUTPUT_FORMAT_MESSAGE, promise.rejectionMessage)
+  }
+
+  @Test
   fun compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif() {
     val module = createModule()
     val sourceFile = createOrientedJpegFile(

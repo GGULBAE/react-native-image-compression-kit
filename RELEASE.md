@@ -1,5 +1,55 @@
 # Release Notes
 
+## v0.2.14
+
+Status: unpublished release candidate for AVIF output capability/error surface alignment. npm `latest` remains `0.2.13`; no `v0.2.14` git tag, GitHub Release, or npm publish has been created.
+
+This candidate keeps AVIF output unimplemented while making Android and iOS capability reporting, unsupported-output messages, TypeScript guidance, README guidance, and verification checks agree on the same boundary: AVIF input can be supported, but `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`.
+
+### Goals
+
+- Keep AVIF output out of scope while making the unsupported output path explicit.
+- Align Android and iOS AVIF capability notes around `output=false`.
+- Make native `ERR_NOT_IMPLEMENTED` messages clear when callers select `output.format: 'avif'`.
+- Keep TypeScript validation accepting `avif` as a planned output format so native platform capability errors surface intact.
+- Align README guidance, release notes, Android verification doctor checks, Vitest expectations, Android JVM tests, and iOS host-app smoke assertions.
+
+### Included
+
+- `package.json` version bump to `0.2.14`.
+- Android AVIF capability notes now say AVIF output reports `output=false` and selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`.
+- Android `compressImage()` now rejects HEIC, HEIF, and AVIF output with an explicit unsupported-output message naming JPEG, PNG, and WebP as the supported output formats.
+- Android module tests now assert AVIF output rejects with `ERR_NOT_IMPLEMENTED`.
+- iOS AVIF capability notes now separate animated AVIF preservation from AVIF output, report AVIF output as unsupported, and state that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`.
+- iOS `compressImage()` now uses an AVIF-specific unsupported-output message for `output.format: 'avif'`.
+- iOS host-app smoke now asserts the AVIF capability note documents the unsupported AVIF output path.
+- TypeScript native-unavailable guidance now describes the current Android/iOS input/output matrix and calls out HEIC, HEIF, and AVIF output as unsupported.
+- README status, implementation scope, iOS behavior, Android AVIF input/output guidance, installation/package status, and release dry-run guidance are updated for the `0.2.14` candidate.
+- Source-level tests and Android verification doctor expectations are updated for the AVIF output unsupported surface candidate.
+
+### Not Included
+
+- AVIF output encoding.
+- HEIC / HEIF output encoding.
+- Animated AVIF preservation.
+- Android or iOS decode behavior changes.
+- npm package publication, `v0.2.14` git tag, or GitHub Release creation.
+
+### Release Checklist
+
+Before any publish:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.
+
 ## v0.2.13
 
 Status: published to npm as the `0.2.13` latest release, tagged as `v0.2.13`.

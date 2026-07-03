@@ -573,6 +573,12 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   const webpOutputAvailable = webpCapability.output === true;
   const avifInputAvailable = avifCapability.input === true;
   assertIOSSmoke(
+    avifCapability.notes?.some((note) =>
+      note.includes("output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED")
+    ) === true,
+    'Expected iOS AVIF capability notes to describe the unsupported AVIF output path.'
+  );
+  assertIOSSmoke(
     capabilities.metadataPolicies.join(',') === 'preserve,safe,strip',
     `Expected iOS metadata policies preserve,safe,strip, received ${capabilities.metadataPolicies.join(',')}.`
   );

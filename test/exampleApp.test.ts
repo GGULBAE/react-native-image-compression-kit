@@ -57,6 +57,12 @@ describe('example app', () => {
     expect(appSource).toContain('avifInputAvailable');
     expect(appSource).toContain('webpOutputAvailable');
     expect(appSource).toContain(
+      "output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED"
+    );
+    expect(appSource).toContain(
+      'Expected iOS AVIF capability notes to describe the unsupported AVIF output path.'
+    );
+    expect(appSource).toContain(
       'Expected iOS JPEG target-size compression to be supported.'
     );
     expect(appSource).toContain('compress-jpeg-to-jpeg-max-bytes');

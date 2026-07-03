@@ -314,6 +314,11 @@ class ImageCompressionOutputTest {
         it == "AVIF output is not implemented."
       }
     )
+    assertTrue(
+      capability.notes.any {
+        it == "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
+      }
+    )
   }
 
   private fun createSampleJpegBytes(): ByteArray {

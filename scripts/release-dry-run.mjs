@@ -41,13 +41,12 @@ const STALE_PACKED_README_SNIPPETS = [
   'Version `0.2.12` is published for `react-native-image-compression-kit`',
   'The latest published npm package is `0.2.12`',
   'The `0.2.12` package metadata is published for `react-native-image-compression-kit`',
-  'Status: v0.2.13 candidate',
-  'v0.2.13%20candidate',
-  'Version `0.2.13` is an unpublished release candidate for `react-native-image-compression-kit`',
-  'latest published npm package at `0.2.12`',
-  'The `0.2.13` package metadata is prepared as an unpublished iOS JPEG metadata preserve hardening candidate',
-  'version `0.2.13` is the unpublished iOS JPEG metadata preserve hardening candidate',
-  'v0.2.13 iOS JPEG metadata preserve hardening candidate notes',
+  'Status: v0.2.13 published',
+  'v0.2.13%20published',
+  'Version `0.2.13` is published for `react-native-image-compression-kit`',
+  'The `0.2.13` package metadata is published for `react-native-image-compression-kit`',
+  'Status: v0.2.14 published',
+  'v0.2.14%20published',
 ];
 
 const STEPS = [

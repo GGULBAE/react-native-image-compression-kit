@@ -87,6 +87,8 @@ internal enum class OutputFormat(
 internal object ImageCompressionOutput {
   const val MAX_BYTES_UNSUPPORTED_MESSAGE =
     "Android MVP supports output.maxBytes for JPEG and WebP output only."
+  const val UNSUPPORTED_OUTPUT_FORMAT_MESSAGE =
+    "Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED."
 
   val FORMAT_VALUES = arrayOf(
     JPEG_FORMAT,
@@ -216,7 +218,8 @@ internal object ImageCompressionOutput {
       "Android API 34+ uses ImageDecoder for AVIF input.",
       "AVIF inputs are decoded without copying EXIF metadata.",
       "Animated AVIF preservation is not implemented.",
-      "AVIF output is not implemented."
+      "AVIF output is not implemented.",
+      "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
     )
 
   private fun encodeBitmapToTargetSize(

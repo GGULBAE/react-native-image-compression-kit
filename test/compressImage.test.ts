@@ -150,7 +150,7 @@ describe('compressImage', () => {
     ).rejects.toMatchObject({
       code: 'ERR_NATIVE_MODULE_UNAVAILABLE',
       message:
-        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression is implemented; iOS runtime compression is implemented for JPEG/PNG/GIF/WebP/HEIC/HEIF input and runtime-available ImageIO AVIF input with JPEG, PNG, and runtime-gated ImageIO-backed WebP output, including JPEG and runtime-available WebP target-size maxBytes and static ImageIO GIF/WebP/HEIC/HEIF/AVIF input, in version 0.2.10.',
+        'Native module ImageCompressionKit is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression supports JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input with JPEG, PNG, and WebP output. iOS runtime compression supports JPEG/PNG/GIF/WebP/HEIC/HEIF input and runtime-available ImageIO AVIF input with JPEG, PNG, and runtime-gated ImageIO-backed WebP output. HEIC, HEIF, and AVIF output remain unsupported and reject with ERR_NOT_IMPLEMENTED.',
     });
   });
 
@@ -178,7 +178,7 @@ describe('compressImage', () => {
       compressImage: vi.fn().mockRejectedValue({
         code: 'ERR_NOT_IMPLEMENTED',
         message:
-          'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
+          "iOS MVP supports AVIF input when ImageIO source decoding is available, but AVIF output is not implemented. Supported output formats are JPEG, PNG, and runtime-available WebP; output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED.",
       }),
     });
     setNativeModuleForTesting(nativeModule);
@@ -186,12 +186,12 @@ describe('compressImage', () => {
     await expect(
       compressImage({
         source: { uri: 'file:///tmp/input.jpg' },
-        output: { format: 'jpeg', quality: 80 },
+        output: { format: 'avif', quality: 80 },
       })
     ).rejects.toMatchObject({
       code: 'ERR_NOT_IMPLEMENTED',
       message:
-        'iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.',
+        "iOS MVP supports AVIF input when ImageIO source decoding is available, but AVIF output is not implemented. Supported output formats are JPEG, PNG, and runtime-available WebP; output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED.",
     });
   });
 

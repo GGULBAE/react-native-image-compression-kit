@@ -215,7 +215,9 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
         canDecodeAVIF && canEncodeWebP
           ? @"AVIF input can also be re-encoded to runtime-available WebP output."
           : @"WebP output still requires runtime ImageIO WebP destination support.",
-        @"Animated AVIF preservation and AVIF output are not implemented."
+        @"Animated AVIF preservation is not implemented.",
+        @"AVIF output is not implemented.",
+        @"AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
       ]
     );
   }
@@ -1067,10 +1069,13 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     BOOL outputIsPng = [outputFormat isEqualToString:RCTImageCompressionKitPngFormat];
     BOOL outputIsWebP = [outputFormat isEqualToString:RCTImageCompressionKitWebPFormat];
     if (!outputIsJpeg && !outputIsPng && !outputIsWebP) {
+      NSString *unsupportedOutputMessage = [outputFormat isEqualToString:RCTImageCompressionKitAvifFormat]
+        ? @"iOS MVP supports AVIF input when ImageIO source decoding is available, but AVIF output is not implemented. Supported output formats are JPEG, PNG, and runtime-available WebP; output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
+        : @"iOS MVP supports JPEG, PNG, and runtime-available WebP output only. HEIC and HEIF output are not implemented. Call getImageCompressionCapabilities() before selecting a platform output format.";
       RCTImageCompressionKitReject(
         reject,
         RCTImageCompressionKitNotImplementedCode,
-        @"iOS MVP supports JPEG, PNG, and WebP output only. Call getImageCompressionCapabilities() before selecting a platform output format.",
+        unsupportedOutputMessage,
         nil
       );
       return;
