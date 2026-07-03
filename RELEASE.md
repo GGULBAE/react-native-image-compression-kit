@@ -1,5 +1,63 @@
 # Release Notes
 
+## v0.2.18
+
+Status: unpublished docs-only npm README correction candidate. npm `latest` remains `0.2.17`; no `v0.2.18` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate corrects the README that is shown on the npm package page after the `0.2.17` tarball shipped pre-publish candidate status text. It keeps Android and iOS runtime behavior unchanged while preparing a new package version whose packaged README reports the `0.2.17` published state and the `0.2.18` docs-only correction candidate.
+
+### Goals
+
+- Prepare a docs-only package version so the npm package page can reflect the published `0.2.17` release state after a future `0.2.18` publish.
+- Remove stale `0.2.17` pre-publish package-page status wording from the packaged README.
+- Keep Android runtime behavior, iOS runtime behavior, and the public TypeScript API unchanged.
+- Verify the `0.2.17` registry tarball README before preparation and the future `0.2.18` registry tarball README after any publish decision.
+- Keep the release dry-run packed README stale-status check and post-publish registry smoke flow in place.
+
+### Included
+
+- `package.json` version bump to `0.2.18`.
+- README status, installation, release guidance, and registry smoke examples updated for the docs-only npm README correction candidate.
+- README copy now describes `0.2.18` as a docs-only README correction candidate while preserving the `0.2.17` runtime behavior surface.
+- Source-level tests and Android verification doctor expectations are updated for the `0.2.18` docs-only status.
+- Release dry-run packed README stale checks now reject the stale `0.2.17` pre-publish candidate snippets that shipped in the published `0.2.17` tarball.
+
+### Not Included
+
+- Android or iOS runtime behavior changes.
+- Native code changes.
+- New public TypeScript API surface.
+- AVIF output, animated AVIF preservation, HEIC/HEIF output, iOS metadata preservation, cancellation, or progress support.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.18`.
+
+### v0.2.17 Registry README Inspection
+
+Before preparing this patch, the published `0.2.17` registry tarball README was checked explicitly:
+
+```bash
+tmpdir=$(mktemp -d)
+npm pack react-native-image-compression-kit@0.2.17 --pack-destination "$tmpdir"
+tar -xOf "$tmpdir"/react-native-image-compression-kit-0.2.17.tgz package/README.md | rg -n 'Status: v0\.2\.17 candidate|Version `0\.2\.17` is an unpublished release candidate|latest published npm package is `0\.2\.14`|GitHub Release \[v0\.2\.14\]|v0\.2\.17 Android AVIF output encode/decode-back smoke candidate notes'
+rm -rf "$tmpdir"
+```
+
+The inspection found `Status: v0.2.17 candidate`, `Version 0.2.17 is an unpublished release candidate`, the "latest published npm package is 0.2.14" wording, `GitHub Release [v0.2.14]`, the unpublished `0.2.17` package metadata sentence, and `v0.2.17 Android AVIF output encode/decode-back smoke candidate notes` in the published `0.2.17` README.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+Because this is a docs-only candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.17`, after any future publish decision.
+
 ## v0.2.17
 
 Status: published to npm as the `0.2.17` latest release, tagged as `v0.2.17`.

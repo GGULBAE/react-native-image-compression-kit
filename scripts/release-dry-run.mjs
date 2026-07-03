@@ -82,6 +82,10 @@ const STALE_PACKED_README_SNIPPETS = [
   'The `0.2.17` package metadata is prepared as an unpublished Android AVIF output encode/decode-back smoke candidate for `react-native-image-compression-kit`',
   'version `0.2.17` is the unpublished Android AVIF output encode/decode-back smoke candidate',
   'v0.2.17 Android AVIF output encode/decode-back smoke candidate notes',
+  'Status: v0.2.18 published',
+  'v0.2.18%20published',
+  'Version `0.2.18` is published for `react-native-image-compression-kit`',
+  'The `0.2.18` package metadata is published for `react-native-image-compression-kit`',
 ];
 
 const STEPS = [
