@@ -36,6 +36,13 @@ const STALE_PACKED_README_SNIPPETS = [
   'v0.2.11%20docs--only',
   'Version `0.2.11` is a docs-only npm README correction for `react-native-image-compression-kit`',
   'The `0.2.11` package metadata is published for `react-native-image-compression-kit`',
+  'Status: v0.2.12 candidate',
+  'v0.2.12%20candidate',
+  'Version `0.2.12` is an unpublished release candidate for `react-native-image-compression-kit`',
+  'latest published npm package at `0.2.11`',
+  'The `0.2.12` package metadata is prepared as an unpublished iOS JPEG metadata preserve candidate',
+  'version `0.2.12` is the unpublished iOS JPEG metadata preserve candidate',
+  'v0.2.12 iOS JPEG metadata preserve candidate notes',
 ];
 
 const STEPS = [
@@ -107,7 +114,7 @@ function checkPackedReadmeStatus() {
       );
     }
 
-    console.log('Packed README candidate status check completed.');
+    console.log('Packed README published status check completed.');
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
   }

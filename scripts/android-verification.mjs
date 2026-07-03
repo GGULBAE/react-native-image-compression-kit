@@ -211,6 +211,13 @@ function checkPackageMetadata() {
     'The latest published npm package is `0.2.10`',
     'GitHub Release [v0.2.10]',
     'The `0.2.10` package metadata is published for `react-native-image-compression-kit`',
+    'Status: v0.2.12 candidate',
+    'v0.2.12%20candidate',
+    'Version `0.2.12` is an unpublished release candidate for `react-native-image-compression-kit`',
+    'latest published npm package at `0.2.11`',
+    'The `0.2.12` package metadata is prepared as an unpublished iOS JPEG metadata preserve candidate',
+    'version `0.2.12` is the unpublished iOS JPEG metadata preserve candidate',
+    'v0.2.12 iOS JPEG metadata preserve candidate notes',
   ];
   const expectedKeywords = [
     'react-native',
@@ -243,11 +250,11 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.12` is an unpublished release candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('Version `0.2.12` is published for `react-native-image-compression-kit`'),
     readmeContents.includes("It adds iOS `metadata: 'preserve'` support for the narrow JPEG source to JPEG output path"),
-    readmeContents.includes('latest published npm package at `0.2.11`'),
-    readmeContents.includes('GitHub Release [v0.2.11]'),
-    readmeContents.includes('The `0.2.12` package metadata is prepared as an unpublished iOS JPEG metadata preserve candidate'),
+    readmeContents.includes('The latest published npm package is `0.2.12`'),
+    readmeContents.includes('GitHub Release [v0.2.12]'),
+    readmeContents.includes('The `0.2.12` package metadata is published for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -260,7 +267,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.9` is the published docs-only npm package page README correction release'),
     readmeContents.includes('version `0.2.10` is the published iOS AVIF input capability-gated static decode release'),
     readmeContents.includes('version `0.2.11` is the published docs-only npm README correction release'),
-    readmeContents.includes('version `0.2.12` is the unpublished iOS JPEG metadata preserve candidate'),
+    readmeContents.includes('version `0.2.12` is the published iOS JPEG metadata preserve release'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -273,10 +280,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.12 iOS JPEG metadata preserve candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.12 iOS JPEG metadata preserve release',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README candidate status are aligned'
-      : 'expected package.json release metadata or README candidate-status guidance is missing/mismatched',
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README published status are aligned'
+      : 'expected package.json release metadata or README published-status guidance is missing/mismatched',
   };
 }
 
@@ -523,7 +530,7 @@ function checkReleaseDryRunChecklist() {
     [releaseScriptContents, 'STALE_PACKED_README_SNIPPETS'],
     [releaseScriptContents, 'checkPackedReadmeStatus'],
     [releaseScriptContents, 'package/README.md'],
-    [releaseScriptContents, 'Packed README candidate status check completed.'],
+    [releaseScriptContents, 'Packed README published status check completed.'],
     [releaseScriptContents, "args: ['smoke:consumer']"],
     [releaseScriptContents, "args: ['publish', '--dry-run', '--no-git-checks']"],
     [readmeContents, '## Release Dry Run Checklist'],
@@ -563,8 +570,8 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.12',
-    'Status: unpublished release candidate for iOS JPEG metadata preserve. npm `latest` remains `0.2.11`; no `v0.2.12` git tag, GitHub Release, or npm publish has been created.',
-    "This candidate adds the narrow iOS `metadata: 'preserve'` MVP for JPEG source",
+    'Status: published to npm as the `0.2.12` latest release, tagged as `v0.2.12`.',
+    "This release adds the narrow iOS `metadata: 'preserve'` MVP for JPEG source",
     'Support iOS JPEG source to JPEG output with `metadata: \'preserve\'`.',
     'Keep resize, `output.quality`, and `output.maxBytes` JPEG output paths aligned with metadata preserve.',
     "Report iOS `metadataPolicies: ['preserve', 'safe', 'strip']` while documenting that preserve is JPEG-to-JPEG only.",
@@ -574,12 +581,17 @@ function checkReleaseNotes() {
     'iOS `metadata: \'preserve\'` rejects with `ERR_NOT_IMPLEMENTED` unless both input and output are JPEG.',
     'iOS capability reporting now includes `preserve`, `safe`, and `strip` metadata policies.',
     'iOS smoke fixtures include a JPEG TIFF Software metadata marker and read it back after preserve compression.',
-    'README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.12` candidate.',
-    'Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve candidate.',
+    'README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.12` release.',
+    'Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve release.',
+    'npm package publication under the `latest` dist-tag.',
+    'Git tag `v0.2.12` and GitHub Release `v0.2.12`.',
     'Android runtime behavior changes.',
     'PNG, WebP, GIF, HEIC, HEIF, or AVIF metadata preserve on iOS.',
-    'npm package publication, `v0.2.12` git tag, or GitHub Release creation.',
-    'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.',
+    'npm publish --tag latest',
+    'pnpm smoke:registry -- --version 0.2.12',
+    'git tag -a v0.2.12 -m "v0.2.12"',
+    'git push origin v0.2.12',
+    'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release commit.',
     '## v0.2.11',
     'Status: published to npm on July 2, 2026 at 08:49:37 UTC (17:49:37 KST), tagged as `v0.2.11`.',
     'This docs-only patch corrects the README that is shown on the npm package page',
@@ -1151,7 +1163,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.12 iOS JPEG metadata preserve candidate notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1167,9 +1179,9 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.12 candidate notes and previous release notes are current',
+    label: 'v0.2.12 published notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
+      ? 'RELEASE.md documents the release scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
           ...(packageJson.version === '0.2.12' ? [] : ['package.json version 0.2.12']),

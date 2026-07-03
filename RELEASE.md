@@ -2,9 +2,9 @@
 
 ## v0.2.12
 
-Status: unpublished release candidate for iOS JPEG metadata preserve. npm `latest` remains `0.2.11`; no `v0.2.12` git tag, GitHub Release, or npm publish has been created.
+Status: published to npm as the `0.2.12` latest release, tagged as `v0.2.12`.
 
-This candidate adds the narrow iOS `metadata: 'preserve'` MVP for JPEG source
+This release adds the narrow iOS `metadata: 'preserve'` MVP for JPEG source
 to JPEG output. Other iOS format conversions keep the explicit
 `ERR_NOT_IMPLEMENTED` preserve boundary.
 
@@ -23,19 +23,20 @@ to JPEG output. Other iOS format conversions keep the explicit
 - iOS `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED` unless both input and output are JPEG.
 - iOS capability reporting now includes `preserve`, `safe`, and `strip` metadata policies.
 - iOS smoke fixtures include a JPEG TIFF Software metadata marker and read it back after preserve compression.
-- README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.12` candidate.
-- Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve candidate.
+- README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.12` release.
+- Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve release.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.12` and GitHub Release `v0.2.12`.
 
 ### Not Included
 
 - Android runtime behavior changes.
 - PNG, WebP, GIF, HEIC, HEIF, or AVIF metadata preserve on iOS.
 - AVIF output, animated AVIF preservation, HEIC/HEIF output, GIF animation preservation, animated WebP preservation, cancellation, or progress support.
-- npm package publication, `v0.2.12` git tag, or GitHub Release creation.
 
 ### Release Checklist
 
-Before any publish:
+Before npm publish:
 
 ```bash
 git status --short --branch
@@ -46,7 +47,16 @@ pnpm pack --dry-run
 pnpm release:dry-run
 ```
 
-Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.
+After npm publish:
+
+```bash
+npm publish --tag latest
+pnpm smoke:registry -- --version 0.2.12
+git tag -a v0.2.12 -m "v0.2.12"
+git push origin v0.2.12
+```
+
+Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release commit. After npm publish, the registry smoke must confirm the real `0.2.12` tarball README no longer includes stale candidate package-page status snippets.
 
 ## v0.2.11
 
