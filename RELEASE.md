@@ -2,9 +2,9 @@
 
 ## v0.2.17
 
-Status: unpublished release candidate for the Android AVIF output encode/decode-back smoke. npm `latest` remains `0.2.14`; no `v0.2.17` tag, GitHub Release, or npm publish is part of this candidate.
+Status: published to npm as the `0.2.17` latest release, tagged as `v0.2.17`.
 
-This candidate does not enable AVIF output. It advances the v0.2.16 Android `MediaCodec image/avif` prototype from route discovery to a real static-file smoke attempt that either proves a minimal AVIF cache file can be encoded and decoded back, or records the blocker that keeps production AVIF output disabled.
+This release does not enable AVIF output. It advances the v0.2.16 Android `MediaCodec image/avif` prototype from route discovery to a real static-file smoke attempt that either proves a minimal AVIF cache file can be encoded and decoded back, or records the blocker that keeps production AVIF output disabled.
 
 ### Goals
 
@@ -38,6 +38,8 @@ This candidate does not enable AVIF output. It advances the v0.2.16 Android `Med
 - Android JVM tests for smoke blocker reporting below API 34 and when no `image/avif` encoder is discovered.
 - Android instrumentation smoke that runs on API 34+, logs `RNICK_AVIF_OUTPUT_SMOKE`, accepts either a validated static AVIF file or a documented blocker, and asserts `getImageCompressionCapabilities().formats.avif.output=false`.
 - README and verification expectations that keep `getImageCompressionCapabilities().formats.avif.output=false`.
+- npm package publication under the `latest` dist-tag.
+- Git tag `v0.2.17` and GitHub Release `v0.2.17`.
 
 ### Not Included
 
@@ -47,22 +49,42 @@ This candidate does not enable AVIF output. It advances the v0.2.16 Android `Med
 - Metadata preservation for AVIF output.
 - Target-size AVIF output.
 - Animated AVIF preservation.
-- npm publish, git tag, or GitHub Release promotion for `v0.2.17`.
 
-### Validation
+### Release Checklist
 
-Before considering the candidate ready:
+Before npm publish:
 
 ```bash
 git status --short --branch
 pnpm verify
 pnpm example:typecheck
 git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
 ```
 
-GitHub Android Instrumentation must also pass on the pushed candidate commit and its `RNICK_AVIF_OUTPUT_SMOKE` log must be reviewed. If the route fails to produce a decodeable AVIF file there, keep AVIF output disabled and carry the logged blocker into the next production-path decision.
+After npm publish:
 
-Because this is a smoke candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.14`, after any future publish decision.
+```bash
+npm publish --tag latest
+npm view react-native-image-compression-kit version dist-tags time.modified --json
+pnpm smoke:registry -- --version 0.2.17
+git tag -a v0.2.17 -m "v0.2.17"
+git push origin v0.2.17
+```
+
+Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release commit. The Android Instrumentation `RNICK_AVIF_OUTPUT_SMOKE` log must be reviewed. If the route fails to produce a decodeable AVIF file there, keep AVIF output disabled and carry the logged blocker into the next production-path decision.
+
+### Publication Results
+
+- `npm view react-native-image-compression-kit version dist-tags time.modified --json` confirmed package version `0.2.17`, `latest: 0.2.17`, and registry modified time `2026-07-03T09:25:30.216Z`.
+- `npm view react-native-image-compression-kit@0.2.17 version dist.tarball dist.integrity dist.shasum time.modified --json` confirmed tarball `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.17.tgz`.
+- Registry integrity is `sha512-QMoXmU5VL5dPvhJIVe1GPJxK5u2OilbAVzL1UHH8gHaf7nDeL/7Cu2JdDY4yqgCLe+HvYG+MTJNEQ2cqjAsi7g==`.
+- Registry shasum is `a7a99058a1f67f6907e57d3a5080129655b0314b`.
+- `pnpm smoke:registry -- --version 0.2.17` passed against the real registry tarball with `fileCount: 50`, `packageSize: 54863`, `unpackedSize: 242110`, and a clean consumer `tsc --noEmit`.
+- Published tarball README inspection found pre-publish package-page wording because `0.2.17` was published before the post-publish README refresh. The npm tarball is immutable, so correcting the npm package-page README requires a later docs-only package version.
+- Release promotion gate passed on commit `f142dcb8bccd0d6955048fb9a762356c076d7167`: [CI](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28650341234), [Android Instrumentation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28650341269), and [iOS Validation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28650341225).
+- Git tag and GitHub Release: `v0.2.17` at `https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.2.17`.
 
 ## v0.2.16
 
