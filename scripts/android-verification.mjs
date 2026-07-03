@@ -2242,7 +2242,10 @@ function checkHeicHeifInstrumentationValidation() {
     workflowContents.includes('api-level: 35'),
     workflowContents.includes('target: google_apis'),
     workflowContents.includes('emulator-boot-timeout: 1200'),
-    workflowContents.includes('script: pnpm example:android-instrumentation'),
+    workflowContents.includes('script: |'),
+    workflowContents.includes('pnpm example:android-instrumentation'),
+    workflowContents.includes('instrumentation_status=$?'),
+    workflowContents.includes('adb logcat -d -s RNICK_AVIF_OUTPUT_SMOKE:I'),
     readmeContents.includes('Android Instrumentation workflow'),
     readmeContents.includes('enables KVM permissions'),
     readmeContents.includes('extended boot timeout'),
@@ -2254,7 +2257,7 @@ function checkHeicHeifInstrumentationValidation() {
     ok: checks.every(Boolean),
     label: 'HEIC/HEIF/AVIF emulator instrumentation and Android AVIF output smoke validation are wired',
     detail: checks.every(Boolean)
-      ? 'androidTest assets, API 34+ codec sample assertions, AVIF output prototype route gate, AVIF encode/decode-back smoke attempt, package script, KVM/boot-timeout workflow setup, and README are present'
+      ? 'androidTest assets, API 34+ codec sample assertions, AVIF output prototype route gate, AVIF encode/decode-back smoke attempt, package script, KVM/boot-timeout workflow setup, logcat smoke result dump, and README are present'
       : 'expected androidTest setup, package script, workflow snippets, or README documentation are missing/mismatched',
   };
 }

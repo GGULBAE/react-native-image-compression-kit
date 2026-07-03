@@ -2608,7 +2608,10 @@ describe('Android verification scripts', () => {
     expect(workflowSource).toContain('api-level: 35');
     expect(workflowSource).toContain('target: google_apis');
     expect(workflowSource).toContain('emulator-boot-timeout: 1200');
-    expect(workflowSource).toContain('script: pnpm example:android-instrumentation');
+    expect(workflowSource).toContain('script: |');
+    expect(workflowSource).toContain('pnpm example:android-instrumentation');
+    expect(workflowSource).toContain('instrumentation_status=$?');
+    expect(workflowSource).toContain('adb logcat -d -s RNICK_AVIF_OUTPUT_SMOKE:I');
     expect(verificationSource).toContain('checkHeicHeifInstrumentationValidation');
   });
 

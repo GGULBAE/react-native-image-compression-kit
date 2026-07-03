@@ -77,4 +77,9 @@ jobs:
           profile: pixel_6
           emulator-boot-timeout: 1200
           disable-animations: true
-          script: pnpm example:android-instrumentation
+          script: |
+            set +e
+            pnpm example:android-instrumentation
+            instrumentation_status=$?
+            adb logcat -d -s RNICK_AVIF_OUTPUT_SMOKE:I '*:S' || true
+            exit $instrumentation_status
