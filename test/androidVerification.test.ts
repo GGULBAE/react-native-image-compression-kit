@@ -77,13 +77,15 @@ describe('Android verification scripts', () => {
       'The latest published npm package is `0.2.10`',
       'GitHub Release [v0.2.10]',
       'The `0.2.10` package metadata is published for `react-native-image-compression-kit`',
-      'Status: v0.2.12 candidate',
-      'v0.2.12%20candidate',
-      'Version `0.2.12` is an unpublished release candidate for `react-native-image-compression-kit`',
-      'latest published npm package at `0.2.11`',
-      'The `0.2.12` package metadata is prepared as an unpublished iOS JPEG metadata preserve candidate',
-      'version `0.2.12` is the unpublished iOS JPEG metadata preserve candidate',
-      'v0.2.12 iOS JPEG metadata preserve candidate notes',
+      'Status: v0.2.12 published',
+      'v0.2.12%20published',
+      'Version `0.2.12` is published for `react-native-image-compression-kit`',
+      'The latest published npm package is `0.2.12`',
+      'The `0.2.12` package metadata is published for `react-native-image-compression-kit`',
+      'Status: v0.2.13 published',
+      'v0.2.13%20published',
+      'Version `0.2.13` is published for `react-native-image-compression-kit`',
+      'The `0.2.13` package metadata is published for `react-native-image-compression-kit`',
     ];
     const expectedKeywords = [
       'react-native',
@@ -101,7 +103,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.12');
+    expect(packageJson.version).toBe('0.2.13');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -129,15 +131,15 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.12` is published for `react-native-image-compression-kit`'
+      'Version `0.2.13` is an unpublished release candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
-      "It adds iOS `metadata: 'preserve'` support for the narrow JPEG source to JPEG output path"
+      "It hardens iOS `metadata: 'preserve'` for JPEG source to JPEG output by normalizing preserved orientation and pixel dimension metadata"
     );
-    expect(readmeSource).toContain('The latest published npm package is `0.2.12`');
+    expect(readmeSource).toContain('keeping the latest published npm package at `0.2.12`');
     expect(readmeSource).toContain('GitHub Release [v0.2.12]');
     expect(readmeSource).toContain(
-      'The `0.2.12` package metadata is published for `react-native-image-compression-kit`'
+      'The `0.2.13` package metadata is prepared as an unpublished iOS JPEG metadata preserve hardening candidate'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -179,6 +181,9 @@ describe('Android verification scripts', () => {
       'version `0.2.12` is the published iOS JPEG metadata preserve release'
     );
     expect(readmeSource).toContain(
+      'version `0.2.13` is the unpublished iOS JPEG metadata preserve hardening candidate'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -186,6 +191,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.13` hardens that iOS preserve path by normalizing output orientation and pixel dimension metadata.'
     );
     expect(readmeSource).toContain("metadataPolicies: ['preserve', 'safe', 'strip']");
     for (const snippet of staleReadmeSnippets) {
@@ -396,7 +404,7 @@ describe('Android verification scripts', () => {
     expect(releaseScriptSource).toContain('checkPackedReadmeStatus');
     expect(releaseScriptSource).toContain('package/README.md');
     expect(releaseScriptSource).toContain(
-      'Packed README published status check completed.'
+      'Packed README candidate status check completed.'
     );
     expect(releaseScriptSource).toContain("args: ['smoke:consumer']");
     expect(releaseScriptSource).toContain(
@@ -458,11 +466,56 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.12 published notes and previous release notes', () => {
+  it('documents the v0.2.13 candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.12');
+    expect(packageJson.version).toBe('0.2.13');
+    expect(releaseSource).toContain('## v0.2.13');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for iOS JPEG metadata preserve hardening. npm `latest` remains `0.2.12`; no `v0.2.13` git tag, GitHub Release, or npm publish has been created.'
+    );
+    expect(releaseSource).toContain(
+      "This candidate hardens the iOS JPEG source to JPEG output `metadata: 'preserve'`"
+    );
+    expect(releaseSource).toContain(
+      'Normalize iOS preserved JPEG output orientation metadata to `1` after rendering.'
+    );
+    expect(releaseSource).toContain(
+      'Update preserved top-level pixel width/height and EXIF `PixelXDimension` / `PixelYDimension` to the rendered JPEG dimensions.'
+    );
+    expect(releaseSource).toContain(
+      'Keep JPEG source to JPEG output as the only iOS preserve scope.'
+    );
+    expect(releaseSource).toContain(
+      'Prove the behavior through iOS host-app smoke metadata readback and source-level expectations.'
+    );
+    expect(releaseSource).toContain(
+      'Align README guidance, release notes, Android verification doctor checks, and Vitest expectations.'
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.13`.');
+    expect(releaseSource).toContain(
+      'iOS JPEG preserve encoding now passes final `CGImage` dimensions into ImageIO destination properties.'
+    );
+    expect(releaseSource).toContain(
+      'Preserved JPEG metadata normalizes top-level orientation, TIFF orientation, top-level pixel width/height, and EXIF pixel dimensions.'
+    );
+    expect(releaseSource).toContain(
+      'iOS smoke fixture writes stale TIFF orientation and stale EXIF pixel dimensions, then verifies preserve output normalizes them to the compressed JPEG result.'
+    );
+    expect(releaseSource).toContain(
+      'README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.13` candidate.'
+    );
+    expect(releaseSource).toContain(
+      'Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve hardening candidate.'
+    );
+    expect(releaseSource).toContain(
+      'npm package publication, `v0.2.13` git tag, or GitHub Release creation.'
+    );
+    expect(releaseSource).toContain('pnpm release:dry-run');
+    expect(releaseSource).toContain(
+      'Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.'
+    );
     expect(releaseSource).toContain('## v0.2.12');
     expect(releaseSource).toContain(
       'Status: published to npm as the `0.2.12` latest release, tagged as `v0.2.12`.'
@@ -1949,7 +2002,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.13 iOS JPEG metadata preserve hardening candidate notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -2344,7 +2397,7 @@ describe('Android verification scripts', () => {
       'iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.'
     );
     expect(iosSource).toContain(
-      'Metadata preserve copies source JPEG metadata for JPEG input to JPEG output.'
+      'Metadata preserve copies source JPEG metadata and normalizes output orientation/dimensions for JPEG input to JPEG output.'
     );
     expect(iosSource).toContain(
       'Metadata safe and strip re-encode without copying source metadata.'
@@ -2441,8 +2494,17 @@ describe('Android verification scripts', () => {
     expect(iosSource).toContain('CGImageDestinationAddImage');
     expect(iosSource).toContain('CGImageDestinationFinalize');
     expect(iosSource).toContain('kCGImageDestinationLossyCompressionQuality');
+    expect(iosSource).toContain('kCGImagePropertyPixelWidth');
+    expect(iosSource).toContain('kCGImagePropertyPixelHeight');
+    expect(iosSource).toContain('kCGImagePropertyOrientation');
+    expect(iosSource).toContain('kCGImagePropertyTIFFOrientation');
+    expect(iosSource).toContain('kCGImagePropertyExifDictionary');
+    expect(iosSource).toContain('kCGImagePropertyExifPixelXDimension');
+    expect(iosSource).toContain('kCGImagePropertyExifPixelYDimension');
     expect(iosSource).toContain('RCTImageCompressionKitSourceImageProperties');
     expect(iosSource).toContain('RCTImageCompressionKitJpegDestinationProperties');
+    expect(iosSource).toContain('CGImageGetWidth(cgImage)');
+    expect(iosSource).toContain('CGImageGetHeight(cgImage)');
     expect(iosSource).toContain('RCTImageCompressionKitEncodeWebP');
     expect(iosSource).toContain(
       'iOS metadata preserve is supported only for JPEG input to JPEG output. Use safe or strip metadata for other iOS format conversions.'

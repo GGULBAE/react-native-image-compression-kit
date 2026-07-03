@@ -117,7 +117,7 @@ static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
         @"iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.",
         @"JPEG output supports quality-based compression and optional resize.",
         @"Target-size compression supports maxBytes by adjusting JPEG quality.",
-        @"Metadata preserve copies source JPEG metadata for JPEG input to JPEG output.",
+        @"Metadata preserve copies source JPEG metadata and normalizes output orientation/dimensions for JPEG input to JPEG output.",
         @"Metadata safe and strip re-encode without copying source metadata.",
         @"Non-JPEG input or non-JPEG output rejects metadata preserve with ERR_NOT_IMPLEMENTED."
       ]
@@ -724,7 +724,9 @@ static NSDictionary *RCTImageCompressionKitSourceImageProperties(NSData *sourceD
 
 static NSDictionary *RCTImageCompressionKitJpegDestinationProperties(
   NSInteger quality,
-  NSDictionary *sourceProperties
+  NSDictionary *sourceProperties,
+  NSUInteger pixelWidth,
+  NSUInteger pixelHeight
 ) {
   NSMutableDictionary *properties = sourceProperties != nil
     ? [sourceProperties mutableCopy]
@@ -732,8 +734,8 @@ static NSDictionary *RCTImageCompressionKitJpegDestinationProperties(
 
   properties[(__bridge NSString *)kCGImageDestinationLossyCompressionQuality] = @((CGFloat)quality / 100.0);
   if (sourceProperties != nil) {
-    [properties removeObjectForKey:(__bridge NSString *)kCGImagePropertyPixelWidth];
-    [properties removeObjectForKey:(__bridge NSString *)kCGImagePropertyPixelHeight];
+    properties[(__bridge NSString *)kCGImagePropertyPixelWidth] = @(pixelWidth);
+    properties[(__bridge NSString *)kCGImagePropertyPixelHeight] = @(pixelHeight);
     properties[(__bridge NSString *)kCGImagePropertyOrientation] = @1;
 
     NSDictionary *tiffProperties = properties[(__bridge NSString *)kCGImagePropertyTIFFDictionary];
@@ -741,6 +743,14 @@ static NSDictionary *RCTImageCompressionKitJpegDestinationProperties(
       NSMutableDictionary *mutableTiffProperties = [tiffProperties mutableCopy];
       mutableTiffProperties[(__bridge NSString *)kCGImagePropertyTIFFOrientation] = @1;
       properties[(__bridge NSString *)kCGImagePropertyTIFFDictionary] = mutableTiffProperties;
+    }
+
+    NSDictionary *exifProperties = properties[(__bridge NSString *)kCGImagePropertyExifDictionary];
+    if ([exifProperties isKindOfClass:[NSDictionary class]]) {
+      NSMutableDictionary *mutableExifProperties = [exifProperties mutableCopy];
+      mutableExifProperties[(__bridge NSString *)kCGImagePropertyExifPixelXDimension] = @(pixelWidth);
+      mutableExifProperties[(__bridge NSString *)kCGImagePropertyExifPixelYDimension] = @(pixelHeight);
+      properties[(__bridge NSString *)kCGImagePropertyExifDictionary] = mutableExifProperties;
     }
   }
 
@@ -768,7 +778,12 @@ static NSData *RCTImageCompressionKitEncodeJpeg(
     return nil;
   }
 
-  NSDictionary *properties = RCTImageCompressionKitJpegDestinationProperties(quality, sourceProperties);
+  NSDictionary *properties = RCTImageCompressionKitJpegDestinationProperties(
+    quality,
+    sourceProperties,
+    CGImageGetWidth(cgImage),
+    CGImageGetHeight(cgImage)
+  );
   CGImageDestinationAddImage(destination, cgImage, (__bridge CFDictionaryRef)properties);
   BOOL finalized = CGImageDestinationFinalize(destination);
   CFRelease(destination);

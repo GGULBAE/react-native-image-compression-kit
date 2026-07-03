@@ -109,8 +109,17 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('RCTImageCompressionKitEncodeQualityOutput');
     expect(iosSource).toContain('bestWithinTargetData');
     expect(iosSource).toContain(
-      'Metadata preserve copies source JPEG metadata for JPEG input to JPEG output.'
+      'Metadata preserve copies source JPEG metadata and normalizes output orientation/dimensions for JPEG input to JPEG output.'
     );
+    expect(iosSource).toContain('kCGImagePropertyPixelWidth');
+    expect(iosSource).toContain('kCGImagePropertyPixelHeight');
+    expect(iosSource).toContain('kCGImagePropertyOrientation');
+    expect(iosSource).toContain('kCGImagePropertyTIFFOrientation');
+    expect(iosSource).toContain('kCGImagePropertyExifDictionary');
+    expect(iosSource).toContain('kCGImagePropertyExifPixelXDimension');
+    expect(iosSource).toContain('kCGImagePropertyExifPixelYDimension');
+    expect(iosSource).toContain('CGImageGetWidth(cgImage)');
+    expect(iosSource).toContain('CGImageGetHeight(cgImage)');
     expect(iosSource).toContain(
       'iOS metadata preserve is supported only for JPEG input to JPEG output. Use safe or strip metadata for other iOS format conversions.'
     );

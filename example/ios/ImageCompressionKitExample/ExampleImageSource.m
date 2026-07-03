@@ -11,7 +11,9 @@ static UIImage *ExampleImageSourceImage(void);
 static NSData *ExampleImageSourceJpegData(void);
 static NSData *ExampleImageSourcePngData(void);
 static NSData *ExampleImageSourceUnsupportedData(NSString *format);
+static NSDictionary *ExampleImageSourceReadJpegMetadataSummary(NSData *data);
 static NSString *ExampleImageSourceReadJpegSoftwareMetadata(NSData *data);
+static NSNumber *ExampleImageSourceNumberValue(NSDictionary *properties, NSString *key);
 
 @implementation ExampleImageSource
 
@@ -119,6 +121,34 @@ RCT_EXPORT_METHOD(readJpegSoftwareMetadata:(NSString *)uri
   resolve(ExampleImageSourceReadJpegSoftwareMetadata(data) ?: [NSNull null]);
 }
 
+RCT_EXPORT_METHOD(readJpegMetadataSummary:(NSString *)uri
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSURL *url = [NSURL URLWithString:uri];
+  if (url == nil) {
+    reject(
+      @"ERR_SAMPLE_METADATA_READ_FAILED",
+      @"The iOS example could not read the JPEG metadata URI.",
+      nil
+    );
+    return;
+  }
+
+  NSError *error = nil;
+  NSData *data = [NSData dataWithContentsOfURL:url options:NSDataReadingMappedIfSafe error:&error];
+  if (data == nil || data.length == 0) {
+    reject(
+      @"ERR_SAMPLE_METADATA_READ_FAILED",
+      @"The iOS example could not read the JPEG metadata file.",
+      error
+    );
+    return;
+  }
+
+  resolve(ExampleImageSourceReadJpegMetadataSummary(data));
+}
+
 - (void)writeSampleWithFormat:(NSString *)format
                          data:(NSData *)data
                       resolve:(RCTPromiseResolveBlock)resolve
@@ -190,7 +220,15 @@ static NSData *ExampleImageSourceJpegData(void)
 
   NSDictionary *properties = @{
     (__bridge NSString *)kCGImageDestinationLossyCompressionQuality : @0.82,
+    (__bridge NSString *)kCGImagePropertyPixelWidth : @320,
+    (__bridge NSString *)kCGImagePropertyPixelHeight : @200,
+    (__bridge NSString *)kCGImagePropertyOrientation : @6,
+    (__bridge NSString *)kCGImagePropertyExifDictionary : @{
+      (__bridge NSString *)kCGImagePropertyExifPixelXDimension : @320,
+      (__bridge NSString *)kCGImagePropertyExifPixelYDimension : @200
+    },
     (__bridge NSString *)kCGImagePropertyTIFFDictionary : @{
+      (__bridge NSString *)kCGImagePropertyTIFFOrientation : @6,
       (__bridge NSString *)kCGImagePropertyTIFFSoftware : ExampleImageSourceJpegSoftwareMetadata
     }
   };
@@ -199,6 +237,51 @@ static NSData *ExampleImageSourceJpegData(void)
   CFRelease(destination);
 
   return finalized && data.length > 0 ? data : nil;
+}
+
+static NSDictionary *ExampleImageSourceReadJpegMetadataSummary(NSData *data)
+{
+  CGImageSourceRef source = CGImageSourceCreateWithData((__bridge CFDataRef)data, nil);
+  if (source == nil || CGImageSourceGetCount(source) == 0) {
+    if (source != nil) {
+      CFRelease(source);
+    }
+    return @{};
+  }
+
+  NSDictionary *properties = CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source, 0, nil));
+  CFRelease(source);
+
+  NSDictionary *tiffProperties = properties[(__bridge NSString *)kCGImagePropertyTIFFDictionary];
+  NSDictionary *exifProperties = properties[(__bridge NSString *)kCGImagePropertyExifDictionary];
+  NSString *software = nil;
+  if ([tiffProperties isKindOfClass:[NSDictionary class]]) {
+    NSString *candidateSoftware = tiffProperties[(__bridge NSString *)kCGImagePropertyTIFFSoftware];
+    software = [candidateSoftware isKindOfClass:[NSString class]] ? candidateSoftware : nil;
+  }
+
+  NSNumber *pixelWidth = ExampleImageSourceNumberValue(properties, (__bridge NSString *)kCGImagePropertyPixelWidth);
+  NSNumber *pixelHeight = ExampleImageSourceNumberValue(properties, (__bridge NSString *)kCGImagePropertyPixelHeight);
+  NSNumber *orientation = ExampleImageSourceNumberValue(properties, (__bridge NSString *)kCGImagePropertyOrientation);
+  NSNumber *tiffOrientation = [tiffProperties isKindOfClass:[NSDictionary class]]
+    ? ExampleImageSourceNumberValue(tiffProperties, (__bridge NSString *)kCGImagePropertyTIFFOrientation)
+    : nil;
+  NSNumber *exifPixelXDimension = [exifProperties isKindOfClass:[NSDictionary class]]
+    ? ExampleImageSourceNumberValue(exifProperties, (__bridge NSString *)kCGImagePropertyExifPixelXDimension)
+    : nil;
+  NSNumber *exifPixelYDimension = [exifProperties isKindOfClass:[NSDictionary class]]
+    ? ExampleImageSourceNumberValue(exifProperties, (__bridge NSString *)kCGImagePropertyExifPixelYDimension)
+    : nil;
+
+  return @{
+    @"software" : software ?: [NSNull null],
+    @"pixelWidth" : pixelWidth ?: [NSNull null],
+    @"pixelHeight" : pixelHeight ?: [NSNull null],
+    @"orientation" : orientation ?: [NSNull null],
+    @"tiffOrientation" : tiffOrientation ?: [NSNull null],
+    @"exifPixelXDimension" : exifPixelXDimension ?: [NSNull null],
+    @"exifPixelYDimension" : exifPixelYDimension ?: [NSNull null]
+  };
 }
 
 static NSString *ExampleImageSourceReadJpegSoftwareMetadata(NSData *data)
@@ -221,6 +304,12 @@ static NSString *ExampleImageSourceReadJpegSoftwareMetadata(NSData *data)
 
   NSString *software = tiffProperties[(__bridge NSString *)kCGImagePropertyTIFFSoftware];
   return [software isKindOfClass:[NSString class]] ? software : nil;
+}
+
+static NSNumber *ExampleImageSourceNumberValue(NSDictionary *properties, NSString *key)
+{
+  id value = properties[key];
+  return [value isKindOfClass:[NSNumber class]] ? value : nil;
 }
 
 static NSData *ExampleImageSourcePngData(void)

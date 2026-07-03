@@ -30,6 +30,16 @@ type ErrorState = {
   message: string;
 };
 
+type IOSJpegMetadataSummary = {
+  software: string | null;
+  pixelWidth: number | null;
+  pixelHeight: number | null;
+  orientation: number | null;
+  tiffOrientation: number | null;
+  exifPixelXDimension: number | null;
+  exifPixelYDimension: number | null;
+};
+
 type ExampleImageSourceModule = {
   copySampleJpegToCache: () => Promise<string>;
   copySamplePngToCache?: () => Promise<string>;
@@ -38,6 +48,7 @@ type ExampleImageSourceModule = {
   copySampleAvifToCache?: () => Promise<string>;
   copyUnsupportedImageToCache?: (format: string) => Promise<string>;
   readJpegSoftwareMetadata?: (uri: string) => Promise<string | null>;
+  readJpegMetadataSummary?: (uri: string) => Promise<IOSJpegMetadataSummary>;
   isSmokeTestEnabled?: () => Promise<boolean>;
   logSmokeEvent?: (message: string) => Promise<void>;
 };
@@ -49,6 +60,7 @@ type IOSSmokeSampleModule = ExampleImageSourceModule & {
   copySampleAvifToCache: () => Promise<string>;
   copyUnsupportedImageToCache: (format: string) => Promise<string>;
   readJpegSoftwareMetadata: (uri: string) => Promise<string | null>;
+  readJpegMetadataSummary: (uri: string) => Promise<IOSJpegMetadataSummary>;
 };
 
 const DEFAULT_QUALITY = '72';
@@ -56,6 +68,8 @@ const EXAMPLE_OUTPUT_FORMATS: OutputFormat[] = ['jpeg', 'png', 'webp'];
 const RESIZE_MODES: ResizeMode[] = ['contain', 'cover', 'stretch'];
 const IOS_SMOKE_STEP_TIMEOUT_MS = 30_000;
 const IOS_JPEG_METADATA_SOFTWARE = 'RNICK iOS metadata preserve fixture';
+const IOS_JPEG_SOURCE_EXIF_WIDTH = 320;
+const IOS_JPEG_SOURCE_EXIF_HEIGHT = 200;
 const SAMPLE_MODULE = NativeModules.ExampleImageSource as
   | ExampleImageSourceModule
   | undefined;
@@ -535,7 +549,7 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   const copySampleAvifToCache = sampleModule.copySampleAvifToCache;
   const copyUnsupportedImageToCache =
     sampleModule.copyUnsupportedImageToCache;
-  const readJpegSoftwareMetadata = sampleModule.readJpegSoftwareMetadata;
+  const readJpegMetadataSummary = sampleModule.readJpegMetadataSummary;
 
   const capabilities = await runIOSSmokeStep('capabilities', () =>
     getImageCompressionCapabilities()
@@ -594,13 +608,22 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
   );
   const targetSizeMaxBytes = 1_000;
   const metadataPreserveMaxBytes = 3_000;
-  const jpegSourceSoftware = await runIOSSmokeStep(
+  const jpegSourceMetadata = await runIOSSmokeStep(
     'read-jpeg-source-metadata',
-    () => readJpegSoftwareMetadata(jpegUri)
+    () => readJpegMetadataSummary(jpegUri)
   );
   assertIOSSmoke(
-    jpegSourceSoftware === IOS_JPEG_METADATA_SOFTWARE,
-    `Expected source JPEG metadata software ${IOS_JPEG_METADATA_SOFTWARE}, received ${jpegSourceSoftware}.`
+    jpegSourceMetadata.software === IOS_JPEG_METADATA_SOFTWARE,
+    `Expected source JPEG metadata software ${IOS_JPEG_METADATA_SOFTWARE}, received ${jpegSourceMetadata.software}.`
+  );
+  assertIOSSmoke(
+    jpegSourceMetadata.tiffOrientation === 6,
+    `Expected source JPEG TIFF orientation 6, received ${jpegSourceMetadata.tiffOrientation}.`
+  );
+  assertIOSSmoke(
+    jpegSourceMetadata.exifPixelXDimension === IOS_JPEG_SOURCE_EXIF_WIDTH &&
+      jpegSourceMetadata.exifPixelYDimension === IOS_JPEG_SOURCE_EXIF_HEIGHT,
+    `Expected source JPEG EXIF dimensions ${IOS_JPEG_SOURCE_EXIF_WIDTH}x${IOS_JPEG_SOURCE_EXIF_HEIGHT}, received ${jpegSourceMetadata.exifPixelXDimension}x${jpegSourceMetadata.exifPixelYDimension}.`
   );
   const jpegResult = await runIOSSmokeStep('compress-jpeg-to-jpeg', () =>
     compressImage({
@@ -624,9 +647,9 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
         metadata: 'preserve',
       })
   );
-  const jpegPreservedSoftware = await runIOSSmokeStep(
+  const jpegPreservedMetadata = await runIOSSmokeStep(
     'read-jpeg-preserve-metadata',
-    () => readJpegSoftwareMetadata(jpegPreserveResult.uri)
+    () => readJpegMetadataSummary(jpegPreserveResult.uri)
   );
   const pngResult = await runIOSSmokeStep('compress-png-to-jpeg', () =>
     compressImage({
@@ -715,8 +738,23 @@ async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSummary> {
     `Expected iOS JPEG preserve target-size output <= ${metadataPreserveMaxBytes} bytes, received ${jpegPreserveResult.byteSize}.`
   );
   assertIOSSmoke(
-    jpegPreservedSoftware === IOS_JPEG_METADATA_SOFTWARE,
-    `Expected preserved JPEG metadata software ${IOS_JPEG_METADATA_SOFTWARE}, received ${jpegPreservedSoftware}.`
+    jpegPreservedMetadata.software === IOS_JPEG_METADATA_SOFTWARE,
+    `Expected preserved JPEG metadata software ${IOS_JPEG_METADATA_SOFTWARE}, received ${jpegPreservedMetadata.software}.`
+  );
+  assertIOSSmoke(
+    jpegPreservedMetadata.orientation === 1 &&
+      jpegPreservedMetadata.tiffOrientation === 1,
+    `Expected preserved JPEG orientation metadata 1/1, received ${jpegPreservedMetadata.orientation}/${jpegPreservedMetadata.tiffOrientation}.`
+  );
+  assertIOSSmoke(
+    jpegPreservedMetadata.pixelWidth === jpegPreserveResult.width &&
+      jpegPreservedMetadata.pixelHeight === jpegPreserveResult.height,
+    `Expected preserved JPEG pixel metadata ${jpegPreserveResult.width}x${jpegPreserveResult.height}, received ${jpegPreservedMetadata.pixelWidth}x${jpegPreservedMetadata.pixelHeight}.`
+  );
+  assertIOSSmoke(
+    jpegPreservedMetadata.exifPixelXDimension === jpegPreserveResult.width &&
+      jpegPreservedMetadata.exifPixelYDimension === jpegPreserveResult.height,
+    `Expected preserved JPEG EXIF dimensions ${jpegPreserveResult.width}x${jpegPreserveResult.height}, received ${jpegPreservedMetadata.exifPixelXDimension}x${jpegPreservedMetadata.exifPixelYDimension}.`
   );
   assertIOSSmoke(
     gifResult.byteSize <= targetSizeMaxBytes,
@@ -1083,7 +1121,8 @@ function assertIOSSmokeSampleModule(
     !module.copySampleHeifToCache ||
     !module.copySampleAvifToCache ||
     !module.copyUnsupportedImageToCache ||
-    !module.readJpegSoftwareMetadata
+    !module.readJpegSoftwareMetadata ||
+    !module.readJpegMetadataSummary
   ) {
     throw new Error('iOS smoke sample module methods are unavailable.');
   }

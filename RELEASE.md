@@ -1,5 +1,52 @@
 # Release Notes
 
+## v0.2.13
+
+Status: unpublished release candidate for iOS JPEG metadata preserve hardening. npm `latest` remains `0.2.12`; no `v0.2.13` git tag, GitHub Release, or npm publish has been created.
+
+This candidate hardens the iOS JPEG source to JPEG output `metadata: 'preserve'`
+path so preserved metadata does not retain stale orientation or pixel dimension
+values after resize, quality, or `output.maxBytes` encoding.
+
+### Goals
+
+- Normalize iOS preserved JPEG output orientation metadata to `1` after rendering.
+- Update preserved top-level pixel width/height and EXIF `PixelXDimension` / `PixelYDimension` to the rendered JPEG dimensions.
+- Keep JPEG source to JPEG output as the only iOS preserve scope.
+- Prove the behavior through iOS host-app smoke metadata readback and source-level expectations.
+- Align README guidance, release notes, Android verification doctor checks, and Vitest expectations.
+
+### Included
+
+- `package.json` version bump to `0.2.13`.
+- iOS JPEG preserve encoding now passes final `CGImage` dimensions into ImageIO destination properties.
+- Preserved JPEG metadata normalizes top-level orientation, TIFF orientation, top-level pixel width/height, and EXIF pixel dimensions.
+- iOS smoke fixture writes stale TIFF orientation and stale EXIF pixel dimensions, then verifies preserve output normalizes them to the compressed JPEG result.
+- README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.13` candidate.
+- Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve hardening candidate.
+
+### Not Included
+
+- Android runtime behavior changes.
+- PNG, WebP, GIF, HEIC, HEIF, or AVIF metadata preserve on iOS.
+- New output formats.
+- npm package publication, `v0.2.13` git tag, or GitHub Release creation.
+
+### Release Checklist
+
+Before any publish:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.
+
 ## v0.2.12
 
 Status: published to npm as the `0.2.12` latest release, tagged as `v0.2.12`.
