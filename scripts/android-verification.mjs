@@ -21,11 +21,13 @@ const REQUIRED_FILES = [
   '.github/workflows/ios-validation.yml',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
+  'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputPrototype.kt',
   'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt',
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt',
   'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
+  'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputPrototypeTest.kt',
   'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt',
   'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
   'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
@@ -235,6 +237,15 @@ function checkPackageMetadata() {
     'v0.2.15%20published',
     'Version `0.2.15` is published for `react-native-image-compression-kit`',
     'The `0.2.15` package metadata is published for `react-native-image-compression-kit`',
+    'Status: v0.2.15 candidate',
+    'v0.2.15%20candidate',
+    'Version `0.2.15` is an unpublished release candidate for `react-native-image-compression-kit`',
+    'It documents the AVIF output feasibility spike and keeps runtime AVIF output unsupported until platform-specific encoder paths can be validated.',
+    'The `0.2.15` package metadata is prepared as an unpublished AVIF output feasibility candidate for `react-native-image-compression-kit`',
+    'Status: v0.2.16 published',
+    'v0.2.16%20published',
+    'Version `0.2.16` is published for `react-native-image-compression-kit`',
+    'The `0.2.16` package metadata is published for `react-native-image-compression-kit`',
   ];
   const expectedKeywords = [
     'react-native',
@@ -252,7 +263,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.15',
+    packageJson.version === '0.2.16',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -267,11 +278,11 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.15` is an unpublished release candidate for `react-native-image-compression-kit`'),
-    readmeContents.includes('It documents the AVIF output feasibility spike and keeps runtime AVIF output unsupported until platform-specific encoder paths can be validated.'),
+    readmeContents.includes('Version `0.2.16` is an unpublished release candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('It adds an internal Android AVIF output encoder route prototype and keeps runtime AVIF output unsupported until byte-signature, decode-back, metadata, and target-size behavior are validated.'),
     readmeContents.includes('The latest published npm package is `0.2.14`'),
     readmeContents.includes('GitHub Release [v0.2.14]'),
-    readmeContents.includes('The `0.2.15` package metadata is prepared as an unpublished AVIF output feasibility candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('The `0.2.16` package metadata is prepared as an unpublished Android AVIF output encoder route prototype candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -288,12 +299,14 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.13` is the published iOS JPEG metadata preserve hardening release'),
     readmeContents.includes('version `0.2.14` is the published AVIF output capability/error surface release'),
     readmeContents.includes('version `0.2.15` is the unpublished AVIF output feasibility candidate'),
+    readmeContents.includes('version `0.2.16` is the unpublished Android AVIF output encoder route prototype candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
     readmeContents.includes('Version `0.2.13` hardens that iOS preserve path by normalizing output orientation and pixel dimension metadata.'),
     readmeContents.includes('Version `0.2.14` aligns AVIF output unsupported capability notes and `ERR_NOT_IMPLEMENTED` messages without adding AVIF encoding.'),
     readmeContents.includes('Version `0.2.15` documents the AVIF output feasibility decision without runtime behavior changes.'),
+    readmeContents.includes('Version `0.2.16` adds an internal Android AVIF output encoder route prototype without enabling AVIF output.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
     readmeContents.includes('## AVIF Output Feasibility Spike'),
@@ -301,6 +314,11 @@ function checkPackageMetadata() {
     readmeContents.includes('the current Android implementation encodes through `Bitmap.compress()`'),
     readmeContents.includes('Future iOS AVIF output must mirror the WebP output path'),
     readmeContents.includes('Current v0.2.15 capability reporting remains unchanged'),
+    readmeContents.includes('## Android AVIF Output Prototype'),
+    readmeContents.includes('MediaCodec image/avif encoder probe'),
+    readmeContents.includes('MediaCodecList.findEncoderForFormat()'),
+    readmeContents.includes('getImageCompressionCapabilities().formats.avif.output=false'),
+    readmeContents.includes('The v0.2.16 Android instrumentation check runs on an API 35 emulator'),
     readmeContents.includes('Partial implementation criteria: static image output only'),
     readmeContents.includes("metadataPolicies: ['preserve', 'safe', 'strip']"),
     staleReadmeSnippets.every((snippet) => !readmeContents.includes(snippet)),
@@ -311,7 +329,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.15 AVIF output feasibility candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.16 Android AVIF output encoder route prototype candidate',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README candidate status are aligned'
       : 'expected package.json release metadata or README AVIF output guidance is missing/mismatched',
@@ -600,6 +618,32 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.16',
+    'Status: unpublished release candidate for the Android AVIF output encoder route prototype. npm `latest` remains `0.2.14`; no `v0.2.16` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not enable AVIF output. It adds an internal Android prototype that probes whether an API 34+ `MediaCodec` still-image AVIF encoder route can become the future production path outside `Bitmap.compress()`.',
+    'Reconfirm the public Android AVIF encoder route available on Android 14+.',
+    'Add one minimal Android prototype for a `MediaCodec image/avif encoder probe`.',
+    'Keep AVIF output capability reporting unchanged until full output validation exists.',
+    'Define byte-signature, decode-back, metadata, `output.maxBytes`, and animation boundaries before production AVIF output work.',
+    'Align README, release notes, Android verification doctor checks, Vitest expectations, JVM tests, and Android instrumentation with the prototype decision.',
+    'Android platform supported-media documentation lists AVIF baseline image encoder and decoder support as mandatory beginning with Android 14.',
+    'The prototype route builds an `image/avif` `MediaFormat` with `COLOR_FormatYUV420Flexible` input and asks `MediaCodecList.findEncoderForFormat()` for an encoder on API 34+.',
+    'The prototype records a `video/av01` fallback encoder probe as evidence only; AV1 video encoder availability is not enough to prove a complete static AVIF still-image file output path.',
+    'The Android production gate remains closed until the module feeds processed `Bitmap` pixels to the encoder, writes a complete `.avif` file, verifies `ftyp` `avif` / `avis` signature bytes, and decodes the result back with `ImageDecoder`.',
+    'v0.2.16 keeps runtime capability reporting unchanged: Android AVIF `input=true` on Android 14+ and `output=false`; iOS AVIF input remains gated by `CGImageSourceCopyTypeIdentifiers()` and AVIF output remains `false`.',
+    'Android may report AVIF `output=true` only after the prototype is promoted into a real encode path with byte-signature, decode-back, target-size, and unsupported metadata-path tests.',
+    "`metadata: 'preserve'` remains unsupported for AVIF output unless explicitly designed and validated.",
+    '`output.maxBytes` remains unsupported for AVIF output until AVIF quality and size-search semantics are validated.',
+    'Animated AVIF preservation remains out of scope.',
+    '`package.json` version bump to `0.2.16`.',
+    'Internal Android `AndroidAvifOutputPrototype` source with route report, API gate, `MediaCodecList.findEncoderForFormat()` probe, AV1 fallback probe, AVIF signature helper, and validation plan.',
+    'Android JVM tests for injected encoder discovery, API 34 gating, production gate closure, YUV420 `image/avif` format construction, and AVIF `ftyp` brand detection.',
+    'Android instrumentation assertion for the API 34+ prototype route report and production gate.',
+    'README and verification expectations that keep `getImageCompressionCapabilities().formats.avif.output=false`.',
+    'AVIF output capability enablement.',
+    'Target-size AVIF output.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.16`.',
+    'Because this is a prototype candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.14`, after any future publish decision.',
     '## v0.2.15',
     'Status: unpublished release candidate for the AVIF output feasibility spike. npm `latest` remains `0.2.14`; no `v0.2.15` tag, GitHub Release, or npm publish is part of this candidate.',
     'This candidate does not implement AVIF output. It records the platform boundary for when Android and iOS can safely report AVIF `output=true` instead of the current `ERR_NOT_IMPLEMENTED` unsupported-output path.',
@@ -1290,7 +1334,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1302,16 +1346,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.15' && missing.length === 0;
+  const ok = packageJson.version === '0.2.16' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.15 AVIF output feasibility notes and previous release notes are current',
+    label: 'v0.2.16 Android AVIF output encoder route prototype notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-    ...(packageJson.version === '0.2.15' ? [] : ['package.json version 0.2.15']),
+          ...(packageJson.version === '0.2.16'
+            ? []
+            : ['package.json version 0.2.16']),
         ].join(' | ')}`,
   };
 }
@@ -1445,6 +1491,9 @@ function checkAndroidGradleConfig() {
 }
 
 function checkAndroidNativeModule() {
+  const avifPrototypeContents = readText(
+    'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputPrototype.kt'
+  );
   const moduleContents = readText(
     'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
   );
@@ -1453,6 +1502,9 @@ function checkAndroidNativeModule() {
   );
   const outputContents = readText(
     'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt'
+  );
+  const avifPrototypeTestContents = readText(
+    'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputPrototypeTest.kt'
   );
   const metadataTestContents = readText(
     'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt'
@@ -1465,15 +1517,31 @@ function checkAndroidNativeModule() {
   );
   const packageJson = readJson('package.json');
   const contents = [
+    avifPrototypeContents,
     moduleContents,
     metadataContents,
     outputContents,
+    avifPrototypeTestContents,
     metadataTestContents,
     outputTestContents,
     moduleTestContents,
   ].join('\n');
   const expectedSnippets = [
     'NativeImageCompressionKitSpec',
+    'AndroidAvifOutputPrototype',
+    'AndroidAvifOutputPrototypeReport',
+    'MediaCodecList(MediaCodecList.REGULAR_CODECS)',
+    'findEncoderForFormat',
+    'MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible',
+    'MediaCodec image/avif encoder probe',
+    'AV1_VIDEO_MIME_TYPE = "video/av01"',
+    'PRODUCTION_GATE_MESSAGE',
+    'looksLikeAvifFile',
+    'Decode the result with ImageDecoder and assert dimensions match the processed bitmap.',
+    'imageAvifMediaFormatUsesStillImageMimeAndFlexibleYuvInput',
+    'inspectRouteFindsInjectedImageEncoderButKeepsProductionGateClosed',
+    'inspectRouteBelowApi34DoesNotProbeEncoderAndReportsSdkBlocker',
+    'avifSignatureRecognizesFtypAvifOrAvisBrandOnly',
     'BitmapFactory.decodeStream',
     'ImageDecoder.decodeBitmap',
     'createImageDecoderSource(inputSource)',
@@ -1651,10 +1719,10 @@ function checkAndroidNativeModule() {
 
   return {
     ok: missing.length === 0 && hasUnitTestScript,
-    label: 'Android Kotlin module matches generated spec and Android image MVP path',
+    label: 'Android Kotlin module matches generated spec, Android image MVP path, and AVIF output prototype',
     detail:
       missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF decode paths, SDK-gated unsupported input boundaries, JPEG orient/metadata, resize, target-size, JPEG/PNG/WebP output encode path, and module-level file/content URI tests'
+        ? 'module extends generated spec and contains JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF decode paths, SDK-gated unsupported input boundaries, JPEG orient/metadata, resize, target-size, JPEG/PNG/WebP output encode path, AVIF output route prototype checks, and module-level file/content URI tests'
         : `missing snippets: ${[
             ...missing,
             ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),
@@ -2096,7 +2164,11 @@ function checkHeicHeifInstrumentationValidation() {
     gradleContents.includes('androidTest.assets.srcDirs += ["src/test/assets"]'),
     gradleContents.includes('androidTestImplementation "androidx.test.ext:junit:1.2.1"'),
     testContents.includes('compressesCommittedHeicHeifAndAvifSamplesToJpegPngAndWebp'),
+    testContents.includes('probesAndroidAvifOutputEncoderPrototypeRoute'),
     testContents.includes('Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE'),
+    testContents.includes('AndroidAvifOutputPrototype.inspectRoute(width = 16, height = 12)'),
+    testContents.includes('AndroidAvifOutputPrototype.PRODUCTION_GATE_MESSAGE'),
+    testContents.includes('assertFalse(report.productionReady)'),
     testContents.includes('heic-heif/sample.heic'),
     testContents.includes('heic-heif/sample.heif'),
     testContents.includes('avif/sample.avif'),
@@ -2125,7 +2197,7 @@ function checkHeicHeifInstrumentationValidation() {
     ok: checks.every(Boolean),
     label: 'HEIC/HEIF/AVIF emulator instrumentation validation is wired',
     detail: checks.every(Boolean)
-      ? 'androidTest assets, API 34+ codec sample assertions, package script, KVM/boot-timeout workflow setup, and README are present'
+      ? 'androidTest assets, API 34+ codec sample assertions, AVIF output prototype route gate, package script, KVM/boot-timeout workflow setup, and README are present'
       : 'expected androidTest setup, package script, workflow snippets, or README documentation are missing/mismatched',
   };
 }

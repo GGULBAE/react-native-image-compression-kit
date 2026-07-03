@@ -20,6 +20,7 @@ import com.facebook.react.bridge.UIManager
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.turbomodule.core.interfaces.CallInvokerHolder
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -92,6 +93,38 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
         )
       }
     }
+  }
+
+  @Test
+  fun probesAndroidAvifOutputEncoderPrototypeRoute() {
+    assertTrue(
+      "AVIF output prototype route probe must run on API 34+.",
+      Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+    )
+
+    val report = AndroidAvifOutputPrototype.inspectRoute(width = 16, height = 12)
+
+    assertTrue(report.sdkEligible)
+    assertEquals(AndroidAvifOutputPrototype.AVIF_MIME_TYPE, report.imageAvifMimeType)
+    assertEquals(AndroidAvifOutputPrototype.CANDIDATE_ROUTE, report.candidateRoute)
+    assertTrue(report.validationPlan.any { it.contains("ImageDecoder") })
+    assertTrue(
+      report.blockers.any {
+        it == AndroidAvifOutputPrototype.PRODUCTION_GATE_MESSAGE
+      }
+    )
+
+    if (report.hasImageAvifEncoder) {
+      assertTrue(report.hasCandidateRoute)
+    } else {
+      assertTrue(
+        report.blockers.any {
+          it.contains("No image/avif encoder was discovered")
+        }
+      )
+    }
+
+    assertFalse(report.productionReady)
   }
 
   private fun compressionOptions(

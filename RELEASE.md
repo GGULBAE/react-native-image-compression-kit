@@ -1,5 +1,66 @@
 # Release Notes
 
+## v0.2.16
+
+Status: unpublished release candidate for the Android AVIF output encoder route prototype. npm `latest` remains `0.2.14`; no `v0.2.16` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It adds an internal Android prototype that probes whether an API 34+ `MediaCodec` still-image AVIF encoder route can become the future production path outside `Bitmap.compress()`.
+
+### Goals
+
+- Reconfirm the public Android AVIF encoder route available on Android 14+.
+- Add one minimal Android prototype for a `MediaCodec image/avif encoder probe`.
+- Keep AVIF output capability reporting unchanged until full output validation exists.
+- Define byte-signature, decode-back, metadata, `output.maxBytes`, and animation boundaries before production AVIF output work.
+- Align README, release notes, Android verification doctor checks, Vitest expectations, JVM tests, and Android instrumentation with the prototype decision.
+
+### Findings
+
+- Android platform supported-media documentation lists AVIF baseline image encoder and decoder support as mandatory beginning with Android 14.
+- Android `Bitmap.CompressFormat` still exposes JPEG, PNG, WebP, WebP lossless, and WebP lossy output formats with no AVIF enum, so the existing `Bitmap.compress()` path still cannot implement AVIF output.
+- The prototype route builds an `image/avif` `MediaFormat` with `COLOR_FormatYUV420Flexible` input and asks `MediaCodecList.findEncoderForFormat()` for an encoder on API 34+.
+- The prototype records a `video/av01` fallback encoder probe as evidence only; AV1 video encoder availability is not enough to prove a complete static AVIF still-image file output path.
+- The Android production gate remains closed until the module feeds processed `Bitmap` pixels to the encoder, writes a complete `.avif` file, verifies `ftyp` `avif` / `avis` signature bytes, and decodes the result back with `ImageDecoder`.
+
+### Capability Reporting Decision
+
+- v0.2.16 keeps runtime capability reporting unchanged: Android AVIF `input=true` on Android 14+ and `output=false`; iOS AVIF input remains gated by `CGImageSourceCopyTypeIdentifiers()` and AVIF output remains `false`.
+- Android may report AVIF `output=true` only after the prototype is promoted into a real encode path with byte-signature, decode-back, target-size, and unsupported metadata-path tests.
+- `metadata: 'preserve'` remains unsupported for AVIF output unless explicitly designed and validated.
+- `output.maxBytes` remains unsupported for AVIF output until AVIF quality and size-search semantics are validated.
+- Animated AVIF preservation remains out of scope.
+
+### Included
+
+- `package.json` version bump to `0.2.16`.
+- Internal Android `AndroidAvifOutputPrototype` source with route report, API gate, `MediaCodecList.findEncoderForFormat()` probe, AV1 fallback probe, AVIF signature helper, and validation plan.
+- Android JVM tests for injected encoder discovery, API 34 gating, production gate closure, YUV420 `image/avif` format construction, and AVIF `ftyp` brand detection.
+- Android instrumentation assertion for the API 34+ prototype route report and production gate.
+- README and verification expectations that keep `getImageCompressionCapabilities().formats.avif.output=false`.
+
+### Not Included
+
+- Production AVIF output encoding.
+- AVIF output capability enablement.
+- HEIC / HEIF output encoding.
+- Metadata preservation for AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.16`.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+```
+
+Because this is a prototype candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.14`, after any future publish decision.
+
 ## v0.2.15
 
 Status: unpublished release candidate for the AVIF output feasibility spike. npm `latest` remains `0.2.14`; no `v0.2.15` tag, GitHub Release, or npm publish is part of this candidate.
