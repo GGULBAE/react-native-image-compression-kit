@@ -1,5 +1,68 @@
 # Release Notes
 
+## v0.2.17
+
+Status: unpublished release candidate for the Android AVIF output encode/decode-back smoke. npm `latest` remains `0.2.14`; no `v0.2.17` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It advances the v0.2.16 Android `MediaCodec image/avif` prototype from route discovery to a real static-file smoke attempt that either proves a minimal AVIF cache file can be encoded and decoded back, or records the blocker that keeps production AVIF output disabled.
+
+### Goals
+
+- Attempt a repo-owned 16x12 Bitmap to AVIF cache-file encode on an API 34+ Android emulator or device.
+- Validate the generated file has an `ftyp` box with `avif` or `avis` compatible brand.
+- Decode the generated file with `ImageDecoder` and assert 16x12 output dimensions.
+- Record a clear blocker when no encoder is exposed, the codec route fails, muxing fails, the signature is invalid, or decode-back fails.
+- Keep AVIF output capability reporting unchanged until a production path is intentionally implemented.
+- Align README, release notes, Android verification doctor checks, Vitest expectations, JVM tests, and Android instrumentation with the smoke result contract.
+
+### Findings
+
+- Android platform supported-media documentation lists AVIF baseline image encoder and decoder support as mandatory beginning with Android 14, but the current production implementation still cannot use `Bitmap.compress()` for AVIF because `Bitmap.CompressFormat` has no AVIF enum.
+- The smoke route creates a 16x12 ARGB bitmap pattern, converts it into YUV420 input through `MediaCodec.getInputImage()`, queues it into an `image/avif` encoder, and collects encoder output bytes and muxable samples.
+- The smoke validates direct encoder bytes first, then attempts a `MediaMuxer.MUXER_OUTPUT_HEIF` container path and validates the muxed output.
+- A passing smoke requires both AVIF `ftyp` `avif` / `avis` signature bytes and `ImageDecoder` decode-back dimensions. Anything less remains a documented blocker, not a partial production feature.
+
+### Capability Reporting Decision
+
+- v0.2.17 keeps runtime capability reporting unchanged: Android AVIF `input=true` on Android 14+ and `output=false`; iOS AVIF input remains gated by `CGImageSourceCopyTypeIdentifiers()` and AVIF output remains `false`.
+- Android may report AVIF `output=true` only after the smoke is promoted into a production encode path with metadata, target-size, unsupported-path, and public API behavior tests.
+- `metadata: 'preserve'` remains unsupported for AVIF output unless explicitly designed and validated.
+- `output.maxBytes` remains unsupported for AVIF output until AVIF quality and size-search semantics are validated.
+- Animated AVIF preservation remains out of scope.
+
+### Included
+
+- `package.json` version bump to `0.2.17`.
+- Internal Android `AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke()` route with `MediaCodec` input image writing, direct output validation, `MediaMuxer.MUXER_OUTPUT_HEIF` fallback, AVIF signature checking, and `ImageDecoder` decode-back validation.
+- Android JVM tests for smoke blocker reporting below API 34 and when no `image/avif` encoder is discovered.
+- Android instrumentation smoke that runs on API 34+, logs `RNICK_AVIF_OUTPUT_SMOKE`, accepts either a validated static AVIF file or a documented blocker, and asserts `getImageCompressionCapabilities().formats.avif.output=false`.
+- README and verification expectations that keep `getImageCompressionCapabilities().formats.avif.output=false`.
+
+### Not Included
+
+- Production AVIF output encoding.
+- AVIF output capability enablement.
+- HEIC / HEIF output encoding.
+- Metadata preservation for AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.17`.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+```
+
+GitHub Android Instrumentation must also pass on the pushed candidate commit and its `RNICK_AVIF_OUTPUT_SMOKE` log must be reviewed. If the route fails to produce a decodeable AVIF file there, keep AVIF output disabled and carry the logged blocker into the next production-path decision.
+
+Because this is a smoke candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.14`, after any future publish decision.
+
 ## v0.2.16
 
 Status: unpublished release candidate for the Android AVIF output encoder route prototype. npm `latest` remains `0.2.14`; no `v0.2.16` tag, GitHub Release, or npm publish is part of this candidate.

@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.facebook.react.bridge.Callback
@@ -14,6 +15,7 @@ import com.facebook.react.bridge.JavaScriptContextHolder
 import com.facebook.react.bridge.JavaScriptModule
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.Promise
+import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.UIManager
@@ -31,6 +33,8 @@ import java.nio.charset.StandardCharsets
 
 @RunWith(AndroidJUnit4::class)
 class ImageCompressionKitHeicHeifInstrumentationTest {
+  private val logTag = "RNICK_AVIF_OUTPUT_SMOKE"
+
   @Test
   fun compressesCommittedHeicHeifAndAvifSamplesToJpegPngAndWebp() {
     assertTrue(
@@ -125,6 +129,44 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
     }
 
     assertFalse(report.productionReady)
+  }
+
+  @Test
+  fun attemptsAndroidAvifOutputEncodeDecodeBackSmoke() {
+    assertTrue(
+      "AVIF output encode/decode-back smoke must run on API 34+.",
+      Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+    )
+
+    val targetContext = InstrumentationRegistry
+      .getInstrumentation()
+      .targetContext
+      .applicationContext
+    val result = AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke(targetContext.cacheDir)
+
+    Log.i(logTag, result.toString())
+    assertTrue(result.route.contains(AndroidAvifOutputPrototype.SMOKE_ROUTE))
+    assertAvifOutputCapabilityRemainsFalse(targetContext)
+
+    if (result.success) {
+      assertTrue(result.attempted)
+      assertTrue(result.signatureValid)
+      assertTrue(result.decodeBackValid)
+      assertEquals(16, result.decodedWidth)
+      assertEquals(12, result.decodedHeight)
+      assertNotNull(result.outputFilePath)
+      val outputFile = File(result.outputFilePath ?: error("Smoke output path is required."))
+      assertTrue(outputFile.exists())
+      assertTrue(outputFile.length() > 0)
+      assertTrue(AndroidAvifOutputPrototype.looksLikeAvifFile(outputFile.readBytes()))
+    } else {
+      assertNotNull(result.blocker)
+      assertTrue(
+        result.blocker?.contains("No image/avif encoder") == true ||
+          result.blocker?.contains("AVIF smoke did not produce") == true ||
+          result.blocker?.contains("MediaCodec image/avif encode/decode-back smoke failed") == true
+      )
+    }
   }
 
   private fun compressionOptions(
@@ -228,6 +270,40 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
     assertTrue(bytes.size >= 12)
     assertEquals("RIFF", String(bytes, 0, 4, StandardCharsets.US_ASCII))
     assertEquals("WEBP", String(bytes, 8, 4, StandardCharsets.US_ASCII))
+  }
+
+  private fun assertAvifOutputCapabilityRemainsFalse(targetContext: Context) {
+    val module = ImageCompressionKitModule(
+      reactContext = TestReactApplicationContext(targetContext),
+      writableMapFactory = { JavaOnlyMap() },
+      writableArrayFactory = { JavaOnlyArray() }
+    )
+    val promise = RecordingPromise()
+
+    module.getImageCompressionCapabilities(promise)
+
+    val capabilities = promise.resolvedMap()
+    val avifCapability = findFormatCapability(
+      capabilities.getArray("formats") ?: error("Capabilities must include formats."),
+      "avif"
+    )
+
+    assertTrue(avifCapability.getBoolean("input"))
+    assertFalse(avifCapability.getBoolean("output"))
+  }
+
+  private fun findFormatCapability(
+    formats: ReadableArray,
+    format: String
+  ): ReadableMap {
+    for (index in 0 until formats.size()) {
+      val capability = formats.getMap(index)
+      if (capability?.getString("format") == format) {
+        return capability
+      }
+    }
+
+    error("Missing $format format capability.")
   }
 
   private data class OutputCase(

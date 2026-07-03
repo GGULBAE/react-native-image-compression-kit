@@ -65,10 +65,19 @@ const STALE_PACKED_README_SNIPPETS = [
   'Version `0.2.15` is an unpublished release candidate for `react-native-image-compression-kit`',
   'It documents the AVIF output feasibility spike and keeps runtime AVIF output unsupported until platform-specific encoder paths can be validated.',
   'The `0.2.15` package metadata is prepared as an unpublished AVIF output feasibility candidate for `react-native-image-compression-kit`',
+  'Status: v0.2.16 candidate',
+  'v0.2.16%20candidate',
+  'Version `0.2.16` is an unpublished release candidate for `react-native-image-compression-kit`',
+  'It adds an internal Android AVIF output encoder route prototype and keeps runtime AVIF output unsupported until byte-signature, decode-back, metadata, and target-size behavior are validated.',
+  'The `0.2.16` package metadata is prepared as an unpublished Android AVIF output encoder route prototype candidate for `react-native-image-compression-kit`',
   'Status: v0.2.16 published',
   'v0.2.16%20published',
   'Version `0.2.16` is published for `react-native-image-compression-kit`',
   'The `0.2.16` package metadata is published for `react-native-image-compression-kit`',
+  'Status: v0.2.17 published',
+  'v0.2.17%20published',
+  'Version `0.2.17` is published for `react-native-image-compression-kit`',
+  'The `0.2.17` package metadata is published for `react-native-image-compression-kit`',
 ];
 
 const STEPS = [

@@ -11,6 +11,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -56,8 +57,8 @@ class AndroidAvifOutputPrototypeTest {
     assertEquals("c2.android.av1.encoder", report.av1FallbackEncoderName)
     assertEquals(AndroidAvifOutputPrototype.CANDIDATE_ROUTE, report.candidateRoute)
     assertFalse(report.productionReady)
-    assertTrue(report.blockers.any { it.contains("Bitmap pixels") })
-    assertTrue(report.blockers.any { it.contains("complete AVIF still-image file") })
+    assertTrue(report.blockers.any { it.contains("not wired into compressImage()") })
+    assertTrue(report.blockers.any { it.contains("ImageDecoder decode-back validation") })
     assertTrue(report.blockers.any { it.contains("metadata='preserve'") })
     assertTrue(report.blockers.any { it.contains("output.maxBytes") })
     assertTrue(
@@ -128,4 +129,43 @@ class AndroidAvifOutputPrototypeTest {
     assertFalse(AndroidAvifOutputPrototype.looksLikeAvifFile(pngBytes))
     assertFalse(AndroidAvifOutputPrototype.looksLikeAvifFile(ByteArray(4)))
   }
+
+  @Test
+  fun smokeBelowApi34ReportsSdkBlockerWithoutAttempting() {
+    val result = AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke(
+      cacheDir = createTempCacheDir(),
+      apiLevel = Build.VERSION_CODES.TIRAMISU,
+      encoderFinder = {
+        throw AssertionError("Encoder finder must not run below API 34.")
+      }
+    )
+
+    assertFalse(result.attempted)
+    assertFalse(result.success)
+    assertEquals(AndroidAvifOutputPrototype.SMOKE_ROUTE, result.route)
+    assertTrue(result.blocker?.contains("requires Android 14+") == true)
+    assertTrue(result.details.any { it.contains("requires Android 14+") })
+  }
+
+  @Test
+  fun smokeOnApi34WithoutImageEncoderReportsBlockerWithoutAttempting() {
+    val result = AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke(
+      cacheDir = createTempCacheDir(),
+      apiLevel = Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+      encoderFinder = { null }
+    )
+
+    assertFalse(result.attempted)
+    assertFalse(result.success)
+    assertEquals(AndroidAvifOutputPrototype.SMOKE_ROUTE, result.route)
+    assertTrue(result.blocker?.contains("No image/avif encoder") == true)
+    assertTrue(result.details.any { it.contains("No image/avif encoder") })
+  }
+
+  private fun createTempCacheDir(): File =
+    createTempFile(prefix = "rnick-avif-output-smoke", suffix = "cache").let { file ->
+      file.delete()
+      file.mkdirs()
+      file
+    }
 }
