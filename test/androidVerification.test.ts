@@ -273,6 +273,12 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('## Android AVIF Output Encode/Decode-Back Smoke');
     expect(readmeSource).toContain('MediaCodec image/avif encode/decode-back smoke');
     expect(readmeSource).toContain('MediaMuxer.MUXER_OUTPUT_HEIF');
+    expect(readmeSource).toContain(
+      'Current GitHub Android Instrumentation result: the API 35 Google APIs emulator does not expose an `image/avif` encoder through `MediaCodecList.findEncoderForFormat()`.'
+    );
+    expect(readmeSource).toContain(
+      'The smoke therefore reports `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`'
+    );
     expect(readmeSource).toContain('getImageCompressionCapabilities().formats.avif.output=false');
     expect(readmeSource).toContain(
       'The v0.2.17 instrumentation check keeps that probe and adds the encode/decode-back smoke'
@@ -587,6 +593,9 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain(
       'A passing smoke requires both AVIF `ftyp` `avif` / `avis` signature bytes and `ImageDecoder` decode-back dimensions.'
+    );
+    expect(releaseSource).toContain(
+      'Current GitHub Android Instrumentation on the API 35 Google APIs emulator reports `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`; that keeps AVIF output disabled.'
     );
     expect(releaseSource).toContain(
       'v0.2.17 keeps runtime capability reporting unchanged: Android AVIF `input=true` on Android 14+ and `output=false`; iOS AVIF input remains gated by `CGImageSourceCopyTypeIdentifiers()` and AVIF output remains `false`.'

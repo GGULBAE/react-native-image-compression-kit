@@ -207,6 +207,8 @@ On Android 14+ it creates a repo-owned 16x12 ARGB bitmap pattern in instrumentat
 
 The smoke success criteria are strict: the output must have an `ftyp` box with `avif` or `avis` compatible brand, and `ImageDecoder` must decode it back to 16x12 pixels. Missing encoders, codec failures, muxer/container failures, invalid signatures, or decode-back failures are reported as blockers instead of enabling a partial AVIF output surface.
 
+Current GitHub Android Instrumentation result: the API 35 Google APIs emulator does not expose an `image/avif` encoder through `MediaCodecList.findEncoderForFormat()`. The smoke therefore reports `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().` AVIF output remains disabled.
+
 Android `getImageCompressionCapabilities().formats.avif.output=false` remains the production contract, and selecting `output.format: 'avif'` still rejects with `ERR_NOT_IMPLEMENTED`. `metadata: 'preserve'`, `output.maxBytes`, animated AVIF preservation, and production AVIF output wiring remain non-goals for this candidate.
 
 ## HEIC / HEIF / AVIF Codec Sample Validation Strategy

@@ -21,6 +21,7 @@ This candidate does not enable AVIF output. It advances the v0.2.16 Android `Med
 - The smoke route creates a 16x12 ARGB bitmap pattern, converts it into YUV420 input through `MediaCodec.getInputImage()`, queues it into an `image/avif` encoder, and collects encoder output bytes and muxable samples.
 - The smoke validates direct encoder bytes first, then attempts a `MediaMuxer.MUXER_OUTPUT_HEIF` container path and validates the muxed output.
 - A passing smoke requires both AVIF `ftyp` `avif` / `avis` signature bytes and `ImageDecoder` decode-back dimensions. Anything less remains a documented blocker, not a partial production feature.
+- Current GitHub Android Instrumentation on the API 35 Google APIs emulator reports `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`; that keeps AVIF output disabled.
 
 ### Capability Reporting Decision
 
