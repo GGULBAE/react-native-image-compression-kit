@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.2.15
+
+Status: unpublished release candidate for the AVIF output feasibility spike. npm `latest` remains `0.2.14`; no `v0.2.15` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not implement AVIF output. It records the platform boundary for when Android and iOS can safely report AVIF `output=true` instead of the current `ERR_NOT_IMPLEMENTED` unsupported-output path.
+
+### Goals
+
+- Confirm whether Android can encode AVIF through the current native output path.
+- Confirm whether iOS ImageIO AVIF destination support can be advertised without runtime probing.
+- Define the AVIF output capability reporting rule for Android and iOS.
+- Define unsupported versus partial-implementation criteria before any production AVIF output work.
+- Align README, release notes, Android verification doctor checks, and Vitest expectations with the feasibility decision.
+
+### Findings
+
+- Android platform supported-media documentation lists AVIF baseline image encoder and decoder support as mandatory beginning with Android 14, but the current module encodes through `Bitmap.compress()`.
+- Android `Bitmap.CompressFormat` exposes JPEG, PNG, WebP, WebP lossless, and WebP lossy output formats, with no AVIF enum, so the existing `Bitmap.compress()` path cannot add AVIF output by enum mapping alone.
+- Android `ExifInterface` supports AVIF for reading metadata but lists writable metadata formats as JPEG, PNG, and WebP, so any future AVIF output must explicitly document metadata preserve behavior.
+- iOS ImageIO supports runtime discovery of destination formats with `CGImageDestinationCopyTypeIdentifiers()`. Future AVIF output must follow the existing WebP pattern and report AVIF `output=true` only when ImageIO advertises an AVIF destination type.
+
+### Capability Reporting Decision
+
+- v0.2.15 keeps runtime capability reporting unchanged: Android AVIF `input=true` on Android 14+ and `output=false`; iOS AVIF input remains gated by `CGImageSourceCopyTypeIdentifiers()` and AVIF output remains `false`.
+- Android may report AVIF `output=true` only after a non-`Bitmap.compress()` AVIF encoder route is implemented and validated on API 34+ with byte-signature, decode-back, target-size, and unsupported metadata-path tests.
+- iOS may report AVIF `output=true` only when `CGImageDestinationCopyTypeIdentifiers()` returns an AVIF destination type and the native path validates static AVIF output through `CGImageDestination`.
+- On platforms or runtimes without a validated encoder route, `output.format: 'avif'` must continue to reject with `ERR_NOT_IMPLEMENTED`.
+
+### Unsupported vs Partial Criteria
+
+- Keep AVIF output unsupported when there is no runtime destination or encoder, no byte-signature and decode-back smoke, unclear metadata behavior, or no documented target-size behavior.
+- A partial implementation may ship only for static still-image output, with animated AVIF preservation out of scope.
+- A partial implementation may reject `metadata: 'preserve'` and `output.maxBytes` for AVIF until those semantics are explicitly designed and tested.
+- A partial release must include README guidance, capability notes, Android instrumentation coverage where Android output is enabled, and iOS host-app smoke coverage where iOS output is enabled.
+
+### Not Included
+
+- Production AVIF output encoding.
+- HEIC / HEIF output encoding.
+- Animated AVIF preservation.
+- Runtime behavior changes.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.15`.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+```
+
+Because this is a feasibility candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.14`, after any future publish decision.
+
 ## v0.2.14
 
 Status: published to npm as the `0.2.14` latest release, tagged as `v0.2.14`.

@@ -227,6 +227,14 @@ function checkPackageMetadata() {
     'The `0.2.14` package metadata is prepared as an unpublished AVIF output capability/error surface candidate',
     'version `0.2.14` is the unpublished AVIF output capability/error surface candidate',
     'v0.2.14 AVIF output capability/error surface candidate notes',
+    'Status: v0.2.14 published',
+    'v0.2.14%20published',
+    'Version `0.2.14` is published for `react-native-image-compression-kit`',
+    'The `0.2.14` package metadata is published for `react-native-image-compression-kit`',
+    'Status: v0.2.15 published',
+    'v0.2.15%20published',
+    'Version `0.2.15` is published for `react-native-image-compression-kit`',
+    'The `0.2.15` package metadata is published for `react-native-image-compression-kit`',
   ];
   const expectedKeywords = [
     'react-native',
@@ -244,7 +252,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.14',
+    packageJson.version === '0.2.15',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -259,11 +267,11 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.14` is published for `react-native-image-compression-kit`'),
-    readmeContents.includes("It keeps AVIF output unsupported while aligning Android and iOS capability notes, `ERR_NOT_IMPLEMENTED` messages, TypeScript guidance, README guidance, and release checks for `output.format: 'avif'`."),
+    readmeContents.includes('Version `0.2.15` is an unpublished release candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('It documents the AVIF output feasibility spike and keeps runtime AVIF output unsupported until platform-specific encoder paths can be validated.'),
     readmeContents.includes('The latest published npm package is `0.2.14`'),
     readmeContents.includes('GitHub Release [v0.2.14]'),
-    readmeContents.includes('The `0.2.14` package metadata is published for `react-native-image-compression-kit`'),
+    readmeContents.includes('The `0.2.15` package metadata is prepared as an unpublished AVIF output feasibility candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -279,13 +287,21 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.12` is the published iOS JPEG metadata preserve release'),
     readmeContents.includes('version `0.2.13` is the published iOS JPEG metadata preserve hardening release'),
     readmeContents.includes('version `0.2.14` is the published AVIF output capability/error surface release'),
+    readmeContents.includes('version `0.2.15` is the unpublished AVIF output feasibility candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
     readmeContents.includes('Version `0.2.13` hardens that iOS preserve path by normalizing output orientation and pixel dimension metadata.'),
     readmeContents.includes('Version `0.2.14` aligns AVIF output unsupported capability notes and `ERR_NOT_IMPLEMENTED` messages without adding AVIF encoding.'),
+    readmeContents.includes('Version `0.2.15` documents the AVIF output feasibility decision without runtime behavior changes.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
+    readmeContents.includes('## AVIF Output Feasibility Spike'),
+    readmeContents.includes('Android platform docs list AVIF baseline image encoder and decoder support on Android 14+'),
+    readmeContents.includes('the current Android implementation encodes through `Bitmap.compress()`'),
+    readmeContents.includes('Future iOS AVIF output must mirror the WebP output path'),
+    readmeContents.includes('Current v0.2.15 capability reporting remains unchanged'),
+    readmeContents.includes('Partial implementation criteria: static image output only'),
     readmeContents.includes("metadataPolicies: ['preserve', 'safe', 'strip']"),
     staleReadmeSnippets.every((snippet) => !readmeContents.includes(snippet)),
     readmeContents.includes('Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'),
@@ -295,9 +311,9 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.14 AVIF output unsupported release',
+    label: 'npm package metadata and README status are aligned for the v0.2.15 AVIF output feasibility candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README published status are aligned'
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README candidate status are aligned'
       : 'expected package.json release metadata or README AVIF output guidance is missing/mismatched',
   };
 }
@@ -584,6 +600,29 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.15',
+    'Status: unpublished release candidate for the AVIF output feasibility spike. npm `latest` remains `0.2.14`; no `v0.2.15` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not implement AVIF output. It records the platform boundary for when Android and iOS can safely report AVIF `output=true` instead of the current `ERR_NOT_IMPLEMENTED` unsupported-output path.',
+    'Confirm whether Android can encode AVIF through the current native output path.',
+    'Confirm whether iOS ImageIO AVIF destination support can be advertised without runtime probing.',
+    'Define the AVIF output capability reporting rule for Android and iOS.',
+    'Define unsupported versus partial-implementation criteria before any production AVIF output work.',
+    'Align README, release notes, Android verification doctor checks, and Vitest expectations with the feasibility decision.',
+    'Android platform supported-media documentation lists AVIF baseline image encoder and decoder support as mandatory beginning with Android 14, but the current module encodes through `Bitmap.compress()`.',
+    'Android `Bitmap.CompressFormat` exposes JPEG, PNG, WebP, WebP lossless, and WebP lossy output formats, with no AVIF enum, so the existing `Bitmap.compress()` path cannot add AVIF output by enum mapping alone.',
+    'Android `ExifInterface` supports AVIF for reading metadata but lists writable metadata formats as JPEG, PNG, and WebP, so any future AVIF output must explicitly document metadata preserve behavior.',
+    'iOS ImageIO supports runtime discovery of destination formats with `CGImageDestinationCopyTypeIdentifiers()`.',
+    'v0.2.15 keeps runtime capability reporting unchanged: Android AVIF `input=true` on Android 14+ and `output=false`; iOS AVIF input remains gated by `CGImageSourceCopyTypeIdentifiers()` and AVIF output remains `false`.',
+    'Android may report AVIF `output=true` only after a non-`Bitmap.compress()` AVIF encoder route is implemented and validated on API 34+ with byte-signature, decode-back, target-size, and unsupported metadata-path tests.',
+    'iOS may report AVIF `output=true` only when `CGImageDestinationCopyTypeIdentifiers()` returns an AVIF destination type and the native path validates static AVIF output through `CGImageDestination`.',
+    "On platforms or runtimes without a validated encoder route, `output.format: 'avif'` must continue to reject with `ERR_NOT_IMPLEMENTED`.",
+    'Keep AVIF output unsupported when there is no runtime destination or encoder, no byte-signature and decode-back smoke, unclear metadata behavior, or no documented target-size behavior.',
+    'A partial implementation may ship only for static still-image output, with animated AVIF preservation out of scope.',
+    "A partial implementation may reject `metadata: 'preserve'` and `output.maxBytes` for AVIF until those semantics are explicitly designed and tested.",
+    'Production AVIF output encoding.',
+    'Runtime behavior changes.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.15`.',
+    'Because this is a feasibility candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.14`, after any future publish decision.',
     '## v0.2.14',
     'Status: published to npm as the `0.2.14` latest release, tagged as `v0.2.14`.',
     "This release keeps AVIF output unimplemented while making Android and iOS capability reporting, unsupported-output messages, TypeScript guidance, README guidance, and verification checks agree on the same boundary: AVIF input can be supported, but `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`.",
@@ -1251,7 +1290,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1263,16 +1302,16 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.14' && missing.length === 0;
+  const ok = packageJson.version === '0.2.15' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.14 published notes and previous release notes are current',
+    label: 'v0.2.15 AVIF output feasibility notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-    ...(packageJson.version === '0.2.14' ? [] : ['package.json version 0.2.14']),
+    ...(packageJson.version === '0.2.15' ? [] : ['package.json version 0.2.15']),
         ].join(' | ')}`,
   };
 }
