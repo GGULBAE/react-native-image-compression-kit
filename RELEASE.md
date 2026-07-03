@@ -21,7 +21,7 @@ values after resize, quality, or `output.maxBytes` encoding.
 - `package.json` version bump to `0.2.13`.
 - iOS JPEG preserve encoding now passes final `CGImage` dimensions into ImageIO destination properties.
 - Preserved JPEG metadata normalizes top-level orientation, TIFF orientation, top-level pixel width/height, and EXIF pixel dimensions.
-- iOS smoke fixture writes stale TIFF orientation and stale EXIF pixel dimensions, then verifies preserve output normalizes them to the compressed JPEG result.
+- iOS smoke fixture writes stale TIFF orientation and source-size EXIF pixel dimensions, then verifies preserve output normalizes them to the compressed JPEG result.
 - README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.13` candidate.
 - Source-level tests and Android verification doctor expectations are updated for the iOS JPEG metadata preserve hardening candidate.
 

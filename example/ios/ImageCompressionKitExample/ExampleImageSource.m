@@ -181,7 +181,7 @@ RCT_EXPORT_METHOD(readJpegMetadataSummary:(NSString *)uri
 
 static UIImage *ExampleImageSourceImage(void)
 {
-  CGSize size = CGSizeMake(32, 20);
+  CGSize size = CGSizeMake(320, 200);
   UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
   format.scale = 1.0;
   format.opaque = NO;
@@ -193,10 +193,10 @@ static UIImage *ExampleImageSourceImage(void)
     UIRectFill(CGRectMake(0, 0, size.width, size.height));
 
     [[UIColor colorWithRed:0.97 green:0.62 blue:0.13 alpha:1.0] setFill];
-    UIRectFill(CGRectMake(4, 4, 12, 12));
+    UIRectFill(CGRectMake(40, 40, 120, 120));
 
     [[UIColor colorWithRed:0.16 green:0.72 blue:0.44 alpha:0.65] setFill];
-    UIRectFill(CGRectMake(14, 6, 14, 10));
+    UIRectFill(CGRectMake(140, 60, 140, 100));
   }];
 }
 

@@ -501,7 +501,7 @@ describe('Android verification scripts', () => {
       'Preserved JPEG metadata normalizes top-level orientation, TIFF orientation, top-level pixel width/height, and EXIF pixel dimensions.'
     );
     expect(releaseSource).toContain(
-      'iOS smoke fixture writes stale TIFF orientation and stale EXIF pixel dimensions, then verifies preserve output normalizes them to the compressed JPEG result.'
+      'iOS smoke fixture writes stale TIFF orientation and source-size EXIF pixel dimensions, then verifies preserve output normalizes them to the compressed JPEG result.'
     );
     expect(releaseSource).toContain(
       'README status, iOS behavior guidance, metadata policy docs, iOS smoke description, and release dry-run guidance are updated for the `0.2.13` candidate.'
