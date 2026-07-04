@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.2.20
+
+Status: unpublished release candidate for the AVIF output production wiring preflight. npm `latest` remains `0.2.19`; no `v0.2.20` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It keeps Android and iOS capability reporting on `output=false` while making the Android `RNICK_AVIF_OUTPUT_SMOKE` result production-decision ready with explicit blocker codes and an `outputCanBeEnabled=false` decision.
+
+### Goals
+
+- Keep Android and iOS AVIF output disabled.
+- Make Android encode/decode-back smoke results carry stable blocker codes for missing `image/avif` encoder, codec failure, invalid `ftyp` signature, and `ImageDecoder` decode-back failure.
+- Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path with metadata preserve, `output.maxBytes`, and animated AVIF boundaries.
+- Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.20 candidate.
+
+### Production Decision Preflight
+
+- `AndroidAvifEncodeDecodeSmokeResult` reports `blockerCode`, `outputCanBeEnabled`, and `productionDecision`.
+- The candidate blocker codes are `sdk_unavailable`, `no_image_avif_encoder`, `codec_failure`, `invalid_signature`, and `decode_back_failure`.
+- `outputCanBeEnabled` remains `false` even if a file-validation smoke passes, because production wiring, metadata preserve, `output.maxBytes`, and animated AVIF boundaries are still not implemented.
+- Android capability reporting remains `formats.avif.output=false`.
+
+### Included
+
+- `package.json` version bump to `0.2.20`.
+- Android AVIF output smoke blocker classification for SDK unavailable, missing `image/avif` encoder, codec failure, invalid signature, and decode-back failure.
+- Android AVIF output smoke production decision fields that keep AVIF output disabled before production wiring.
+- Android instrumentation expectation that `RNICK_AVIF_OUTPUT_SMOKE` keeps `outputCanBeEnabled=false` and reports a stable blocker code when the smoke fails.
+- README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.20 candidate state.
+
+### Not Included
+
+- Production AVIF output encoding.
+- Android `compressImage()` AVIF output wiring.
+- iOS AVIF output implementation.
+- AVIF output capability enablement.
+- Metadata preservation for AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.20`.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+Remote validation also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit. The Android Instrumentation `RNICK_AVIF_OUTPUT_SMOKE` log must keep AVIF output disabled and expose the relevant blocker code unless a later non-candidate implementation explicitly enables AVIF output.
+
+After validation, keep this candidate unpublished until a separate publish goal.
+
 ## v0.2.19
 
 Status: published to npm as the `0.2.19` latest AVIF output production gate release. No `v0.2.19` tag or GitHub Release is part of this package-page promotion.

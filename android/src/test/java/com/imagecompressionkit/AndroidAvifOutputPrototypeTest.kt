@@ -5,6 +5,7 @@ import android.media.MediaFormat
 import android.os.Build
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -142,8 +143,11 @@ class AndroidAvifOutputPrototypeTest {
 
     assertFalse(result.attempted)
     assertFalse(result.success)
+    assertFalse(result.outputCanBeEnabled)
+    assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_SDK_UNAVAILABLE, result.blockerCode)
     assertEquals(AndroidAvifOutputPrototype.SMOKE_ROUTE, result.route)
     assertTrue(result.blocker?.contains("requires Android 14+") == true)
+    assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
     assertTrue(result.details.any { it.contains("requires Android 14+") })
   }
 
@@ -157,9 +161,49 @@ class AndroidAvifOutputPrototypeTest {
 
     assertFalse(result.attempted)
     assertFalse(result.success)
+    assertFalse(result.outputCanBeEnabled)
+    assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER, result.blockerCode)
     assertEquals(AndroidAvifOutputPrototype.SMOKE_ROUTE, result.route)
     assertTrue(result.blocker?.contains("No image/avif encoder") == true)
+    assertEquals(AndroidAvifOutputPrototype.NO_IMAGE_AVIF_ENCODER_BLOCKER, result.blocker)
+    assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
     assertTrue(result.details.any { it.contains("No image/avif encoder") })
+  }
+
+  @Test
+  fun smokeValidationClassifiesInvalidSignatureAndDecodeBackFailures() {
+    val invalidSignature = AndroidAvifOutputPrototype.classifySmokeValidationBlocker(
+      signatureValid = false,
+      decodeBackValid = false
+    )
+    val decodeBackFailure = AndroidAvifOutputPrototype.classifySmokeValidationBlocker(
+      signatureValid = true,
+      decodeBackValid = false
+    )
+    val success = AndroidAvifOutputPrototype.classifySmokeValidationBlocker(
+      signatureValid = true,
+      decodeBackValid = true
+    )
+
+    assertNotNull(invalidSignature)
+    assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_INVALID_SIGNATURE, invalidSignature?.code)
+    assertEquals(AndroidAvifOutputPrototype.INVALID_SIGNATURE_BLOCKER, invalidSignature?.message)
+    assertNotNull(decodeBackFailure)
+    assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_DECODE_BACK_FAILURE, decodeBackFailure?.code)
+    assertEquals(AndroidAvifOutputPrototype.DECODE_BACK_FAILURE_BLOCKER, decodeBackFailure?.message)
+    assertNull(success)
+  }
+
+  @Test
+  fun codecFailureBlockerKeepsStableProductionDecisionMessage() {
+    val blocker = AndroidAvifOutputPrototype.codecFailureBlocker(
+      IllegalStateException("codec exploded")
+    )
+
+    assertEquals(
+      "${AndroidAvifOutputPrototype.CODEC_FAILURE_BLOCKER_PREFIX}: IllegalStateException: codec exploded",
+      blocker
+    )
   }
 
   private fun createTempCacheDir(): File =

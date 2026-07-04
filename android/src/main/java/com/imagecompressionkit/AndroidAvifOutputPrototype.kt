@@ -45,8 +45,16 @@ internal data class AndroidAvifEncodeDecodeSmokeResult(
   val decodeBackValid: Boolean,
   val decodedWidth: Int?,
   val decodedHeight: Int?,
+  val blockerCode: String?,
   val blocker: String?,
+  val outputCanBeEnabled: Boolean,
+  val productionDecision: String,
   val details: List<String>
+)
+
+internal data class AndroidAvifSmokeBlocker(
+  val code: String,
+  val message: String
 )
 
 internal object AndroidAvifOutputPrototype {
@@ -54,6 +62,23 @@ internal object AndroidAvifOutputPrototype {
   const val AV1_VIDEO_MIME_TYPE = "video/av01"
   const val CANDIDATE_ROUTE = "MediaCodec image/avif encoder probe"
   const val SMOKE_ROUTE = "MediaCodec image/avif encode/decode-back smoke"
+  const val BLOCKER_CODE_SDK_UNAVAILABLE = "sdk_unavailable"
+  const val BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER = "no_image_avif_encoder"
+  const val BLOCKER_CODE_CODEC_FAILURE = "codec_failure"
+  const val BLOCKER_CODE_INVALID_SIGNATURE = "invalid_signature"
+  const val BLOCKER_CODE_DECODE_BACK_FAILURE = "decode_back_failure"
+  const val NO_IMAGE_AVIF_ENCODER_BLOCKER =
+    "No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat()."
+  const val INVALID_SIGNATURE_BLOCKER =
+    "AVIF smoke output did not pass ftyp avif/avis signature validation."
+  const val DECODE_BACK_FAILURE_BLOCKER =
+    "AVIF smoke output passed ftyp signature validation but failed ImageDecoder decode-back validation."
+  const val CODEC_FAILURE_BLOCKER_PREFIX =
+    "MediaCodec image/avif encode/decode-back smoke failed"
+  const val PRODUCTION_DECISION_KEEP_DISABLED =
+    "Keep Android AVIF output disabled; do not report avif.output=true or wire output.format='avif' into compressImage()."
+  const val PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED =
+    "Keep Android AVIF output disabled even though the AVIF smoke passed file validation; production wiring, metadata preserve, output.maxBytes, and animated AVIF boundaries are still not implemented and tested."
   const val PRODUCTION_GATE_MESSAGE =
     "AVIF output production gate remains closed until production wiring, byte-signature, ImageDecoder decode-back, metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated."
 
@@ -144,6 +169,7 @@ internal object AndroidAvifOutputPrototype {
       return blockedSmokeResult(
         report = routeReport,
         attempted = false,
+        blockerCode = BLOCKER_CODE_SDK_UNAVAILABLE,
         blocker = "Android AVIF output encode/decode-back smoke requires Android 14+."
       )
     }
@@ -152,7 +178,8 @@ internal object AndroidAvifOutputPrototype {
       ?: return blockedSmokeResult(
         report = routeReport,
         attempted = false,
-        blocker = "No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat()."
+        blockerCode = BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER,
+        blocker = NO_IMAGE_AVIF_ENCODER_BLOCKER
       )
 
     return try {
@@ -191,10 +218,30 @@ internal object AndroidAvifOutputPrototype {
       blockedSmokeResult(
         report = routeReport,
         attempted = true,
-        blocker = "MediaCodec image/avif encode/decode-back smoke failed: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
+        blockerCode = BLOCKER_CODE_CODEC_FAILURE,
+        blocker = codecFailureBlocker(error)
       )
     }
   }
+
+  fun classifySmokeValidationBlocker(
+    signatureValid: Boolean,
+    decodeBackValid: Boolean
+  ): AndroidAvifSmokeBlocker? =
+    when {
+      !signatureValid -> AndroidAvifSmokeBlocker(
+        code = BLOCKER_CODE_INVALID_SIGNATURE,
+        message = INVALID_SIGNATURE_BLOCKER
+      )
+      !decodeBackValid -> AndroidAvifSmokeBlocker(
+        code = BLOCKER_CODE_DECODE_BACK_FAILURE,
+        message = DECODE_BACK_FAILURE_BLOCKER
+      )
+      else -> null
+    }
+
+  fun codecFailureBlocker(error: Exception): String =
+    "$CODEC_FAILURE_BLOCKER_PREFIX: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
 
   private fun createAv1FallbackMediaFormat(width: Int, height: Int): MediaFormat =
     MediaFormat.createVideoFormat(AV1_VIDEO_MIME_TYPE, width, height).apply {
@@ -231,7 +278,7 @@ internal object AndroidAvifOutputPrototype {
         add("Android AVIF output prototype requires Android 14+ because MediaFormat.MIMETYPE_IMAGE_AVIF was added in API 34.")
       }
       if (imageAvifEncoderName == null) {
-        add("No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().")
+        add(NO_IMAGE_AVIF_ENCODER_BLOCKER)
       }
       add("Prototype route is not wired into compressImage() or production capability reporting.")
       add("Prototype smoke result must pass complete AVIF file signature and ImageDecoder decode-back validation before AVIF output can be enabled.")
@@ -515,12 +562,11 @@ internal object AndroidAvifOutputPrototype {
     route: String,
     details: List<String>
   ): AndroidAvifEncodeDecodeSmokeResult {
-    val success = signatureValid && decodeBackValid
-    val blocker = if (success) {
-      null
-    } else {
-      "AVIF smoke did not produce a file that passed ftyp avif/avis signature and ImageDecoder decode-back validation."
-    }
+    val validationBlocker = classifySmokeValidationBlocker(
+      signatureValid = signatureValid,
+      decodeBackValid = decodeBackValid
+    )
+    val success = validationBlocker == null
 
     return AndroidAvifEncodeDecodeSmokeResult(
       apiLevel = report.apiLevel,
@@ -534,14 +580,22 @@ internal object AndroidAvifOutputPrototype {
       decodeBackValid = decodeBackValid,
       decodedWidth = decodedWidth,
       decodedHeight = decodedHeight,
-      blocker = blocker,
-      details = details + this.details
+      blockerCode = validationBlocker?.code,
+      blocker = validationBlocker?.message,
+      outputCanBeEnabled = false,
+      productionDecision = if (success) {
+        PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED
+      } else {
+        PRODUCTION_DECISION_KEEP_DISABLED
+      },
+      details = details + this.details + report.blockers
     )
   }
 
   private fun blockedSmokeResult(
     report: AndroidAvifOutputPrototypeReport,
     attempted: Boolean,
+    blockerCode: String,
     blocker: String
   ): AndroidAvifEncodeDecodeSmokeResult =
     AndroidAvifEncodeDecodeSmokeResult(
@@ -556,7 +610,10 @@ internal object AndroidAvifOutputPrototype {
       decodeBackValid = false,
       decodedWidth = null,
       decodedHeight = null,
+      blockerCode = blockerCode,
       blocker = blocker,
+      outputCanBeEnabled = false,
+      productionDecision = PRODUCTION_DECISION_KEEP_DISABLED,
       details = report.blockers
     )
 

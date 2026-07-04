@@ -162,7 +162,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.19');
+    expect(packageJson.version).toBe('0.2.20');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -190,18 +190,24 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.19` is published for `react-native-image-compression-kit` as the AVIF output production gate release.'
+      'Version `0.2.20` is an unpublished AVIF output production wiring preflight candidate for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
-      'It keeps runtime AVIF output disabled while aligning Android and iOS capability notes, unsupported-output errors, README guidance, and verification expectations around the blockers found by the v0.2.17 Android encode/decode-back smoke and the current iOS ImageIO runtime-gated policy.'
+      'explicit blocker codes for `sdk_unavailable`, `no_image_avif_encoder`, `codec_failure`, `invalid_signature`, and `decode_back_failure`, plus an `outputCanBeEnabled=false` decision'
     );
-    expect(readmeSource).toContain('npm `latest` points to `0.2.19`');
+    expect(readmeSource).toContain('npm `latest` remains `0.2.19`');
     expect(readmeSource).toContain('the previous GitHub Release remains [v0.2.17]');
     expect(readmeSource).toContain(
-      'Version `0.2.19` is a package-only npm release. No `v0.2.19` tag or GitHub Release is part of this package-page promotion.'
+      'Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.19` package metadata is published as the AVIF output production gate release for `react-native-image-compression-kit`'
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.20 candidate.'
+    );
+    expect(readmeSource).toContain(
+      'The `0.2.20` package metadata is prepared as an unpublished AVIF output production wiring preflight candidate for `react-native-image-compression-kit`'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.19` remains the latest published npm package.'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -264,6 +270,9 @@ describe('Android verification scripts', () => {
       'version `0.2.19` is the published AVIF output production gate release'
     );
     expect(readmeSource).toContain(
+      'version `0.2.20` is the unpublished AVIF output production wiring preflight candidate'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -292,6 +301,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.19` clarifies the AVIF output production gate, capability notes, and `ERR_NOT_IMPLEMENTED` messages without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.20` adds Android AVIF output smoke production-decision blocker codes without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -327,7 +339,7 @@ describe('Android verification scripts', () => {
       'Current GitHub Android Instrumentation result: the API 35 Google APIs emulator does not expose an `image/avif` encoder through `MediaCodecList.findEncoderForFormat()`.'
     );
     expect(readmeSource).toContain(
-      'The smoke therefore reports `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`'
+      'The smoke therefore reports `attempted=false`, `success=false`, `blockerCode=no_image_avif_encoder`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`'
     );
     expect(readmeSource).toContain('getImageCompressionCapabilities().formats.avif.output=false');
     expect(readmeSource).toContain(
@@ -335,6 +347,15 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.19` keeps AVIF output disabled while making the production gate explicit across Android and iOS capability notes, unsupported-output errors, README guidance, and verification expectations.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.20` keeps AVIF output disabled and turns the Android smoke into a production-decision preflight.'
+    );
+    expect(readmeSource).toContain(
+      'Smoke results now carry `blockerCode`, `outputCanBeEnabled=false`, and `productionDecision`'
+    );
+    expect(readmeSource).toContain(
+      'instrumentation records an explicit blocker code (`sdk_unavailable`, `no_image_avif_encoder`, `codec_failure`, `invalid_signature`, or `decode_back_failure`) and capability reporting remains `output=false`.'
     );
     expect(readmeSource).toContain('Partial implementation criteria: static image output only');
     expect(readmeSource).toContain("metadataPolicies: ['preserve', 'safe', 'strip']");
@@ -608,11 +629,63 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.19 published AVIF output production gate release notes and previous release notes', () => {
+  it('documents the v0.2.20 AVIF output production wiring preflight candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.19');
+    expect(packageJson.version).toBe('0.2.20');
+    expect(releaseSource).toContain('## v0.2.20');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for the AVIF output production wiring preflight. npm `latest` remains `0.2.19`; no `v0.2.20` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output. It keeps Android and iOS capability reporting on `output=false` while making the Android `RNICK_AVIF_OUTPUT_SMOKE` result production-decision ready with explicit blocker codes and an `outputCanBeEnabled=false` decision.'
+    );
+    expect(releaseSource).toContain('Keep Android and iOS AVIF output disabled.');
+    expect(releaseSource).toContain(
+      'Make Android encode/decode-back smoke results carry stable blocker codes for missing `image/avif` encoder, codec failure, invalid `ftyp` signature, and `ImageDecoder` decode-back failure.'
+    );
+    expect(releaseSource).toContain(
+      "Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path with metadata preserve, `output.maxBytes`, and animated AVIF boundaries."
+    );
+    expect(releaseSource).toContain(
+      'Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.20 candidate.'
+    );
+    expect(releaseSource).toContain('### Production Decision Preflight');
+    expect(releaseSource).toContain(
+      '`AndroidAvifEncodeDecodeSmokeResult` reports `blockerCode`, `outputCanBeEnabled`, and `productionDecision`.'
+    );
+    expect(releaseSource).toContain(
+      'The candidate blocker codes are `sdk_unavailable`, `no_image_avif_encoder`, `codec_failure`, `invalid_signature`, and `decode_back_failure`.'
+    );
+    expect(releaseSource).toContain(
+      '`outputCanBeEnabled` remains `false` even if a file-validation smoke passes, because production wiring, metadata preserve, `output.maxBytes`, and animated AVIF boundaries are still not implemented.'
+    );
+    expect(releaseSource).toContain('Android capability reporting remains `formats.avif.output=false`.');
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.20`.');
+    expect(releaseSource).toContain(
+      'Android AVIF output smoke blocker classification for SDK unavailable, missing `image/avif` encoder, codec failure, invalid signature, and decode-back failure.'
+    );
+    expect(releaseSource).toContain(
+      'Android AVIF output smoke production decision fields that keep AVIF output disabled before production wiring.'
+    );
+    expect(releaseSource).toContain(
+      'Android instrumentation expectation that `RNICK_AVIF_OUTPUT_SMOKE` keeps `outputCanBeEnabled=false` and reports a stable blocker code when the smoke fails.'
+    );
+    expect(releaseSource).toContain(
+      'README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.20 candidate state.'
+    );
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.20`.'
+    );
+    expect(releaseSource).toContain('### Validation');
+    expect(releaseSource).toContain('Before considering the candidate ready:');
+    expect(releaseSource).toContain(
+      'Remote validation also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit.'
+    );
+    expect(releaseSource).toContain(
+      'After validation, keep this candidate unpublished until a separate publish goal.'
+    );
     expect(releaseSource).toContain('## v0.2.19');
     expect(releaseSource).toContain(
       'Status: published to npm as the `0.2.19` latest AVIF output production gate release. No `v0.2.19` tag or GitHub Release is part of this package-page promotion.'
@@ -2683,7 +2756,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -3034,6 +3107,21 @@ describe('Android verification scripts', () => {
     expect(prototypeSource).toContain('AndroidAvifOutputPrototype');
     expect(prototypeSource).toContain('AndroidAvifOutputPrototypeReport');
     expect(prototypeSource).toContain('AndroidAvifEncodeDecodeSmokeResult');
+    expect(prototypeSource).toContain('AndroidAvifSmokeBlocker');
+    expect(prototypeSource).toContain('blockerCode');
+    expect(prototypeSource).toContain('outputCanBeEnabled');
+    expect(prototypeSource).toContain('productionDecision');
+    expect(prototypeSource).toContain('BLOCKER_CODE_SDK_UNAVAILABLE');
+    expect(prototypeSource).toContain('BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER');
+    expect(prototypeSource).toContain('BLOCKER_CODE_CODEC_FAILURE');
+    expect(prototypeSource).toContain('BLOCKER_CODE_INVALID_SIGNATURE');
+    expect(prototypeSource).toContain('BLOCKER_CODE_DECODE_BACK_FAILURE');
+    expect(prototypeSource).toContain('NO_IMAGE_AVIF_ENCODER_BLOCKER');
+    expect(prototypeSource).toContain('INVALID_SIGNATURE_BLOCKER');
+    expect(prototypeSource).toContain('DECODE_BACK_FAILURE_BLOCKER');
+    expect(prototypeSource).toContain('CODEC_FAILURE_BLOCKER_PREFIX');
+    expect(prototypeSource).toContain('PRODUCTION_DECISION_KEEP_DISABLED');
+    expect(prototypeSource).toContain('PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED');
     expect(prototypeSource).toContain('MediaCodecList(MediaCodecList.REGULAR_CODECS)');
     expect(prototypeSource).toContain('findEncoderForFormat');
     expect(prototypeSource).toContain(
@@ -3045,6 +3133,8 @@ describe('Android verification scripts', () => {
     expect(prototypeSource).toContain('SMOKE_ROUTE');
     expect(prototypeSource).toContain('PRODUCTION_GATE_MESSAGE');
     expect(prototypeSource).toContain('looksLikeAvifFile');
+    expect(prototypeSource).toContain('classifySmokeValidationBlocker');
+    expect(prototypeSource).toContain('codecFailureBlocker');
     expect(prototypeSource).toContain('runEncodeDecodeBackSmoke');
     expect(prototypeSource).toContain('MediaCodec.createByCodecName');
     expect(prototypeSource).toContain('MediaCodec.CONFIGURE_FLAG_ENCODE');
@@ -3071,6 +3161,12 @@ describe('Android verification scripts', () => {
     expect(prototypeTestSource).toContain('smokeBelowApi34ReportsSdkBlockerWithoutAttempting');
     expect(prototypeTestSource).toContain(
       'smokeOnApi34WithoutImageEncoderReportsBlockerWithoutAttempting'
+    );
+    expect(prototypeTestSource).toContain(
+      'smokeValidationClassifiesInvalidSignatureAndDecodeBackFailures'
+    );
+    expect(prototypeTestSource).toContain(
+      'codecFailureBlockerKeepsStableProductionDecisionMessage'
     );
   });
 

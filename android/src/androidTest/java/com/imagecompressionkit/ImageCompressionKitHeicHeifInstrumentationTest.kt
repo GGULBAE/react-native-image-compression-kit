@@ -146,12 +146,16 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
 
     Log.i(logTag, result.toString())
     assertTrue(result.route.contains(AndroidAvifOutputPrototype.SMOKE_ROUTE))
+    assertFalse(result.outputCanBeEnabled)
+    assertTrue(result.productionDecision.contains("Keep Android AVIF output disabled"))
     assertAvifOutputCapabilityRemainsFalse(targetContext)
 
     if (result.success) {
       assertTrue(result.attempted)
       assertTrue(result.signatureValid)
       assertTrue(result.decodeBackValid)
+      assertNull(result.blockerCode)
+      assertNull(result.blocker)
       assertEquals(16, result.decodedWidth)
       assertEquals(12, result.decodedHeight)
       assertNotNull(result.outputFilePath)
@@ -160,11 +164,13 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
       assertTrue(outputFile.length() > 0)
       assertTrue(AndroidAvifOutputPrototype.looksLikeAvifFile(outputFile.readBytes()))
     } else {
+      assertNotNull(result.blockerCode)
       assertNotNull(result.blocker)
       assertTrue(
-        result.blocker?.contains("No image/avif encoder") == true ||
-          result.blocker?.contains("AVIF smoke did not produce") == true ||
-          result.blocker?.contains("MediaCodec image/avif encode/decode-back smoke failed") == true
+        result.blockerCode == AndroidAvifOutputPrototype.BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER ||
+          result.blockerCode == AndroidAvifOutputPrototype.BLOCKER_CODE_CODEC_FAILURE ||
+          result.blockerCode == AndroidAvifOutputPrototype.BLOCKER_CODE_INVALID_SIGNATURE ||
+          result.blockerCode == AndroidAvifOutputPrototype.BLOCKER_CODE_DECODE_BACK_FAILURE
       )
     }
   }
