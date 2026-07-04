@@ -319,6 +319,16 @@ class ImageCompressionOutputTest {
         it == "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
       }
     )
+    assertTrue(
+      capability.notes.any {
+        it == "Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
+        it == "metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
+      }
+    )
   }
 
   private fun createSampleJpegBytes(): ByteArray {

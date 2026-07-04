@@ -98,7 +98,7 @@ describe('native module foundation', () => {
     expect(iosSource).toContain('RCTImageCompressionKitLooksLikeAVIFData');
     expect(iosSource).toContain('RCTImageCompressionKitIsHeicHeifType');
     expect(iosSource).toContain(
-      "iOS MVP supports AVIF input when ImageIO source decoding is available, but AVIF output is not implemented. Supported output formats are JPEG, PNG, and runtime-available WebP; output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
+      "iOS MVP supports AVIF input when ImageIO source decoding is available, but AVIF output is not implemented. Supported output formats are JPEG, PNG, and runtime-available WebP. Future AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation; metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output. output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
     );
     expect(iosSource).toContain(
       'AVIF capability reports output=false; selecting output.format: \'avif\' rejects with ERR_NOT_IMPLEMENTED.'

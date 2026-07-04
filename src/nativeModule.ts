@@ -44,7 +44,7 @@ export function getNativeModule(): NativeImageCompressionKitModule {
 
   throw new ImageCompressionKitError(
     'ERR_NATIVE_MODULE_UNAVAILABLE',
-    `Native module ${NATIVE_MODULE_NAME} is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression supports JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input with JPEG, PNG, and WebP output. iOS runtime compression supports JPEG/PNG/GIF/WebP/HEIC/HEIF input and runtime-available ImageIO AVIF input with JPEG, PNG, and runtime-gated ImageIO-backed WebP output. HEIC, HEIF, and AVIF output remain unsupported and reject with ERR_NOT_IMPLEMENTED.`
+    `Native module ${NATIVE_MODULE_NAME} is unavailable. Rebuild the React Native app after installing react-native-image-compression-kit. Android runtime compression supports JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input with JPEG, PNG, and WebP output. iOS runtime compression supports JPEG/PNG/GIF/WebP/HEIC/HEIF input and runtime-available ImageIO AVIF input with JPEG, PNG, and runtime-gated ImageIO-backed WebP output. HEIC, HEIF, and AVIF output remain unsupported and reject with ERR_NOT_IMPLEMENTED; AVIF output stays gated until encoder/destination support, decode-back validation, metadata preserve, output.maxBytes, and animation boundaries are explicitly designed and tested.`
   );
 }
 

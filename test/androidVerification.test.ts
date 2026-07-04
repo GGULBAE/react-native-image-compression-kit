@@ -131,6 +131,12 @@ describe('Android verification scripts', () => {
       'The `0.2.18` package metadata is prepared as an unpublished docs-only npm README correction candidate for `react-native-image-compression-kit`',
       'version `0.2.18` is the unpublished docs-only npm package-page README correction candidate',
       'v0.2.18 docs-only npm README correction candidate notes',
+      'Status: v0.2.18 published',
+      'v0.2.18%20published',
+      'Version `0.2.18` is published as a docs-only npm README correction for `react-native-image-compression-kit`',
+      'The `0.2.18` package metadata is published as a docs-only npm README correction for `react-native-image-compression-kit`',
+      'version `0.2.18` is the published docs-only npm package-page README correction release',
+      'v0.2.18 published docs-only npm README correction release notes',
     ];
     const expectedKeywords = [
       'react-native',
@@ -148,7 +154,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.18');
+    expect(packageJson.version).toBe('0.2.19');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -176,15 +182,18 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.18` is published as a docs-only npm README correction for `react-native-image-compression-kit`'
+      'Version `0.2.19` is an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
-      'It keeps Android and iOS runtime behavior unchanged while replacing the npm package-page README that carried stale `0.2.17` pre-publish candidate wording.'
+      'It keeps runtime AVIF output disabled while aligning Android and iOS capability notes, unsupported-output errors, README guidance, and verification expectations around the blockers found by the v0.2.17 Android encode/decode-back smoke and the current iOS ImageIO runtime-gated policy.'
     );
-    expect(readmeSource).toContain('npm `latest` points to `0.2.18`');
+    expect(readmeSource).toContain('npm `latest` remains `0.2.18`');
     expect(readmeSource).toContain('the previous GitHub Release remains [v0.2.17]');
     expect(readmeSource).toContain(
-      'The `0.2.18` package metadata is published as a docs-only npm README correction for `react-native-image-compression-kit`'
+      'Version `0.2.18` remains the latest published npm package and docs-only package-page README correction.'
+    );
+    expect(readmeSource).toContain(
+      'The `0.2.19` package metadata is prepared as an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -241,7 +250,10 @@ describe('Android verification scripts', () => {
       'version `0.2.17` is the published Android AVIF output encode/decode-back smoke release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.18` is the published docs-only npm package-page README correction release'
+      'version `0.2.18` remains the latest published docs-only npm package-page README correction release'
+    );
+    expect(readmeSource).toContain(
+      'version `0.2.19` is the unpublished AVIF output production gate candidate'
     );
     expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
@@ -271,10 +283,22 @@ describe('Android verification scripts', () => {
       'Version `0.2.18` corrects the packaged npm README without runtime behavior changes.'
     );
     expect(readmeSource).toContain(
+      'Version `0.2.19` clarifies the AVIF output production gate, capability notes, and `ERR_NOT_IMPLEMENTED` messages without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
     );
     expect(readmeSource).toContain(
+      'Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'
+    );
+    expect(readmeSource).toContain(
       "AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."
+    );
+    expect(readmeSource).toContain(
+      'Future iOS AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.'
+    );
+    expect(readmeSource).toContain(
+      "metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
     );
     expect(readmeSource).toContain('## AVIF Output Feasibility Spike');
     expect(readmeSource).toContain(
@@ -300,6 +324,9 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('getImageCompressionCapabilities().formats.avif.output=false');
     expect(readmeSource).toContain(
       'The v0.2.17 instrumentation check keeps that probe and adds the encode/decode-back smoke'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.19` keeps AVIF output disabled while making the production gate explicit across Android and iOS capability notes, unsupported-output errors, README guidance, and verification expectations.'
     );
     expect(readmeSource).toContain('Partial implementation criteria: static image output only');
     expect(readmeSource).toContain("metadataPolicies: ['preserve', 'safe', 'strip']");
@@ -573,11 +600,70 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.18 published docs-only npm README correction notes and previous release notes', () => {
+  it('documents the v0.2.19 AVIF output production gate candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.18');
+    expect(packageJson.version).toBe('0.2.19');
+    expect(releaseSource).toContain('## v0.2.19');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for the AVIF output production gate. npm `latest` remains `0.2.18`; no `v0.2.19` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output. It tightens the public and test-covered explanation for why AVIF output remains disabled after the v0.2.17 Android `MediaCodec image/avif` encode/decode-back smoke blocker, and how future iOS AVIF output must stay runtime-gated by ImageIO destination support.'
+    );
+    expect(releaseSource).toContain(
+      'Keep AVIF output capability reporting unchanged while making the production gate explicit.'
+    );
+    expect(releaseSource).toContain(
+      'Align the Android AVIF smoke blocker language with the runtime capability notes and unsupported-output error message.'
+    );
+    expect(releaseSource).toContain(
+      "Align iOS AVIF capability notes and `output.format: 'avif'` unsupported-output errors with the current ImageIO runtime-gated destination policy."
+    );
+    expect(releaseSource).toContain(
+      "State that `metadata: 'preserve'`, `output.maxBytes`, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
+    );
+    expect(releaseSource).toContain(
+      'Android AVIF output remains disabled until the `MediaCodec image/avif` encode/decode-back smoke produces a complete AVIF file with `ftyp` `avif` / `avis` signature bytes and `ImageDecoder` decode-back validation.'
+    );
+    expect(releaseSource).toContain(
+      'Future iOS AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.'
+    );
+    expect(releaseSource).toContain(
+      "`metadata='preserve'`, `output.maxBytes`, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.19`.');
+    expect(releaseSource).toContain(
+      'Android `AndroidAvifOutputPrototype` production gate message now names production wiring, byte-signature validation, `ImageDecoder` decode-back validation, metadata preserve, `output.maxBytes`, and animated AVIF boundaries.'
+    );
+    expect(releaseSource).toContain(
+      'Android AVIF capability notes now describe the `MediaCodec image/avif` encode/decode-back gate and the metadata, target-size, and animation unsupported boundaries.'
+    );
+    expect(releaseSource).toContain(
+      'Android HEIC/HEIF/AVIF unsupported-output error message now explains that AVIF output remains disabled until the smoke produces a complete AVIF file and the remaining AVIF output boundaries are validated.'
+    );
+    expect(releaseSource).toContain(
+      'iOS AVIF capability notes now state that future AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.'
+    );
+    expect(releaseSource).toContain(
+      'iOS AVIF unsupported-output error message now calls out metadata preserve, `output.maxBytes`, and animated AVIF preservation as unsupported AVIF output boundaries.'
+    );
+    expect(releaseSource).toContain(
+      'TypeScript native-unavailable guidance now includes the AVIF output production gate boundary.'
+    );
+    expect(releaseSource).toContain(
+      'README, release dry-run stale README snippets, Android verification doctor expectations, and Vitest expectations updated for the v0.2.19 candidate.'
+    );
+    expect(releaseSource).toContain('Production AVIF output encoding.');
+    expect(releaseSource).toContain('Android encoder production wiring.');
+    expect(releaseSource).toContain('iOS AVIF output implementation.');
+    expect(releaseSource).toContain('Metadata preservation for AVIF output.');
+    expect(releaseSource).toContain('Target-size AVIF output.');
+    expect(releaseSource).toContain('Animated AVIF preservation.');
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.19`.'
+    );
     expect(releaseSource).toContain('## v0.2.18');
     expect(releaseSource).toContain(
       'Status: published to npm as the `0.2.18` latest docs-only README correction. No `v0.2.18` tag or GitHub Release is part of this package-page correction.'
@@ -2541,7 +2627,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.18 published docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.19 AVIF output production gate candidate notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -3084,10 +3170,16 @@ describe('Android verification scripts', () => {
       "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
     );
     expect(iosSource).toContain(
+      'Future iOS AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.'
+    );
+    expect(iosSource).toContain(
+      "metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
+    );
+    expect(iosSource).toContain(
       'iOS MVP supports JPEG, PNG, static GIF, static WebP, static HEIC, static HEIF, and runtime-available static AVIF input with JPEG, PNG, or runtime ImageIO-backed WebP output only.'
     );
     expect(iosSource).toContain(
-      "iOS MVP supports AVIF input when ImageIO source decoding is available, but AVIF output is not implemented. Supported output formats are JPEG, PNG, and runtime-available WebP; output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
+      "iOS MVP supports AVIF input when ImageIO source decoding is available, but AVIF output is not implemented. Supported output formats are JPEG, PNG, and runtime-available WebP. Future AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation; metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output. output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
     );
     expect(iosSource).toContain(
       'iOS MVP supports JPEG, PNG, and runtime-available WebP output only. HEIC and HEIF output are not implemented. Call getImageCompressionCapabilities() before selecting a platform output format.'
@@ -3290,7 +3382,7 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('output = outputFormat != null');
     expect(combinedSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
     expect(combinedSource).toContain(
-      'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED.'
+      'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated.'
     );
     expect(combinedSource).not.toContain('PNG and WebP input remain planned.');
   });
@@ -3353,9 +3445,15 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain(
       "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
     );
+    expect(combinedSource).toContain(
+      'Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'
+    );
+    expect(combinedSource).toContain(
+      "metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
+    );
     expect(combinedSource).toContain('UNSUPPORTED_OUTPUT_FORMAT_MESSAGE');
     expect(combinedSource).toContain(
-      'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED.'
+      'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated.'
     );
     expect(combinedSource).toContain(
       'Android MVP decodes GIF file:// and content:// sources as a static first frame.'

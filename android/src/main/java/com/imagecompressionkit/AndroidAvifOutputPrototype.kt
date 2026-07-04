@@ -55,7 +55,7 @@ internal object AndroidAvifOutputPrototype {
   const val CANDIDATE_ROUTE = "MediaCodec image/avif encoder probe"
   const val SMOKE_ROUTE = "MediaCodec image/avif encode/decode-back smoke"
   const val PRODUCTION_GATE_MESSAGE =
-    "AVIF output production gate remains closed until byte-signature, decode-back, metadata, and maxBytes behavior are validated."
+    "AVIF output production gate remains closed until production wiring, byte-signature, ImageDecoder decode-back, metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated."
 
   fun inspectRoute(
     width: Int,
@@ -237,6 +237,7 @@ internal object AndroidAvifOutputPrototype {
       add("Prototype smoke result must pass complete AVIF file signature and ImageDecoder decode-back validation before AVIF output can be enabled.")
       add("metadata='preserve' remains unsupported for AVIF output because Android ExifInterface writable metadata support is JPEG, PNG, and WebP only.")
       add("output.maxBytes remains unsupported for AVIF output until quality and size-search semantics are validated.")
+      add("Animated AVIF preservation remains unsupported until the public output contract explicitly designs static-only versus animated behavior.")
       add(PRODUCTION_GATE_MESSAGE)
     }
 
@@ -246,7 +247,7 @@ internal object AndroidAvifOutputPrototype {
       "Encode one static 16x12 ARGB_8888 bitmap through the candidate route into an .avif cache file.",
       "Assert the result has an ftyp box with avif or avis compatible brand.",
       "Decode the result with ImageDecoder and assert dimensions match the processed bitmap.",
-      "Assert metadata='preserve' and output.maxBytes reject with documented unsupported errors until implemented.",
+      "Assert metadata='preserve', output.maxBytes, and animated AVIF preservation reject with documented unsupported errors until implemented.",
       "Keep getImageCompressionCapabilities().formats.avif.output=false until the encode and decode-back smoke passes in instrumentation."
     )
 

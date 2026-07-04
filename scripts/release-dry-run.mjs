@@ -90,6 +90,12 @@ const STALE_PACKED_README_SNIPPETS = [
   'The `0.2.18` package metadata is prepared as an unpublished docs-only npm README correction candidate for `react-native-image-compression-kit`',
   'version `0.2.18` is the unpublished docs-only npm package-page README correction candidate',
   'v0.2.18 docs-only npm README correction candidate notes',
+  'Status: v0.2.18 published',
+  'v0.2.18%20published',
+  'Version `0.2.18` is published as a docs-only npm README correction for `react-native-image-compression-kit`',
+  'The `0.2.18` package metadata is published as a docs-only npm README correction for `react-native-image-compression-kit`',
+  'version `0.2.18` is the published docs-only npm package-page README correction release',
+  'v0.2.18 published docs-only npm README correction release notes',
 ];
 
 const STEPS = [

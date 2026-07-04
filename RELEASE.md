@@ -1,5 +1,64 @@
 # Release Notes
 
+## v0.2.19
+
+Status: unpublished release candidate for the AVIF output production gate. npm `latest` remains `0.2.18`; no `v0.2.19` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It tightens the public and test-covered explanation for why AVIF output remains disabled after the v0.2.17 Android `MediaCodec image/avif` encode/decode-back smoke blocker, and how future iOS AVIF output must stay runtime-gated by ImageIO destination support.
+
+### Goals
+
+- Keep AVIF output capability reporting unchanged while making the production gate explicit.
+- Align the Android AVIF smoke blocker language with the runtime capability notes and unsupported-output error message.
+- Align iOS AVIF capability notes and `output.format: 'avif'` unsupported-output errors with the current ImageIO runtime-gated destination policy.
+- State that `metadata: 'preserve'`, `output.maxBytes`, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested.
+- Keep README, release notes, release dry-run checks, Android verification doctor checks, and Vitest expectations current for the v0.2.19 candidate.
+
+### Capability Reporting Decision
+
+- Android AVIF input remains API 34+ and AVIF output remains `output=false`.
+- Android AVIF output remains disabled until the `MediaCodec image/avif` encode/decode-back smoke produces a complete AVIF file with `ftyp` `avif` / `avis` signature bytes and `ImageDecoder` decode-back validation.
+- iOS AVIF input remains gated by `CGImageSourceCopyTypeIdentifiers()`, and AVIF output remains `output=false`.
+- Future iOS AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.
+- `metadata='preserve'`, `output.maxBytes`, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested.
+
+### Included
+
+- `package.json` version bump to `0.2.19`.
+- Android `AndroidAvifOutputPrototype` production gate message now names production wiring, byte-signature validation, `ImageDecoder` decode-back validation, metadata preserve, `output.maxBytes`, and animated AVIF boundaries.
+- Android AVIF capability notes now describe the `MediaCodec image/avif` encode/decode-back gate and the metadata, target-size, and animation unsupported boundaries.
+- Android HEIC/HEIF/AVIF unsupported-output error message now explains that AVIF output remains disabled until the smoke produces a complete AVIF file and the remaining AVIF output boundaries are validated.
+- iOS AVIF capability notes now state that future AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.
+- iOS AVIF unsupported-output error message now calls out metadata preserve, `output.maxBytes`, and animated AVIF preservation as unsupported AVIF output boundaries.
+- TypeScript native-unavailable guidance now includes the AVIF output production gate boundary.
+- README, release dry-run stale README snippets, Android verification doctor expectations, and Vitest expectations updated for the v0.2.19 candidate.
+
+### Not Included
+
+- Production AVIF output encoding.
+- Android encoder production wiring.
+- iOS AVIF output implementation.
+- AVIF output capability enablement.
+- Metadata preservation for AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.19`.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+After validation, the candidate should remain unpublished until a separate publish goal explicitly promotes it.
+
 ## v0.2.18
 
 Status: published to npm as the `0.2.18` latest docs-only README correction. No `v0.2.18` tag or GitHub Release is part of this package-page correction.
