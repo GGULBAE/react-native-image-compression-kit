@@ -516,7 +516,7 @@ describe('Android verification scripts', () => {
     expect(registrySmokeScriptSource).toContain('RNICK_REGISTRY_SMOKE_KEEP');
     expect(registrySmokeScriptSource).toContain('compressImage(options)');
     expect(registrySmokeScriptSource).toContain('getImageCompressionCapabilities()');
-    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.18');
+    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.19');
     expect(readmeSource).toContain('published npm registry package');
     expect(readmeSource).toContain('npm install --ignore-scripts --legacy-peer-deps');
     expect(readmeSource).toContain(
@@ -686,13 +686,13 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain('pnpm smoke:registry -- --version 0.2.19');
     expect(releaseSource).toContain('### Pre-Publish Remote Verification');
     expect(releaseSource).toContain(
-      'Release preparation commit `31372e9093857231366eef33afa309f612d927ac` passed GitHub Actions CI: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065108`.'
+      'Release preparation commit `fb45336a875422620d5a64413ee3300bbb0aa9f0` passed GitHub Actions CI: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700528814`.'
     );
     expect(releaseSource).toContain(
-      'Android Instrumentation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065092`.'
+      'Android Instrumentation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700528804`.'
     );
     expect(releaseSource).toContain(
-      'iOS Validation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065129`.'
+      'iOS Validation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700528803`.'
     );
     expect(releaseSource).toContain(
       'Android `RNICK_AVIF_OUTPUT_SMOKE` reported `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`, keeping AVIF output disabled.'
@@ -702,7 +702,23 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain('### Post-Publish Registry Verification');
     expect(releaseSource).toContain(
-      'Record the `npm view react-native-image-compression-kit@0.2.19 version dist.tarball dist.integrity dist.shasum time.modified --json` output and `pnpm smoke:registry -- --version 0.2.19` result after npm publish.'
+      'confirmed package version `0.2.19`, `latest: 0.2.19`, and registry modified time `2026-07-04T08:41:31.627Z`.'
+    );
+    expect(releaseSource).toContain(
+      'https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.19.tgz'
+    );
+    expect(releaseSource).toContain(
+      'sha512-QI0XvKLtq9bi4QAnAq7BP8I8pq2X6wZ7Zp8O29Z7UUkoGqNp6nS0TDy2OYjblyp87vvVh7Z2RaDi09IV5WigZA=='
+    );
+    expect(releaseSource).toContain('f2691b8fde440c8ab20fec01dbadd18ba928839a');
+    expect(releaseSource).toContain(
+      'Published tarball README inspection confirmed `Status: v0.2.19 published`'
+    );
+    expect(releaseSource).toContain(
+      'Published tarball README stale-candidate scan found no `v0.2.19 candidate`'
+    );
+    expect(releaseSource).toContain(
+      '`pnpm smoke:registry -- --version 0.2.19` passed against the real registry tarball with `fileCount: 50`, `packageSize: 55677`, `unpackedSize: 246114`, and a clean consumer `tsc --noEmit`.'
     );
     expect(releaseSource).toContain('## v0.2.18');
     expect(releaseSource).toContain(

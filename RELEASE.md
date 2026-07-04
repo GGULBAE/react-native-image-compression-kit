@@ -71,15 +71,19 @@ pnpm smoke:registry -- --version 0.2.19
 
 ### Pre-Publish Remote Verification
 
-- Release preparation commit `31372e9093857231366eef33afa309f612d927ac` passed GitHub Actions CI: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065108`.
-- Android Instrumentation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065092`.
-- iOS Validation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065129`.
+- Release preparation commit `fb45336a875422620d5a64413ee3300bbb0aa9f0` passed GitHub Actions CI: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700528814`.
+- Android Instrumentation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700528804`.
+- iOS Validation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700528803`.
 - Android `RNICK_AVIF_OUTPUT_SMOKE` reported `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`, keeping AVIF output disabled.
 - iOS smoke reported `RNICK_IOS_SMOKE_PASS` with `unsupportedOutputs` containing `webp`, `heic`, `heif`, and `avif`, matching the runtime-gated output policy.
 
 ### Post-Publish Registry Verification
 
-Record the `npm view react-native-image-compression-kit@0.2.19 version dist.tarball dist.integrity dist.shasum time.modified --json` output and `pnpm smoke:registry -- --version 0.2.19` result after npm publish.
+- `npm view react-native-image-compression-kit version dist-tags.latest time.modified --json` confirmed package version `0.2.19`, `latest: 0.2.19`, and registry modified time `2026-07-04T08:41:31.627Z`.
+- `npm view react-native-image-compression-kit@0.2.19 version dist.tarball dist.integrity dist.shasum time.modified --json` confirmed tarball `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.19.tgz`, integrity `sha512-QI0XvKLtq9bi4QAnAq7BP8I8pq2X6wZ7Zp8O29Z7UUkoGqNp6nS0TDy2OYjblyp87vvVh7Z2RaDi09IV5WigZA==`, shasum `f2691b8fde440c8ab20fec01dbadd18ba928839a`, and publish timestamp `2026-07-04T08:41:31.627Z`.
+- Published tarball README inspection confirmed `Status: v0.2.19 published`, `npm latest points to 0.2.19`, `Version 0.2.19 is a package-only npm release`, and `The 0.2.19 package metadata is published as the AVIF output production gate release`.
+- Published tarball README stale-candidate scan found no `v0.2.19 candidate`, unpublished AVIF output production gate candidate, `npm latest remains 0.2.18`, or unpublished `0.2.19` package-page snippets.
+- `pnpm smoke:registry -- --version 0.2.19` passed against the real registry tarball with `fileCount: 50`, `packageSize: 55677`, `unpackedSize: 246114`, and a clean consumer `tsc --noEmit`.
 
 ## v0.2.18
 

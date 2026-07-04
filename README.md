@@ -556,7 +556,7 @@ pnpm smoke:consumer
 
 `pnpm smoke:consumer` builds the TypeScript output, creates a `pnpm pack` tarball, installs that tarball into a separate temporary React Native consumer project, and typechecks imports from `react-native-image-compression-kit` against the packed package. This pre-release smoke test verifies the npm package shape without publishing to npm or running Metro/native device builds. Set `RNICK_CONSUMER_SMOKE_KEEP=1` to keep the temporary project for inspection, or `RNICK_CONSUMER_SMOKE_TMPDIR=/path/to/tmp` to choose its parent directory.
 
-`pnpm smoke:registry -- --version 0.2.18` validates an already published npm registry package. It runs `npm view`, downloads the registry tarball with `npm pack`, checks required runtime files and forbidden development-only files, installs the published version into a separate temporary React Native consumer project with `npm install --ignore-scripts --legacy-peer-deps`, and runs `npm run typecheck` against public imports from the registry package. This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`, because it requires an already published npm version. Set `RNICK_REGISTRY_SMOKE_KEEP=1` to keep the temporary project for inspection, `RNICK_REGISTRY_SMOKE_TMPDIR=/path/to/tmp` to choose its parent directory, or `RNICK_REGISTRY_SMOKE_VERSION=0.2.18` to provide the version without CLI arguments.
+`pnpm smoke:registry -- --version 0.2.19` validates an already published npm registry package. It runs `npm view`, downloads the registry tarball with `npm pack`, checks required runtime files and forbidden development-only files, installs the published version into a separate temporary React Native consumer project with `npm install --ignore-scripts --legacy-peer-deps`, and runs `npm run typecheck` against public imports from the registry package. This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`, because it requires an already published npm version. Set `RNICK_REGISTRY_SMOKE_KEEP=1` to keep the temporary project for inspection, `RNICK_REGISTRY_SMOKE_TMPDIR=/path/to/tmp` to choose its parent directory, or `RNICK_REGISTRY_SMOKE_VERSION=0.2.19` to provide the version without CLI arguments.
 
 The separate `.github/workflows/android-instrumentation.yml` workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout, and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC, HEIF, and AVIF fixtures decode on the Android `ImageDecoder` paths and can be compressed to JPEG, PNG, and WebP; it also runs the Android AVIF output encode/decode-back smoke and asserts AVIF output capability reporting remains false. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
 
@@ -623,7 +623,7 @@ This command builds the package, creates a local tarball with `pnpm pack`, insta
 Run the registry-based smoke test after publishing, or dry-run it against the latest published package while iterating on release automation:
 
 ```bash
-pnpm smoke:registry -- --version 0.2.18
+pnpm smoke:registry -- --version 0.2.19
 ```
 
 This command reads npm registry metadata, downloads the published tarball, verifies required package contents and development-only file exclusions, installs the published package into a clean temporary React Native consumer project, and typechecks public API imports. It does not publish to npm.
