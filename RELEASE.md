@@ -62,6 +62,16 @@ pnpm smoke:registry -- --version 0.2.18
 
 After publishing, `pnpm smoke:registry -- --version 0.2.18` validates the real registry tarball and confirms the package-page README no longer contains the stale `0.2.17` candidate wording.
 
+### Post-Publish Registry Verification
+
+- `npm view react-native-image-compression-kit version dist-tags.latest time.modified --json` confirmed package version `0.2.18`, `latest: 0.2.18`, and registry modified time `2026-07-04T07:09:19.302Z`.
+- `npm view react-native-image-compression-kit@0.2.18 version dist.tarball dist.integrity dist.shasum time.modified --json` confirmed tarball `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.18.tgz`.
+- Registry tarball integrity: `sha512-fpM8aqOij9qXN3gk05b6wbGRCcvB16XnqxGoXOSI6+W67pSzCIWfKj4+URZCU+DSkNyKLehO1XvGj+RkrqOYVw==`; shasum: `72c7cbf845d436c936de8bbcc3844bc330416549`.
+- Published tarball README inspection confirmed `Status: v0.2.18 published`, `npm latest points to 0.2.18`, and `version 0.2.18 is the published docs-only npm package-page README correction release`.
+- Published tarball README stale-candidate scan found no `v0.2.17 candidate`, unpublished `0.2.17` release-candidate, `latest published npm package is 0.2.14`, `GitHub Release [v0.2.14]`, `v0.2.18 candidate`, or unpublished `0.2.18` package-page snippets.
+- `pnpm smoke:registry -- --version 0.2.18` passed against the real registry tarball with `fileCount: 50`, `packageSize: 54991`, `unpackedSize: 242469`, and a clean consumer `tsc --noEmit`.
+- Release promotion gate passed on commit `9f032e269e5d82e5fdaf38f554a113572cd63f1e`: CI `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28698349542`, Android Instrumentation `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28698349545`, and iOS Validation `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28698349539`.
+
 ## v0.2.17
 
 Status: published to npm as the `0.2.17` latest release, tagged as `v0.2.17`.

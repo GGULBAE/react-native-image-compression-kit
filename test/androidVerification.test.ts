@@ -628,6 +628,38 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'After publishing, `pnpm smoke:registry -- --version 0.2.18` validates the real registry tarball and confirms the package-page README no longer contains the stale `0.2.17` candidate wording.'
     );
+    expect(releaseSource).toContain('### Post-Publish Registry Verification');
+    expect(releaseSource).toContain(
+      'confirmed package version `0.2.18`, `latest: 0.2.18`, and registry modified time `2026-07-04T07:09:19.302Z`.'
+    );
+    expect(releaseSource).toContain(
+      'https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.18.tgz'
+    );
+    expect(releaseSource).toContain(
+      'sha512-fpM8aqOij9qXN3gk05b6wbGRCcvB16XnqxGoXOSI6+W67pSzCIWfKj4+URZCU+DSkNyKLehO1XvGj+RkrqOYVw=='
+    );
+    expect(releaseSource).toContain('72c7cbf845d436c936de8bbcc3844bc330416549');
+    expect(releaseSource).toContain(
+      'Published tarball README inspection confirmed `Status: v0.2.18 published`'
+    );
+    expect(releaseSource).toContain(
+      'Published tarball README stale-candidate scan found no `v0.2.17 candidate`'
+    );
+    expect(releaseSource).toContain(
+      '`pnpm smoke:registry -- --version 0.2.18` passed against the real registry tarball with `fileCount: 50`, `packageSize: 54991`, `unpackedSize: 242469`, and a clean consumer `tsc --noEmit`.'
+    );
+    expect(releaseSource).toContain(
+      'Release promotion gate passed on commit `9f032e269e5d82e5fdaf38f554a113572cd63f1e`'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28698349542'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28698349545'
+    );
+    expect(releaseSource).toContain(
+      'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28698349539'
+    );
     expect(releaseSource).toContain('## v0.2.17');
     expect(releaseSource).toContain(
       'Status: published to npm as the `0.2.17` latest release, tagged as `v0.2.17`.'
