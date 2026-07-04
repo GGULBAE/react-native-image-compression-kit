@@ -82,10 +82,14 @@ const STALE_PACKED_README_SNIPPETS = [
   'The `0.2.17` package metadata is prepared as an unpublished Android AVIF output encode/decode-back smoke candidate for `react-native-image-compression-kit`',
   'version `0.2.17` is the unpublished Android AVIF output encode/decode-back smoke candidate',
   'v0.2.17 Android AVIF output encode/decode-back smoke candidate notes',
-  'Status: v0.2.18 published',
-  'v0.2.18%20published',
-  'Version `0.2.18` is published for `react-native-image-compression-kit`',
-  'The `0.2.18` package metadata is published for `react-native-image-compression-kit`',
+  'Status: v0.2.18 candidate',
+  'v0.2.18%20candidate',
+  'Version `0.2.18` is an unpublished docs-only npm README correction candidate for `react-native-image-compression-kit`',
+  'The latest published npm package is `0.2.17`',
+  'npm `latest` remains `0.2.17`',
+  'The `0.2.18` package metadata is prepared as an unpublished docs-only npm README correction candidate for `react-native-image-compression-kit`',
+  'version `0.2.18` is the unpublished docs-only npm package-page README correction candidate',
+  'v0.2.18 docs-only npm README correction candidate notes',
 ];
 
 const STEPS = [

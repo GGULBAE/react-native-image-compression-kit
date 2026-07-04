@@ -2,25 +2,26 @@
 
 ## v0.2.18
 
-Status: unpublished docs-only npm README correction candidate. npm `latest` remains `0.2.17`; no `v0.2.18` tag, GitHub Release, or npm publish is part of this candidate.
+Status: published to npm as the `0.2.18` latest docs-only README correction. No `v0.2.18` tag or GitHub Release is part of this package-page correction.
 
-This candidate corrects the README that is shown on the npm package page after the `0.2.17` tarball shipped pre-publish candidate status text. It keeps Android and iOS runtime behavior unchanged while preparing a new package version whose packaged README reports the `0.2.17` published state and the `0.2.18` docs-only correction candidate.
+This release corrects the README that is shown on the npm package page after the `0.2.17` tarball shipped pre-publish candidate status text. It keeps Android and iOS runtime behavior unchanged while publishing a new package version whose packaged README reports `0.2.18` as the current docs-only correction.
 
 ### Goals
 
-- Prepare a docs-only package version so the npm package page can reflect the published `0.2.17` release state after a future `0.2.18` publish.
+- Publish a docs-only package version so the npm package page reflects the corrected `0.2.18` release state.
 - Remove stale `0.2.17` pre-publish package-page status wording from the packaged README.
 - Keep Android runtime behavior, iOS runtime behavior, and the public TypeScript API unchanged.
-- Verify the `0.2.17` registry tarball README before preparation and the future `0.2.18` registry tarball README after any publish decision.
+- Verify the `0.2.17` registry tarball README before preparation and the `0.2.18` registry tarball README after publish.
 - Keep the release dry-run packed README stale-status check and post-publish registry smoke flow in place.
 
 ### Included
 
 - `package.json` version bump to `0.2.18`.
-- README status, installation, release guidance, and registry smoke examples updated for the docs-only npm README correction candidate.
-- README copy now describes `0.2.18` as a docs-only README correction candidate while preserving the `0.2.17` runtime behavior surface.
-- Source-level tests and Android verification doctor expectations are updated for the `0.2.18` docs-only status.
-- Release dry-run packed README stale checks now reject the stale `0.2.17` pre-publish candidate snippets that shipped in the published `0.2.17` tarball.
+- README status, installation, release guidance, and registry smoke examples updated for the published docs-only npm README correction.
+- README copy now describes `0.2.18` as a docs-only README correction release while preserving the `0.2.17` runtime behavior surface.
+- Source-level tests and Android verification doctor expectations are updated for the `0.2.18` published docs-only status.
+- Release dry-run packed README stale checks now reject the stale `0.2.17` pre-publish candidate snippets that shipped in the published `0.2.17` tarball and the stale `0.2.18` candidate snippets from the pre-publish correction commit.
+- npm `latest` publish and post-publish registry smoke are part of this publish gate.
 
 ### Not Included
 
@@ -28,7 +29,7 @@ This candidate corrects the README that is shown on the npm package page after t
 - Native code changes.
 - New public TypeScript API surface.
 - AVIF output, animated AVIF preservation, HEIC/HEIF output, iOS metadata preservation, cancellation, or progress support.
-- npm publish, git tag, or GitHub Release promotion for `v0.2.18`.
+- Git tag or GitHub Release promotion for `v0.2.18`.
 
 ### v0.2.17 Registry README Inspection
 
@@ -45,7 +46,7 @@ The inspection found `Status: v0.2.17 candidate`, `Version 0.2.17 is an unpublis
 
 ### Validation
 
-Before considering the candidate ready:
+Before publishing and after the publish gate:
 
 ```bash
 git status --short --branch
@@ -54,9 +55,12 @@ pnpm example:typecheck
 git diff --check
 pnpm pack --dry-run
 pnpm release:dry-run
+npm publish --tag latest
+npm view react-native-image-compression-kit version dist-tags.latest
+pnpm smoke:registry -- --version 0.2.18
 ```
 
-Because this is a docs-only candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.17`, after any future publish decision.
+After publishing, `pnpm smoke:registry -- --version 0.2.18` validates the real registry tarball and confirms the package-page README no longer contains the stale `0.2.17` candidate wording.
 
 ## v0.2.17
 

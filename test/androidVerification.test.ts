@@ -123,10 +123,14 @@ describe('Android verification scripts', () => {
       'The `0.2.17` package metadata is prepared as an unpublished Android AVIF output encode/decode-back smoke candidate for `react-native-image-compression-kit`',
       'version `0.2.17` is the unpublished Android AVIF output encode/decode-back smoke candidate',
       'v0.2.17 Android AVIF output encode/decode-back smoke candidate notes',
-      'Status: v0.2.18 published',
-      'v0.2.18%20published',
-      'Version `0.2.18` is published for `react-native-image-compression-kit`',
-      'The `0.2.18` package metadata is published for `react-native-image-compression-kit`',
+      'Status: v0.2.18 candidate',
+      'v0.2.18%20candidate',
+      'Version `0.2.18` is an unpublished docs-only npm README correction candidate for `react-native-image-compression-kit`',
+      'The latest published npm package is `0.2.17`',
+      'npm `latest` remains `0.2.17`',
+      'The `0.2.18` package metadata is prepared as an unpublished docs-only npm README correction candidate for `react-native-image-compression-kit`',
+      'version `0.2.18` is the unpublished docs-only npm package-page README correction candidate',
+      'v0.2.18 docs-only npm README correction candidate notes',
     ];
     const expectedKeywords = [
       'react-native',
@@ -172,15 +176,15 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.18` is an unpublished docs-only npm README correction candidate for `react-native-image-compression-kit`'
+      'Version `0.2.18` is published as a docs-only npm README correction for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
-      'It keeps Android and iOS runtime behavior unchanged while preparing a package-page README that no longer carries stale `0.2.17` pre-publish candidate wording.'
+      'It keeps Android and iOS runtime behavior unchanged while replacing the npm package-page README that carried stale `0.2.17` pre-publish candidate wording.'
     );
-    expect(readmeSource).toContain('The latest published npm package is `0.2.17`');
-    expect(readmeSource).toContain('GitHub Release [v0.2.17]');
+    expect(readmeSource).toContain('npm `latest` points to `0.2.18`');
+    expect(readmeSource).toContain('the previous GitHub Release remains [v0.2.17]');
     expect(readmeSource).toContain(
-      'The `0.2.18` package metadata is prepared as an unpublished docs-only npm README correction candidate for `react-native-image-compression-kit`'
+      'The `0.2.18` package metadata is published as a docs-only npm README correction for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -237,7 +241,7 @@ describe('Android verification scripts', () => {
       'version `0.2.17` is the published Android AVIF output encode/decode-back smoke release'
     );
     expect(readmeSource).toContain(
-      'version `0.2.18` is the unpublished docs-only npm package-page README correction candidate'
+      'version `0.2.18` is the published docs-only npm package-page README correction release'
     );
     expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
@@ -264,7 +268,7 @@ describe('Android verification scripts', () => {
       'Version `0.2.17` adds an internal Android AVIF output encode/decode-back smoke attempt without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
-      'Version `0.2.18` corrects the prepared npm README without runtime behavior changes.'
+      'Version `0.2.18` corrects the packaged npm README without runtime behavior changes.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -477,7 +481,7 @@ describe('Android verification scripts', () => {
     expect(registrySmokeScriptSource).toContain('RNICK_REGISTRY_SMOKE_KEEP');
     expect(registrySmokeScriptSource).toContain('compressImage(options)');
     expect(registrySmokeScriptSource).toContain('getImageCompressionCapabilities()');
-    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.17');
+    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.18');
     expect(readmeSource).toContain('published npm registry package');
     expect(readmeSource).toContain('npm install --ignore-scripts --legacy-peer-deps');
     expect(readmeSource).toContain(
@@ -569,20 +573,20 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.18 docs-only npm README correction notes and previous release notes', () => {
+  it('documents the v0.2.18 published docs-only npm README correction notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.18');
     expect(releaseSource).toContain('## v0.2.18');
     expect(releaseSource).toContain(
-      'Status: unpublished docs-only npm README correction candidate. npm `latest` remains `0.2.17`; no `v0.2.18` tag, GitHub Release, or npm publish is part of this candidate.'
+      'Status: published to npm as the `0.2.18` latest docs-only README correction. No `v0.2.18` tag or GitHub Release is part of this package-page correction.'
     );
     expect(releaseSource).toContain(
-      'This candidate corrects the README that is shown on the npm package page after the `0.2.17` tarball shipped pre-publish candidate status text.'
+      'This release corrects the README that is shown on the npm package page after the `0.2.17` tarball shipped pre-publish candidate status text.'
     );
     expect(releaseSource).toContain(
-      'Prepare a docs-only package version so the npm package page can reflect the published `0.2.17` release state after a future `0.2.18` publish.'
+      'Publish a docs-only package version so the npm package page reflects the corrected `0.2.18` release state.'
     );
     expect(releaseSource).toContain(
       'Remove stale `0.2.17` pre-publish package-page status wording from the packaged README.'
@@ -592,23 +596,24 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain('`package.json` version bump to `0.2.18`.');
     expect(releaseSource).toContain(
-      'README status, installation, release guidance, and registry smoke examples updated for the docs-only npm README correction candidate.'
+      'README status, installation, release guidance, and registry smoke examples updated for the published docs-only npm README correction.'
     );
     expect(releaseSource).toContain(
-      'README copy now describes `0.2.18` as a docs-only README correction candidate while preserving the `0.2.17` runtime behavior surface.'
+      'README copy now describes `0.2.18` as a docs-only README correction release while preserving the `0.2.17` runtime behavior surface.'
     );
     expect(releaseSource).toContain(
-      'Source-level tests and Android verification doctor expectations are updated for the `0.2.18` docs-only status.'
+      'Source-level tests and Android verification doctor expectations are updated for the `0.2.18` published docs-only status.'
     );
     expect(releaseSource).toContain(
-      'Release dry-run packed README stale checks now reject the stale `0.2.17` pre-publish candidate snippets that shipped in the published `0.2.17` tarball.'
+      'Release dry-run packed README stale checks now reject the stale `0.2.17` pre-publish candidate snippets that shipped in the published `0.2.17` tarball and the stale `0.2.18` candidate snippets from the pre-publish correction commit.'
+    );
+    expect(releaseSource).toContain(
+      'npm `latest` publish and post-publish registry smoke are part of this publish gate.'
     );
     expect(releaseSource).toContain('Android or iOS runtime behavior changes.');
     expect(releaseSource).toContain('Native code changes.');
     expect(releaseSource).toContain('New public TypeScript API surface.');
-    expect(releaseSource).toContain(
-      'npm publish, git tag, or GitHub Release promotion for `v0.2.18`.'
-    );
+    expect(releaseSource).toContain('Git tag or GitHub Release promotion for `v0.2.18`.');
     expect(releaseSource).toContain('### v0.2.17 Registry README Inspection');
     expect(releaseSource).toContain(
       'npm pack react-native-image-compression-kit@0.2.17 --pack-destination "$tmpdir"'
@@ -621,7 +626,7 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain('the "latest published npm package is 0.2.14" wording');
     expect(releaseSource).toContain('v0.2.17 Android AVIF output encode/decode-back smoke candidate notes');
     expect(releaseSource).toContain(
-      'Because this is a docs-only candidate and not a publish step, `pnpm smoke:registry` remains pointed at the latest published package, `0.2.17`, after any future publish decision.'
+      'After publishing, `pnpm smoke:registry -- --version 0.2.18` validates the real registry tarball and confirms the package-page README no longer contains the stale `0.2.17` candidate wording.'
     );
     expect(releaseSource).toContain('## v0.2.17');
     expect(releaseSource).toContain(
@@ -2504,7 +2509,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.18 docs-only npm README correction candidate notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.18 published docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
