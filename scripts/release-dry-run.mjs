@@ -94,8 +94,16 @@ const STALE_PACKED_README_SNIPPETS = [
   'v0.2.18%20published',
   'Version `0.2.18` is published as a docs-only npm README correction for `react-native-image-compression-kit`',
   'The `0.2.18` package metadata is published as a docs-only npm README correction for `react-native-image-compression-kit`',
-  'version `0.2.18` is the published docs-only npm package-page README correction release',
   'v0.2.18 published docs-only npm README correction release notes',
+  'Status: v0.2.19 candidate',
+  'v0.2.19%20candidate',
+  'Version `0.2.19` is an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`',
+  'npm `latest` remains `0.2.18`',
+  'Version `0.2.18` remains the latest published npm package and docs-only package-page README correction.',
+  'No npm publish, git tag, or GitHub Release is part of the v0.2.19 candidate.',
+  'The `0.2.19` package metadata is prepared as an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`',
+  'version `0.2.19` is the unpublished AVIF output production gate candidate',
+  'v0.2.19 AVIF output production gate candidate notes',
 ];
 
 const STEPS = [

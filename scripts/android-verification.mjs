@@ -271,8 +271,16 @@ function checkPackageMetadata() {
     'v0.2.18%20published',
     'Version `0.2.18` is published as a docs-only npm README correction for `react-native-image-compression-kit`',
     'The `0.2.18` package metadata is published as a docs-only npm README correction for `react-native-image-compression-kit`',
-    'version `0.2.18` is the published docs-only npm package-page README correction release',
     'v0.2.18 published docs-only npm README correction release notes',
+    'Status: v0.2.19 candidate',
+    'v0.2.19%20candidate',
+    'Version `0.2.19` is an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`',
+    'npm `latest` remains `0.2.18`',
+    'Version `0.2.18` remains the latest published npm package and docs-only package-page README correction.',
+    'No npm publish, git tag, or GitHub Release is part of the v0.2.19 candidate.',
+    'The `0.2.19` package metadata is prepared as an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`',
+    'version `0.2.19` is the unpublished AVIF output production gate candidate',
+    'v0.2.19 AVIF output production gate candidate notes',
   ];
   const expectedKeywords = [
     'react-native',
@@ -305,12 +313,12 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.19` is an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('Version `0.2.19` is published for `react-native-image-compression-kit` as the AVIF output production gate release.'),
     readmeContents.includes('It keeps runtime AVIF output disabled while aligning Android and iOS capability notes, unsupported-output errors, README guidance, and verification expectations around the blockers found by the v0.2.17 Android encode/decode-back smoke and the current iOS ImageIO runtime-gated policy.'),
-    readmeContents.includes('npm `latest` remains `0.2.18`'),
+    readmeContents.includes('npm `latest` points to `0.2.19`'),
     readmeContents.includes('the previous GitHub Release remains [v0.2.17]'),
-    readmeContents.includes('Version `0.2.18` remains the latest published npm package and docs-only package-page README correction.'),
-    readmeContents.includes('The `0.2.19` package metadata is prepared as an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('Version `0.2.19` is a package-only npm release. No `v0.2.19` tag or GitHub Release is part of this package-page promotion.'),
+    readmeContents.includes('The `0.2.19` package metadata is published as the AVIF output production gate release for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -329,8 +337,8 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.15` is the unpublished AVIF output feasibility candidate'),
     readmeContents.includes('version `0.2.16` is the unpublished Android AVIF output encoder route prototype candidate'),
     readmeContents.includes('version `0.2.17` is the published Android AVIF output encode/decode-back smoke release'),
-    readmeContents.includes('version `0.2.18` remains the latest published docs-only npm package-page README correction release'),
-    readmeContents.includes('version `0.2.19` is the unpublished AVIF output production gate candidate'),
+    readmeContents.includes('version `0.2.18` is the published docs-only npm package-page README correction release'),
+    readmeContents.includes('version `0.2.19` is the published AVIF output production gate release'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -372,7 +380,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.19 AVIF output production gate candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.19 published AVIF output production gate release',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README AVIF output production gate status are aligned'
       : 'expected package.json release metadata or README AVIF output guidance is missing/mismatched',
@@ -662,12 +670,13 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.19',
-    'Status: unpublished release candidate for the AVIF output production gate. npm `latest` remains `0.2.18`; no `v0.2.19` tag, GitHub Release, or npm publish is part of this candidate.',
-    'This candidate does not enable AVIF output. It tightens the public and test-covered explanation for why AVIF output remains disabled after the v0.2.17 Android `MediaCodec image/avif` encode/decode-back smoke blocker, and how future iOS AVIF output must stay runtime-gated by ImageIO destination support.',
+    'Status: published to npm as the `0.2.19` latest AVIF output production gate release. No `v0.2.19` tag or GitHub Release is part of this package-page promotion.',
+    'This release does not enable AVIF output. It tightens the public and test-covered explanation for why AVIF output remains disabled after the v0.2.17 Android `MediaCodec image/avif` encode/decode-back smoke blocker, and how future iOS AVIF output must stay runtime-gated by ImageIO destination support.',
     'Keep AVIF output capability reporting unchanged while making the production gate explicit.',
     'Align the Android AVIF smoke blocker language with the runtime capability notes and unsupported-output error message.',
     'Align iOS AVIF capability notes and `output.format: \'avif\'` unsupported-output errors with the current ImageIO runtime-gated destination policy.',
     'State that `metadata: \'preserve\'`, `output.maxBytes`, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested.',
+    'Publish a package-page release whose packed README does not carry stale `v0.2.19 candidate` wording.',
     'Android AVIF output remains disabled until the `MediaCodec image/avif` encode/decode-back smoke produces a complete AVIF file with `ftyp` `avif` / `avis` signature bytes and `ImageDecoder` decode-back validation.',
     'Future iOS AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.',
     '`metadata=\'preserve\'`, `output.maxBytes`, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested.',
@@ -678,14 +687,29 @@ function checkReleaseNotes() {
     'iOS AVIF capability notes now state that future AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.',
     'iOS AVIF unsupported-output error message now calls out metadata preserve, `output.maxBytes`, and animated AVIF preservation as unsupported AVIF output boundaries.',
     'TypeScript native-unavailable guidance now includes the AVIF output production gate boundary.',
-    'README, release dry-run stale README snippets, Android verification doctor expectations, and Vitest expectations updated for the v0.2.19 candidate.',
+    'README, release dry-run stale README snippets, Android verification doctor expectations, and Vitest expectations updated for the v0.2.19 published package state.',
+    'npm package publication under the `latest` dist-tag.',
     'Production AVIF output encoding.',
     'Android encoder production wiring.',
     'iOS AVIF output implementation.',
     'Metadata preservation for AVIF output.',
     'Target-size AVIF output.',
     'Animated AVIF preservation.',
-    'npm publish, git tag, or GitHub Release promotion for `v0.2.19`.',
+    'Git tag or GitHub Release promotion for `v0.2.19`.',
+    '### Release Checklist',
+    'Before npm publish:',
+    'After npm publish:',
+    'npm publish --tag latest',
+    'npm view react-native-image-compression-kit version dist-tags.latest time.modified --json',
+    'pnpm smoke:registry -- --version 0.2.19',
+    '### Pre-Publish Remote Verification',
+    'Release preparation commit `31372e9093857231366eef33afa309f612d927ac` passed GitHub Actions CI: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065108`.',
+    'Android Instrumentation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065092`.',
+    'iOS Validation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065129`.',
+    'Android `RNICK_AVIF_OUTPUT_SMOKE` reported `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`, keeping AVIF output disabled.',
+    'iOS smoke reported `RNICK_IOS_SMOKE_PASS` with `unsupportedOutputs` containing `webp`, `heic`, `heif`, and `avif`, matching the runtime-gated output policy.',
+    '### Post-Publish Registry Verification',
+    'Record the `npm view react-native-image-compression-kit@0.2.19 version dist.tarball dist.integrity dist.shasum time.modified --json` output and `pnpm smoke:registry -- --version 0.2.19` result after npm publish.',
     '## v0.2.18',
     'Status: published to npm as the `0.2.18` latest docs-only README correction. No `v0.2.18` tag or GitHub Release is part of this package-page correction.',
     'This release corrects the README that is shown on the npm package page after the `0.2.17` tarball shipped pre-publish candidate status text.',
@@ -1474,7 +1498,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.19 AVIF output production gate candidate notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1490,9 +1514,9 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.19 AVIF output production gate candidate notes and previous release notes are current',
+    label: 'v0.2.19 published AVIF output production gate release notes and previous release notes are current',
     detail: ok
-      ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
+      ? 'RELEASE.md documents the release scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
           ...(packageJson.version === '0.2.19'

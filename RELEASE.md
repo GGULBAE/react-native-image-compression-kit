@@ -2,9 +2,9 @@
 
 ## v0.2.19
 
-Status: unpublished release candidate for the AVIF output production gate. npm `latest` remains `0.2.18`; no `v0.2.19` tag, GitHub Release, or npm publish is part of this candidate.
+Status: published to npm as the `0.2.19` latest AVIF output production gate release. No `v0.2.19` tag or GitHub Release is part of this package-page promotion.
 
-This candidate does not enable AVIF output. It tightens the public and test-covered explanation for why AVIF output remains disabled after the v0.2.17 Android `MediaCodec image/avif` encode/decode-back smoke blocker, and how future iOS AVIF output must stay runtime-gated by ImageIO destination support.
+This release does not enable AVIF output. It tightens the public and test-covered explanation for why AVIF output remains disabled after the v0.2.17 Android `MediaCodec image/avif` encode/decode-back smoke blocker, and how future iOS AVIF output must stay runtime-gated by ImageIO destination support.
 
 ### Goals
 
@@ -12,7 +12,8 @@ This candidate does not enable AVIF output. It tightens the public and test-cove
 - Align the Android AVIF smoke blocker language with the runtime capability notes and unsupported-output error message.
 - Align iOS AVIF capability notes and `output.format: 'avif'` unsupported-output errors with the current ImageIO runtime-gated destination policy.
 - State that `metadata: 'preserve'`, `output.maxBytes`, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested.
-- Keep README, release notes, release dry-run checks, Android verification doctor checks, and Vitest expectations current for the v0.2.19 candidate.
+- Publish a package-page release whose packed README does not carry stale `v0.2.19 candidate` wording.
+- Keep README, release notes, release dry-run checks, Android verification doctor checks, and Vitest expectations current for the v0.2.19 package release.
 
 ### Capability Reporting Decision
 
@@ -31,7 +32,8 @@ This candidate does not enable AVIF output. It tightens the public and test-cove
 - iOS AVIF capability notes now state that future AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.
 - iOS AVIF unsupported-output error message now calls out metadata preserve, `output.maxBytes`, and animated AVIF preservation as unsupported AVIF output boundaries.
 - TypeScript native-unavailable guidance now includes the AVIF output production gate boundary.
-- README, release dry-run stale README snippets, Android verification doctor expectations, and Vitest expectations updated for the v0.2.19 candidate.
+- README, release dry-run stale README snippets, Android verification doctor expectations, and Vitest expectations updated for the v0.2.19 published package state.
+- npm package publication under the `latest` dist-tag.
 
 ### Not Included
 
@@ -42,11 +44,11 @@ This candidate does not enable AVIF output. It tightens the public and test-cove
 - Metadata preservation for AVIF output.
 - Target-size AVIF output.
 - Animated AVIF preservation.
-- npm publish, git tag, or GitHub Release promotion for `v0.2.19`.
+- Git tag or GitHub Release promotion for `v0.2.19`.
 
-### Validation
+### Release Checklist
 
-Before considering the candidate ready:
+Before npm publish:
 
 ```bash
 git status --short --branch
@@ -57,7 +59,27 @@ pnpm pack --dry-run
 pnpm release:dry-run
 ```
 
-After validation, the candidate should remain unpublished until a separate publish goal explicitly promotes it.
+Release promotion also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed release commit. The Android Instrumentation `RNICK_AVIF_OUTPUT_SMOKE` log must keep AVIF output disabled and carry the known encoder-discovery blocker unless a later implementation explicitly enables AVIF output.
+
+After npm publish:
+
+```bash
+npm publish --tag latest
+npm view react-native-image-compression-kit version dist-tags.latest time.modified --json
+pnpm smoke:registry -- --version 0.2.19
+```
+
+### Pre-Publish Remote Verification
+
+- Release preparation commit `31372e9093857231366eef33afa309f612d927ac` passed GitHub Actions CI: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065108`.
+- Android Instrumentation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065092`.
+- iOS Validation passed: `https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28700065129`.
+- Android `RNICK_AVIF_OUTPUT_SMOKE` reported `attempted=false`, `success=false`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().`, keeping AVIF output disabled.
+- iOS smoke reported `RNICK_IOS_SMOKE_PASS` with `unsupportedOutputs` containing `webp`, `heic`, `heif`, and `avif`, matching the runtime-gated output policy.
+
+### Post-Publish Registry Verification
+
+Record the `npm view react-native-image-compression-kit@0.2.19 version dist.tarball dist.integrity dist.shasum time.modified --json` output and `pnpm smoke:registry -- --version 0.2.19` result after npm publish.
 
 ## v0.2.18
 
