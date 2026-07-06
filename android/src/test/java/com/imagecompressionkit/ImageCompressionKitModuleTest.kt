@@ -176,7 +176,9 @@ class ImageCompressionKitModuleTest {
     assertTrue(promise.rejectionMessage?.contains("metadata='preserve'") == true)
     assertTrue(promise.rejectionMessage?.contains("output.maxBytes") == true)
     assertTrue(promise.rejectionMessage?.contains("animated AVIF preservation") == true)
-    assertTrue(promise.rejectionMessage?.contains("does not enter the MediaCodec") == true)
+    assertTrue(
+      promise.rejectionMessage?.contains("does not enter the extracted Android AVIF output encode/decode-back helper") == true
+    )
   }
 
   @Test
