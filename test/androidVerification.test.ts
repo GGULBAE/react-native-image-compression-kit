@@ -162,7 +162,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.21');
+    expect(packageJson.version).toBe('0.2.22');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -190,13 +190,13 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.21` is an unpublished Android AVIF output production wiring scaffold candidate for `react-native-image-compression-kit`.'
+      'Version `0.2.22` is an unpublished Android AVIF output production helper extraction candidate for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
-      "routing Android `output.format: 'avif'` requests through a production wiring scaffold before source access or MediaCodec helper entry"
+      'extracting the Android AVIF encode/decode-back path into `AndroidAvifOutputHelper` with reusable helper input, output, sample, validation, and result types'
     );
     expect(readmeSource).toContain(
-      "The scaffold keeps `ERR_NOT_IMPLEMENTED`, `avif.output=false`, and the metadata `preserve`, `output.maxBytes`, and animated AVIF boundaries explicit."
+      "The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"
     );
     expect(readmeSource).toContain('npm `latest` remains `0.2.19`');
     expect(readmeSource).toContain('the previous GitHub Release remains [v0.2.17]');
@@ -204,10 +204,10 @@ describe('Android verification scripts', () => {
       'Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'
     );
     expect(readmeSource).toContain(
-      'No npm publish, git tag, or GitHub Release is part of the v0.2.21 candidate.'
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.22 candidate.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.21` package metadata is prepared as an unpublished Android AVIF output production wiring scaffold candidate for `react-native-image-compression-kit`'
+      'The `0.2.22` package metadata is prepared as an unpublished Android AVIF output production helper extraction candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'Version `0.2.19` remains the latest published npm package.'
@@ -279,6 +279,9 @@ describe('Android verification scripts', () => {
       'version `0.2.21` is the unpublished Android AVIF output production wiring scaffold candidate'
     );
     expect(readmeSource).toContain(
+      'version `0.2.22` is the unpublished Android AVIF output production helper extraction candidate'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -313,6 +316,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.21` adds an Android AVIF output production wiring scaffold without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.22` extracts the Android AVIF output encode/decode-back helper boundary without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -372,6 +378,12 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('willEnterEncodeDecodeBackHelper=false');
     expect(readmeSource).toContain(
       'AVIF requests continue to reject with `ERR_NOT_IMPLEMENTED` before source access, helper entry, metadata preserve, `output.maxBytes`, or animated AVIF preservation can be treated as implemented.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.22` keeps AVIF output disabled and extracts the Android AVIF encode/decode-back implementation into `AndroidAvifOutputHelper`.'
+    );
+    expect(readmeSource).toContain(
+      'The helper owns reusable input, encoded output, sample, file-validation, and result types for future production wiring'
     );
     expect(readmeSource).toContain('Partial implementation criteria: static image output only');
     expect(readmeSource).toContain("metadataPolicies: ['preserve', 'safe', 'strip']");
@@ -645,11 +657,62 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.21 Android AVIF output production wiring scaffold candidate notes and previous release notes', () => {
+  it('documents the v0.2.22 Android AVIF output production helper extraction candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.21');
+    expect(packageJson.version).toBe('0.2.22');
+    expect(releaseSource).toContain('## v0.2.22');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for the Android AVIF output production helper extraction. npm `latest` remains `0.2.19`; no `v0.2.22` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output. It extracts the Android AVIF encode/decode-back implementation from the prototype object into `AndroidAvifOutputHelper`, so future production wiring can reuse explicit helper input, output, sample, file-validation, and result types while `compressImage()` continues to reject before helper entry.'
+    );
+    expect(releaseSource).toContain(
+      'Extract the Android AVIF encode/decode-back helper from the prototype-only structure into reusable internal helper types.'
+    );
+    expect(releaseSource).toContain(
+      "Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path before source access or helper entry."
+    );
+    expect(releaseSource).toContain(
+      'Keep Android capability reporting on `formats.avif.output=false`.'
+    );
+    expect(releaseSource).toContain(
+      'Cover helper input, result, blocker, and failure boundaries in Android JVM tests.'
+    );
+    expect(releaseSource).toContain(
+      'Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.22 candidate.'
+    );
+    expect(releaseSource).toContain('### Production Helper Extraction');
+    expect(releaseSource).toContain(
+      '`AndroidAvifOutputHelper` owns the MediaCodec image/avif encode/decode-back helper implementation.'
+    );
+    expect(releaseSource).toContain(
+      '`AndroidAvifOutputHelperInput`, `AndroidAvifOutputHelperOutput`, `AndroidAvifOutputHelperSample`, `AndroidAvifOutputHelperFileValidation`, and `AndroidAvifOutputHelperResult` make the helper boundary explicit.'
+    );
+    expect(releaseSource).toContain(
+      '`AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke()` now delegates to the helper and adapts the helper result back to the existing smoke result shape for instrumentation logs.'
+    );
+    expect(releaseSource).toContain(
+      '`AndroidAvifOutputProductionScaffold.reusableHelperRoute` points at the extracted production helper route, but `willEnterEncodeDecodeBackHelper=false` while `avif.output=false`.'
+    );
+    expect(releaseSource).toContain(
+      'Android `compressImage()` still rejects AVIF output with the scaffold-specific `ERR_NOT_IMPLEMENTED` message before source access or helper entry.'
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.22`.');
+    expect(releaseSource).toContain(
+      'Android AVIF output helper extraction into a reusable internal helper file.'
+    );
+    expect(releaseSource).toContain(
+      'Android JVM tests for helper input construction, SDK/encoder blockers, validation blocker classification, codec failure messaging, scaffold helper-entry blocking, and capability notes.'
+    );
+    expect(releaseSource).toContain(
+      'README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.22 candidate state.'
+    );
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.22`.'
+    );
     expect(releaseSource).toContain('## v0.2.21');
     expect(releaseSource).toContain(
       'Status: unpublished release candidate for the Android AVIF output production wiring scaffold. npm `latest` remains `0.2.19`; no `v0.2.21` tag, GitHub Release, or npm publish is part of this candidate.'
@@ -2821,7 +2884,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -3162,76 +3225,106 @@ describe('Android verification scripts', () => {
   });
 
   it('documents the Android AVIF output encoder route prototype and smoke attempt in source and JVM tests', () => {
+    const helperSource = readProjectFile(
+      'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputHelper.kt'
+    );
     const prototypeSource = readProjectFile(
       'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputPrototype.kt'
+    );
+    const helperTestSource = readProjectFile(
+      'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputHelperTest.kt'
     );
     const prototypeTestSource = readProjectFile(
       'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputPrototypeTest.kt'
     );
+    const combinedSource = `${helperSource}\n${prototypeSource}`;
+    const combinedTestSource = `${helperTestSource}\n${prototypeTestSource}`;
 
-    expect(prototypeSource).toContain('AndroidAvifOutputPrototype');
-    expect(prototypeSource).toContain('AndroidAvifOutputPrototypeReport');
-    expect(prototypeSource).toContain('AndroidAvifEncodeDecodeSmokeResult');
-    expect(prototypeSource).toContain('AndroidAvifSmokeBlocker');
-    expect(prototypeSource).toContain('blockerCode');
-    expect(prototypeSource).toContain('outputCanBeEnabled');
-    expect(prototypeSource).toContain('productionDecision');
-    expect(prototypeSource).toContain('BLOCKER_CODE_SDK_UNAVAILABLE');
-    expect(prototypeSource).toContain('BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER');
-    expect(prototypeSource).toContain('BLOCKER_CODE_CODEC_FAILURE');
-    expect(prototypeSource).toContain('BLOCKER_CODE_INVALID_SIGNATURE');
-    expect(prototypeSource).toContain('BLOCKER_CODE_DECODE_BACK_FAILURE');
-    expect(prototypeSource).toContain('NO_IMAGE_AVIF_ENCODER_BLOCKER');
-    expect(prototypeSource).toContain('INVALID_SIGNATURE_BLOCKER');
-    expect(prototypeSource).toContain('DECODE_BACK_FAILURE_BLOCKER');
-    expect(prototypeSource).toContain('CODEC_FAILURE_BLOCKER_PREFIX');
-    expect(prototypeSource).toContain('PRODUCTION_DECISION_KEEP_DISABLED');
-    expect(prototypeSource).toContain('PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED');
-    expect(prototypeSource).toContain('MediaCodecList(MediaCodecList.REGULAR_CODECS)');
-    expect(prototypeSource).toContain('findEncoderForFormat');
-    expect(prototypeSource).toContain(
+    expect(combinedSource).toContain('AndroidAvifOutputHelper');
+    expect(combinedSource).toContain('AndroidAvifOutputHelperInput');
+    expect(combinedSource).toContain('AndroidAvifOutputHelperOutput');
+    expect(combinedSource).toContain('AndroidAvifOutputHelperSample');
+    expect(combinedSource).toContain('AndroidAvifOutputHelperFileValidation');
+    expect(combinedSource).toContain('AndroidAvifOutputHelperResult');
+    expect(combinedSource).toContain('PRODUCTION_HELPER_ROUTE');
+    expect(combinedSource).toContain('HELPER_DISABLED_FROM_COMPRESS_IMAGE');
+    expect(combinedSource).toContain('AndroidAvifOutputPrototype');
+    expect(combinedSource).toContain('AndroidAvifOutputPrototypeReport');
+    expect(combinedSource).toContain('AndroidAvifEncodeDecodeSmokeResult');
+    expect(combinedSource).toContain('AndroidAvifSmokeBlocker');
+    expect(combinedSource).toContain('blockerCode');
+    expect(combinedSource).toContain('outputCanBeEnabled');
+    expect(combinedSource).toContain('productionDecision');
+    expect(combinedSource).toContain('BLOCKER_CODE_SDK_UNAVAILABLE');
+    expect(combinedSource).toContain('BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER');
+    expect(combinedSource).toContain('BLOCKER_CODE_CODEC_FAILURE');
+    expect(combinedSource).toContain('BLOCKER_CODE_INVALID_SIGNATURE');
+    expect(combinedSource).toContain('BLOCKER_CODE_DECODE_BACK_FAILURE');
+    expect(combinedSource).toContain('NO_IMAGE_AVIF_ENCODER_BLOCKER');
+    expect(combinedSource).toContain('INVALID_SIGNATURE_BLOCKER');
+    expect(combinedSource).toContain('DECODE_BACK_FAILURE_BLOCKER');
+    expect(combinedSource).toContain('CODEC_FAILURE_BLOCKER_PREFIX');
+    expect(combinedSource).toContain('PRODUCTION_DECISION_KEEP_DISABLED');
+    expect(combinedSource).toContain('PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED');
+    expect(combinedSource).toContain('MediaCodecList(MediaCodecList.REGULAR_CODECS)');
+    expect(combinedSource).toContain('findEncoderForFormat');
+    expect(combinedSource).toContain(
       'MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible'
     );
-    expect(prototypeSource).toContain('MediaCodec image/avif encoder probe');
-    expect(prototypeSource).toContain('MediaCodec image/avif encode/decode-back smoke');
-    expect(prototypeSource).toContain('AV1_VIDEO_MIME_TYPE = "video/av01"');
-    expect(prototypeSource).toContain('SMOKE_ROUTE');
-    expect(prototypeSource).toContain('PRODUCTION_GATE_MESSAGE');
-    expect(prototypeSource).toContain('looksLikeAvifFile');
-    expect(prototypeSource).toContain('classifySmokeValidationBlocker');
-    expect(prototypeSource).toContain('codecFailureBlocker');
-    expect(prototypeSource).toContain('runEncodeDecodeBackSmoke');
-    expect(prototypeSource).toContain('MediaCodec.createByCodecName');
-    expect(prototypeSource).toContain('MediaCodec.CONFIGURE_FLAG_ENCODE');
-    expect(prototypeSource).toContain('getInputImage');
-    expect(prototypeSource).toContain('queueInputBuffer');
-    expect(prototypeSource).toContain('dequeueOutputBuffer');
-    expect(prototypeSource).toContain('MediaMuxer.OutputFormat.MUXER_OUTPUT_HEIF');
-    expect(prototypeSource).toContain('ImageDecoder.decodeBitmap');
-    expect(prototypeSource).toContain('rnick-avif-output-smoke');
-    expect(prototypeSource).toContain('ftyp avif/avis signature');
-    expect(prototypeSource).toContain(
+    expect(combinedSource).toContain('MediaCodec image/avif encoder probe');
+    expect(combinedSource).toContain('MediaCodec image/avif encode/decode-back smoke');
+    expect(combinedSource).toContain('AV1_VIDEO_MIME_TYPE = "video/av01"');
+    expect(combinedSource).toContain('SMOKE_ROUTE');
+    expect(combinedSource).toContain('PRODUCTION_GATE_MESSAGE');
+    expect(combinedSource).toContain('looksLikeAvifFile');
+    expect(combinedSource).toContain('classifySmokeValidationBlocker');
+    expect(combinedSource).toContain('codecFailureBlocker');
+    expect(combinedSource).toContain('createInput');
+    expect(combinedSource).toContain('runEncodeDecodeBack');
+    expect(combinedSource).toContain('runEncodeDecodeBackSmoke');
+    expect(combinedSource).toContain('MediaCodec.createByCodecName');
+    expect(combinedSource).toContain('MediaCodec.CONFIGURE_FLAG_ENCODE');
+    expect(combinedSource).toContain('getInputImage');
+    expect(combinedSource).toContain('queueInputBuffer');
+    expect(combinedSource).toContain('dequeueOutputBuffer');
+    expect(combinedSource).toContain('MediaMuxer.OutputFormat.MUXER_OUTPUT_HEIF');
+    expect(combinedSource).toContain('ImageDecoder.decodeBitmap');
+    expect(combinedSource).toContain('rnick-avif-output-smoke');
+    expect(combinedSource).toContain('ftyp avif/avis signature');
+    expect(combinedSource).toContain(
       'Decode the result with ImageDecoder and assert dimensions match the processed bitmap.'
     );
-    expect(prototypeTestSource).toContain(
+    expect(combinedTestSource).toContain(
       'imageAvifMediaFormatUsesStillImageMimeAndFlexibleYuvInput'
     );
-    expect(prototypeTestSource).toContain(
+    expect(combinedTestSource).toContain(
       'inspectRouteFindsInjectedImageEncoderButKeepsProductionGateClosed'
     );
-    expect(prototypeTestSource).toContain(
+    expect(combinedTestSource).toContain(
       'inspectRouteBelowApi34DoesNotProbeEncoderAndReportsSdkBlocker'
     );
-    expect(prototypeTestSource).toContain('avifSignatureRecognizesFtypAvifOrAvisBrandOnly');
-    expect(prototypeTestSource).toContain('smokeBelowApi34ReportsSdkBlockerWithoutAttempting');
-    expect(prototypeTestSource).toContain(
+    expect(combinedTestSource).toContain('avifSignatureRecognizesFtypAvifOrAvisBrandOnly');
+    expect(combinedTestSource).toContain('smokeBelowApi34ReportsSdkBlockerWithoutAttempting');
+    expect(combinedTestSource).toContain(
       'smokeOnApi34WithoutImageEncoderReportsBlockerWithoutAttempting'
     );
-    expect(prototypeTestSource).toContain(
+    expect(combinedTestSource).toContain(
       'smokeValidationClassifiesInvalidSignatureAndDecodeBackFailures'
     );
-    expect(prototypeTestSource).toContain(
+    expect(combinedTestSource).toContain(
       'codecFailureBlockerKeepsStableProductionDecisionMessage'
+    );
+    expect(combinedTestSource).toContain(
+      'helperInputPreservesRouteReportAndProductionHelperBoundary'
+    );
+    expect(combinedTestSource).toContain(
+      'helperBelowApi34ReportsSdkBlockerWithoutAttemptingCodec'
+    );
+    expect(combinedTestSource).toContain(
+      'helperWithoutImageEncoderReportsStableNoEncoderBlocker'
+    );
+    expect(combinedTestSource).toContain(
+      'helperClassifiesValidationAndCodecFailuresWithProductionDecisionBlockers'
     );
   });
 
@@ -3599,7 +3692,7 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('output = outputFormat != null');
     expect(combinedSource).toContain('Non-JPEG output does not preserve source EXIF metadata.');
     expect(combinedSource).toContain(
-      'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated.'
+      'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the extracted Android AVIF output encode/decode-back helper produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated.'
     );
     expect(combinedSource).not.toContain('PNG and WebP input remain planned.');
   });
@@ -3663,7 +3756,7 @@ describe('Android verification scripts', () => {
       "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED."
     );
     expect(combinedSource).toContain(
-      'Android AVIF output production wiring scaffold blocks helper entry while capability output=false.'
+      'Android AVIF output production wiring scaffold blocks entry into the extracted encode/decode-back helper while capability output=false.'
     );
     expect(combinedSource).toContain(
       'Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'
@@ -3673,7 +3766,7 @@ describe('Android verification scripts', () => {
     );
     expect(combinedSource).toContain('UNSUPPORTED_OUTPUT_FORMAT_MESSAGE');
     expect(combinedSource).toContain(
-      'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated.'
+      'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the extracted Android AVIF output encode/decode-back helper produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated.'
     );
     expect(combinedSource).toContain(
       'Android MVP decodes GIF file:// and content:// sources as a static first frame.'

@@ -1,5 +1,63 @@
 # Release Notes
 
+## v0.2.22
+
+Status: unpublished release candidate for the Android AVIF output production helper extraction. npm `latest` remains `0.2.19`; no `v0.2.22` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It extracts the Android AVIF encode/decode-back implementation from the prototype object into `AndroidAvifOutputHelper`, so future production wiring can reuse explicit helper input, output, sample, file-validation, and result types while `compressImage()` continues to reject before helper entry.
+
+### Goals
+
+- Keep Android and iOS AVIF output disabled.
+- Extract the Android AVIF encode/decode-back helper from the prototype-only structure into reusable internal helper types.
+- Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path before source access or helper entry.
+- Keep Android capability reporting on `formats.avif.output=false`.
+- Cover helper input, result, blocker, and failure boundaries in Android JVM tests.
+- Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.22 candidate.
+
+### Production Helper Extraction
+
+- `AndroidAvifOutputHelper` owns the MediaCodec image/avif encode/decode-back helper implementation.
+- `AndroidAvifOutputHelperInput`, `AndroidAvifOutputHelperOutput`, `AndroidAvifOutputHelperSample`, `AndroidAvifOutputHelperFileValidation`, and `AndroidAvifOutputHelperResult` make the helper boundary explicit.
+- `AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke()` now delegates to the helper and adapts the helper result back to the existing smoke result shape for instrumentation logs.
+- `AndroidAvifOutputProductionScaffold.reusableHelperRoute` points at the extracted production helper route, but `willEnterEncodeDecodeBackHelper=false` while `avif.output=false`.
+- Android `compressImage()` still rejects AVIF output with the scaffold-specific `ERR_NOT_IMPLEMENTED` message before source access or helper entry.
+
+### Included
+
+- `package.json` version bump to `0.2.22`.
+- Android AVIF output helper extraction into a reusable internal helper file.
+- Android JVM tests for helper input construction, SDK/encoder blockers, validation blocker classification, codec failure messaging, scaffold helper-entry blocking, and capability notes.
+- README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.22 candidate state.
+
+### Not Included
+
+- Production AVIF output encoding enablement.
+- Android AVIF output capability enablement.
+- Actual AVIF file return from `compressImage()`.
+- iOS AVIF output implementation.
+- Metadata preservation for AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.22`.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+Remote validation also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit. The Android Instrumentation `RNICK_AVIF_OUTPUT_SMOKE` log must keep AVIF output disabled and expose the relevant blocker code unless a later non-candidate implementation explicitly enables AVIF output.
+
+After validation, keep this candidate unpublished until a separate publish goal.
+
 ## v0.2.21
 
 Status: unpublished release candidate for the Android AVIF output production wiring scaffold. npm `latest` remains `0.2.19`; no `v0.2.21` tag, GitHub Release, or npm publish is part of this candidate.

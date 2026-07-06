@@ -215,7 +215,7 @@ class AndroidAvifOutputPrototypeTest {
     )
 
     assertEquals(AndroidAvifOutputPrototype.PRODUCTION_WIRING_SCAFFOLD_ROUTE, scaffold.route)
-    assertEquals(AndroidAvifOutputPrototype.SMOKE_ROUTE, scaffold.reusableHelperRoute)
+    assertEquals(AndroidAvifOutputHelper.PRODUCTION_HELPER_ROUTE, scaffold.reusableHelperRoute)
     assertFalse(scaffold.outputEnabled)
     assertFalse(scaffold.willEnterEncodeDecodeBackHelper)
     assertEquals(
@@ -223,6 +223,8 @@ class AndroidAvifOutputPrototypeTest {
       scaffold.notImplementedMessage
     )
     assertTrue(scaffold.notImplementedMessage.contains("ERR_NOT_IMPLEMENTED"))
+    assertTrue(scaffold.notImplementedMessage.contains("extracted Android AVIF output"))
+    assertTrue(scaffold.boundaryBlockers.any { it == AndroidAvifOutputHelper.HELPER_DISABLED_FROM_COMPRESS_IMAGE })
     assertTrue(scaffold.boundaryBlockers.any { it.contains("metadata='preserve' was requested") })
     assertTrue(scaffold.boundaryBlockers.any { it.contains("output.maxBytes was requested") })
     assertTrue(scaffold.boundaryBlockers.any { it.contains("animated AVIF preservation") })

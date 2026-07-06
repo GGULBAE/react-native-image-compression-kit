@@ -88,7 +88,7 @@ internal object ImageCompressionOutput {
   const val MAX_BYTES_UNSUPPORTED_MESSAGE =
     "Android MVP supports output.maxBytes for JPEG and WebP output only."
   const val UNSUPPORTED_OUTPUT_FORMAT_MESSAGE =
-    "Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated."
+    "Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the extracted Android AVIF output encode/decode-back helper produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated."
 
   val FORMAT_VALUES = arrayOf(
     JPEG_FORMAT,
@@ -223,7 +223,7 @@ internal object ImageCompressionOutput {
       "Animated AVIF preservation is not implemented.",
       "AVIF output is not implemented.",
       "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED.",
-      "Android AVIF output production wiring scaffold blocks helper entry while capability output=false.",
+      "Android AVIF output production wiring scaffold blocks entry into the extracted encode/decode-back helper while capability output=false.",
       "Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.",
       "metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
     )

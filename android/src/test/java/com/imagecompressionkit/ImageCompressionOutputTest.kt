@@ -321,7 +321,7 @@ class ImageCompressionOutputTest {
     )
     assertTrue(
       capability.notes.any {
-        it == "Android AVIF output production wiring scaffold blocks helper entry while capability output=false."
+        it == "Android AVIF output production wiring scaffold blocks entry into the extracted encode/decode-back helper while capability output=false."
       }
     )
     assertTrue(
