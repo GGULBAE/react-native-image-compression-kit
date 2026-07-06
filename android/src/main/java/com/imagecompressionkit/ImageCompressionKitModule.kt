@@ -53,8 +53,8 @@ class ImageCompressionKitModule(
         return
       }
 
-      val outputFormat = try {
-        readOutputFormat(output)
+      val outputFormatValue = try {
+        readOutputFormatValue(output)
       } catch (error: InvalidOptionsException) {
         reject(
           promise,
@@ -64,8 +64,12 @@ class ImageCompressionKitModule(
         )
         return
       }
+      val outputFormat = ImageCompressionOutput.fromValue(outputFormatValue)
 
-      if (outputFormat == null) {
+      if (
+        outputFormat == null &&
+        !ImageCompressionOutput.isAvifOutputFormat(outputFormatValue)
+      ) {
         reject(
           promise,
           ERR_NOT_IMPLEMENTED,
@@ -94,6 +98,19 @@ class ImageCompressionKitModule(
           ERR_INVALID_OPTIONS,
           error.message ?: "Compression output.maxBytes is invalid.",
           error
+        )
+        return
+      }
+
+      if (outputFormat == null) {
+        val avifScaffold = AndroidAvifOutputPrototype.createProductionWiringScaffold(
+          metadataPolicy = metadataPolicy.value,
+          maxBytesRequested = maxBytes != null
+        )
+        reject(
+          promise,
+          ERR_NOT_IMPLEMENTED,
+          avifScaffold.notImplementedMessage
         )
         return
       }
@@ -369,7 +386,7 @@ class ImageCompressionKitModule(
       DEFAULT_QUALITY
     }
 
-  private fun readOutputFormat(output: ReadableMap): OutputFormat? {
+  private fun readOutputFormatValue(output: ReadableMap): String? {
     val value = if (hasValue(output, "format")) {
       try {
         output.getString("format")
@@ -385,7 +402,7 @@ class ImageCompressionKitModule(
       )
     }
 
-    return ImageCompressionOutput.fromValue(value)
+    return value
   }
 
   private fun readMetadataPolicy(options: ReadableMap): MetadataPolicy {
@@ -993,10 +1010,10 @@ class ImageCompressionKitModule(
     STRETCH
   }
 
-  private enum class MetadataPolicy {
-    PRESERVE,
-    SAFE,
-    STRIP
+  private enum class MetadataPolicy(val value: String) {
+    PRESERVE("preserve"),
+    SAFE("safe"),
+    STRIP("strip")
   }
 
   private enum class InputFormat(

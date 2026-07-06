@@ -1,5 +1,62 @@
 # Release Notes
 
+## v0.2.21
+
+Status: unpublished release candidate for the Android AVIF output production wiring scaffold. npm `latest` remains `0.2.19`; no `v0.2.21` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It moves Android AVIF output handling closer to the production `compressImage()` boundary by routing `output.format: 'avif'` through a production wiring scaffold that rejects before source access or MediaCodec encode/decode-back helper entry while `avif.output=false`.
+
+### Goals
+
+- Keep Android and iOS AVIF output disabled.
+- Add an Android AVIF output production wiring scaffold that can reuse the encode/decode-back helper route later.
+- Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path.
+- Block metadata `preserve`, `output.maxBytes`, and animated AVIF preservation before Android AVIF output helper entry.
+- Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.21 candidate.
+
+### Production Wiring Scaffold
+
+- `AndroidAvifOutputProductionScaffold` reports the scaffold route, reusable helper route, output-enabled decision, helper-entry decision, unsupported message, boundary blockers, and validation plan.
+- Android `compressImage()` recognizes `output.format: 'avif'`, parses metadata and `output.maxBytes`, and then rejects with `ERR_NOT_IMPLEMENTED` before source access.
+- `willEnterEncodeDecodeBackHelper` remains `false` while `avif.output=false`.
+- Android capability reporting remains `formats.avif.output=false`.
+
+### Included
+
+- `package.json` version bump to `0.2.21`.
+- Android AVIF production wiring scaffold and helper-entry blockers for metadata `preserve`, `output.maxBytes`, and animated AVIF preservation.
+- Android module AVIF output rejection path that uses the scaffold-specific `ERR_NOT_IMPLEMENTED` message before source access.
+- Android JVM tests covering the scaffold, AVIF output rejection, and capability note boundary.
+- README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.21 candidate state.
+
+### Not Included
+
+- Production AVIF output encoding.
+- Android AVIF output capability enablement.
+- Actual AVIF file return from `compressImage()`.
+- iOS AVIF output implementation.
+- Metadata preservation for AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.21`.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+Remote validation also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit. The Android Instrumentation `RNICK_AVIF_OUTPUT_SMOKE` log must keep AVIF output disabled and expose the relevant blocker code unless a later non-candidate implementation explicitly enables AVIF output.
+
+After validation, keep this candidate unpublished until a separate publish goal.
+
 ## v0.2.20
 
 Status: unpublished release candidate for the AVIF output production wiring preflight. npm `latest` remains `0.2.19`; no `v0.2.20` tag, GitHub Release, or npm publish is part of this candidate.

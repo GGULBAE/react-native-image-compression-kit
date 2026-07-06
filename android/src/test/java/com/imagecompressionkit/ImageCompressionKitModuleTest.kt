@@ -140,7 +140,43 @@ class ImageCompressionKitModuleTest {
 
     assertNull(promise.resolvedValue)
     assertEquals(ImageCompressionKitModule.ERR_NOT_IMPLEMENTED, promise.rejectionCode)
-    assertEquals(ImageCompressionOutput.UNSUPPORTED_OUTPUT_FORMAT_MESSAGE, promise.rejectionMessage)
+    assertEquals(
+      AndroidAvifOutputPrototype.PRODUCTION_WIRING_NOT_IMPLEMENTED_MESSAGE,
+      promise.rejectionMessage
+    )
+  }
+
+  @Test
+  fun compressImageRejectsAvifOutputBeforeSourceAccessAndProductionHelperEntry() {
+    val module = createModule()
+    val promise = RecordingPromise()
+
+    module.compressImage(
+      compressionOptions(
+        sourceUri = "file:///missing-avif-output-source-${System.nanoTime()}.jpg",
+        output = JavaOnlyMap.of(
+          "format",
+          "avif",
+          "quality",
+          72,
+          "maxBytes",
+          10_000
+        ),
+        metadata = "preserve"
+      ),
+      promise
+    )
+
+    assertNull(promise.resolvedValue)
+    assertEquals(ImageCompressionKitModule.ERR_NOT_IMPLEMENTED, promise.rejectionCode)
+    assertEquals(
+      AndroidAvifOutputPrototype.PRODUCTION_WIRING_NOT_IMPLEMENTED_MESSAGE,
+      promise.rejectionMessage
+    )
+    assertTrue(promise.rejectionMessage?.contains("metadata='preserve'") == true)
+    assertTrue(promise.rejectionMessage?.contains("output.maxBytes") == true)
+    assertTrue(promise.rejectionMessage?.contains("animated AVIF preservation") == true)
+    assertTrue(promise.rejectionMessage?.contains("does not enter the MediaCodec") == true)
   }
 
   @Test

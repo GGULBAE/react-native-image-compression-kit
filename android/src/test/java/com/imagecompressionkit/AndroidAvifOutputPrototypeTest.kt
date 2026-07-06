@@ -62,6 +62,7 @@ class AndroidAvifOutputPrototypeTest {
     assertTrue(report.blockers.any { it.contains("ImageDecoder decode-back validation") })
     assertTrue(report.blockers.any { it.contains("metadata='preserve'") })
     assertTrue(report.blockers.any { it.contains("output.maxBytes") })
+    assertTrue(report.blockers.any { it.contains("Animated AVIF preservation") })
     assertTrue(
       report.validationPlan.any {
         it == "Decode the result with ImageDecoder and assert dimensions match the processed bitmap."
@@ -203,6 +204,33 @@ class AndroidAvifOutputPrototypeTest {
     assertEquals(
       "${AndroidAvifOutputPrototype.CODEC_FAILURE_BLOCKER_PREFIX}: IllegalStateException: codec exploded",
       blocker
+    )
+  }
+
+  @Test
+  fun productionWiringScaffoldBlocksHelperEntryBeforeAvifOutputCanBeEnabled() {
+    val scaffold = AndroidAvifOutputPrototype.createProductionWiringScaffold(
+      metadataPolicy = "preserve",
+      maxBytesRequested = true
+    )
+
+    assertEquals(AndroidAvifOutputPrototype.PRODUCTION_WIRING_SCAFFOLD_ROUTE, scaffold.route)
+    assertEquals(AndroidAvifOutputPrototype.SMOKE_ROUTE, scaffold.reusableHelperRoute)
+    assertFalse(scaffold.outputEnabled)
+    assertFalse(scaffold.willEnterEncodeDecodeBackHelper)
+    assertEquals(
+      AndroidAvifOutputPrototype.PRODUCTION_WIRING_NOT_IMPLEMENTED_MESSAGE,
+      scaffold.notImplementedMessage
+    )
+    assertTrue(scaffold.notImplementedMessage.contains("ERR_NOT_IMPLEMENTED"))
+    assertTrue(scaffold.boundaryBlockers.any { it.contains("metadata='preserve' was requested") })
+    assertTrue(scaffold.boundaryBlockers.any { it.contains("output.maxBytes was requested") })
+    assertTrue(scaffold.boundaryBlockers.any { it.contains("animated AVIF preservation") })
+    assertTrue(scaffold.boundaryBlockers.any { it.contains("avif.output=false") })
+    assertTrue(
+      scaffold.validationPlan.any {
+        it == "Assert metadata='preserve', output.maxBytes, and animated AVIF preservation reject with documented unsupported errors until implemented."
+      }
     )
   }
 

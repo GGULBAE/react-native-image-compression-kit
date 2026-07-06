@@ -321,6 +321,11 @@ class ImageCompressionOutputTest {
     )
     assertTrue(
       capability.notes.any {
+        it == "Android AVIF output production wiring scaffold blocks helper entry while capability output=false."
+      }
+    )
+    assertTrue(
+      capability.notes.any {
         it == "Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation."
       }
     )

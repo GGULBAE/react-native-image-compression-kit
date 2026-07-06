@@ -57,11 +57,23 @@ internal data class AndroidAvifSmokeBlocker(
   val message: String
 )
 
+internal data class AndroidAvifOutputProductionScaffold(
+  val route: String,
+  val reusableHelperRoute: String,
+  val outputEnabled: Boolean,
+  val willEnterEncodeDecodeBackHelper: Boolean,
+  val notImplementedMessage: String,
+  val boundaryBlockers: List<String>,
+  val validationPlan: List<String>
+)
+
 internal object AndroidAvifOutputPrototype {
   const val AVIF_MIME_TYPE = "image/avif"
   const val AV1_VIDEO_MIME_TYPE = "video/av01"
   const val CANDIDATE_ROUTE = "MediaCodec image/avif encoder probe"
   const val SMOKE_ROUTE = "MediaCodec image/avif encode/decode-back smoke"
+  const val PRODUCTION_WIRING_SCAFFOLD_ROUTE =
+    "Android AVIF output production wiring scaffold"
   const val BLOCKER_CODE_SDK_UNAVAILABLE = "sdk_unavailable"
   const val BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER = "no_image_avif_encoder"
   const val BLOCKER_CODE_CODEC_FAILURE = "codec_failure"
@@ -81,6 +93,14 @@ internal object AndroidAvifOutputPrototype {
     "Keep Android AVIF output disabled even though the AVIF smoke passed file validation; production wiring, metadata preserve, output.maxBytes, and animated AVIF boundaries are still not implemented and tested."
   const val PRODUCTION_GATE_MESSAGE =
     "AVIF output production gate remains closed until production wiring, byte-signature, ImageDecoder decode-back, metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated."
+  const val PRODUCTION_WIRING_NOT_IMPLEMENTED_MESSAGE =
+    "AVIF output is not implemented. Android AVIF output production wiring scaffold keeps output.format: 'avif' on ERR_NOT_IMPLEMENTED and does not enter the MediaCodec image/avif encode/decode-back helper while avif.output=false. metadata='preserve', output.maxBytes, and animated AVIF preservation remain blocked before helper entry."
+  const val METADATA_PRESERVE_HELPER_ENTRY_BLOCKER =
+    "metadata='preserve' is blocked before Android AVIF output production helper entry."
+  const val OUTPUT_MAX_BYTES_HELPER_ENTRY_BLOCKER =
+    "output.maxBytes is blocked before Android AVIF output production helper entry."
+  const val ANIMATED_AVIF_HELPER_ENTRY_BLOCKER =
+    "animated AVIF preservation is blocked before Android AVIF output production helper entry."
 
   fun inspectRoute(
     width: Int,
@@ -243,6 +263,23 @@ internal object AndroidAvifOutputPrototype {
   fun codecFailureBlocker(error: Exception): String =
     "$CODEC_FAILURE_BLOCKER_PREFIX: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
 
+  fun createProductionWiringScaffold(
+    metadataPolicy: String,
+    maxBytesRequested: Boolean
+  ): AndroidAvifOutputProductionScaffold =
+    AndroidAvifOutputProductionScaffold(
+      route = PRODUCTION_WIRING_SCAFFOLD_ROUTE,
+      reusableHelperRoute = SMOKE_ROUTE,
+      outputEnabled = false,
+      willEnterEncodeDecodeBackHelper = false,
+      notImplementedMessage = PRODUCTION_WIRING_NOT_IMPLEMENTED_MESSAGE,
+      boundaryBlockers = createProductionBoundaryBlockers(
+        metadataPolicy = metadataPolicy,
+        maxBytesRequested = maxBytesRequested
+      ),
+      validationPlan = createValidationPlan()
+    )
+
   private fun createAv1FallbackMediaFormat(width: Int, height: Int): MediaFormat =
     MediaFormat.createVideoFormat(AV1_VIDEO_MIME_TYPE, width, height).apply {
       setInteger(MediaFormat.KEY_FRAME_RATE, 1)
@@ -297,6 +334,31 @@ internal object AndroidAvifOutputPrototype {
       "Assert metadata='preserve', output.maxBytes, and animated AVIF preservation reject with documented unsupported errors until implemented.",
       "Keep getImageCompressionCapabilities().formats.avif.output=false until the encode and decode-back smoke passes in instrumentation."
     )
+
+  private fun createProductionBoundaryBlockers(
+    metadataPolicy: String,
+    maxBytesRequested: Boolean
+  ): List<String> =
+    buildList {
+      add(PRODUCTION_DECISION_KEEP_DISABLED)
+      add(PRODUCTION_GATE_MESSAGE)
+      add(
+        if (metadataPolicy == "preserve") {
+          "metadata='preserve' was requested and is blocked before Android AVIF output production helper entry."
+        } else {
+          METADATA_PRESERVE_HELPER_ENTRY_BLOCKER
+        }
+      )
+      add(
+        if (maxBytesRequested) {
+          "output.maxBytes was requested and is blocked before Android AVIF output production helper entry."
+        } else {
+          OUTPUT_MAX_BYTES_HELPER_ENTRY_BLOCKER
+        }
+      )
+      add(ANIMATED_AVIF_HELPER_ENTRY_BLOCKER)
+      add("Keep getImageCompressionCapabilities().formats.avif.output=false.")
+    }
 
   private fun estimatePrototypeBitrate(width: Int, height: Int): Int =
     (width * height * 8).coerceAtLeast(MIN_PROTOTYPE_BITRATE)
