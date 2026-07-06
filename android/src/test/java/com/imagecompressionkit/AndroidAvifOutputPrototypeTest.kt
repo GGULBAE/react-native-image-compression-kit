@@ -134,6 +134,14 @@ class AndroidAvifOutputPrototypeTest {
 
   @Test
   fun smokeBelowApi34ReportsSdkBlockerWithoutAttempting() {
+    val routeReport = AndroidAvifOutputPrototype.inspectRoute(
+      width = 16,
+      height = 12,
+      apiLevel = Build.VERSION_CODES.TIRAMISU,
+      encoderFinder = {
+        throw AssertionError("Encoder finder must not run below API 34.")
+      }
+    )
     val result = AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke(
       cacheDir = createTempCacheDir(),
       apiLevel = Build.VERSION_CODES.TIRAMISU,
@@ -149,11 +157,17 @@ class AndroidAvifOutputPrototypeTest {
     assertEquals(AndroidAvifOutputPrototype.SMOKE_ROUTE, result.route)
     assertTrue(result.blocker?.contains("requires Android 14+") == true)
     assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
-    assertTrue(result.details.any { it.contains("requires Android 14+") })
+    assertSmokeBlockedDetailsOrder(routeReport, result.details)
   }
 
   @Test
   fun smokeOnApi34WithoutImageEncoderReportsBlockerWithoutAttempting() {
+    val routeReport = AndroidAvifOutputPrototype.inspectRoute(
+      width = 16,
+      height = 12,
+      apiLevel = Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+      encoderFinder = { null }
+    )
     val result = AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke(
       cacheDir = createTempCacheDir(),
       apiLevel = Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
@@ -168,7 +182,7 @@ class AndroidAvifOutputPrototypeTest {
     assertTrue(result.blocker?.contains("No image/avif encoder") == true)
     assertEquals(AndroidAvifOutputPrototype.NO_IMAGE_AVIF_ENCODER_BLOCKER, result.blocker)
     assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
-    assertTrue(result.details.any { it.contains("No image/avif encoder") })
+    assertSmokeBlockedDetailsOrder(routeReport, result.details)
   }
 
   @Test
@@ -242,4 +256,17 @@ class AndroidAvifOutputPrototypeTest {
       file.mkdirs()
       file
     }
+
+  private fun assertSmokeBlockedDetailsOrder(
+    routeReport: AndroidAvifOutputPrototypeReport,
+    details: List<String>
+  ) {
+    assertTrue(routeReport.blockers.isNotEmpty())
+    assertEquals(
+      routeReport.blockers +
+        AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM +
+        AndroidAvifOutputHelper.HELPER_DISABLED_FROM_COMPRESS_IMAGE,
+      details
+    )
+  }
 }

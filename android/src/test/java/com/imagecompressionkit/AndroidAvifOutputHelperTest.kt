@@ -74,7 +74,7 @@ class AndroidAvifOutputHelperTest {
     assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_SDK_UNAVAILABLE, result.blockerCode)
     assertTrue(result.blocker?.contains("requires Android 14+") == true)
     assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
-    assertTrue(result.details.any { it == AndroidAvifOutputHelper.HELPER_DISABLED_FROM_COMPRESS_IMAGE })
+    assertBlockedResultDetailsOrder(input, result.details)
   }
 
   @Test
@@ -100,7 +100,7 @@ class AndroidAvifOutputHelperTest {
     assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER, result.blockerCode)
     assertEquals(AndroidAvifOutputPrototype.NO_IMAGE_AVIF_ENCODER_BLOCKER, result.blocker)
     assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
-    assertTrue(result.details.any { it.contains("No image/avif encoder") })
+    assertBlockedResultDetailsOrder(input, result.details)
   }
 
   @Test

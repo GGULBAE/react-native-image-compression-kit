@@ -300,7 +300,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.26',
+    packageJson.version === '0.2.27',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -315,16 +315,16 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.26` is an unpublished Android AVIF output helper validation detail contract candidate for `react-native-image-compression-kit`.'),
-    readmeContents.includes('pinning `AndroidAvifOutputHelper` result `details` order for direct success, muxed success, invalid signature, decode-back failure, and codec failure paths'),
-    readmeContents.includes('Validation results now have tests for the `INJECTABLE_VALIDATION_SEAM`, encoder/direct/muxer/validator detail order, and trailing route blockers'),
-    readmeContents.includes('codec failure details keep route blockers ahead of the seam and helper-disabled message'),
+    readmeContents.includes('Version `0.2.27` is an unpublished Android AVIF output helper blocked-route detail contract candidate for `react-native-image-compression-kit`.'),
+    readmeContents.includes('pinning `sdk_unavailable` and `no_image_avif_encoder` helper `details` order and the smoke adapter preservation contract'),
+    readmeContents.includes('Blocked helper and smoke results now have tests for route blockers first, then `INJECTABLE_VALIDATION_SEAM`, then `HELPER_DISABLED_FROM_COMPRESS_IMAGE`'),
+    readmeContents.includes('`runEncodeDecodeBackSmoke()` also preserves the helper `blockerCode` and `details` while keeping `outputCanBeEnabled=false`'),
     readmeContents.includes("The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"),
     readmeContents.includes('npm `latest` remains `0.2.19`'),
     readmeContents.includes('the previous GitHub Release remains [v0.2.17]'),
     readmeContents.includes('Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'),
-    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.26 candidate.'),
-    readmeContents.includes('The `0.2.26` package metadata is prepared as an unpublished Android AVIF output helper validation detail contract candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.27 candidate.'),
+    readmeContents.includes('The `0.2.27` package metadata is prepared as an unpublished Android AVIF output helper blocked-route detail contract candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('Version `0.2.19` remains the latest published npm package.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
@@ -353,6 +353,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.24` is the unpublished Android AVIF output helper injected success contract candidate'),
     readmeContents.includes('version `0.2.25` is the unpublished Android AVIF output helper direct-output success contract candidate'),
     readmeContents.includes('version `0.2.26` is the unpublished Android AVIF output helper validation detail contract candidate'),
+    readmeContents.includes('version `0.2.27` is the unpublished Android AVIF output helper blocked-route detail contract candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -370,6 +371,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.24` fixes the injected Android AVIF output helper success contract without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.25` fixes the injected Android AVIF output helper direct-output success contract without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.26` fixes the Android AVIF output helper validation detail ordering contract without enabling AVIF output.'),
+    readmeContents.includes('Version `0.2.27` fixes the Android AVIF output helper blocked-route detail and smoke adapter contract without enabling AVIF output.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes('Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
@@ -408,6 +410,9 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.26` keeps AVIF output disabled and fixes the helper validation detail contract for `AndroidAvifOutputHelper`.'),
     readmeContents.includes('pin direct success, muxed success, invalid signature, decode-back failure, and codec failure `details` ordering'),
     readmeContents.includes('dependency-provided encoder/direct/muxer/validator details next, and route blockers last'),
+    readmeContents.includes('Version `0.2.27` keeps AVIF output disabled and fixes the blocked-route detail contract for `AndroidAvifOutputHelper` and `AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke()`.'),
+    readmeContents.includes('pin below-API-34 and no-image/avif-encoder blocked helper details to route blockers, `INJECTABLE_VALIDATION_SEAM`, and `HELPER_DISABLED_FROM_COMPRESS_IMAGE`'),
+    readmeContents.includes('verify the smoke adapter preserves `blockerCode`, `details`, and `outputCanBeEnabled=false`'),
     readmeContents.includes('Partial implementation criteria: static image output only'),
     readmeContents.includes("metadataPolicies: ['preserve', 'safe', 'strip']"),
     staleReadmeSnippets.every((snippet) => !readmeContents.includes(snippet)),
@@ -418,7 +423,7 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.26 Android AVIF output helper validation detail contract candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.27 Android AVIF output helper blocked-route detail contract candidate',
     detail: checks.every(Boolean)
       ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README AVIF output preflight status are aligned'
       : 'expected package.json release metadata or README AVIF output guidance is missing/mismatched',
@@ -707,23 +712,25 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.27',
+    'Status: unpublished release candidate for the Android AVIF output helper blocked-route detail contract. npm `latest` remains `0.2.19`; no `v0.2.27` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not enable AVIF output. It keeps the Android `compressImage()` AVIF output scaffold on `ERR_NOT_IMPLEMENTED` before helper entry while pinning blocked helper details for `sdk_unavailable` and `no_image_avif_encoder` paths, and proving the smoke adapter preserves those blocked helper details with `outputCanBeEnabled=false`.',
+    'Add exact detail-order expectations for below-API-34 and no-image/avif-encoder blocked helper paths.',
+    'Fix blocked helper details around route blockers, `INJECTABLE_VALIDATION_SEAM`, and `HELPER_DISABLED_FROM_COMPRESS_IMAGE`.',
+    'Add smoke adapter expectations proving `runEncodeDecodeBackSmoke()` preserves blocked `blockerCode`, `details`, and `outputCanBeEnabled=false`.',
+    'Keep Android capability reporting on `formats.avif.output=false`.',
+    'Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.27 candidate.',
+    '### Blocked Route Detail Contract',
+    'Android JVM helper tests now assert exact `details` arrays for both below-API-34 and no-image/avif-encoder blocked paths. The blocked result order is route blockers first, then `INJECTABLE_VALIDATION_SEAM`, then `HELPER_DISABLED_FROM_COMPRESS_IMAGE`.',
+    'Android JVM smoke tests now build the matching `AndroidAvifOutputPrototype.inspectRoute()` report and assert `runEncodeDecodeBackSmoke()` preserves the route blockers, helper seam, helper-disabled message, stable `blockerCode`, and `outputCanBeEnabled=false` in the adapted `AndroidAvifEncodeDecodeSmokeResult`.',
+    'The contract keeps disabled-route diagnostics stable before production wiring without changing `compressImage()` behavior, capability reporting, or AVIF output support.',
+    '`package.json` version bump to `0.2.27`.',
+    'Android AVIF output helper blocked-route detail-order JVM coverage.',
+    'Android AVIF output smoke adapter blocked-result preservation JVM coverage.',
+    'README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.27 candidate state.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.27`.',
     '## v0.2.26',
     'Status: unpublished release candidate for the Android AVIF output helper validation detail contract. npm `latest` remains `0.2.19`; no `v0.2.26` tag, GitHub Release, or npm publish is part of this candidate.',
-    'This candidate does not enable AVIF output. It keeps the Android `compressImage()` AVIF output scaffold on `ERR_NOT_IMPLEMENTED` before helper entry while pinning `AndroidAvifOutputHelper` result `details` order for direct success, muxed success, invalid signature, decode-back failure, and codec failure paths.',
-    'Add Android JVM expectations for direct success, muxed success, invalid signature, decode-back failure, and codec failure `details` ordering.',
-    'Fix validation-result detail order around `INJECTABLE_VALIDATION_SEAM`, dependency-provided encoder/direct/muxer/validator details, and trailing route blockers.',
-    'Fix codec-failure detail order around route blockers, `INJECTABLE_VALIDATION_SEAM`, and `HELPER_DISABLED_FROM_COMPRESS_IMAGE`.',
-    'Keep Android capability reporting on `formats.avif.output=false`.',
-    'Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.26 candidate.',
-    '### Validation Detail Contract',
-    'Android JVM tests now assert exact helper `details` arrays for the injected direct success, muxed success, invalid-signature, decode-back-failure, and codec-failure paths.',
-    'Validation results report details in this order: `INJECTABLE_VALIDATION_SEAM`, dependency-provided encoder/direct-validator/muxer/final-validator details, then the route blockers from `AndroidAvifOutputPrototype.inspectRoute()`.',
-    'Codec failure results report route blockers first, then `INJECTABLE_VALIDATION_SEAM`, then `HELPER_DISABLED_FROM_COMPRESS_IMAGE`.',
-    'The contract keeps diagnostics stable for production wiring without changing `compressImage()` behavior, capability reporting, or the disabled AVIF output gate.',
-    '`package.json` version bump to `0.2.26`.',
-    'Android AVIF output helper validation-detail-order JVM coverage.',
-    'README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.26 candidate state.',
-    'npm publish, git tag, or GitHub Release promotion for `v0.2.26`.',
     '## v0.2.25',
     'Status: unpublished release candidate for the Android AVIF output helper direct-output success contract. npm `latest` remains `0.2.19`; no `v0.2.25` tag, GitHub Release, or npm publish is part of this candidate.',
     '## v0.2.24',
@@ -1653,7 +1660,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1665,18 +1672,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.26' && missing.length === 0;
+  const ok = packageJson.version === '0.2.27' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.26 Android AVIF output helper validation detail contract candidate notes and previous release notes are current',
+    label: 'v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.26'
+          ...(packageJson.version === '0.2.27'
             ? []
-            : ['package.json version 0.2.26']),
+            : ['package.json version 0.2.27']),
         ].join(' | ')}`,
   };
 }
@@ -1941,6 +1948,7 @@ function checkAndroidNativeModule() {
     'helperClassifiesValidationAndCodecFailuresWithProductionDecisionBlockers',
     'assertValidationResultDetailsOrder',
     'assertBlockedResultDetailsOrder',
+    'assertSmokeBlockedDetailsOrder',
     'productionWiringScaffoldBlocksHelperEntryBeforeAvifOutputCanBeEnabled',
     'compressImageRejectsAvifOutputBeforeSourceAccessAndProductionHelperEntry',
     'Android AVIF output production wiring scaffold blocks entry into the extracted encode/decode-back helper while capability output=false.',
