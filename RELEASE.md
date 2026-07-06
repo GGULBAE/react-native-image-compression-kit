@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.2.24
+
+Status: unpublished release candidate for the Android AVIF output helper injected success contract. npm `latest` remains `0.2.19`; no `v0.2.24` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It keeps the Android `compressImage()` AVIF output scaffold on `ERR_NOT_IMPLEMENTED` before helper entry while adding an injected muxed success path so the helper's passed-smoke result contract is fixed before production wiring.
+
+### Goals
+
+- Keep Android and iOS AVIF output disabled.
+- Add fake valid AVIF bytes, muxed output file, and decode-back success coverage to `AndroidAvifOutputHelper`.
+- Fix helper success expectations for `byteSize`, `signatureValid`, `decodeBackValid`, `blockerCode`, `blocker`, and `productionDecision`.
+- Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path before source access or helper entry.
+- Keep Android capability reporting on `formats.avif.output=false`.
+- Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.24 candidate.
+
+### Injected Success Contract
+
+- Android JVM tests now inject direct bytes that fail validation, muxed fake AVIF bytes that pass signature checks, and decode-back dimensions that match the helper input.
+- Successful helper validation reports `success=true`, `byteSize` from the muxed fake AVIF file, `signatureValid=true`, `decodeBackValid=true`, `blockerCode=null`, and `blocker=null`.
+- A passed helper smoke still reports `PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED` because production wiring, metadata preserve, `output.maxBytes`, and animated AVIF boundaries are not implemented.
+- `AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM` now describes fake success and failure coverage; `compressImage()` and capability reporting still keep AVIF output disabled.
+
+### Included
+
+- `package.json` version bump to `0.2.24`.
+- Android AVIF output helper injected success-path JVM coverage.
+- README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.24 candidate state.
+
+### Not Included
+
+- Production AVIF output encoding enablement.
+- Android AVIF output capability enablement.
+- Actual AVIF file return from `compressImage()`.
+- iOS AVIF output implementation.
+- Metadata preservation for AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.24`.
+
+### Validation
+
+Before considering the candidate ready:
+
+```bash
+git status --short --branch
+pnpm verify
+pnpm example:typecheck
+git diff --check
+pnpm pack --dry-run
+pnpm release:dry-run
+```
+
+Remote validation also requires GitHub Actions CI, Android Instrumentation, and iOS Validation to pass on the pushed candidate commit. The Android Instrumentation `RNICK_AVIF_OUTPUT_SMOKE` log must keep AVIF output disabled and expose the relevant blocker code unless a later non-candidate implementation explicitly enables AVIF output.
+
+After validation, keep this candidate unpublished until a separate publish goal.
+
 ## v0.2.23
 
 Status: unpublished release candidate for the Android AVIF output helper injectable validation seam. npm `latest` remains `0.2.19`; no `v0.2.23` tag, GitHub Release, or npm publish is part of this candidate.

@@ -88,7 +88,7 @@ internal object AndroidAvifOutputHelper {
   const val HELPER_DISABLED_FROM_COMPRESS_IMAGE =
     "compressImage() keeps output.format='avif' on ERR_NOT_IMPLEMENTED before entering the extracted Android AVIF output helper while avif.output=false."
   const val INJECTABLE_VALIDATION_SEAM =
-    "Android AVIF output helper uses injectable encoder, muxer, file, and decode-back validation dependencies for fake/failure-case coverage while avif.output=false."
+    "Android AVIF output helper uses injectable encoder, muxer, file, and decode-back validation dependencies for fake success/failure coverage while avif.output=false."
 
   fun createInput(
     cacheDir: File,

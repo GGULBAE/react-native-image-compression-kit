@@ -179,6 +179,91 @@ class AndroidAvifOutputHelperTest {
   }
 
   @Test
+  fun helperUsesInjectedMuxedDecodeBackSuccessForPassedSmokeContract() {
+    val cacheDir = createTempCacheDir()
+    val input = createEligibleHelperInput(cacheDir)
+    val calls = mutableListOf<String>()
+
+    val result = AndroidAvifOutputHelper.runEncodeDecodeBack(
+      input = input,
+      dependencies = AndroidAvifOutputHelperDependencies(
+        createBitmap = { width, height ->
+          calls.add("bitmap:$width:$height")
+          Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        },
+        encodeBitmap = { encoderName, bitmap ->
+          calls.add("encode:$encoderName:${bitmap.width}x${bitmap.height}")
+          AndroidAvifOutputHelperOutput(
+            directBytes = "direct-not-avif".toByteArray(StandardCharsets.US_ASCII),
+            outputFormat = AndroidAvifOutputHelper.createImageAvifMediaFormat(
+              bitmap.width,
+              bitmap.height
+            ),
+            samples = listOf(
+              AndroidAvifOutputHelperSample(
+                bytes = "muxable-fake-sample".toByteArray(StandardCharsets.US_ASCII),
+                presentationTimeUs = 33333L,
+                flags = 0
+              )
+            ),
+            details = listOf("Injected success-contract encoder bytes")
+          )
+        },
+        createOutputFile = { directory, suffix ->
+          calls.add("file:$suffix")
+          File(directory, "success-$suffix.avif")
+        },
+        muxEncodedSamples = { outputFile, _, samples ->
+          calls.add("mux:${outputFile.name}:${samples.size}")
+          outputFile.writeBytes(fakeAvifBytes())
+          listOf("Injected muxed ftyp avif bytes")
+        },
+        validateFile = { file, expectedWidth, expectedHeight ->
+          val signatureValid = AndroidAvifOutputHelper.looksLikeAvifFile(file.readBytes())
+          val isMuxedOutput = file.name.contains("muxed")
+          calls.add("validate:${file.name}:$signatureValid:$isMuxedOutput")
+          AndroidAvifOutputHelperFileValidation(
+            file = file,
+            signatureValid = signatureValid,
+            decodeBackValid = isMuxedOutput,
+            decodedWidth = if (isMuxedOutput) expectedWidth else null,
+            decodedHeight = if (isMuxedOutput) expectedHeight else null,
+            details = listOf("Injected decode-back success=$isMuxedOutput")
+          )
+        }
+      )
+    )
+
+    assertTrue(result.attempted)
+    assertTrue(result.success)
+    assertEquals("fake.avif.encoder", result.encoderName)
+    assertEquals(
+      "${AndroidAvifOutputPrototype.SMOKE_ROUTE} via MediaMuxer.MUXER_OUTPUT_HEIF",
+      result.route
+    )
+    assertTrue(result.outputFilePath?.endsWith("success-muxed.avif") == true)
+    assertEquals(fakeAvifBytes().size.toLong(), result.byteSize)
+    assertTrue(result.signatureValid)
+    assertTrue(result.decodeBackValid)
+    assertEquals(16, result.decodedWidth)
+    assertEquals(12, result.decodedHeight)
+    assertNull(result.blockerCode)
+    assertNull(result.blocker)
+    assertEquals(
+      AndroidAvifOutputPrototype.PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED,
+      result.productionDecision
+    )
+    assertTrue(result.details.any { it == AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM })
+    assertTrue(result.details.any { it == "Injected success-contract encoder bytes" })
+    assertTrue(result.details.any { it == "Injected muxed ftyp avif bytes" })
+    assertTrue(result.details.any { it == "Injected decode-back success=true" })
+    assertTrue(result.details.any { it.contains("not wired into compressImage()") })
+    assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct", "file:muxed")))
+    assertTrue(calls.any { it == "validate:success-direct.avif:false:false" })
+    assertTrue(calls.any { it == "validate:success-muxed.avif:true:true" })
+  }
+
+  @Test
   fun helperUsesInjectedValidatorForDecodeBackFailureBlocker() {
     val cacheDir = createTempCacheDir()
     val input = createEligibleHelperInput(cacheDir)
