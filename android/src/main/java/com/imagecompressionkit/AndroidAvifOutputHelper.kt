@@ -189,9 +189,9 @@ internal object AndroidAvifOutputHelper {
 
         val muxedFile = dependencies.createOutputFile(input.cacheDir, "muxed")
         val muxDetails = dependencies.muxEncodedSamples(
-          outputFile = muxedFile,
-          outputFormat = encodedOutput.outputFormat,
-          samples = encodedOutput.samples
+          muxedFile,
+          encodedOutput.outputFormat,
+          encodedOutput.samples
         )
         val muxedValidation = dependencies.validateFile(muxedFile, input.width, input.height)
         muxedValidation.toHelperResult(
