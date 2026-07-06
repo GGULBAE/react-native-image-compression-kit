@@ -66,11 +66,29 @@ internal data class AndroidAvifOutputHelperFileValidation(
     get() = signatureValid && decodeBackValid
 }
 
+internal data class AndroidAvifOutputHelperDependencies(
+  val createBitmap: (width: Int, height: Int) -> Bitmap,
+  val encodeBitmap: (encoderName: String, bitmap: Bitmap) -> AndroidAvifOutputHelperOutput,
+  val createOutputFile: (cacheDir: File, suffix: String) -> File,
+  val muxEncodedSamples: (
+    outputFile: File,
+    outputFormat: MediaFormat,
+    samples: List<AndroidAvifOutputHelperSample>
+  ) -> List<String>,
+  val validateFile: (
+    file: File,
+    expectedWidth: Int,
+    expectedHeight: Int
+  ) -> AndroidAvifOutputHelperFileValidation
+)
+
 internal object AndroidAvifOutputHelper {
   const val PRODUCTION_HELPER_ROUTE =
     "Android AVIF output encode/decode-back production helper"
   const val HELPER_DISABLED_FROM_COMPRESS_IMAGE =
     "compressImage() keeps output.format='avif' on ERR_NOT_IMPLEMENTED before entering the extracted Android AVIF output helper while avif.output=false."
+  const val INJECTABLE_VALIDATION_SEAM =
+    "Android AVIF output helper uses injectable encoder, muxer, file, and decode-back validation dependencies for fake/failure-case coverage while avif.output=false."
 
   fun createInput(
     cacheDir: File,
@@ -123,7 +141,19 @@ internal object AndroidAvifOutputHelper {
     return brandWindow.contains("avif") || brandWindow.contains("avis")
   }
 
-  fun runEncodeDecodeBack(input: AndroidAvifOutputHelperInput): AndroidAvifOutputHelperResult {
+  fun createDefaultDependencies(): AndroidAvifOutputHelperDependencies =
+    AndroidAvifOutputHelperDependencies(
+      createBitmap = ::createHelperBitmap,
+      encodeBitmap = ::encodeBitmap,
+      createOutputFile = ::createHelperFile,
+      muxEncodedSamples = ::muxEncodedSamples,
+      validateFile = ::validateAvifFile
+    )
+
+  fun runEncodeDecodeBack(
+    input: AndroidAvifOutputHelperInput,
+    dependencies: AndroidAvifOutputHelperDependencies = createDefaultDependencies()
+  ): AndroidAvifOutputHelperResult {
     if (!input.sdkEligible) {
       return blockedHelperResult(
         input = input,
@@ -142,12 +172,12 @@ internal object AndroidAvifOutputHelper {
       )
 
     return try {
-      val bitmap = createHelperBitmap(input.width, input.height)
+      val bitmap = dependencies.createBitmap(input.width, input.height)
       try {
-        val encodedOutput = encodeBitmap(encoderName, bitmap)
-        val directFile = createHelperFile(input.cacheDir, "direct")
+        val encodedOutput = dependencies.encodeBitmap(encoderName, bitmap)
+        val directFile = dependencies.createOutputFile(input.cacheDir, "direct")
         directFile.writeBytes(encodedOutput.directBytes)
-        val directValidation = validateAvifFile(directFile, input.width, input.height)
+        val directValidation = dependencies.validateFile(directFile, input.width, input.height)
         if (directValidation.success) {
           return directValidation.toHelperResult(
             input = input,
@@ -157,13 +187,13 @@ internal object AndroidAvifOutputHelper {
           )
         }
 
-        val muxedFile = createHelperFile(input.cacheDir, "muxed")
-        val muxDetails = muxEncodedSamples(
+        val muxedFile = dependencies.createOutputFile(input.cacheDir, "muxed")
+        val muxDetails = dependencies.muxEncodedSamples(
           outputFile = muxedFile,
           outputFormat = encodedOutput.outputFormat,
           samples = encodedOutput.samples
         )
-        val muxedValidation = validateAvifFile(muxedFile, input.width, input.height)
+        val muxedValidation = dependencies.validateFile(muxedFile, input.width, input.height)
         muxedValidation.toHelperResult(
           input = input,
           encoderName = encoderName,
@@ -488,7 +518,7 @@ internal object AndroidAvifOutputHelper {
       } else {
         AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED
       },
-      details = details + this.details + input.routeBlockers
+      details = listOf(INJECTABLE_VALIDATION_SEAM) + details + this.details + input.routeBlockers
     )
   }
 
@@ -513,7 +543,7 @@ internal object AndroidAvifOutputHelper {
       blockerCode = blockerCode,
       blocker = blocker,
       productionDecision = AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED,
-      details = input.routeBlockers + HELPER_DISABLED_FROM_COMPRESS_IMAGE
+      details = input.routeBlockers + INJECTABLE_VALIDATION_SEAM + HELPER_DISABLED_FROM_COMPRESS_IMAGE
     )
 
   private fun ByteArray.toByteBuffer() =

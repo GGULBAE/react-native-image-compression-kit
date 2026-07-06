@@ -1,5 +1,6 @@
 package com.imagecompressionkit
 
+import android.graphics.Bitmap
 import android.media.MediaFormat
 import android.os.Build
 import org.junit.Assert.assertEquals
@@ -11,6 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.io.File
+import java.nio.charset.StandardCharsets
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
@@ -102,6 +104,180 @@ class AndroidAvifOutputHelperTest {
   }
 
   @Test
+  fun helperUsesInjectedEncoderMuxerAndValidatorForInvalidSignatureBlocker() {
+    val cacheDir = createTempCacheDir()
+    val input = createEligibleHelperInput(cacheDir)
+    val calls = mutableListOf<String>()
+
+    val result = AndroidAvifOutputHelper.runEncodeDecodeBack(
+      input = input,
+      dependencies = AndroidAvifOutputHelperDependencies(
+        createBitmap = { width, height ->
+          calls.add("bitmap:$width:$height")
+          Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        },
+        encodeBitmap = { encoderName, bitmap ->
+          calls.add("encode:$encoderName:${bitmap.width}x${bitmap.height}")
+          AndroidAvifOutputHelperOutput(
+            directBytes = "not-an-avif".toByteArray(StandardCharsets.US_ASCII),
+            outputFormat = AndroidAvifOutputHelper.createImageAvifMediaFormat(
+              bitmap.width,
+              bitmap.height
+            ),
+            samples = listOf(
+              AndroidAvifOutputHelperSample(
+                bytes = "fake-sample".toByteArray(StandardCharsets.US_ASCII),
+                presentationTimeUs = 0L,
+                flags = 0
+              )
+            ),
+            details = listOf("Injected fake encoder bytes")
+          )
+        },
+        createOutputFile = { directory, suffix ->
+          calls.add("file:$suffix")
+          File(directory, "fake-$suffix.avif")
+        },
+        muxEncodedSamples = { outputFile, _, samples ->
+          calls.add("mux:${outputFile.name}:${samples.size}")
+          outputFile.writeBytes("muxed-but-not-avif".toByteArray(StandardCharsets.US_ASCII))
+          listOf("Injected fake muxer bytes")
+        },
+        validateFile = { file, _, _ ->
+          val signatureValid = AndroidAvifOutputHelper.looksLikeAvifFile(file.readBytes())
+          calls.add("validate:${file.name}:$signatureValid")
+          AndroidAvifOutputHelperFileValidation(
+            file = file,
+            signatureValid = signatureValid,
+            decodeBackValid = false,
+            decodedWidth = null,
+            decodedHeight = null,
+            details = listOf("Injected validator signatureValid=$signatureValid")
+          )
+        }
+      )
+    )
+
+    assertTrue(result.attempted)
+    assertFalse(result.success)
+    assertEquals("fake.avif.encoder", result.encoderName)
+    assertEquals(
+      "${AndroidAvifOutputPrototype.SMOKE_ROUTE} via MediaMuxer.MUXER_OUTPUT_HEIF",
+      result.route
+    )
+    assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_INVALID_SIGNATURE, result.blockerCode)
+    assertEquals(AndroidAvifOutputPrototype.INVALID_SIGNATURE_BLOCKER, result.blocker)
+    assertFalse(result.signatureValid)
+    assertFalse(result.decodeBackValid)
+    assertTrue(result.outputFilePath?.endsWith("fake-muxed.avif") == true)
+    assertTrue(result.details.any { it == AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM })
+    assertTrue(result.details.any { it == "Injected fake encoder bytes" })
+    assertTrue(result.details.any { it == "Injected fake muxer bytes" })
+    assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct", "file:muxed")))
+    assertTrue(calls.any { it == "validate:fake-direct.avif:false" })
+    assertTrue(calls.any { it == "validate:fake-muxed.avif:false" })
+  }
+
+  @Test
+  fun helperUsesInjectedValidatorForDecodeBackFailureBlocker() {
+    val cacheDir = createTempCacheDir()
+    val input = createEligibleHelperInput(cacheDir)
+
+    val result = AndroidAvifOutputHelper.runEncodeDecodeBack(
+      input = input,
+      dependencies = AndroidAvifOutputHelperDependencies(
+        createBitmap = { width, height ->
+          Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        },
+        encodeBitmap = { _, bitmap ->
+          AndroidAvifOutputHelperOutput(
+            directBytes = fakeAvifBytes(),
+            outputFormat = AndroidAvifOutputHelper.createImageAvifMediaFormat(
+              bitmap.width,
+              bitmap.height
+            ),
+            samples = listOf(
+              AndroidAvifOutputHelperSample(
+                bytes = fakeAvifBytes(),
+                presentationTimeUs = 0L,
+                flags = 0
+              )
+            ),
+            details = listOf("Injected ftyp avif bytes")
+          )
+        },
+        createOutputFile = { directory, suffix ->
+          File(directory, "decode-$suffix.avif")
+        },
+        muxEncodedSamples = { outputFile, _, _ ->
+          outputFile.writeBytes(fakeAvifBytes())
+          listOf("Injected muxed ftyp avif bytes")
+        },
+        validateFile = { file, expectedWidth, expectedHeight ->
+          AndroidAvifOutputHelperFileValidation(
+            file = file,
+            signatureValid = AndroidAvifOutputHelper.looksLikeAvifFile(file.readBytes()),
+            decodeBackValid = false,
+            decodedWidth = expectedWidth,
+            decodedHeight = expectedHeight - 1,
+            details = listOf("Injected ImageDecoder decode-back failure")
+          )
+        }
+      )
+    )
+
+    assertTrue(result.attempted)
+    assertFalse(result.success)
+    assertTrue(result.signatureValid)
+    assertFalse(result.decodeBackValid)
+    assertEquals(16, result.decodedWidth)
+    assertEquals(11, result.decodedHeight)
+    assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_DECODE_BACK_FAILURE, result.blockerCode)
+    assertEquals(AndroidAvifOutputPrototype.DECODE_BACK_FAILURE_BLOCKER, result.blocker)
+    assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
+    assertTrue(result.details.any { it == "Injected ImageDecoder decode-back failure" })
+  }
+
+  @Test
+  fun helperUsesInjectedEncoderFailureForCodecFailureResult() {
+    val cacheDir = createTempCacheDir()
+    val input = createEligibleHelperInput(cacheDir)
+
+    val result = AndroidAvifOutputHelper.runEncodeDecodeBack(
+      input = input,
+      dependencies = AndroidAvifOutputHelperDependencies(
+        createBitmap = { width, height ->
+          Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        },
+        encodeBitmap = { _, _ ->
+          throw IllegalStateException("injected codec failure")
+        },
+        createOutputFile = { _, _ ->
+          throw AssertionError("Output files must not be created after encoder failure.")
+        },
+        muxEncodedSamples = { _, _, _ ->
+          throw AssertionError("Muxer must not run after encoder failure.")
+        },
+        validateFile = { _, _, _ ->
+          throw AssertionError("Validator must not run after encoder failure.")
+        }
+      )
+    )
+
+    assertTrue(result.attempted)
+    assertFalse(result.success)
+    assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_CODEC_FAILURE, result.blockerCode)
+    assertEquals(
+      "${AndroidAvifOutputPrototype.CODEC_FAILURE_BLOCKER_PREFIX}: IllegalStateException: injected codec failure",
+      result.blocker
+    )
+    assertNull(result.outputFilePath)
+    assertFalse(result.signatureValid)
+    assertFalse(result.decodeBackValid)
+    assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
+  }
+
+  @Test
   fun helperClassifiesValidationAndCodecFailuresWithProductionDecisionBlockers() {
     val invalidSignature = AndroidAvifOutputHelper.classifyValidationBlocker(
       signatureValid = false,
@@ -125,10 +301,34 @@ class AndroidAvifOutputHelperTest {
     )
   }
 
+  private fun createEligibleHelperInput(cacheDir: File): AndroidAvifOutputHelperInput =
+    AndroidAvifOutputHelper.createInput(
+      cacheDir = cacheDir,
+      width = 16,
+      height = 12,
+      routeReport = AndroidAvifOutputPrototype.inspectRoute(
+        width = 16,
+        height = 12,
+        apiLevel = Build.VERSION_CODES.UPSIDE_DOWN_CAKE,
+        encoderFinder = { format ->
+          when (format.getString(MediaFormat.KEY_MIME)) {
+            AndroidAvifOutputPrototype.AVIF_MIME_TYPE -> "fake.avif.encoder"
+            else -> null
+          }
+        }
+      )
+    )
+
   private fun createTempCacheDir(): File =
     createTempFile(prefix = "rnick-avif-output-helper", suffix = "cache").let { file ->
       file.delete()
       file.mkdirs()
       file
     }
+
+  private fun fakeAvifBytes(): ByteArray =
+    byteArrayOf(0, 0, 0, 24) +
+      "ftypavif".toByteArray(StandardCharsets.US_ASCII) +
+      byteArrayOf(0, 0, 0, 0) +
+      "avif".toByteArray(StandardCharsets.US_ASCII)
 }

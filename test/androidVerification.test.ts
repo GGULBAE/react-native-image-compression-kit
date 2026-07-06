@@ -162,7 +162,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.22');
+    expect(packageJson.version).toBe('0.2.23');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -190,10 +190,13 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.22` is an unpublished Android AVIF output production helper extraction candidate for `react-native-image-compression-kit`.'
+      'Version `0.2.23` is an unpublished Android AVIF output helper injectable validation seam candidate for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
-      'extracting the Android AVIF encode/decode-back path into `AndroidAvifOutputHelper` with reusable helper input, output, sample, validation, and result types'
+      'adding injectable encoder, muxer, output-file, and decode-back validation dependencies to `AndroidAvifOutputHelper`'
+    );
+    expect(readmeSource).toContain(
+      'fake encoded bytes, invalid signatures, decode-back failures, and codec failures can be tested before any production enablement'
     );
     expect(readmeSource).toContain(
       "The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"
@@ -204,10 +207,10 @@ describe('Android verification scripts', () => {
       'Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'
     );
     expect(readmeSource).toContain(
-      'No npm publish, git tag, or GitHub Release is part of the v0.2.22 candidate.'
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.23 candidate.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.22` package metadata is prepared as an unpublished Android AVIF output production helper extraction candidate for `react-native-image-compression-kit`'
+      'The `0.2.23` package metadata is prepared as an unpublished Android AVIF output helper injectable validation seam candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'Version `0.2.19` remains the latest published npm package.'
@@ -282,6 +285,9 @@ describe('Android verification scripts', () => {
       'version `0.2.22` is the unpublished Android AVIF output production helper extraction candidate'
     );
     expect(readmeSource).toContain(
+      'version `0.2.23` is the unpublished Android AVIF output helper injectable validation seam candidate'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -319,6 +325,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.22` extracts the Android AVIF output encode/decode-back helper boundary without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.23` adds injectable Android AVIF output helper validation dependencies without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -384,6 +393,12 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'The helper owns reusable input, encoded output, sample, file-validation, and result types for future production wiring'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.23` keeps AVIF output disabled and adds an injectable validation seam to `AndroidAvifOutputHelper`.'
+    );
+    expect(readmeSource).toContain(
+      '`AndroidAvifOutputHelperDependencies` wraps the default bitmap, encoder, output-file, muxer, and decode-back validator path'
     );
     expect(readmeSource).toContain('Partial implementation criteria: static image output only');
     expect(readmeSource).toContain("metadataPolicies: ['preserve', 'safe', 'strip']");
@@ -657,11 +672,56 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.22 Android AVIF output production helper extraction candidate notes and previous release notes', () => {
+  it('documents the v0.2.23 Android AVIF output helper injectable validation seam candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.22');
+    expect(packageJson.version).toBe('0.2.23');
+    expect(releaseSource).toContain('## v0.2.23');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for the Android AVIF output helper injectable validation seam. npm `latest` remains `0.2.19`; no `v0.2.23` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output. It keeps the Android `compressImage()` AVIF output scaffold on `ERR_NOT_IMPLEMENTED` before helper entry while adding an injectable helper dependency seam so fake encoded bytes, invalid signatures, decode-back failures, and codec failures can be covered before production wiring.'
+    );
+    expect(releaseSource).toContain(
+      'Add injectable encoder, muxer, output-file, and decode-back validation dependencies to `AndroidAvifOutputHelper`.'
+    );
+    expect(releaseSource).toContain(
+      'Cover fake encoded bytes, invalid signature, decode-back failure, and codec failure result paths in Android JVM tests.'
+    );
+    expect(releaseSource).toContain(
+      'Keep Android capability reporting on `formats.avif.output=false`.'
+    );
+    expect(releaseSource).toContain(
+      'Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.23 candidate.'
+    );
+    expect(releaseSource).toContain('### Injectable Validation Seam');
+    expect(releaseSource).toContain(
+      '`AndroidAvifOutputHelperDependencies` wraps the default bitmap creation, MediaCodec encode, output-file creation, MediaMuxer mux, and ImageDecoder validation path.'
+    );
+    expect(releaseSource).toContain(
+      '`AndroidAvifOutputHelper.runEncodeDecodeBack()` accepts injected dependencies while preserving the default production helper route for instrumentation.'
+    );
+    expect(releaseSource).toContain(
+      'Android JVM tests now inject fake encoder bytes, fake muxed bytes, fake validation results, and injected encoder failures to prove blocker classification without requiring a real `image/avif` encoder.'
+    );
+    expect(releaseSource).toContain(
+      '`AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM` records that the seam is internal validation coverage only; `compressImage()` and capability reporting still keep AVIF output disabled.'
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.23`.');
+    expect(releaseSource).toContain(
+      'Android AVIF output helper dependency seam for encoder, muxer, output file, and decode-back validation injection.'
+    );
+    expect(releaseSource).toContain(
+      'Android JVM tests for fake encoded bytes, invalid signature, decode-back failure, codec failure, scaffold helper-entry blocking, and capability notes.'
+    );
+    expect(releaseSource).toContain(
+      'README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.23 candidate state.'
+    );
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.23`.'
+    );
     expect(releaseSource).toContain('## v0.2.22');
     expect(releaseSource).toContain(
       'Status: unpublished release candidate for the Android AVIF output production helper extraction. npm `latest` remains `0.2.19`; no `v0.2.22` tag, GitHub Release, or npm publish is part of this candidate.'
@@ -2884,7 +2944,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
@@ -3245,9 +3305,11 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('AndroidAvifOutputHelperOutput');
     expect(combinedSource).toContain('AndroidAvifOutputHelperSample');
     expect(combinedSource).toContain('AndroidAvifOutputHelperFileValidation');
+    expect(combinedSource).toContain('AndroidAvifOutputHelperDependencies');
     expect(combinedSource).toContain('AndroidAvifOutputHelperResult');
     expect(combinedSource).toContain('PRODUCTION_HELPER_ROUTE');
     expect(combinedSource).toContain('HELPER_DISABLED_FROM_COMPRESS_IMAGE');
+    expect(combinedSource).toContain('INJECTABLE_VALIDATION_SEAM');
     expect(combinedSource).toContain('AndroidAvifOutputPrototype');
     expect(combinedSource).toContain('AndroidAvifOutputPrototypeReport');
     expect(combinedSource).toContain('AndroidAvifEncodeDecodeSmokeResult');
@@ -3280,8 +3342,12 @@ describe('Android verification scripts', () => {
     expect(combinedSource).toContain('classifySmokeValidationBlocker');
     expect(combinedSource).toContain('codecFailureBlocker');
     expect(combinedSource).toContain('createInput');
+    expect(combinedSource).toContain('createDefaultDependencies');
     expect(combinedSource).toContain('runEncodeDecodeBack');
     expect(combinedSource).toContain('runEncodeDecodeBackSmoke');
+    expect(combinedSource).toContain('dependencies.encodeBitmap');
+    expect(combinedSource).toContain('dependencies.muxEncodedSamples');
+    expect(combinedSource).toContain('dependencies.validateFile');
     expect(combinedSource).toContain('MediaCodec.createByCodecName');
     expect(combinedSource).toContain('MediaCodec.CONFIGURE_FLAG_ENCODE');
     expect(combinedSource).toContain('getInputImage');
@@ -3322,6 +3388,15 @@ describe('Android verification scripts', () => {
     );
     expect(combinedTestSource).toContain(
       'helperWithoutImageEncoderReportsStableNoEncoderBlocker'
+    );
+    expect(combinedTestSource).toContain(
+      'helperUsesInjectedEncoderMuxerAndValidatorForInvalidSignatureBlocker'
+    );
+    expect(combinedTestSource).toContain(
+      'helperUsesInjectedValidatorForDecodeBackFailureBlocker'
+    );
+    expect(combinedTestSource).toContain(
+      'helperUsesInjectedEncoderFailureForCodecFailureResult'
     );
     expect(combinedTestSource).toContain(
       'helperClassifiesValidationAndCodecFailuresWithProductionDecisionBlockers'
