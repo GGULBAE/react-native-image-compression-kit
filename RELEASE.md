@@ -1,5 +1,53 @@
 # Release Notes
 
+## v0.2.26
+
+Status: unpublished release candidate for the Android AVIF output helper validation detail contract. npm `latest` remains `0.2.19`; no `v0.2.26` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It keeps the Android `compressImage()` AVIF output scaffold on `ERR_NOT_IMPLEMENTED` before helper entry while pinning `AndroidAvifOutputHelper` result `details` order for direct success, muxed success, invalid signature, decode-back failure, and codec failure paths.
+
+### Goals
+
+- Add Android JVM expectations for direct success, muxed success, invalid signature, decode-back failure, and codec failure `details` ordering.
+- Fix validation-result detail order around `INJECTABLE_VALIDATION_SEAM`, dependency-provided encoder/direct/muxer/validator details, and trailing route blockers.
+- Fix codec-failure detail order around route blockers, `INJECTABLE_VALIDATION_SEAM`, and `HELPER_DISABLED_FROM_COMPRESS_IMAGE`.
+- Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path before source access or helper entry.
+- Keep Android capability reporting on `formats.avif.output=false`.
+- Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.26 candidate.
+
+### Validation Detail Contract
+
+Android JVM tests now assert exact helper `details` arrays for the injected direct success, muxed success, invalid-signature, decode-back-failure, and codec-failure paths.
+
+Validation results report details in this order: `INJECTABLE_VALIDATION_SEAM`, dependency-provided encoder/direct-validator/muxer/final-validator details, then the route blockers from `AndroidAvifOutputPrototype.inspectRoute()`. Codec failure results report route blockers first, then `INJECTABLE_VALIDATION_SEAM`, then `HELPER_DISABLED_FROM_COMPRESS_IMAGE`.
+
+The contract keeps diagnostics stable for production wiring without changing `compressImage()` behavior, capability reporting, or the disabled AVIF output gate.
+
+### Included
+
+- `package.json` version bump to `0.2.26`.
+- Android AVIF output helper validation-detail-order JVM coverage.
+- README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.26 candidate state.
+
+### Not Included
+
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- iOS AVIF output implementation.
+- Metadata-preserving AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.26`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation after push.
+
 ## v0.2.25
 
 Status: unpublished release candidate for the Android AVIF output helper direct-output success contract. npm `latest` remains `0.2.19`; no `v0.2.25` tag, GitHub Release, or npm publish is part of this candidate.

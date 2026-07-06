@@ -170,9 +170,16 @@ class AndroidAvifOutputHelperTest {
     assertFalse(result.signatureValid)
     assertFalse(result.decodeBackValid)
     assertTrue(result.outputFilePath?.endsWith("fake-muxed.avif") == true)
-    assertTrue(result.details.any { it == AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM })
-    assertTrue(result.details.any { it == "Injected fake encoder bytes" })
-    assertTrue(result.details.any { it == "Injected fake muxer bytes" })
+    assertValidationResultDetailsOrder(
+      input = input,
+      details = result.details,
+      expectedCoreDetails = listOf(
+        "Injected fake encoder bytes",
+        "Injected validator signatureValid=false",
+        "Injected fake muxer bytes",
+        "Injected validator signatureValid=false"
+      )
+    )
     assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct", "file:muxed")))
     assertTrue(calls.any { it == "validate:fake-direct.avif:false" })
     assertTrue(calls.any { it == "validate:fake-muxed.avif:false" })
@@ -253,11 +260,16 @@ class AndroidAvifOutputHelperTest {
       AndroidAvifOutputPrototype.PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED,
       result.productionDecision
     )
-    assertTrue(result.details.any { it == AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM })
-    assertTrue(result.details.any { it == "Injected success-contract encoder bytes" })
-    assertTrue(result.details.any { it == "Injected muxed ftyp avif bytes" })
-    assertTrue(result.details.any { it == "Injected decode-back success=true" })
-    assertTrue(result.details.any { it.contains("not wired into compressImage()") })
+    assertValidationResultDetailsOrder(
+      input = input,
+      details = result.details,
+      expectedCoreDetails = listOf(
+        "Injected success-contract encoder bytes",
+        "Injected decode-back success=false",
+        "Injected muxed ftyp avif bytes",
+        "Injected decode-back success=true"
+      )
+    )
     assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct", "file:muxed")))
     assertTrue(calls.any { it == "validate:success-direct.avif:false:false" })
     assertTrue(calls.any { it == "validate:success-muxed.avif:true:true" })
@@ -335,10 +347,14 @@ class AndroidAvifOutputHelperTest {
       AndroidAvifOutputPrototype.PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED,
       result.productionDecision
     )
-    assertTrue(result.details.any { it == AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM })
-    assertTrue(result.details.any { it == "Injected direct ftyp avif bytes" })
-    assertTrue(result.details.any { it == "Injected direct decode-back success=true" })
-    assertTrue(result.details.any { it.contains("not wired into compressImage()") })
+    assertValidationResultDetailsOrder(
+      input = input,
+      details = result.details,
+      expectedCoreDetails = listOf(
+        "Injected direct ftyp avif bytes",
+        "Injected direct decode-back success=true"
+      )
+    )
     assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct")))
     assertTrue(calls.any { it == "validate:direct-success-direct.avif:true" })
     assertFalse(calls.contains("file:muxed"))
@@ -402,7 +418,16 @@ class AndroidAvifOutputHelperTest {
     assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_DECODE_BACK_FAILURE, result.blockerCode)
     assertEquals(AndroidAvifOutputPrototype.DECODE_BACK_FAILURE_BLOCKER, result.blocker)
     assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
-    assertTrue(result.details.any { it == "Injected ImageDecoder decode-back failure" })
+    assertValidationResultDetailsOrder(
+      input = input,
+      details = result.details,
+      expectedCoreDetails = listOf(
+        "Injected ftyp avif bytes",
+        "Injected ImageDecoder decode-back failure",
+        "Injected muxed ftyp avif bytes",
+        "Injected ImageDecoder decode-back failure"
+      )
+    )
   }
 
   @Test
@@ -442,6 +467,7 @@ class AndroidAvifOutputHelperTest {
     assertFalse(result.signatureValid)
     assertFalse(result.decodeBackValid)
     assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)
+    assertBlockedResultDetailsOrder(input, result.details)
   }
 
   @Test
@@ -492,6 +518,33 @@ class AndroidAvifOutputHelperTest {
       file.mkdirs()
       file
     }
+
+  private fun assertValidationResultDetailsOrder(
+    input: AndroidAvifOutputHelperInput,
+    details: List<String>,
+    expectedCoreDetails: List<String>
+  ) {
+    assertTrue(input.routeBlockers.isNotEmpty())
+    assertEquals(
+      listOf(AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM) +
+        expectedCoreDetails +
+        input.routeBlockers,
+      details
+    )
+  }
+
+  private fun assertBlockedResultDetailsOrder(
+    input: AndroidAvifOutputHelperInput,
+    details: List<String>
+  ) {
+    assertTrue(input.routeBlockers.isNotEmpty())
+    assertEquals(
+      input.routeBlockers +
+        AndroidAvifOutputHelper.INJECTABLE_VALIDATION_SEAM +
+        AndroidAvifOutputHelper.HELPER_DISABLED_FROM_COMPRESS_IMAGE,
+      details
+    )
+  }
 
   private fun fakeAvifBytes(): ByteArray =
     byteArrayOf(0, 0, 0, 24) +
