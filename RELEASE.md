@@ -1,5 +1,50 @@
 # Release Notes
 
+## v0.2.31
+
+Status: unpublished release candidate for iOS smoke diagnostic testability hardening. npm `latest` remains `0.2.19`; no `v0.2.31` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while extracting the smoke retry, environment override, and timeout diagnostic formatting contract into simulator-free Node-level test coverage.
+
+### Goals
+
+- Extract the iOS smoke retry and timeout diagnostic contract into `scripts/ios-smoke-contract.mjs`.
+- Cover `RNICK_IOS_SMOKE_ATTEMPTS`, `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`, and `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW` defaults and overrides without launching Xcode, Metro, or a simulator.
+- Cover timeout-only retry decisions so only `rnickSmokeTimeout` errors retry before the final attempt.
+- Cover timeout diagnostic formatting for simulator state, app/data containers, app process lookup, launch output, captured `RNICK_IOS_SMOKE_*` stream tail, Metro output tail, and unified log tail.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.31 candidate.
+
+### iOS Smoke Contract Testability
+
+`scripts/ios-validation.mjs` now delegates environment parsing, retry decision checks, retry warning text, and timeout error formatting to `scripts/ios-smoke-contract.mjs`.
+
+`test/iosSmokeContract.test.mjs` validates the iOS smoke contract without any simulator dependency. The tests pin default and overridden smoke env values, invalid override fallback behavior, timeout-only retry gating before the final attempt, and the diagnostics block shape.
+
+The runtime smoke still uses Xcode, Metro, and simulator logs for end-to-end validation. The new Node-level tests make the failure-surface contract reviewable before the macOS runner reaches the host-app smoke.
+
+### Included
+
+- `package.json` version bump to `0.2.31`.
+- `scripts/ios-smoke-contract.mjs` helper module for iOS smoke env parsing, retry gating, retry warnings, and timeout diagnostics.
+- `test/iosSmokeContract.test.mjs` Node-level Vitest coverage for iOS smoke env overrides, timeout-only retry decisions, and timeout diagnostics.
+- README, release notes, Android verification doctor expectations, and Vitest configuration updated for the v0.2.31 candidate state.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.31`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation after push.
+
 ## v0.2.30
 
 Status: unpublished release candidate for iOS smoke retry and diagnostic hardening. npm `latest` remains `0.2.19`; no `v0.2.30` tag, GitHub Release, or npm publish is part of this candidate.

@@ -5,6 +5,13 @@ import { rmSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import process from 'node:process';
+import {
+  createIOSValidationConfig,
+  createSmokeTimeoutError,
+  formatSmokeRetryWarning,
+  shouldRetrySmokeTimeout,
+  tailLines,
+} from './ios-smoke-contract.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const EXAMPLE_DIR = path.join(ROOT, 'example');
@@ -14,25 +21,14 @@ const REACT_NATIVE_CLI = path.join(EXAMPLE_DIR, 'node_modules', 'react-native', 
 const WORKSPACE = path.join(IOS_DIR, 'ImageCompressionKitExample.xcworkspace');
 const SCHEME = 'ImageCompressionKitExample';
 const BUNDLE_ID = 'com.imagecompressionkit.example';
-const METRO_PORT = Number(process.env.RNICK_IOS_METRO_PORT ?? '8081');
-const METRO_READY_TIMEOUT_MS = Number(
-  process.env.RNICK_IOS_METRO_READY_TIMEOUT_MS ?? '180000'
-);
-const SMOKE_TIMEOUT_MS = Number(process.env.RNICK_IOS_SMOKE_TIMEOUT_MS ?? '180000');
-const SMOKE_MAX_ATTEMPTS = parsePositiveInteger(
-  process.env.RNICK_IOS_SMOKE_ATTEMPTS,
-  2
-);
-const SMOKE_LOG_STREAM_WARMUP_MS = parsePositiveInteger(
-  process.env.RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS,
-  1000
-);
-const SMOKE_DIAGNOSTIC_LOG_WINDOW =
-  process.env.RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW ?? '10m';
-const POD_INSTALL_MAX_ATTEMPTS = parsePositiveInteger(
-  process.env.RNICK_IOS_POD_INSTALL_ATTEMPTS,
-  2
-);
+const IOS_VALIDATION_CONFIG = createIOSValidationConfig(process.env);
+const METRO_PORT = IOS_VALIDATION_CONFIG.metroPort;
+const METRO_READY_TIMEOUT_MS = IOS_VALIDATION_CONFIG.metroReadyTimeoutMs;
+const SMOKE_TIMEOUT_MS = IOS_VALIDATION_CONFIG.smokeTimeoutMs;
+const SMOKE_MAX_ATTEMPTS = IOS_VALIDATION_CONFIG.smokeMaxAttempts;
+const SMOKE_LOG_STREAM_WARMUP_MS = IOS_VALIDATION_CONFIG.smokeLogStreamWarmupMs;
+const SMOKE_DIAGNOSTIC_LOG_WINDOW = IOS_VALIDATION_CONFIG.smokeDiagnosticLogWindow;
+const POD_INSTALL_MAX_ATTEMPTS = IOS_VALIDATION_CONFIG.podInstallMaxAttempts;
 const POD_INSTALL_CLEANUP_PATHS = [
   path.join(IOS_DIR, 'Pods'),
   WORKSPACE,
@@ -382,17 +378,18 @@ async function runSmoke(udid, metroProcess, setLogProcess) {
       await runSmokeAttempt(udid, metroProcess, setLogProcess, attempt);
       return;
     } catch (error) {
-      if (!error.rnickSmokeTimeout || attempt >= SMOKE_MAX_ATTEMPTS) {
+      if (
+        !shouldRetrySmokeTimeout({
+          error,
+          attempt,
+          maxAttempts: SMOKE_MAX_ATTEMPTS,
+        })
+      ) {
         throw error;
       }
 
       console.warn(error.message);
-      console.warn(
-        [
-          `iOS smoke attempt ${attempt}/${SMOKE_MAX_ATTEMPTS} timed out before RNICK_IOS_SMOKE_PASS.`,
-          'Retrying after terminating the app so the next attempt gets a fresh launch and log stream.',
-        ].join('\n')
-      );
+      console.warn(formatSmokeRetryWarning({ attempt, maxAttempts: SMOKE_MAX_ATTEMPTS }));
       optionalCommandOutput('xcrun', ['simctl', 'terminate', udid, BUNDLE_ID]);
       await delay(2000);
     }
@@ -410,11 +407,37 @@ function runSmokeAttempt(udid, metroProcess, setLogProcess, attempt) {
       finish(
         reject,
         createSmokeTimeoutError({
-          udid,
+          smokeTimeoutMs: SMOKE_TIMEOUT_MS,
           attempt,
+          maxAttempts: SMOKE_MAX_ATTEMPTS,
+          diagnosticLogWindow: SMOKE_DIAGNOSTIC_LOG_WINDOW,
+          simulator: simulatorSummary(udid),
+          appContainer: optionalCommandOutput('xcrun', [
+            'simctl',
+            'get_app_container',
+            udid,
+            BUNDLE_ID,
+            'app',
+          ]),
+          appDataContainer: optionalCommandOutput('xcrun', [
+            'simctl',
+            'get_app_container',
+            udid,
+            BUNDLE_ID,
+            'data',
+          ]),
+          appProcessLookup: optionalCommandOutput('xcrun', [
+            'simctl',
+            'spawn',
+            udid,
+            'pgrep',
+            '-fl',
+            SCHEME,
+          ]),
           smokeLogOutput,
           launchOutput,
-          metroProcess,
+          metroOutput: metroProcess.rnickOutput ?? '',
+          unifiedLogTail: recentIOSSmokeLogs(udid),
         })
       );
     }, SMOKE_TIMEOUT_MS);
@@ -525,31 +548,6 @@ function runSmokeAttempt(udid, metroProcess, setLogProcess, attempt) {
         finish(reject, error);
       });
   });
-}
-
-function createSmokeTimeoutError({
-  udid,
-  attempt,
-  smokeLogOutput,
-  launchOutput,
-  metroProcess,
-}) {
-  const diagnostics = [
-    `Timed out waiting for RNICK_IOS_SMOKE_PASS after ${SMOKE_TIMEOUT_MS}ms.`,
-    `iOS smoke attempt: ${attempt}/${SMOKE_MAX_ATTEMPTS}`,
-    'iOS smoke diagnostics:',
-    `- simulator: ${simulatorSummary(udid)}`,
-    `- app container: ${optionalCommandOutput('xcrun', ['simctl', 'get_app_container', udid, BUNDLE_ID, 'app'])}`,
-    `- app data container: ${optionalCommandOutput('xcrun', ['simctl', 'get_app_container', udid, BUNDLE_ID, 'data'])}`,
-    `- app process lookup: ${optionalCommandOutput('xcrun', ['simctl', 'spawn', udid, 'pgrep', '-fl', SCHEME])}`,
-    `- launch output:\n${indentBlock(launchOutput.trim() || '(no launch output captured)')}`,
-    `- captured RNICK_IOS_SMOKE stream tail:\n${indentBlock(tailLines(smokeLogOutput, 120) || '(no RNICK_IOS_SMOKE lines captured)')}`,
-    `- Metro output tail:\n${indentBlock(tailLines(metroProcess.rnickOutput ?? '', 120) || '(no Metro output captured)')}`,
-    `- unified log tail (${SMOKE_DIAGNOSTIC_LOG_WINDOW}):\n${indentBlock(recentIOSSmokeLogs(udid))}`,
-  ];
-  const error = new Error(diagnostics.join('\n'));
-  error.rnickSmokeTimeout = true;
-  return error;
 }
 
 function simulatorSummary(udid) {
@@ -669,34 +667,6 @@ function optionalCommandOutput(command, args, options = {}) {
   }
 
   return commandOutput(result).trim() || '(no output)';
-}
-
-function parsePositiveInteger(value, defaultValue) {
-  if (value === undefined) {
-    return defaultValue;
-  }
-
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    return defaultValue;
-  }
-
-  return parsed;
-}
-
-function tailLines(value, maxLines) {
-  return value
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .slice(-maxLines)
-    .join('\n');
-}
-
-function indentBlock(value) {
-  return value
-    .split(/\r?\n/)
-    .map((line) => `  ${line}`)
-    .join('\n');
 }
 
 function stopProcess(child) {

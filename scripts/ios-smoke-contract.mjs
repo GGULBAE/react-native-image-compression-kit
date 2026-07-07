@@ -1,0 +1,144 @@
+export const DEFAULT_IOS_VALIDATION_CONFIG = Object.freeze({
+  metroPort: 8081,
+  metroReadyTimeoutMs: 180000,
+  smokeTimeoutMs: 180000,
+  smokeMaxAttempts: 2,
+  smokeLogStreamWarmupMs: 1000,
+  smokeDiagnosticLogWindow: '10m',
+  podInstallMaxAttempts: 2,
+});
+
+export function createIOSValidationConfig(env = {}) {
+  return {
+    metroPort: parsePositiveInteger(
+      env.RNICK_IOS_METRO_PORT,
+      DEFAULT_IOS_VALIDATION_CONFIG.metroPort
+    ),
+    metroReadyTimeoutMs: parsePositiveInteger(
+      env.RNICK_IOS_METRO_READY_TIMEOUT_MS,
+      DEFAULT_IOS_VALIDATION_CONFIG.metroReadyTimeoutMs
+    ),
+    smokeTimeoutMs: parsePositiveInteger(
+      env.RNICK_IOS_SMOKE_TIMEOUT_MS,
+      DEFAULT_IOS_VALIDATION_CONFIG.smokeTimeoutMs
+    ),
+    smokeMaxAttempts: parsePositiveInteger(
+      env.RNICK_IOS_SMOKE_ATTEMPTS,
+      DEFAULT_IOS_VALIDATION_CONFIG.smokeMaxAttempts
+    ),
+    smokeLogStreamWarmupMs: parsePositiveInteger(
+      env.RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS,
+      DEFAULT_IOS_VALIDATION_CONFIG.smokeLogStreamWarmupMs
+    ),
+    smokeDiagnosticLogWindow: parseNonEmptyString(
+      env.RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW,
+      DEFAULT_IOS_VALIDATION_CONFIG.smokeDiagnosticLogWindow
+    ),
+    podInstallMaxAttempts: parsePositiveInteger(
+      env.RNICK_IOS_POD_INSTALL_ATTEMPTS,
+      DEFAULT_IOS_VALIDATION_CONFIG.podInstallMaxAttempts
+    ),
+  };
+}
+
+export function isSmokeTimeoutError(error) {
+  return Boolean(error && typeof error === 'object' && error.rnickSmokeTimeout === true);
+}
+
+export function shouldRetrySmokeTimeout({ error, attempt, maxAttempts }) {
+  return isSmokeTimeoutError(error) && attempt < maxAttempts;
+}
+
+export function formatSmokeRetryWarning({ attempt, maxAttempts }) {
+  return [
+    `iOS smoke attempt ${attempt}/${maxAttempts} timed out before RNICK_IOS_SMOKE_PASS.`,
+    'Retrying after terminating the app so the next attempt gets a fresh launch and log stream.',
+  ].join('\n');
+}
+
+export function createSmokeTimeoutError(options) {
+  const error = new Error(formatSmokeTimeoutDiagnostics(options));
+  error.rnickSmokeTimeout = true;
+  return error;
+}
+
+export function formatSmokeTimeoutDiagnostics({
+  smokeTimeoutMs,
+  attempt,
+  maxAttempts,
+  diagnosticLogWindow,
+  simulator,
+  appContainer,
+  appDataContainer,
+  appProcessLookup,
+  launchOutput,
+  smokeLogOutput,
+  metroOutput,
+  unifiedLogTail,
+}) {
+  return [
+    `Timed out waiting for RNICK_IOS_SMOKE_PASS after ${smokeTimeoutMs}ms.`,
+    `iOS smoke attempt: ${attempt}/${maxAttempts}`,
+    'iOS smoke diagnostics:',
+    `- simulator: ${formatInline(simulator)}`,
+    `- app container: ${formatInline(appContainer)}`,
+    `- app data container: ${formatInline(appDataContainer)}`,
+    `- app process lookup: ${formatInline(appProcessLookup)}`,
+    `- launch output:\n${indentBlock(formatBlock(launchOutput, '(no launch output captured)'))}`,
+    `- captured RNICK_IOS_SMOKE stream tail:\n${indentBlock(
+      tailLines(formatBlock(smokeLogOutput, '(no RNICK_IOS_SMOKE lines captured)'), 120)
+    )}`,
+    `- Metro output tail:\n${indentBlock(
+      tailLines(formatBlock(metroOutput, '(no Metro output captured)'), 120)
+    )}`,
+    `- unified log tail (${diagnosticLogWindow}):\n${indentBlock(
+      formatBlock(unifiedLogTail, '(no matching unified log entries captured)')
+    )}`,
+  ].join('\n');
+}
+
+export function parsePositiveInteger(value, defaultValue) {
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return defaultValue;
+  }
+
+  return parsed;
+}
+
+export function tailLines(value, maxLines) {
+  return String(value)
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .slice(-maxLines)
+    .join('\n');
+}
+
+function parseNonEmptyString(value, defaultValue) {
+  if (value === undefined) {
+    return defaultValue;
+  }
+
+  const parsed = String(value).trim();
+  return parsed.length > 0 ? parsed : defaultValue;
+}
+
+function formatInline(value) {
+  return formatBlock(value, 'unavailable');
+}
+
+function formatBlock(value, fallback) {
+  const parsed = String(value ?? '').trim();
+  return parsed.length > 0 ? parsed : fallback;
+}
+
+function indentBlock(value) {
+  return String(value)
+    .split(/\r?\n/)
+    .map((line) => `  ${line}`)
+    .join('\n');
+}

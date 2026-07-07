@@ -162,7 +162,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.30');
+    expect(packageJson.version).toBe('0.2.31');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -190,13 +190,13 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.30` is an unpublished iOS smoke retry and diagnostic hardening candidate for `react-native-image-compression-kit`.'
+      'Version `0.2.31` is an unpublished iOS smoke diagnostic testability hardening candidate for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
-      'The iOS smoke runner now supports `RNICK_IOS_SMOKE_ATTEMPTS`, warms the `RNICK_IOS_SMOKE_*` log stream before each app launch, retries timeout-only smoke attempts with a fresh app launch'
+      'extracting the iOS smoke retry, environment override, and timeout diagnostic formatting contract into `scripts/ios-smoke-contract.mjs`'
     );
     expect(readmeSource).toContain(
-      'prints simulator state, app container paths, app process lookup, launch output, captured smoke stream tail, Metro output tail, and recent unified logs from `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`'
+      '`test/iosSmokeContract.test.mjs` now fixes the simulator-free Node-level expectations for `RNICK_IOS_SMOKE_ATTEMPTS`, `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`, `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`'
     );
     expect(readmeSource).toContain(
       'The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'
@@ -210,10 +210,10 @@ describe('Android verification scripts', () => {
       'Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'
     );
     expect(readmeSource).toContain(
-      'No npm publish, git tag, or GitHub Release is part of the v0.2.30 candidate.'
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.31 candidate.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.30` package metadata is prepared as an unpublished iOS smoke retry and diagnostic hardening candidate for `react-native-image-compression-kit`'
+      'The `0.2.31` package metadata is prepared as an unpublished iOS smoke diagnostic testability hardening candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'Version `0.2.19` remains the latest published npm package.'
@@ -312,6 +312,9 @@ describe('Android verification scripts', () => {
       'version `0.2.30` is the unpublished iOS smoke retry and diagnostic hardening candidate'
     );
     expect(readmeSource).toContain(
+      'version `0.2.31` is the unpublished iOS smoke diagnostic testability hardening candidate'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -373,6 +376,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.30` hardens iOS smoke retry and timeout diagnostics without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.31` hardens simulator-free iOS smoke diagnostic test coverage without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -731,7 +737,10 @@ describe('Android verification scripts', () => {
     const podfileWorkaroundSource = readProjectFile(
       'example/ios/cocoapods_pathname_workaround.rb'
     );
+    const smokeContractSource = readProjectFile('scripts/ios-smoke-contract.mjs');
+    const smokeContractTestSource = readProjectFile('test/iosSmokeContract.test.mjs');
     const validationScriptSource = readProjectFile('scripts/ios-validation.mjs');
+    const vitestConfigSource = readProjectFile('vitest.config.ts');
 
     expect(packageJson.scripts['example:ios:pods']).toBe(
       'node scripts/ios-validation.mjs pods'
@@ -749,6 +758,9 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS=1000');
     expect(readmeSource).toContain('RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW=10m');
     expect(readmeSource).toContain('iOS smoke diagnostics:');
+    expect(readmeSource).toContain('test/iosSmokeContract.test.mjs');
+    expect(readmeSource).toContain('scripts/ios-smoke-contract.mjs');
+    expect(readmeSource).toContain('simulator-free Node-level expectations');
     expect(readmeSource).toContain('Xcode 26.5 and the iPhoneSimulator26.5 SDK');
     expect(readmeSource).toContain('Ruby 3.1 or newer');
     expect(readmeSource).toContain('patched ActiveSupport and Concurrent Ruby ranges');
@@ -764,29 +776,95 @@ describe('Android verification scripts', () => {
     expect(gemfileSource).toContain("ruby '>= 3.1.0'");
     expect(gemfileSource).toContain("gem 'activesupport', '>= 7.2.3.1'");
     expect(gemfileSource).toContain("gem 'concurrent-ruby', '>= 1.3.7'");
+    expect(validationScriptSource).toContain("from './ios-smoke-contract.mjs'");
     expect(validationScriptSource).toContain('POD_INSTALL_MAX_ATTEMPTS');
     expect(validationScriptSource).toContain('SMOKE_MAX_ATTEMPTS');
     expect(validationScriptSource).toContain('SMOKE_LOG_STREAM_WARMUP_MS');
     expect(validationScriptSource).toContain('SMOKE_DIAGNOSTIC_LOG_WINDOW');
-    expect(validationScriptSource).toContain('RNICK_IOS_SMOKE_ATTEMPTS');
-    expect(validationScriptSource).toContain('RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS');
-    expect(validationScriptSource).toContain('RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW');
     expect(validationScriptSource).toContain('createSmokeTimeoutError');
     expect(validationScriptSource).toContain('smokeLogOutput');
     expect(validationScriptSource).toContain('simulatorSummary');
     expect(validationScriptSource).toContain('recentIOSSmokeLogs');
-    expect(validationScriptSource).toContain('iOS smoke diagnostics:');
-    expect(validationScriptSource).toContain('Retrying after terminating the app');
+    expect(smokeContractSource).toContain('createIOSValidationConfig');
+    expect(smokeContractSource).toContain('shouldRetrySmokeTimeout');
+    expect(smokeContractSource).toContain('formatSmokeTimeoutDiagnostics');
+    expect(smokeContractSource).toContain('createSmokeTimeoutError');
+    expect(smokeContractSource).toContain('formatSmokeRetryWarning');
+    expect(smokeContractSource).toContain('iOS smoke diagnostics:');
+    expect(smokeContractSource).toContain('Retrying after terminating the app');
+    expect(smokeContractSource).toContain('RNICK_IOS_SMOKE_ATTEMPTS');
+    expect(smokeContractSource).toContain('RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS');
+    expect(smokeContractSource).toContain('RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW');
+    expect(smokeContractSource).toContain('RNICK_IOS_METRO_READY_TIMEOUT_MS');
+    expect(smokeContractSource).toContain('RNICK_IOS_POD_INSTALL_ATTEMPTS');
+    expect(smokeContractTestSource).toContain(
+      'parses default and overridden iOS validation environment values'
+    );
+    expect(smokeContractTestSource).toContain(
+      'falls back to defaults for invalid positive integer and empty window overrides'
+    );
+    expect(smokeContractTestSource).toContain(
+      'retries timeout-only errors before the final attempt'
+    );
+    expect(smokeContractTestSource).toContain(
+      'formats timeout diagnostics with simulator, app, process, launch, log, and Metro state'
+    );
+    expect(vitestConfigSource).toContain("include: ['test/**/*.test.{ts,mjs}']");
     expect(validationScriptSource).toContain('pathname contains null byte');
     expect(validationScriptSource).toContain('cleanPodInstallArtifacts');
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.30 iOS smoke retry and diagnostic hardening candidate notes and previous release notes', () => {
+  it('documents the v0.2.31 iOS smoke diagnostic testability hardening candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.30');
+    expect(packageJson.version).toBe('0.2.31');
+    expect(releaseSource).toContain('## v0.2.31');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for iOS smoke diagnostic testability hardening. npm `latest` remains `0.2.19`; no `v0.2.31` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while extracting the smoke retry, environment override, and timeout diagnostic formatting contract into simulator-free Node-level test coverage.'
+    );
+    expect(releaseSource).toContain(
+      'Extract the iOS smoke retry and timeout diagnostic contract into `scripts/ios-smoke-contract.mjs`.'
+    );
+    expect(releaseSource).toContain(
+      'Cover `RNICK_IOS_SMOKE_ATTEMPTS`, `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`, and `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW` defaults and overrides without launching Xcode, Metro, or a simulator.'
+    );
+    expect(releaseSource).toContain(
+      'Cover timeout-only retry decisions so only `rnickSmokeTimeout` errors retry before the final attempt.'
+    );
+    expect(releaseSource).toContain(
+      'Cover timeout diagnostic formatting for simulator state, app/data containers, app process lookup, launch output, captured `RNICK_IOS_SMOKE_*` stream tail, Metro output tail, and unified log tail.'
+    );
+    expect(releaseSource).toContain(
+      'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.31 candidate.'
+    );
+    expect(releaseSource).toContain('### iOS Smoke Contract Testability');
+    expect(releaseSource).toContain(
+      '`scripts/ios-validation.mjs` now delegates environment parsing, retry decision checks, retry warning text, and timeout error formatting to `scripts/ios-smoke-contract.mjs`.'
+    );
+    expect(releaseSource).toContain(
+      '`test/iosSmokeContract.test.mjs` validates the iOS smoke contract without any simulator dependency.'
+    );
+    expect(releaseSource).toContain(
+      'The tests pin default and overridden smoke env values, invalid override fallback behavior, timeout-only retry gating before the final attempt, and the diagnostics block shape.'
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.31`.');
+    expect(releaseSource).toContain(
+      '`scripts/ios-smoke-contract.mjs` helper module for iOS smoke env parsing, retry gating, retry warnings, and timeout diagnostics.'
+    );
+    expect(releaseSource).toContain(
+      '`test/iosSmokeContract.test.mjs` Node-level Vitest coverage for iOS smoke env overrides, timeout-only retry decisions, and timeout diagnostics.'
+    );
+    expect(releaseSource).toContain(
+      'README, release notes, Android verification doctor expectations, and Vitest configuration updated for the v0.2.31 candidate state.'
+    );
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.31`.'
+    );
     expect(releaseSource).toContain('## v0.2.30');
     expect(releaseSource).toContain(
       'Status: unpublished release candidate for iOS smoke retry and diagnostic hardening. npm `latest` remains `0.2.19`; no `v0.2.30` tag, GitHub Release, or npm publish is part of this candidate.'
@@ -3194,7 +3272,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
