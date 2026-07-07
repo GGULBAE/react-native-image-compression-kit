@@ -7,6 +7,7 @@ import path from 'node:path';
 import process from 'node:process';
 import {
   createIOSValidationConfig,
+  createSmokeAttemptLifecycle,
   createSmokeTimeoutErrorFromCLIState,
   formatSmokeRetryWarningMessages,
   shouldRetrySmokeTimeout,
@@ -403,86 +404,13 @@ async function runSmoke(udid, metroProcess, setLogProcess) {
 
 function runSmokeAttempt(udid, metroProcess, setLogProcess, attempt) {
   return new Promise((resolve, reject) => {
-    let markerBuffer = '';
-    let smokeLogOutput = '';
-    let launchOutput = '';
-    let logProcess;
-    let settled = false;
-    const timeout = setTimeout(() => {
-      finish(
-        reject,
-        createSmokeTimeoutErrorFromCLIState({
-          config: IOS_VALIDATION_CONFIG,
-          attempt,
-          udid,
-          bundleId: BUNDLE_ID,
-          scheme: SCHEME,
-          smokeLogOutput,
-          launchOutput,
-          metroOutput: metroProcess.rnickOutput ?? '',
-          simulatorSummary,
-          optionalCommandOutput,
-          recentIOSSmokeLogs,
-        })
-      );
-    }, SMOKE_TIMEOUT_MS);
-
-    const onData = (chunk, { smokeLog = false } = {}) => {
-      const text = chunk.toString();
-      markerBuffer += text;
-
-      if (smokeLog) {
-        smokeLogOutput += text;
-      }
-
-      if (text.length > 0) {
-        process.stdout.write(text);
-      }
-
-      if (markerBuffer.includes('RNICK_IOS_SMOKE_FAIL')) {
-        finish(reject, new Error(`iOS smoke failed:\n${markerBuffer}`));
-      } else if (markerBuffer.includes('RNICK_IOS_SMOKE_PASS')) {
-        finish(resolve);
-      }
-    };
-    const onMetroData = (chunk) => {
-      onData(chunk);
-    };
-    const onSmokeLogData = (chunk) => {
-      onData(chunk, { smokeLog: true });
-    };
-
-    const finish = (callback, error) => {
-      if (settled) {
-        return;
-      }
-
-      settled = true;
-      clearTimeout(timeout);
-      metroProcess.stdout.off('data', onMetroData);
-      metroProcess.stderr.off('data', onMetroData);
-      logProcess?.stdout.off('data', onSmokeLogData);
-      logProcess?.stderr.off('data', onSmokeLogData);
-      stopProcess(logProcess);
-      setLogProcess(null);
-
-      if (error) {
-        callback(error);
-      } else {
-        callback();
-      }
-    };
-
     console.log(
       `Starting iOS smoke attempt ${attempt}/${SMOKE_MAX_ATTEMPTS} with ` +
         `timeout=${SMOKE_TIMEOUT_MS}ms, logWarmup=${SMOKE_LOG_STREAM_WARMUP_MS}ms, ` +
         `diagnosticLogWindow=${SMOKE_DIAGNOSTIC_LOG_WINDOW}.`
     );
 
-    metroProcess.stdout.on('data', onMetroData);
-    metroProcess.stderr.on('data', onMetroData);
-
-    logProcess = spawn(
+    const logProcess = spawn(
       'xcrun',
       [
         'simctl',
@@ -500,12 +428,42 @@ function runSmokeAttempt(udid, metroProcess, setLogProcess, attempt) {
         stdio: ['ignore', 'pipe', 'pipe'],
       }
     );
-    setLogProcess(logProcess);
-    logProcess.stdout.on('data', onSmokeLogData);
-    logProcess.stderr.on('data', onSmokeLogData);
-    logProcess.on('error', (error) => {
-      onData(Buffer.from(`iOS smoke log stream error: ${error.message}\n`));
+    const lifecycle = createSmokeAttemptLifecycle({
+      metroProcess,
+      logProcess,
+      setLogProcess,
+      stopProcess,
+      clearAttemptTimeout: () => {
+        clearTimeout(timeout);
+      },
+      writeOutput: (text) => {
+        process.stdout.write(text);
+      },
+      onPass: resolve,
+      onFail: reject,
     });
+    const timeout = setTimeout(() => {
+      const { launchOutput, smokeLogOutput } = lifecycle.snapshot();
+
+      lifecycle.finish(
+        reject,
+        createSmokeTimeoutErrorFromCLIState({
+          config: IOS_VALIDATION_CONFIG,
+          attempt,
+          udid,
+          bundleId: BUNDLE_ID,
+          scheme: SCHEME,
+          smokeLogOutput,
+          launchOutput,
+          metroOutput: metroProcess.rnickOutput ?? '',
+          simulatorSummary,
+          optionalCommandOutput,
+          recentIOSSmokeLogs,
+        })
+      );
+    }, SMOKE_TIMEOUT_MS);
+
+    lifecycle.attach();
 
     delay(SMOKE_LOG_STREAM_WARMUP_MS)
       .then(() => {
@@ -527,10 +485,10 @@ function runSmokeAttempt(udid, metroProcess, setLogProcess, attempt) {
             },
           }
         );
-        launchOutput = commandOutput(launchResult);
+        lifecycle.setLaunchOutput(commandOutput(launchResult));
       })
       .catch((error) => {
-        finish(reject, error);
+        lifecycle.finish(reject, error);
       });
   });
 }

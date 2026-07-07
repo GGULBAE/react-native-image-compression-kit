@@ -111,6 +111,97 @@ export function createSmokeTimeoutErrorFromCLIState({
   });
 }
 
+export function createSmokeAttemptLifecycle({
+  metroProcess,
+  logProcess,
+  setLogProcess,
+  stopProcess,
+  clearAttemptTimeout,
+  writeOutput = () => {},
+  onPass,
+  onFail,
+}) {
+  let markerBuffer = '';
+  let smokeLogOutput = '';
+  let launchOutput = '';
+  let settled = false;
+
+  const onData = (chunk, { smokeLog = false } = {}) => {
+    const text = chunk.toString();
+    markerBuffer += text;
+
+    if (smokeLog) {
+      smokeLogOutput += text;
+    }
+
+    if (text.length > 0) {
+      writeOutput(text);
+    }
+
+    if (markerBuffer.includes('RNICK_IOS_SMOKE_FAIL')) {
+      finish(onFail, new Error(`iOS smoke failed:\n${markerBuffer}`));
+    } else if (markerBuffer.includes('RNICK_IOS_SMOKE_PASS')) {
+      finish(onPass);
+    }
+  };
+  const onMetroData = (chunk) => {
+    onData(chunk);
+  };
+  const onSmokeLogData = (chunk) => {
+    onData(chunk, { smokeLog: true });
+  };
+  const onLogProcessError = (error) => {
+    onData(Buffer.from(`iOS smoke log stream error: ${error.message}\n`));
+  };
+
+  const attach = () => {
+    metroProcess.stdout.on('data', onMetroData);
+    metroProcess.stderr.on('data', onMetroData);
+    logProcess.stdout.on('data', onSmokeLogData);
+    logProcess.stderr.on('data', onSmokeLogData);
+    logProcess.on('error', onLogProcessError);
+    setLogProcess(logProcess);
+  };
+
+  const finish = (callback, error) => {
+    if (settled) {
+      return;
+    }
+
+    settled = true;
+    clearAttemptTimeout();
+    metroProcess.stdout.off('data', onMetroData);
+    metroProcess.stderr.off('data', onMetroData);
+    logProcess.stdout.off('data', onSmokeLogData);
+    logProcess.stderr.off('data', onSmokeLogData);
+    logProcess.off('error', onLogProcessError);
+    stopProcess(logProcess);
+    setLogProcess(null);
+
+    if (error) {
+      callback(error);
+    } else {
+      callback();
+    }
+  };
+
+  return {
+    attach,
+    finish,
+    setLaunchOutput(value) {
+      launchOutput = String(value ?? '');
+    },
+    snapshot() {
+      return {
+        launchOutput,
+        markerBuffer,
+        settled,
+        smokeLogOutput,
+      };
+    },
+  };
+}
+
 export function createSmokeTimeoutError(options) {
   const error = new Error(formatSmokeTimeoutDiagnostics(options));
   error.rnickSmokeTimeout = true;

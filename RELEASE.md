@@ -1,5 +1,49 @@
 # Release Notes
 
+## v0.2.33
+
+Status: unpublished release candidate for iOS smoke process lifecycle fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.33` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while adding simulator-free fixture coverage for the log stream listener cleanup, log process termination, and log process reference clearing used by `scripts/ios-validation.mjs smoke`.
+
+### Goals
+
+- Split the `runSmokeAttempt` process lifecycle into `createSmokeAttemptLifecycle()` so Metro/log stream listeners and log process cleanup can be tested without launching Xcode, Metro, or a simulator.
+- Cover PASS, FAIL, and timeout settle paths with fake EventEmitter Metro and log stream fixtures.
+- Verify listener removal, log process stop, and `setLogProcess(null)` after each settle path.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.33 candidate.
+
+### iOS Smoke Process Lifecycle Fixtures
+
+`scripts/ios-validation.mjs` now delegates smoke marker observation, Metro/log stream listener lifecycle, log stream error handling, log process termination, and log process reference clearing to `createSmokeAttemptLifecycle()`.
+
+`test/iosSmokeLifecycle.test.mjs` validates PASS, FAIL, and timeout settle paths with fake EventEmitter Metro/log stream fixtures. The tests pin listener counts for Metro stdout/stderr, log stream stdout/stderr, and log stream `error`, then assert cleanup stops the log process and clears `setLogProcess(null)` exactly once per settle path.
+
+The runtime smoke still uses Xcode, Metro, simulator log streaming, and unified logs for end-to-end validation. The fixture coverage makes the process cleanup contract reviewable before the macOS runner reaches an actual simulator run or timeout.
+
+### Included
+
+- `package.json` version bump to `0.2.33`.
+- `createSmokeAttemptLifecycle()` helper for iOS smoke marker observation and process lifecycle cleanup.
+- `test/iosSmokeLifecycle.test.mjs` Node-level fixture coverage for PASS, FAIL, and timeout cleanup paths.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.33 candidate state.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.33`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation after push.
+
 ## v0.2.32
 
 Status: unpublished release candidate for iOS smoke timeout CLI fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.32` tag, GitHub Release, or npm publish is part of this candidate.
