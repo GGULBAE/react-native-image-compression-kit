@@ -7,8 +7,8 @@ import path from 'node:path';
 import process from 'node:process';
 import {
   createIOSValidationConfig,
-  createSmokeTimeoutError,
-  formatSmokeRetryWarning,
+  createSmokeTimeoutErrorFromCLIState,
+  formatSmokeRetryWarningMessages,
   shouldRetrySmokeTimeout,
   tailLines,
 } from './ios-smoke-contract.mjs';
@@ -388,8 +388,13 @@ async function runSmoke(udid, metroProcess, setLogProcess) {
         throw error;
       }
 
-      console.warn(error.message);
-      console.warn(formatSmokeRetryWarning({ attempt, maxAttempts: SMOKE_MAX_ATTEMPTS }));
+      for (const warning of formatSmokeRetryWarningMessages({
+        error,
+        attempt,
+        maxAttempts: SMOKE_MAX_ATTEMPTS,
+      })) {
+        console.warn(warning);
+      }
       optionalCommandOutput('xcrun', ['simctl', 'terminate', udid, BUNDLE_ID]);
       await delay(2000);
     }
@@ -406,38 +411,18 @@ function runSmokeAttempt(udid, metroProcess, setLogProcess, attempt) {
     const timeout = setTimeout(() => {
       finish(
         reject,
-        createSmokeTimeoutError({
-          smokeTimeoutMs: SMOKE_TIMEOUT_MS,
+        createSmokeTimeoutErrorFromCLIState({
+          config: IOS_VALIDATION_CONFIG,
           attempt,
-          maxAttempts: SMOKE_MAX_ATTEMPTS,
-          diagnosticLogWindow: SMOKE_DIAGNOSTIC_LOG_WINDOW,
-          simulator: simulatorSummary(udid),
-          appContainer: optionalCommandOutput('xcrun', [
-            'simctl',
-            'get_app_container',
-            udid,
-            BUNDLE_ID,
-            'app',
-          ]),
-          appDataContainer: optionalCommandOutput('xcrun', [
-            'simctl',
-            'get_app_container',
-            udid,
-            BUNDLE_ID,
-            'data',
-          ]),
-          appProcessLookup: optionalCommandOutput('xcrun', [
-            'simctl',
-            'spawn',
-            udid,
-            'pgrep',
-            '-fl',
-            SCHEME,
-          ]),
+          udid,
+          bundleId: BUNDLE_ID,
+          scheme: SCHEME,
           smokeLogOutput,
           launchOutput,
           metroOutput: metroProcess.rnickOutput ?? '',
-          unifiedLogTail: recentIOSSmokeLogs(udid),
+          simulatorSummary,
+          optionalCommandOutput,
+          recentIOSSmokeLogs,
         })
       );
     }, SMOKE_TIMEOUT_MS);

@@ -49,6 +49,7 @@ const REQUIRED_FILES = [
   'scripts/generate-avif-fixtures.mjs',
   'scripts/generate-heic-heif-fixtures.mjs',
   'scripts/release-dry-run.mjs',
+  'test/iosSmokeCliTimeout.test.mjs',
   'test/iosSmokeContract.test.mjs',
   'vitest.config.ts',
   'example/Gemfile',
@@ -303,7 +304,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.31',
+    packageJson.version === '0.2.32',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -318,16 +319,16 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.31` is an unpublished iOS smoke diagnostic testability hardening candidate for `react-native-image-compression-kit`.'),
-    readmeContents.includes('extracting the iOS smoke retry, environment override, and timeout diagnostic formatting contract into `scripts/ios-smoke-contract.mjs`'),
-    readmeContents.includes('`test/iosSmokeContract.test.mjs` now fixes the simulator-free Node-level expectations for `RNICK_IOS_SMOKE_ATTEMPTS`, `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`, `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`'),
+    readmeContents.includes('Version `0.2.32` is an unpublished iOS smoke timeout CLI fixture coverage candidate for `react-native-image-compression-kit`.'),
+    readmeContents.includes('moving the CLI timeout diagnostic assembly behind `createSmokeTimeoutErrorFromCLIState()` and the retry warning order behind `formatSmokeRetryWarningMessages()`'),
+    readmeContents.includes('`test/iosSmokeCliTimeout.test.mjs` now fixes simulator-free fixture expectations for fake launch output, captured `RNICK_IOS_SMOKE_*` log stream output, Metro output, unified log output, app container and process lookups, and diagnostics-before-retry warning order'),
     readmeContents.includes('The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'),
     readmeContents.includes("The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"),
     readmeContents.includes('npm `latest` remains `0.2.19`'),
     readmeContents.includes('the previous GitHub Release remains [v0.2.17]'),
     readmeContents.includes('Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'),
-    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.31 candidate.'),
-    readmeContents.includes('The `0.2.31` package metadata is prepared as an unpublished iOS smoke diagnostic testability hardening candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.32 candidate.'),
+    readmeContents.includes('The `0.2.32` package metadata is prepared as an unpublished iOS smoke timeout CLI fixture coverage candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('Version `0.2.19` remains the latest published npm package.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
@@ -361,6 +362,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.29` is the unpublished Android AVIF output helper validation-result provenance contract candidate'),
     readmeContents.includes('version `0.2.30` is the unpublished iOS smoke retry and diagnostic hardening candidate'),
     readmeContents.includes('version `0.2.31` is the unpublished iOS smoke diagnostic testability hardening candidate'),
+    readmeContents.includes('version `0.2.32` is the unpublished iOS smoke timeout CLI fixture coverage candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -383,6 +385,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.29` fixes the Android AVIF output helper validation-result provenance contract without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.30` hardens iOS smoke retry and timeout diagnostics without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.31` hardens simulator-free iOS smoke diagnostic test coverage without enabling AVIF output.'),
+    readmeContents.includes('Version `0.2.32` hardens CLI-level iOS smoke timeout fixture coverage without enabling AVIF output.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes('Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
@@ -440,10 +443,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.31 iOS smoke diagnostic testability hardening candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.32 iOS smoke timeout CLI fixture coverage candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README iOS smoke testability status are aligned'
-      : 'expected package.json release metadata or README iOS smoke testability guidance is missing/mismatched',
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README iOS smoke CLI timeout fixture status are aligned'
+      : 'expected package.json release metadata or README iOS smoke CLI timeout fixture guidance is missing/mismatched',
   };
 }
 
@@ -729,6 +732,23 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.32',
+    'Status: unpublished release candidate for iOS smoke timeout CLI fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.32` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while adding simulator-free fixture coverage for the CLI timeout diagnostic assembly and retry warning order used by `scripts/ios-validation.mjs smoke`.',
+    'Split the `runSmokeAttempt` timeout diagnostic assembly into `createSmokeTimeoutErrorFromCLIState()` so app/container/process/log inputs can be tested without launching Xcode, Metro, or a simulator.',
+    'Cover fake launch output, captured `RNICK_IOS_SMOKE_*` log stream output, Metro output, unified log output, app container lookup, and process lookup in Node-level Vitest fixtures.',
+    'Cover the timeout retry warning order so the diagnostics block is printed before the retry guidance.',
+    'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.32 candidate.',
+    '### iOS Smoke CLI Timeout Fixtures',
+    '`scripts/ios-validation.mjs` now delegates timeout diagnostic input assembly to `createSmokeTimeoutErrorFromCLIState()` and retry warning ordering to `formatSmokeRetryWarningMessages()`.',
+    '`test/iosSmokeCliTimeout.test.mjs` validates the CLI timeout path with fake simulator summary, app/data container lookups, process lookup, launch output, captured log stream output, Metro output, and unified log output.',
+    'The test also pins diagnostics-before-retry warning order without forcing a real simulator timeout.',
+    '`package.json` version bump to `0.2.32`.',
+    '`createSmokeTimeoutErrorFromCLIState()` helper for CLI timeout diagnostic input assembly.',
+    '`formatSmokeRetryWarningMessages()` helper for diagnostics-before-retry warning order.',
+    '`test/iosSmokeCliTimeout.test.mjs` Node-level fixture coverage for CLI timeout diagnostics and retry warning ordering.',
+    'README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.32 candidate state.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.32`.',
     '## v0.2.31',
     'Status: unpublished release candidate for iOS smoke diagnostic testability hardening. npm `latest` remains `0.2.19`; no `v0.2.31` tag, GitHub Release, or npm publish is part of this candidate.',
     'This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while extracting the smoke retry, environment override, and timeout diagnostic formatting contract into simulator-free Node-level test coverage.',
@@ -1717,7 +1737,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1729,18 +1749,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.31' && missing.length === 0;
+  const ok = packageJson.version === '0.2.32' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.31 iOS smoke diagnostic testability hardening candidate notes and previous release notes are current',
+    label: 'v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.31'
+          ...(packageJson.version === '0.2.32'
             ? []
-            : ['package.json version 0.2.31']),
+            : ['package.json version 0.2.32']),
         ].join(' | ')}`,
   };
 }
@@ -2375,6 +2395,7 @@ function checkIOSHostAppValidation() {
   const workflowContents = readText('.github/workflows/ios-validation.yml');
   const smokeContractContents = readText('scripts/ios-smoke-contract.mjs');
   const validationScriptContents = readText('scripts/ios-validation.mjs');
+  const smokeCliTimeoutTestContents = readText('test/iosSmokeCliTimeout.test.mjs');
   const smokeContractTestContents = readText('test/iosSmokeContract.test.mjs');
   const vitestConfigContents = readText('vitest.config.ts');
   const appContents = readText('example/src/App.tsx');
@@ -2401,9 +2422,10 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS=1000'],
     [readmeContents, 'RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW=10m'],
     [readmeContents, 'iOS smoke diagnostics:'],
+    [readmeContents, 'test/iosSmokeCliTimeout.test.mjs'],
     [readmeContents, 'test/iosSmokeContract.test.mjs'],
     [readmeContents, 'scripts/ios-smoke-contract.mjs'],
-    [readmeContents, 'simulator-free Node-level expectations'],
+    [readmeContents, 'CLI timeout input assembly from fake launch/log stream/Metro/unified-log output'],
     [readmeContents, 'Xcode 26.5 and the iPhoneSimulator26.5 SDK'],
     [readmeContents, 'pathname contains null byte'],
     [readmeContents, 'local CocoaPods pathname workaround for pnpm-symlinked pods'],
@@ -2433,6 +2455,9 @@ function checkIOSHostAppValidation() {
     [releaseContents, 'RNICK_IOS_SMOKE_PASS'],
     [releaseContents, 'iOS smoke timeout-only retry support.'],
     [releaseContents, 'iOS smoke timeout diagnostics for simulator, app, process, launch, Metro, and unified log state.'],
+    [releaseContents, 'iOS Smoke CLI Timeout Fixtures'],
+    [releaseContents, '`scripts/ios-validation.mjs` now delegates timeout diagnostic input assembly to `createSmokeTimeoutErrorFromCLIState()` and retry warning ordering to `formatSmokeRetryWarningMessages()`.'],
+    [releaseContents, '`test/iosSmokeCliTimeout.test.mjs` validates the CLI timeout path with fake simulator summary, app/data container lookups, process lookup, launch output, captured log stream output, Metro output, and unified log output.'],
     [releaseContents, 'iOS Smoke Contract Testability'],
     [releaseContents, '`scripts/ios-validation.mjs` now delegates environment parsing, retry decision checks, retry warning text, and timeout error formatting to `scripts/ios-smoke-contract.mjs`.'],
     [releaseContents, '`test/iosSmokeContract.test.mjs` validates the iOS smoke contract without any simulator dependency.'],
@@ -2445,6 +2470,8 @@ function checkIOSHostAppValidation() {
     [validationScriptContents, 'SMOKE_MAX_ATTEMPTS'],
     [validationScriptContents, 'SMOKE_LOG_STREAM_WARMUP_MS'],
     [validationScriptContents, 'SMOKE_DIAGNOSTIC_LOG_WINDOW'],
+    [validationScriptContents, 'createSmokeTimeoutErrorFromCLIState'],
+    [validationScriptContents, 'formatSmokeRetryWarningMessages'],
     [validationScriptContents, 'createSmokeTimeoutError'],
     [validationScriptContents, 'smokeLogOutput'],
     [validationScriptContents, 'simulatorSummary'],
@@ -2452,7 +2479,9 @@ function checkIOSHostAppValidation() {
     [smokeContractContents, 'createIOSValidationConfig'],
     [smokeContractContents, 'shouldRetrySmokeTimeout'],
     [smokeContractContents, 'formatSmokeTimeoutDiagnostics'],
+    [smokeContractContents, 'createSmokeTimeoutErrorFromCLIState'],
     [smokeContractContents, 'createSmokeTimeoutError'],
+    [smokeContractContents, 'formatSmokeRetryWarningMessages'],
     [smokeContractContents, 'formatSmokeRetryWarning'],
     [smokeContractContents, 'iOS smoke diagnostics:'],
     [smokeContractContents, 'Retrying after terminating the app'],
@@ -2461,6 +2490,10 @@ function checkIOSHostAppValidation() {
     [smokeContractContents, 'RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW'],
     [smokeContractContents, 'RNICK_IOS_METRO_READY_TIMEOUT_MS'],
     [smokeContractContents, 'RNICK_IOS_POD_INSTALL_ATTEMPTS'],
+    [smokeCliTimeoutTestContents, 'assembles timeout diagnostics from fake CLI launch, log stream, Metro, and unified log output'],
+    [smokeCliTimeoutTestContents, 'keeps timeout diagnostics before the retry warning message'],
+    [smokeCliTimeoutTestContents, 'createSmokeTimeoutErrorFromCLIState'],
+    [smokeCliTimeoutTestContents, 'formatSmokeRetryWarningMessages'],
     [smokeContractTestContents, 'parses default and overridden iOS validation environment values'],
     [smokeContractTestContents, 'falls back to defaults for invalid positive integer and empty window overrides'],
     [smokeContractTestContents, 'retries timeout-only errors before the final attempt'],

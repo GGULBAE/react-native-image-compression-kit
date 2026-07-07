@@ -1,5 +1,50 @@
 # Release Notes
 
+## v0.2.32
+
+Status: unpublished release candidate for iOS smoke timeout CLI fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.32` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while adding simulator-free fixture coverage for the CLI timeout diagnostic assembly and retry warning order used by `scripts/ios-validation.mjs smoke`.
+
+### Goals
+
+- Split the `runSmokeAttempt` timeout diagnostic assembly into `createSmokeTimeoutErrorFromCLIState()` so app/container/process/log inputs can be tested without launching Xcode, Metro, or a simulator.
+- Cover fake launch output, captured `RNICK_IOS_SMOKE_*` log stream output, Metro output, unified log output, app container lookup, and process lookup in Node-level Vitest fixtures.
+- Cover the timeout retry warning order so the diagnostics block is printed before the retry guidance.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.32 candidate.
+
+### iOS Smoke CLI Timeout Fixtures
+
+`scripts/ios-validation.mjs` now delegates timeout diagnostic input assembly to `createSmokeTimeoutErrorFromCLIState()` and retry warning ordering to `formatSmokeRetryWarningMessages()`.
+
+`test/iosSmokeCliTimeout.test.mjs` validates the CLI timeout path with fake simulator summary, app/data container lookups, process lookup, launch output, captured log stream output, Metro output, and unified log output. The test also pins diagnostics-before-retry warning order without forcing a real simulator timeout.
+
+The runtime smoke still uses Xcode, Metro, simulator log streaming, and unified logs for end-to-end validation. The fixture coverage makes the timeout failure surface reviewable before the macOS runner reaches an actual timeout.
+
+### Included
+
+- `package.json` version bump to `0.2.32`.
+- `createSmokeTimeoutErrorFromCLIState()` helper for CLI timeout diagnostic input assembly.
+- `formatSmokeRetryWarningMessages()` helper for diagnostics-before-retry warning order.
+- `test/iosSmokeCliTimeout.test.mjs` Node-level fixture coverage for CLI timeout diagnostics and retry warning ordering.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.32 candidate state.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.32`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation after push.
+
 ## v0.2.31
 
 Status: unpublished release candidate for iOS smoke diagnostic testability hardening. npm `latest` remains `0.2.19`; no `v0.2.31` tag, GitHub Release, or npm publish is part of this candidate.

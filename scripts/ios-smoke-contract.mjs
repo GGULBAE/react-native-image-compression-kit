@@ -56,6 +56,61 @@ export function formatSmokeRetryWarning({ attempt, maxAttempts }) {
   ].join('\n');
 }
 
+export function formatSmokeRetryWarningMessages({ error, attempt, maxAttempts }) {
+  return [
+    error instanceof Error ? error.message : String(error),
+    formatSmokeRetryWarning({ attempt, maxAttempts }),
+  ];
+}
+
+export function createSmokeTimeoutErrorFromCLIState({
+  config,
+  attempt,
+  udid,
+  bundleId,
+  scheme,
+  smokeLogOutput,
+  launchOutput,
+  metroOutput,
+  simulatorSummary,
+  optionalCommandOutput,
+  recentIOSSmokeLogs,
+}) {
+  return createSmokeTimeoutError({
+    smokeTimeoutMs: config.smokeTimeoutMs,
+    attempt,
+    maxAttempts: config.smokeMaxAttempts,
+    diagnosticLogWindow: config.smokeDiagnosticLogWindow,
+    simulator: simulatorSummary(udid),
+    appContainer: optionalCommandOutput('xcrun', [
+      'simctl',
+      'get_app_container',
+      udid,
+      bundleId,
+      'app',
+    ]),
+    appDataContainer: optionalCommandOutput('xcrun', [
+      'simctl',
+      'get_app_container',
+      udid,
+      bundleId,
+      'data',
+    ]),
+    appProcessLookup: optionalCommandOutput('xcrun', [
+      'simctl',
+      'spawn',
+      udid,
+      'pgrep',
+      '-fl',
+      scheme,
+    ]),
+    smokeLogOutput,
+    launchOutput,
+    metroOutput,
+    unifiedLogTail: recentIOSSmokeLogs(udid),
+  });
+}
+
 export function createSmokeTimeoutError(options) {
   const error = new Error(formatSmokeTimeoutDiagnostics(options));
   error.rnickSmokeTimeout = true;
