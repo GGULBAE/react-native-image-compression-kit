@@ -1,5 +1,50 @@
 # Release Notes
 
+## v0.2.30
+
+Status: unpublished release candidate for iOS smoke retry and diagnostic hardening. npm `latest` remains `0.2.19`; no `v0.2.30` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps the iOS native behavior unchanged while making `scripts/ios-validation.mjs smoke` retry timeout-only `RNICK_IOS_SMOKE_PASS` misses and print simulator/app/process/log diagnostics before retrying or failing.
+
+### Goals
+
+- Retry timeout-only iOS smoke attempts with a fresh app launch through `RNICK_IOS_SMOKE_ATTEMPTS`.
+- Warm the `RNICK_IOS_SMOKE_*` log stream before app launch through `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`.
+- Print timeout diagnostics for simulator state, app/data containers, app process lookup, launch output, captured smoke stream tail, Metro output tail, and recent unified logs from `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the Xcode 26.5 / iPhoneSimulator26.5 runner environment.
+- Keep AVIF output disabled and keep npm publish, git tag, and GitHub Release outside this candidate.
+
+### iOS Smoke Retry And Diagnostics
+
+The iOS smoke runner now treats a missing `RNICK_IOS_SMOKE_PASS` marker as a timeout-only attempt when no `RNICK_IOS_SMOKE_FAIL` marker is captured. It terminates the app and retries with a new log stream and app launch until `RNICK_IOS_SMOKE_ATTEMPTS` is exhausted.
+
+Each attempt starts the unified log stream before launch, waits `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`, then launches `com.imagecompressionkit.example` with `SIMCTL_CHILD_RNICK_IOS_SMOKE=1`.
+
+On timeout, the script prints an `iOS smoke diagnostics:` block with simulator state, app and data container lookup, process lookup, launch output, captured `RNICK_IOS_SMOKE_*` stream tail, Metro output tail, and recent unified logs from `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`.
+
+### Included
+
+- `package.json` version bump to `0.2.30`.
+- iOS smoke timeout-only retry support.
+- iOS smoke timeout diagnostics for simulator, app, process, launch, Metro, and unified log state.
+- README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.30 candidate state and Xcode 26.5 runner environment.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.30`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation after push.
+
 ## v0.2.29
 
 Status: unpublished release candidate for the Android AVIF output helper validation-result provenance contract. npm `latest` remains `0.2.19`; no `v0.2.29` tag, GitHub Release, or npm publish is part of this candidate.

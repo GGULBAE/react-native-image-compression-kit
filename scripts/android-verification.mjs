@@ -300,7 +300,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.29',
+    packageJson.version === '0.2.30',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -315,16 +315,16 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.29` is an unpublished Android AVIF output helper validation-result provenance contract candidate for `react-native-image-compression-kit`.'),
-    readmeContents.includes('pinning which validation file produced helper `details` for `AndroidAvifOutputHelper`'),
-    readmeContents.includes('Direct validation details now retain the direct file name, byte size, signature result, decode-back result, and decoded dimensions when available'),
-    readmeContents.includes('Direct failure followed by muxed success or failure now preserves encoder -> direct validation -> muxer -> final validation detail order'),
+    readmeContents.includes('Version `0.2.30` is an unpublished iOS smoke retry and diagnostic hardening candidate for `react-native-image-compression-kit`.'),
+    readmeContents.includes('The iOS smoke runner now supports `RNICK_IOS_SMOKE_ATTEMPTS`, warms the `RNICK_IOS_SMOKE_*` log stream before each app launch, retries timeout-only smoke attempts with a fresh app launch'),
+    readmeContents.includes('prints simulator state, app container paths, app process lookup, launch output, captured smoke stream tail, Metro output tail, and recent unified logs from `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`'),
+    readmeContents.includes('The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'),
     readmeContents.includes("The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"),
     readmeContents.includes('npm `latest` remains `0.2.19`'),
     readmeContents.includes('the previous GitHub Release remains [v0.2.17]'),
     readmeContents.includes('Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'),
-    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.29 candidate.'),
-    readmeContents.includes('The `0.2.29` package metadata is prepared as an unpublished Android AVIF output helper validation-result provenance contract candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.30 candidate.'),
+    readmeContents.includes('The `0.2.30` package metadata is prepared as an unpublished iOS smoke retry and diagnostic hardening candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('Version `0.2.19` remains the latest published npm package.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
@@ -356,6 +356,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.27` is the unpublished Android AVIF output helper blocked-route detail contract candidate'),
     readmeContents.includes('version `0.2.28` is the unpublished Android AVIF output helper temp-file lifecycle contract candidate'),
     readmeContents.includes('version `0.2.29` is the unpublished Android AVIF output helper validation-result provenance contract candidate'),
+    readmeContents.includes('version `0.2.30` is the unpublished iOS smoke retry and diagnostic hardening candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -376,6 +377,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.27` fixes the Android AVIF output helper blocked-route detail and smoke adapter contract without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.28` fixes the Android AVIF output helper temp-file lifecycle contract without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.29` fixes the Android AVIF output helper validation-result provenance contract without enabling AVIF output.'),
+    readmeContents.includes('Version `0.2.30` hardens iOS smoke retry and timeout diagnostics without enabling AVIF output.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes('Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
@@ -433,10 +435,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.29 Android AVIF output helper validation-result provenance contract candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.30 iOS smoke retry and diagnostic hardening candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README AVIF output preflight status are aligned'
-      : 'expected package.json release metadata or README AVIF output guidance is missing/mismatched',
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README iOS smoke diagnostic status are aligned'
+      : 'expected package.json release metadata or README iOS smoke diagnostic guidance is missing/mismatched',
   };
 }
 
@@ -722,6 +724,22 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.30',
+    'Status: unpublished release candidate for iOS smoke retry and diagnostic hardening. npm `latest` remains `0.2.19`; no `v0.2.30` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not enable AVIF output or add iOS features. It keeps the iOS native behavior unchanged while making `scripts/ios-validation.mjs smoke` retry timeout-only `RNICK_IOS_SMOKE_PASS` misses and print simulator/app/process/log diagnostics before retrying or failing.',
+    'Retry timeout-only iOS smoke attempts with a fresh app launch through `RNICK_IOS_SMOKE_ATTEMPTS`.',
+    'Warm the `RNICK_IOS_SMOKE_*` log stream before app launch through `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`.',
+    'Print timeout diagnostics for simulator state, app/data containers, app process lookup, launch output, captured smoke stream tail, Metro output tail, and recent unified logs from `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`.',
+    'Update README, release notes, Android verification doctor checks, and Vitest expectations for the Xcode 26.5 / iPhoneSimulator26.5 runner environment.',
+    '### iOS Smoke Retry And Diagnostics',
+    'The iOS smoke runner now treats a missing `RNICK_IOS_SMOKE_PASS` marker as a timeout-only attempt when no `RNICK_IOS_SMOKE_FAIL` marker is captured.',
+    'Each attempt starts the unified log stream before launch, waits `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`, then launches `com.imagecompressionkit.example` with `SIMCTL_CHILD_RNICK_IOS_SMOKE=1`.',
+    'On timeout, the script prints an `iOS smoke diagnostics:` block with simulator state, app and data container lookup, process lookup, launch output, captured `RNICK_IOS_SMOKE_*` stream tail, Metro output tail, and recent unified logs from `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`.',
+    '`package.json` version bump to `0.2.30`.',
+    'iOS smoke timeout-only retry support.',
+    'iOS smoke timeout diagnostics for simulator, app, process, launch, Metro, and unified log state.',
+    'README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.30 candidate state and Xcode 26.5 runner environment.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.30`.',
     '## v0.2.29',
     'Status: unpublished release candidate for the Android AVIF output helper validation-result provenance contract. npm `latest` remains `0.2.19`; no `v0.2.29` tag, GitHub Release, or npm publish is part of this candidate.',
     'This candidate does not enable AVIF output. It keeps the Android `compressImage()` AVIF output scaffold on `ERR_NOT_IMPLEMENTED` before helper entry while pinning whether helper validation details came from the direct file or the muxed file inside `AndroidAvifOutputHelper`.',
@@ -1677,7 +1695,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1689,18 +1707,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.29' && missing.length === 0;
+  const ok = packageJson.version === '0.2.30' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes and previous release notes are current',
+    label: 'v0.2.30 iOS smoke retry and diagnostic hardening candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.29'
+          ...(packageJson.version === '0.2.30'
             ? []
-            : ['package.json version 0.2.29']),
+            : ['package.json version 0.2.30']),
         ].join(' | ')}`,
   };
 }
@@ -2354,6 +2372,11 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'pnpm example:ios:build'],
     [readmeContents, 'pnpm example:ios:smoke'],
     [readmeContents, 'RNICK_IOS_SMOKE_PASS'],
+    [readmeContents, 'RNICK_IOS_SMOKE_ATTEMPTS=2'],
+    [readmeContents, 'RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS=1000'],
+    [readmeContents, 'RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW=10m'],
+    [readmeContents, 'iOS smoke diagnostics:'],
+    [readmeContents, 'Xcode 26.5 and the iPhoneSimulator26.5 SDK'],
     [readmeContents, 'pathname contains null byte'],
     [readmeContents, 'local CocoaPods pathname workaround for pnpm-symlinked pods'],
     [readmeContents, 'RNICK_IOS_POD_INSTALL_ATTEMPTS'],
@@ -2380,11 +2403,25 @@ function checkIOSHostAppValidation() {
     [releaseContents, '`pnpm example:ios:pods`, `pnpm example:ios:build`, and `pnpm example:ios:smoke` scripts.'],
     [releaseContents, 'GitHub Actions iOS Validation workflow that runs the host-app smoke on a macOS runner.'],
     [releaseContents, 'RNICK_IOS_SMOKE_PASS'],
+    [releaseContents, 'iOS smoke timeout-only retry support.'],
+    [releaseContents, 'iOS smoke timeout diagnostics for simulator, app, process, launch, Metro, and unified log state.'],
     [workflowContents, 'name: iOS Validation'],
     [workflowContents, 'runs-on: macos-latest'],
     [workflowContents, 'run: pnpm example:ios:smoke'],
     [validationScriptContents, 'RNICK_IOS_SMOKE_PASS'],
     [validationScriptContents, 'RNICK_IOS_SMOKE_FAIL'],
+    [validationScriptContents, 'SMOKE_MAX_ATTEMPTS'],
+    [validationScriptContents, 'SMOKE_LOG_STREAM_WARMUP_MS'],
+    [validationScriptContents, 'SMOKE_DIAGNOSTIC_LOG_WINDOW'],
+    [validationScriptContents, 'RNICK_IOS_SMOKE_ATTEMPTS'],
+    [validationScriptContents, 'RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS'],
+    [validationScriptContents, 'RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW'],
+    [validationScriptContents, 'createSmokeTimeoutError'],
+    [validationScriptContents, 'smokeLogOutput'],
+    [validationScriptContents, 'simulatorSummary'],
+    [validationScriptContents, 'recentIOSSmokeLogs'],
+    [validationScriptContents, 'iOS smoke diagnostics:'],
+    [validationScriptContents, 'Retrying after terminating the app'],
     [validationScriptContents, 'POD_INSTALL_MAX_ATTEMPTS'],
     [validationScriptContents, 'pathname contains null byte'],
     [validationScriptContents, 'cleanPodInstallArtifacts'],
