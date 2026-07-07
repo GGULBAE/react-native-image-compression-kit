@@ -1,5 +1,58 @@
 # Release Notes
 
+## v0.2.29
+
+Status: unpublished release candidate for the Android AVIF output helper validation-result provenance contract. npm `latest` remains `0.2.19`; no `v0.2.29` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It keeps the Android `compressImage()` AVIF output scaffold on `ERR_NOT_IMPLEMENTED` before helper entry while pinning whether helper validation details came from the direct file or the muxed file inside `AndroidAvifOutputHelper`.
+
+### Goals
+
+- Add direct validation detail expectations proving direct file name, byte size, signature result, and decode-back result stay attached to the direct validation file.
+- Add muxed validation detail expectations proving muxed file name, byte size, signature result, and decode-back result stay attached to the muxed validation file.
+- Add direct-failure plus muxed-success/failure expectations proving `details` preserve encoder, direct validation, muxer, final validation order with file provenance.
+- Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path before source access or helper entry.
+- Keep Android capability reporting on `formats.avif.output=false`.
+- Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.29 candidate.
+
+### Validation Provenance Contract
+
+The default Android AVIF file validator now records one provenance summary per validation file with the file name, byte size, signature result, decode-back result, and decoded dimensions when available. ImageDecoder failure details remain attached after that summary.
+
+Android JVM helper tests now assert direct validation success keeps the direct file name, direct byte size, signature result, and decode-back result in the direct validation detail, while still skipping the muxer.
+
+Android JVM helper tests now assert direct validation failure followed by muxed success or muxed failure keeps `details` ordered as encoder, direct validation, muxer, and final validation, with the final validation detail naming the muxed file and its byte size, signature result, and decode-back result.
+
+The contract keeps helper diagnostics stable before production wiring without changing `compressImage()` behavior, capability reporting, or AVIF output support.
+
+### Included
+
+- `package.json` version bump to `0.2.29`.
+- Android AVIF output helper direct validation provenance JVM coverage.
+- Android AVIF output helper muxed validation provenance JVM coverage.
+- Android AVIF output helper direct-failure detail ordering JVM coverage.
+- Default Android AVIF file validator detail summary now includes file name, byte size, signature result, decode-back result, and decoded dimensions.
+- README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.29 candidate state.
+
+### Not Included
+
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- iOS AVIF output implementation.
+- Metadata-preserving AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.29`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation after push.
+
 ## v0.2.28
 
 Status: unpublished release candidate for the Android AVIF output helper temp-file lifecycle contract. npm `latest` remains `0.2.19`; no `v0.2.28` tag, GitHub Release, or npm publish is part of this candidate.

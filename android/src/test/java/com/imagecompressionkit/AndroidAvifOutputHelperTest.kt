@@ -148,14 +148,22 @@ class AndroidAvifOutputHelperTest {
         },
         validateFile = { file, _, _ ->
           val signatureValid = AndroidAvifOutputHelper.looksLikeAvifFile(file.readBytes())
+          val decodeBackValid = false
           calls.add("validate:${file.name}:$signatureValid")
           AndroidAvifOutputHelperFileValidation(
             file = file,
             signatureValid = signatureValid,
-            decodeBackValid = false,
+            decodeBackValid = decodeBackValid,
             decodedWidth = null,
             decodedHeight = null,
-            details = listOf("Injected validator signatureValid=$signatureValid")
+            details = listOf(
+              validationProvenanceDetail(
+                label = if (file.name.contains("muxed")) "Muxed validation" else "Direct validation",
+                file = file,
+                signatureValid = signatureValid,
+                decodeBackValid = decodeBackValid
+              )
+            )
           )
         }
       )
@@ -187,9 +195,19 @@ class AndroidAvifOutputHelperTest {
       details = result.details,
       expectedCoreDetails = listOf(
         "Injected fake encoder bytes",
-        "Injected validator signatureValid=false",
+        validationProvenanceDetail(
+          label = "Direct validation",
+          file = directFile,
+          signatureValid = false,
+          decodeBackValid = false
+        ),
         "Injected fake muxer bytes",
-        "Injected validator signatureValid=false"
+        validationProvenanceDetail(
+          label = "Muxed validation",
+          file = muxedFile,
+          signatureValid = false,
+          decodeBackValid = false
+        )
       )
     )
     assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct", "file:muxed")))
@@ -243,14 +261,22 @@ class AndroidAvifOutputHelperTest {
         validateFile = { file, expectedWidth, expectedHeight ->
           val signatureValid = AndroidAvifOutputHelper.looksLikeAvifFile(file.readBytes())
           val isMuxedOutput = file.name.contains("muxed")
+          val decodeBackValid = isMuxedOutput
           calls.add("validate:${file.name}:$signatureValid:$isMuxedOutput")
           AndroidAvifOutputHelperFileValidation(
             file = file,
             signatureValid = signatureValid,
-            decodeBackValid = isMuxedOutput,
+            decodeBackValid = decodeBackValid,
             decodedWidth = if (isMuxedOutput) expectedWidth else null,
             decodedHeight = if (isMuxedOutput) expectedHeight else null,
-            details = listOf("Injected decode-back success=$isMuxedOutput")
+            details = listOf(
+              validationProvenanceDetail(
+                label = if (isMuxedOutput) "Muxed validation" else "Direct validation",
+                file = file,
+                signatureValid = signatureValid,
+                decodeBackValid = decodeBackValid
+              )
+            )
           )
         }
       )
@@ -288,9 +314,19 @@ class AndroidAvifOutputHelperTest {
       details = result.details,
       expectedCoreDetails = listOf(
         "Injected success-contract encoder bytes",
-        "Injected decode-back success=false",
+        validationProvenanceDetail(
+          label = "Direct validation",
+          file = directFile,
+          signatureValid = false,
+          decodeBackValid = false
+        ),
         "Injected muxed ftyp avif bytes",
-        "Injected decode-back success=true"
+        validationProvenanceDetail(
+          label = "Muxed validation",
+          file = muxedFile,
+          signatureValid = true,
+          decodeBackValid = true
+        )
       )
     )
     assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct", "file:muxed")))
@@ -340,14 +376,22 @@ class AndroidAvifOutputHelperTest {
         },
         validateFile = { file, expectedWidth, expectedHeight ->
           val signatureValid = AndroidAvifOutputHelper.looksLikeAvifFile(file.readBytes())
+          val decodeBackValid = signatureValid
           calls.add("validate:${file.name}:$signatureValid")
           AndroidAvifOutputHelperFileValidation(
             file = file,
             signatureValid = signatureValid,
-            decodeBackValid = signatureValid,
+            decodeBackValid = decodeBackValid,
             decodedWidth = if (signatureValid) expectedWidth else null,
             decodedHeight = if (signatureValid) expectedHeight else null,
-            details = listOf("Injected direct decode-back success=$signatureValid")
+            details = listOf(
+              validationProvenanceDetail(
+                label = "Direct validation",
+                file = file,
+                signatureValid = signatureValid,
+                decodeBackValid = decodeBackValid
+              )
+            )
           )
         }
       )
@@ -381,7 +425,12 @@ class AndroidAvifOutputHelperTest {
       details = result.details,
       expectedCoreDetails = listOf(
         "Injected direct ftyp avif bytes",
-        "Injected direct decode-back success=true"
+        validationProvenanceDetail(
+          label = "Direct validation",
+          file = directFile,
+          signatureValid = true,
+          decodeBackValid = true
+        )
       )
     )
     assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct")))
@@ -429,13 +478,21 @@ class AndroidAvifOutputHelperTest {
           listOf("Injected muxed ftyp avif bytes")
         },
         validateFile = { file, expectedWidth, expectedHeight ->
+          val signatureValid = AndroidAvifOutputHelper.looksLikeAvifFile(file.readBytes())
           AndroidAvifOutputHelperFileValidation(
             file = file,
-            signatureValid = AndroidAvifOutputHelper.looksLikeAvifFile(file.readBytes()),
+            signatureValid = signatureValid,
             decodeBackValid = false,
             decodedWidth = expectedWidth,
             decodedHeight = expectedHeight - 1,
-            details = listOf("Injected ImageDecoder decode-back failure")
+            details = listOf(
+              validationProvenanceDetail(
+                label = if (file.name.contains("muxed")) "Muxed validation" else "Direct validation",
+                file = file,
+                signatureValid = signatureValid,
+                decodeBackValid = false
+              )
+            )
           )
         }
       )
@@ -465,9 +522,19 @@ class AndroidAvifOutputHelperTest {
       details = result.details,
       expectedCoreDetails = listOf(
         "Injected ftyp avif bytes",
-        "Injected ImageDecoder decode-back failure",
+        validationProvenanceDetail(
+          label = "Direct validation",
+          file = directFile,
+          signatureValid = true,
+          decodeBackValid = false
+        ),
         "Injected muxed ftyp avif bytes",
-        "Injected ImageDecoder decode-back failure"
+        validationProvenanceDetail(
+          label = "Muxed validation",
+          file = muxedFile,
+          signatureValid = true,
+          decodeBackValid = false
+        )
       )
     )
   }
@@ -587,6 +654,15 @@ class AndroidAvifOutputHelperTest {
       details
     )
   }
+
+  private fun validationProvenanceDetail(
+    label: String,
+    file: File,
+    signatureValid: Boolean,
+    decodeBackValid: Boolean
+  ): String =
+    "$label ${file.name}: ${file.length()} byte(s), " +
+      "signatureValid=$signatureValid, decodeBackValid=$decodeBackValid"
 
   private fun fakeAvifBytes(): ByteArray =
     byteArrayOf(0, 0, 0, 24) +

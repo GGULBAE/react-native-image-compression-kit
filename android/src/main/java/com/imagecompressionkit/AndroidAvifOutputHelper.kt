@@ -447,9 +447,7 @@ internal object AndroidAvifOutputHelper {
     val signatureValid = looksLikeAvifFile(bytes)
     var decodedWidth: Int? = null
     var decodedHeight: Int? = null
-    val details = mutableListOf(
-      "${file.name}: ${bytes.size} byte(s), signatureValid=$signatureValid"
-    )
+    var decodeBackFailure: String? = null
     val decodeBackValid = if (signatureValid) {
       try {
         val source = ImageDecoder.createSource(file)
@@ -464,12 +462,19 @@ internal object AndroidAvifOutputHelper {
           decodedBitmap.recycle()
         }
       } catch (error: Exception) {
-        details.add("ImageDecoder decode-back failed: ${error.javaClass.simpleName}: ${error.message ?: "no message"}")
+        decodeBackFailure = "ImageDecoder decode-back failed: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
         false
       }
     } else {
       false
     }
+    val details = mutableListOf(
+      "${file.name}: ${bytes.size} byte(s), signatureValid=$signatureValid, " +
+        "decodeBackValid=$decodeBackValid, " +
+        "decodedWidth=${decodedWidth?.toString() ?: "null"}, " +
+        "decodedHeight=${decodedHeight?.toString() ?: "null"}"
+    )
+    decodeBackFailure?.let(details::add)
 
     return AndroidAvifOutputHelperFileValidation(
       file = file,
