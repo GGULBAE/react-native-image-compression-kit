@@ -108,6 +108,9 @@ class AndroidAvifOutputHelperTest {
     val cacheDir = createTempCacheDir()
     val input = createEligibleHelperInput(cacheDir)
     val calls = mutableListOf<String>()
+    val outputFiles = mutableMapOf<String, File>()
+    val directBytes = "not-an-avif".toByteArray(StandardCharsets.US_ASCII)
+    val muxedBytes = "muxed-but-not-avif".toByteArray(StandardCharsets.US_ASCII)
 
     val result = AndroidAvifOutputHelper.runEncodeDecodeBack(
       input = input,
@@ -119,7 +122,7 @@ class AndroidAvifOutputHelperTest {
         encodeBitmap = { encoderName, bitmap ->
           calls.add("encode:$encoderName:${bitmap.width}x${bitmap.height}")
           AndroidAvifOutputHelperOutput(
-            directBytes = "not-an-avif".toByteArray(StandardCharsets.US_ASCII),
+            directBytes = directBytes,
             outputFormat = AndroidAvifOutputHelper.createImageAvifMediaFormat(
               bitmap.width,
               bitmap.height
@@ -136,11 +139,11 @@ class AndroidAvifOutputHelperTest {
         },
         createOutputFile = { directory, suffix ->
           calls.add("file:$suffix")
-          File(directory, "fake-$suffix.avif")
+          File(directory, "fake-$suffix.avif").also { outputFiles[suffix] = it }
         },
         muxEncodedSamples = { outputFile, _, samples ->
           calls.add("mux:${outputFile.name}:${samples.size}")
-          outputFile.writeBytes("muxed-but-not-avif".toByteArray(StandardCharsets.US_ASCII))
+          outputFile.writeBytes(muxedBytes)
           listOf("Injected fake muxer bytes")
         },
         validateFile = { file, _, _ ->
@@ -158,6 +161,9 @@ class AndroidAvifOutputHelperTest {
       )
     )
 
+    val directFile = outputFiles.getValue("direct")
+    val muxedFile = outputFiles.getValue("muxed")
+
     assertTrue(result.attempted)
     assertFalse(result.success)
     assertEquals("fake.avif.encoder", result.encoderName)
@@ -169,7 +175,13 @@ class AndroidAvifOutputHelperTest {
     assertEquals(AndroidAvifOutputPrototype.INVALID_SIGNATURE_BLOCKER, result.blocker)
     assertFalse(result.signatureValid)
     assertFalse(result.decodeBackValid)
-    assertTrue(result.outputFilePath?.endsWith("fake-muxed.avif") == true)
+    assertEquals(muxedFile.absolutePath, result.outputFilePath)
+    assertFalse(result.outputFilePath == directFile.absolutePath)
+    assertTrue(directFile.exists())
+    assertTrue(muxedFile.exists())
+    assertEquals(directBytes.size.toLong(), directFile.length())
+    assertEquals(muxedBytes.size.toLong(), muxedFile.length())
+    assertEquals(muxedFile.length(), result.byteSize)
     assertValidationResultDetailsOrder(
       input = input,
       details = result.details,
@@ -190,6 +202,9 @@ class AndroidAvifOutputHelperTest {
     val cacheDir = createTempCacheDir()
     val input = createEligibleHelperInput(cacheDir)
     val calls = mutableListOf<String>()
+    val outputFiles = mutableMapOf<String, File>()
+    val directBytes = "direct-not-avif".toByteArray(StandardCharsets.US_ASCII)
+    val muxedBytes = fakeAvifBytes()
 
     val result = AndroidAvifOutputHelper.runEncodeDecodeBack(
       input = input,
@@ -201,7 +216,7 @@ class AndroidAvifOutputHelperTest {
         encodeBitmap = { encoderName, bitmap ->
           calls.add("encode:$encoderName:${bitmap.width}x${bitmap.height}")
           AndroidAvifOutputHelperOutput(
-            directBytes = "direct-not-avif".toByteArray(StandardCharsets.US_ASCII),
+            directBytes = directBytes,
             outputFormat = AndroidAvifOutputHelper.createImageAvifMediaFormat(
               bitmap.width,
               bitmap.height
@@ -218,11 +233,11 @@ class AndroidAvifOutputHelperTest {
         },
         createOutputFile = { directory, suffix ->
           calls.add("file:$suffix")
-          File(directory, "success-$suffix.avif")
+          File(directory, "success-$suffix.avif").also { outputFiles[suffix] = it }
         },
         muxEncodedSamples = { outputFile, _, samples ->
           calls.add("mux:${outputFile.name}:${samples.size}")
-          outputFile.writeBytes(fakeAvifBytes())
+          outputFile.writeBytes(muxedBytes)
           listOf("Injected muxed ftyp avif bytes")
         },
         validateFile = { file, expectedWidth, expectedHeight ->
@@ -241,6 +256,9 @@ class AndroidAvifOutputHelperTest {
       )
     )
 
+    val directFile = outputFiles.getValue("direct")
+    val muxedFile = outputFiles.getValue("muxed")
+
     assertTrue(result.attempted)
     assertTrue(result.success)
     assertEquals("fake.avif.encoder", result.encoderName)
@@ -248,8 +266,13 @@ class AndroidAvifOutputHelperTest {
       "${AndroidAvifOutputPrototype.SMOKE_ROUTE} via MediaMuxer.MUXER_OUTPUT_HEIF",
       result.route
     )
-    assertTrue(result.outputFilePath?.endsWith("success-muxed.avif") == true)
-    assertEquals(fakeAvifBytes().size.toLong(), result.byteSize)
+    assertEquals(muxedFile.absolutePath, result.outputFilePath)
+    assertFalse(result.outputFilePath == directFile.absolutePath)
+    assertTrue(directFile.exists())
+    assertTrue(muxedFile.exists())
+    assertEquals(directBytes.size.toLong(), directFile.length())
+    assertEquals(muxedBytes.size.toLong(), muxedFile.length())
+    assertEquals(muxedFile.length(), result.byteSize)
     assertTrue(result.signatureValid)
     assertTrue(result.decodeBackValid)
     assertEquals(16, result.decodedWidth)
@@ -280,6 +303,8 @@ class AndroidAvifOutputHelperTest {
     val cacheDir = createTempCacheDir()
     val input = createEligibleHelperInput(cacheDir)
     val calls = mutableListOf<String>()
+    val outputFiles = mutableMapOf<String, File>()
+    val directBytes = fakeAvifBytes()
 
     val result = AndroidAvifOutputHelper.runEncodeDecodeBack(
       input = input,
@@ -291,7 +316,7 @@ class AndroidAvifOutputHelperTest {
         encodeBitmap = { encoderName, bitmap ->
           calls.add("encode:$encoderName:${bitmap.width}x${bitmap.height}")
           AndroidAvifOutputHelperOutput(
-            directBytes = fakeAvifBytes(),
+            directBytes = directBytes,
             outputFormat = AndroidAvifOutputHelper.createImageAvifMediaFormat(
               bitmap.width,
               bitmap.height
@@ -308,7 +333,7 @@ class AndroidAvifOutputHelperTest {
         },
         createOutputFile = { directory, suffix ->
           calls.add("file:$suffix")
-          File(directory, "direct-success-$suffix.avif")
+          File(directory, "direct-success-$suffix.avif").also { outputFiles[suffix] = it }
         },
         muxEncodedSamples = { _, _, _ ->
           throw AssertionError("Muxer must not run after direct validation success.")
@@ -328,6 +353,8 @@ class AndroidAvifOutputHelperTest {
       )
     )
 
+    val directFile = outputFiles.getValue("direct")
+
     assertTrue(result.attempted)
     assertTrue(result.success)
     assertEquals("fake.avif.encoder", result.encoderName)
@@ -335,8 +362,10 @@ class AndroidAvifOutputHelperTest {
       "${AndroidAvifOutputPrototype.SMOKE_ROUTE} direct encoder output",
       result.route
     )
-    assertTrue(result.outputFilePath?.endsWith("direct-success-direct.avif") == true)
-    assertEquals(fakeAvifBytes().size.toLong(), result.byteSize)
+    assertEquals(directFile.absolutePath, result.outputFilePath)
+    assertTrue(directFile.exists())
+    assertEquals(directBytes.size.toLong(), directFile.length())
+    assertEquals(directFile.length(), result.byteSize)
     assertTrue(result.signatureValid)
     assertTrue(result.decodeBackValid)
     assertEquals(16, result.decodedWidth)
@@ -357,6 +386,7 @@ class AndroidAvifOutputHelperTest {
     )
     assertTrue(calls.containsAll(listOf("bitmap:16:12", "file:direct")))
     assertTrue(calls.any { it == "validate:direct-success-direct.avif:true" })
+    assertFalse(outputFiles.containsKey("muxed"))
     assertFalse(calls.contains("file:muxed"))
     assertFalse(calls.any { it.startsWith("mux:") })
   }
@@ -365,6 +395,8 @@ class AndroidAvifOutputHelperTest {
   fun helperUsesInjectedValidatorForDecodeBackFailureBlocker() {
     val cacheDir = createTempCacheDir()
     val input = createEligibleHelperInput(cacheDir)
+    val outputFiles = mutableMapOf<String, File>()
+    val avifBytes = fakeAvifBytes()
 
     val result = AndroidAvifOutputHelper.runEncodeDecodeBack(
       input = input,
@@ -374,14 +406,14 @@ class AndroidAvifOutputHelperTest {
         },
         encodeBitmap = { _, bitmap ->
           AndroidAvifOutputHelperOutput(
-            directBytes = fakeAvifBytes(),
+            directBytes = avifBytes,
             outputFormat = AndroidAvifOutputHelper.createImageAvifMediaFormat(
               bitmap.width,
               bitmap.height
             ),
             samples = listOf(
               AndroidAvifOutputHelperSample(
-                bytes = fakeAvifBytes(),
+                bytes = avifBytes,
                 presentationTimeUs = 0L,
                 flags = 0
               )
@@ -390,10 +422,10 @@ class AndroidAvifOutputHelperTest {
           )
         },
         createOutputFile = { directory, suffix ->
-          File(directory, "decode-$suffix.avif")
+          File(directory, "decode-$suffix.avif").also { outputFiles[suffix] = it }
         },
         muxEncodedSamples = { outputFile, _, _ ->
-          outputFile.writeBytes(fakeAvifBytes())
+          outputFile.writeBytes(avifBytes)
           listOf("Injected muxed ftyp avif bytes")
         },
         validateFile = { file, expectedWidth, expectedHeight ->
@@ -409,12 +441,22 @@ class AndroidAvifOutputHelperTest {
       )
     )
 
+    val directFile = outputFiles.getValue("direct")
+    val muxedFile = outputFiles.getValue("muxed")
+
     assertTrue(result.attempted)
     assertFalse(result.success)
     assertTrue(result.signatureValid)
     assertFalse(result.decodeBackValid)
     assertEquals(16, result.decodedWidth)
     assertEquals(11, result.decodedHeight)
+    assertEquals(muxedFile.absolutePath, result.outputFilePath)
+    assertFalse(result.outputFilePath == directFile.absolutePath)
+    assertTrue(directFile.exists())
+    assertTrue(muxedFile.exists())
+    assertEquals(avifBytes.size.toLong(), directFile.length())
+    assertEquals(avifBytes.size.toLong(), muxedFile.length())
+    assertEquals(muxedFile.length(), result.byteSize)
     assertEquals(AndroidAvifOutputPrototype.BLOCKER_CODE_DECODE_BACK_FAILURE, result.blockerCode)
     assertEquals(AndroidAvifOutputPrototype.DECODE_BACK_FAILURE_BLOCKER, result.blocker)
     assertEquals(AndroidAvifOutputPrototype.PRODUCTION_DECISION_KEEP_DISABLED, result.productionDecision)

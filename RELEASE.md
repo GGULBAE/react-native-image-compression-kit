@@ -1,5 +1,57 @@
 # Release Notes
 
+## v0.2.28
+
+Status: unpublished release candidate for the Android AVIF output helper temp-file lifecycle contract. npm `latest` remains `0.2.19`; no `v0.2.28` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output. It keeps the Android `compressImage()` AVIF output scaffold on `ERR_NOT_IMPLEMENTED` before helper entry while pinning direct and muxed validation temp-file creation, returned `outputFilePath`, and intermediate-file non-reporting behavior inside `AndroidAvifOutputHelper`.
+
+### Goals
+
+- Add direct-success expectations proving only the direct validation file is created, no muxed file is created, and `outputFilePath`/`byteSize` come from the direct file.
+- Add direct-failure plus muxed-success expectations proving the returned `outputFilePath`/`byteSize` come from the muxed file and the direct intermediate file is not reported as the result.
+- Add invalid-signature and decode-back failure expectations proving the final blocker result reports the final muxed validation path and final-file `byteSize`.
+- Keep `output.format: 'avif'` on the documented `ERR_NOT_IMPLEMENTED` path before source access or helper entry.
+- Keep Android capability reporting on `formats.avif.output=false`.
+- Keep README, release notes, Android verification doctor checks, and Vitest expectations current for the v0.2.28 candidate.
+
+### Temp-File Lifecycle Contract
+
+Android JVM helper tests now assert direct validation success creates and returns the direct `.avif` file, skips mux file creation, and derives `byteSize` from the returned direct file.
+
+Android JVM helper tests now assert direct validation failure followed by muxed success creates both direct and muxed files, but returns only the muxed file path and muxed file byte size; the direct intermediate file remains an internal validation artifact and is not reported as the result.
+
+Invalid-signature and decode-back failure tests now assert the final blocker result reports the final muxed validation file path, does not report the direct intermediate file, and derives `byteSize` from that final muxed file.
+
+The contract keeps cache-file result reporting stable before production wiring without changing `compressImage()` behavior, capability reporting, or AVIF output support.
+
+### Included
+
+- `package.json` version bump to `0.2.28`.
+- Android AVIF output helper direct success temp-file lifecycle JVM coverage.
+- Android AVIF output helper muxed success final-result path JVM coverage.
+- Android AVIF output helper invalid-signature and decode-back final blocker path JVM coverage.
+- README, release notes, Android verification doctor expectations, and Vitest expectations updated for the v0.2.28 candidate state.
+
+### Not Included
+
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- iOS AVIF output implementation.
+- Metadata-preserving AVIF output.
+- Target-size AVIF output.
+- Animated AVIF preservation.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.28`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation after push.
+
 ## v0.2.27
 
 Status: unpublished release candidate for the Android AVIF output helper blocked-route detail contract. npm `latest` remains `0.2.19`; no `v0.2.27` tag, GitHub Release, or npm publish is part of this candidate.
