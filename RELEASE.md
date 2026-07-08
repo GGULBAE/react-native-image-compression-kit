@@ -1,5 +1,50 @@
 # Release Notes
 
+## v0.2.36
+
+Status: unpublished release candidate for iOS smoke artifact failure-path dry-run fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.36` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while proving the iOS smoke diagnostics summary and artifact failure path with a local fake-log dry run instead of forcing a simulator failure.
+
+### Goals
+
+- Run `node scripts/ios-validation.mjs summarize-smoke-log` against a fake `ios-smoke.log` fixture.
+- Verify the CLI writes the same packed diagnostics summary to stdout and `$GITHUB_STEP_SUMMARY`.
+- Pin the iOS Validation workflow summary and upload artifact steps as failure-only `if: failure()` paths.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.36 candidate.
+
+### iOS Smoke Artifact Failure-Path Dry Run Fixtures
+
+`test/iosSmokeSummaryCli.test.mjs` runs `node scripts/ios-validation.mjs summarize-smoke-log` with a fake `ios-smoke.log`, sets `GITHUB_STEP_SUMMARY` to a temporary file, and asserts stdout exactly matches the summary file content.
+
+The fixture log includes iOS smoke attempt, `RNICK_IOS_SMOKE_*`, timeout, diagnostics, retry guidance, and log stream error markers so the summary keeps key markers before the packed log tail without depending on Xcode, Metro, or a simulator.
+
+`.github/workflows/ios-validation.yml` keeps the failure-only path explicit: it tees smoke output into `ios-smoke-diagnostics/ios-smoke.log`, summarizes that log into `ios-smoke-diagnostics/ios-smoke-summary.md`, and uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps.
+
+### Included
+
+- `package.json` version bump to `0.2.36`.
+- `test/iosSmokeSummaryCli.test.mjs` fake-log CLI fixture for `summarize-smoke-log` stdout and `$GITHUB_STEP_SUMMARY` parity.
+- Failure-only iOS smoke summary/upload artifact path expectations in README, Android verification doctor checks, and Vitest coverage.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.36 candidate state.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.36`.
+- Forced simulator smoke failures.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.35
 
 Status: unpublished release candidate for iOS smoke diagnostics packed log artifact coverage. npm `latest` remains `0.2.19`; no `v0.2.35` tag, GitHub Release, or npm publish is part of this candidate.

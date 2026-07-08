@@ -52,6 +52,7 @@ const REQUIRED_FILES = [
   'test/iosSmokeLifecycle.test.mjs',
   'test/iosSmokeCliTimeout.test.mjs',
   'test/iosSmokeContract.test.mjs',
+  'test/iosSmokeSummaryCli.test.mjs',
   'vitest.config.ts',
   'example/Gemfile',
   'example/ios/Podfile',
@@ -305,7 +306,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.35',
+    packageJson.version === '0.2.36',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -320,16 +321,17 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.35` is an unpublished iOS smoke diagnostics packed log artifact coverage candidate for `react-native-image-compression-kit`.'),
-    readmeContents.includes('wiring the iOS Validation workflow to tee `pnpm example:ios:smoke` into `ios-smoke-diagnostics/ios-smoke.log`, generate `ios-smoke-diagnostics/ios-smoke-summary.md` through `node scripts/ios-validation.mjs summarize-smoke-log`, append the same ordered excerpt to the GitHub Step Summary, and upload the packed diagnostics directory after failed smoke runs'),
-    readmeContents.includes('`test/iosSmokeContract.test.mjs` now fixes simulator-free expectations for key marker extraction, timeout diagnostics, retry guidance, log stream error lines, and packed log tail ordering'),
+    readmeContents.includes('Version `0.2.36` is an unpublished iOS smoke artifact failure-path dry-run fixture candidate for `react-native-image-compression-kit`.'),
+    readmeContents.includes('adding a simulator-free fake-log CLI fixture for `node scripts/ios-validation.mjs summarize-smoke-log`'),
+    readmeContents.includes('`test/iosSmokeSummaryCli.test.mjs` now runs that CLI against a fake `ios-smoke.log`, verifies stdout matches the `$GITHUB_STEP_SUMMARY` file content'),
+    readmeContents.includes('uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'),
     readmeContents.includes('The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'),
     readmeContents.includes("The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"),
     readmeContents.includes('npm `latest` remains `0.2.19`'),
     readmeContents.includes('the previous GitHub Release remains [v0.2.17]'),
     readmeContents.includes('Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'),
-    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.35 candidate.'),
-    readmeContents.includes('The `0.2.35` package metadata is prepared as an unpublished iOS smoke diagnostics packed log artifact coverage candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.36 candidate.'),
+    readmeContents.includes('The `0.2.36` package metadata is prepared as an unpublished iOS smoke artifact failure-path dry-run fixture candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('Version `0.2.19` remains the latest published npm package.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
@@ -367,6 +369,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.33` is the unpublished iOS smoke process lifecycle fixture coverage candidate'),
     readmeContents.includes('version `0.2.34` is the unpublished iOS smoke log stream error fixture coverage candidate'),
     readmeContents.includes('version `0.2.35` is the unpublished iOS smoke diagnostics packed log artifact coverage candidate'),
+    readmeContents.includes('version `0.2.36` is the unpublished iOS smoke artifact failure-path dry-run fixture candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -393,6 +396,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.33` hardens iOS smoke process lifecycle fixture coverage without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.34` hardens iOS smoke log stream error fixture coverage without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.35` hardens iOS smoke diagnostics packed log artifact coverage without enabling AVIF output.'),
+    readmeContents.includes('Version `0.2.36` hardens iOS smoke artifact failure-path dry-run fixture coverage without enabling AVIF output.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes('Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
@@ -450,10 +454,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README iOS smoke diagnostics artifact status are aligned'
-      : 'expected package.json release metadata or README iOS smoke diagnostics artifact guidance is missing/mismatched',
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README iOS smoke artifact dry-run fixture status are aligned'
+      : 'expected package.json release metadata or README iOS smoke artifact dry-run fixture guidance is missing/mismatched',
   };
 }
 
@@ -739,6 +743,23 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.36',
+    'Status: unpublished release candidate for iOS smoke artifact failure-path dry-run fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.36` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while proving the iOS smoke diagnostics summary and artifact failure path with a local fake-log dry run instead of forcing a simulator failure.',
+    'Run `node scripts/ios-validation.mjs summarize-smoke-log` against a fake `ios-smoke.log` fixture.',
+    'Verify the CLI writes the same packed diagnostics summary to stdout and `$GITHUB_STEP_SUMMARY`.',
+    'Pin the iOS Validation workflow summary and upload artifact steps as failure-only `if: failure()` paths.',
+    'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.36 candidate.',
+    '### iOS Smoke Artifact Failure-Path Dry Run Fixtures',
+    '`test/iosSmokeSummaryCli.test.mjs` runs `node scripts/ios-validation.mjs summarize-smoke-log` with a fake `ios-smoke.log`, sets `GITHUB_STEP_SUMMARY` to a temporary file, and asserts stdout exactly matches the summary file content.',
+    'The fixture log includes iOS smoke attempt, `RNICK_IOS_SMOKE_*`, timeout, diagnostics, retry guidance, and log stream error markers so the summary keeps key markers before the packed log tail without depending on Xcode, Metro, or a simulator.',
+    '`.github/workflows/ios-validation.yml` keeps the failure-only path explicit: it tees smoke output into `ios-smoke-diagnostics/ios-smoke.log`, summarizes that log into `ios-smoke-diagnostics/ios-smoke-summary.md`, and uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps.',
+    '`package.json` version bump to `0.2.36`.',
+    '`test/iosSmokeSummaryCli.test.mjs` fake-log CLI fixture for `summarize-smoke-log` stdout and `$GITHUB_STEP_SUMMARY` parity.',
+    'Failure-only iOS smoke summary/upload artifact path expectations in README, Android verification doctor checks, and Vitest coverage.',
+    'README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.36 candidate state.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.36`.',
+    'Forced simulator smoke failures.',
     '## v0.2.35',
     'Status: unpublished release candidate for iOS smoke diagnostics packed log artifact coverage. npm `latest` remains `0.2.19`; no `v0.2.35` tag, GitHub Release, or npm publish is part of this candidate.',
     'This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while making failed iOS smoke diagnostics easier to find in GitHub Actions through a packed `ios-smoke-diagnostics` artifact and a GitHub Step Summary excerpt generated from the same Node-level formatter.',
@@ -1794,7 +1815,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1806,18 +1827,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.35' && missing.length === 0;
+  const ok = packageJson.version === '0.2.36' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes and previous release notes are current',
+    label: 'v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.35'
+          ...(packageJson.version === '0.2.36'
             ? []
-            : ['package.json version 0.2.35']),
+            : ['package.json version 0.2.36']),
         ].join(' | ')}`,
   };
 }
@@ -2455,6 +2476,7 @@ function checkIOSHostAppValidation() {
   const smokeLifecycleTestContents = readText('test/iosSmokeLifecycle.test.mjs');
   const smokeCliTimeoutTestContents = readText('test/iosSmokeCliTimeout.test.mjs');
   const smokeContractTestContents = readText('test/iosSmokeContract.test.mjs');
+  const smokeSummaryCliTestContents = readText('test/iosSmokeSummaryCli.test.mjs');
   const vitestConfigContents = readText('vitest.config.ts');
   const appContents = readText('example/src/App.tsx');
   const iosModuleContents = readText('example/ios/ImageCompressionKitExample/ExampleImageSource.m');
@@ -2488,7 +2510,10 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'test/iosSmokeLifecycle.test.mjs'],
     [readmeContents, 'test/iosSmokeCliTimeout.test.mjs'],
     [readmeContents, 'test/iosSmokeContract.test.mjs'],
+    [readmeContents, 'test/iosSmokeSummaryCli.test.mjs'],
     [readmeContents, 'scripts/ios-smoke-contract.mjs'],
+    [readmeContents, 'summarize-smoke-log` CLI stdout/`$GITHUB_STEP_SUMMARY` dry-run contracts'],
+    [readmeContents, 'summarize-smoke-log` CLI stdout/`$GITHUB_STEP_SUMMARY` parity from a fake `ios-smoke.log`'],
     [readmeContents, 'CLI timeout input assembly from fake launch/log stream/Metro/unified-log output'],
     [readmeContents, 'fake EventEmitter Metro/log stream listener cleanup plus log process stop and `setLogProcess(null)` after PASS, FAIL, and timeout settle paths'],
     [readmeContents, 'log stream error output/snapshot/timeout diagnostics propagation'],
@@ -2525,6 +2550,10 @@ function checkIOSHostAppValidation() {
     [releaseContents, '`.github/workflows/ios-validation.yml` now tees the host-app smoke output into `ios-smoke-diagnostics/ios-smoke.log`, summarizes that log with `node scripts/ios-validation.mjs summarize-smoke-log`, and uploads the packed diagnostics directory with `actions/upload-artifact@v6` when the smoke step fails.'],
     [releaseContents, '`formatIOSSmokeDiagnosticsSummary()` now owns the GitHub Step Summary shape.'],
     [releaseContents, '`test/iosSmokeContract.test.mjs` validates the packed diagnostics summary ordering and marker extraction with fake log text'],
+    [releaseContents, 'iOS Smoke Artifact Failure-Path Dry Run Fixtures'],
+    [releaseContents, '`test/iosSmokeSummaryCli.test.mjs` runs `node scripts/ios-validation.mjs summarize-smoke-log` with a fake `ios-smoke.log`'],
+    [releaseContents, 'asserts stdout exactly matches the summary file content'],
+    [releaseContents, 'uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'],
     [releaseContents, 'iOS Smoke Log Stream Error Fixtures'],
     [releaseContents, '`createSmokeAttemptLifecycle()` now records log process `error` events as `iOS smoke log stream error:` output and includes that text in `markerBuffer` and `smokeLogOutput` snapshot state.'],
     [releaseContents, '`test/iosSmokeLifecycle.test.mjs` validates the log stream error path with a fake EventEmitter process.'],
@@ -2542,6 +2571,7 @@ function checkIOSHostAppValidation() {
     [workflowContents, 'pnpm example:ios:smoke 2>&1 | tee ios-smoke-diagnostics/ios-smoke.log'],
     [workflowContents, 'node scripts/ios-validation.mjs summarize-smoke-log ios-smoke-diagnostics/ios-smoke.log'],
     [workflowContents, 'tee ios-smoke-diagnostics/ios-smoke-summary.md'],
+    [workflowContents, 'if: failure()'],
     [workflowContents, 'uses: actions/upload-artifact@v6'],
     [workflowContents, 'name: ios-smoke-diagnostics'],
     [workflowContents, 'path: ios-smoke-diagnostics'],
@@ -2603,6 +2633,13 @@ function checkIOSHostAppValidation() {
     [smokeContractTestContents, 'falls back to defaults for invalid positive integer and empty window overrides'],
     [smokeContractTestContents, 'retries timeout-only errors before the final attempt'],
     [smokeContractTestContents, 'formats timeout diagnostics with simulator, app, process, launch, log, and Metro state'],
+    [smokeSummaryCliTestContents, 'writes the same packed diagnostics summary to stdout and GITHUB_STEP_SUMMARY'],
+    [smokeSummaryCliTestContents, 'spawnSync'],
+    [smokeSummaryCliTestContents, 'summarize-smoke-log'],
+    [smokeSummaryCliTestContents, 'GITHUB_STEP_SUMMARY'],
+    [smokeSummaryCliTestContents, 'ios-smoke.log'],
+    [smokeSummaryCliTestContents, 'Installing ImageCompressionKitExample.app'],
+    [smokeSummaryCliTestContents, 'RNICK_IOS_SMOKE_STEP_START compress-jpeg-to-jpeg'],
     [vitestConfigContents, "include: ['test/**/*.test.{ts,mjs}']"],
     [validationScriptContents, 'POD_INSTALL_MAX_ATTEMPTS'],
     [validationScriptContents, 'pathname contains null byte'],
