@@ -1,5 +1,50 @@
 # Release Notes
 
+## v0.2.35
+
+Status: unpublished release candidate for iOS smoke diagnostics packed log artifact coverage. npm `latest` remains `0.2.19`; no `v0.2.35` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while making failed iOS smoke diagnostics easier to find in GitHub Actions through a packed `ios-smoke-diagnostics` artifact and a GitHub Step Summary excerpt generated from the same Node-level formatter.
+
+### Goals
+
+- Capture the full `pnpm example:ios:smoke` output into `ios-smoke-diagnostics/ios-smoke.log` on the iOS Validation workflow.
+- Generate `ios-smoke-diagnostics/ios-smoke-summary.md` and append the same ordered excerpt to `$GITHUB_STEP_SUMMARY` after a failed iOS smoke step.
+- Cover the summary formatter without launching Xcode, Metro, or a simulator.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.35 candidate.
+
+### iOS Smoke Diagnostics Artifact Fixtures
+
+`.github/workflows/ios-validation.yml` now tees the host-app smoke output into `ios-smoke-diagnostics/ios-smoke.log`, summarizes that log with `node scripts/ios-validation.mjs summarize-smoke-log`, and uploads the packed diagnostics directory with `actions/upload-artifact@v6` when the smoke step fails.
+
+`formatIOSSmokeDiagnosticsSummary()` now owns the GitHub Step Summary shape. It keeps key `RNICK_IOS_SMOKE_*`, timeout, retry, failure, and log-stream-error lines before the packed log tail so the most useful markers remain visible even when the raw smoke log is long.
+
+`test/iosSmokeContract.test.mjs` validates the packed diagnostics summary ordering and marker extraction with fake log text, including timeout diagnostics, `RNICK_IOS_SMOKE_STEP_START`, retry guidance, and log stream error lines.
+
+### Included
+
+- `package.json` version bump to `0.2.35`.
+- `summarize-smoke-log` mode in `scripts/ios-validation.mjs` for reusable GitHub Step Summary generation.
+- iOS Validation workflow failure artifact upload for `ios-smoke-diagnostics`.
+- Node-level fixture coverage for diagnostics excerpt and packed log tail ordering.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.35 candidate state.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.35`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.34
 
 Status: unpublished release candidate for iOS smoke log stream error fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.34` tag, GitHub Release, or npm publish is part of this candidate.

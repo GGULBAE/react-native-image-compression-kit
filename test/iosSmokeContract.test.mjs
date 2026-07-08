@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   createIOSValidationConfig,
   createSmokeTimeoutError,
+  extractIOSSmokeDiagnosticExcerpt,
+  formatIOSSmokeDiagnosticsSummary,
   formatSmokeTimeoutDiagnostics,
   shouldRetrySmokeTimeout,
 } from '../scripts/ios-smoke-contract.mjs';
@@ -148,5 +150,52 @@ describe('iOS smoke contract helpers', () => {
     expect(diagnostics.split('\n')).not.toContain('  Metro line 1');
     expect(diagnostics).toContain('- unified log tail (30m):');
     expect(diagnostics).toContain('RNICK_IOS_SMOKE_STEP_START');
+  });
+
+  it('formats packed diagnostics summary with key markers before the log tail', () => {
+    const logText = [
+      'Installing ImageCompressionKitExample.app',
+      'Starting iOS smoke attempt 1/2 with timeout=45000ms.',
+      'RNICK_IOS_SMOKE_START',
+      'Metro unrelated line',
+      'Timed out waiting for RNICK_IOS_SMOKE_PASS after 45000ms.',
+      'iOS smoke diagnostics:',
+      '- simulator: iPhone Fixture state=Booted',
+      '- captured RNICK_IOS_SMOKE stream tail:',
+      '  RNICK_IOS_SMOKE_STEP_START compress-jpeg-to-jpeg',
+      'iOS smoke log stream error: fixture log stream disconnected',
+      'Retrying after terminating the app so the next attempt gets a fresh launch and log stream.',
+      'final cleanup line',
+    ].join('\n');
+
+    expect(extractIOSSmokeDiagnosticExcerpt(logText, 10)).toBe(
+      [
+        'Starting iOS smoke attempt 1/2 with timeout=45000ms.',
+        'RNICK_IOS_SMOKE_START',
+        'Timed out waiting for RNICK_IOS_SMOKE_PASS after 45000ms.',
+        'iOS smoke diagnostics:',
+        '- captured RNICK_IOS_SMOKE stream tail:',
+        '  RNICK_IOS_SMOKE_STEP_START compress-jpeg-to-jpeg',
+        'iOS smoke log stream error: fixture log stream disconnected',
+        'Retrying after terminating the app so the next attempt gets a fresh launch and log stream.',
+      ].join('\n')
+    );
+
+    const summary = formatIOSSmokeDiagnosticsSummary({
+      logText,
+      markerMaxLines: 10,
+      tailMaxLines: 4,
+    });
+
+    expect(summary).toContain('## iOS smoke diagnostics');
+    expect(summary).toContain('### Key markers and diagnostics');
+    expect(summary).toContain('RNICK_IOS_SMOKE_STEP_START compress-jpeg-to-jpeg');
+    expect(summary).toContain('iOS smoke log stream error: fixture log stream disconnected');
+    expect(summary).toContain('### Packed log tail');
+    expect(summary).toContain('final cleanup line');
+    expect(summary).not.toContain('Installing ImageCompressionKitExample.app');
+    expect(summary.indexOf('### Key markers and diagnostics')).toBeLessThan(
+      summary.indexOf('### Packed log tail')
+    );
   });
 });

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from 'node:child_process';
-import { rmSync } from 'node:fs';
+import { appendFileSync, readFileSync, rmSync } from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import process from 'node:process';
@@ -9,6 +9,7 @@ import {
   createIOSValidationConfig,
   createSmokeAttemptLifecycle,
   createSmokeTimeoutErrorFromCLIState,
+  formatIOSSmokeDiagnosticsSummary,
   formatSmokeRetryWarningMessages,
   shouldRetrySmokeTimeout,
   tailLines,
@@ -39,6 +40,11 @@ const POD_INSTALL_CLEANUP_PATHS = [
 const mode = process.argv[2] ?? 'smoke';
 
 async function main() {
+  if (mode === 'summarize-smoke-log') {
+    summarizeSmokeLog();
+    return;
+  }
+
   if (mode === 'env') {
     checkIOSBuildEnvironment();
     return;
@@ -85,6 +91,24 @@ async function main() {
   }
 
   throw new Error(`Unknown iOS validation mode: ${mode}`);
+}
+
+function summarizeSmokeLog() {
+  const logPath = process.argv[3];
+  if (!logPath) {
+    throw new Error(
+      'Usage: node scripts/ios-validation.mjs summarize-smoke-log <log-file>'
+    );
+  }
+
+  const summary = formatIOSSmokeDiagnosticsSummary({
+    logText: readFileSync(path.resolve(ROOT, logPath), 'utf8'),
+  });
+  process.stdout.write(`${summary}\n`);
+
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary}\n`);
+  }
 }
 
 function ensurePackageJSBuild() {

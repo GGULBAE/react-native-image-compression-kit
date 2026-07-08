@@ -266,6 +266,51 @@ export function tailLines(value, maxLines) {
     .join('\n');
 }
 
+const IOS_SMOKE_DIAGNOSTIC_LINE_PATTERN =
+  /Starting iOS smoke attempt|RNICK_IOS_SMOKE|Timed out waiting for RNICK_IOS_SMOKE_PASS|iOS smoke diagnostics:|iOS smoke failed:|iOS smoke log stream error:|Retrying after terminating the app/;
+
+export function extractIOSSmokeDiagnosticExcerpt(logText, maxLines = 160) {
+  return tailLines(
+    String(logText ?? '')
+      .split(/\r?\n/)
+      .filter((line) => IOS_SMOKE_DIAGNOSTIC_LINE_PATTERN.test(line))
+      .join('\n'),
+    maxLines
+  );
+}
+
+export function formatIOSSmokeDiagnosticsSummary({
+  logText,
+  markerMaxLines = 80,
+  tailMaxLines = 160,
+} = {}) {
+  const parsedLogText = String(logText ?? '');
+  const diagnosticExcerpt = extractIOSSmokeDiagnosticExcerpt(
+    parsedLogText,
+    markerMaxLines
+  );
+  const packedLogTail = tailLines(formatBlock(parsedLogText, '(no iOS smoke log captured)'), tailMaxLines);
+
+  return [
+    '## iOS smoke diagnostics',
+    '',
+    '### Key markers and diagnostics',
+    '',
+    '```text',
+    formatBlock(
+      diagnosticExcerpt,
+      '(no RNICK_IOS_SMOKE markers or diagnostics lines captured)'
+    ),
+    '```',
+    '',
+    '### Packed log tail',
+    '',
+    '```text',
+    packedLogTail,
+    '```',
+  ].join('\n');
+}
+
 function parseNonEmptyString(value, defaultValue) {
   if (value === undefined) {
     return defaultValue;

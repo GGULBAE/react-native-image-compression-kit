@@ -40,4 +40,22 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run iOS host-app smoke
-        run: pnpm example:ios:smoke
+        shell: bash
+        run: |
+          mkdir -p ios-smoke-diagnostics
+          set -o pipefail
+          pnpm example:ios:smoke 2>&1 | tee ios-smoke-diagnostics/ios-smoke.log
+
+      - name: Summarize iOS smoke diagnostics
+        if: failure()
+        run: |
+          node scripts/ios-validation.mjs summarize-smoke-log ios-smoke-diagnostics/ios-smoke.log \
+            | tee ios-smoke-diagnostics/ios-smoke-summary.md
+
+      - name: Upload iOS smoke diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ios-smoke-diagnostics
+          path: ios-smoke-diagnostics
+          if-no-files-found: ignore
