@@ -1,8 +1,55 @@
 # Release Notes
 
+## v0.2.39
+
+Status: unpublished release candidate for iOS WebP-output available PASS payload schema snapshot coverage. npm `latest` remains `0.2.38`; no `v0.2.39` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output, force WebP output availability, or add iOS native features. It keeps iOS native compression behavior unchanged while pinning the extra JSON payload fields emitted by successful `RNICK_IOS_SMOKE_PASS` host-app smoke logs when `webpOutputAvailable=true`.
+
+### Goals
+
+- Add simulator-free `RNICK_IOS_SMOKE_PASS` fixture coverage for the WebP-output available branch.
+- Snapshot the conditional WebP output result byte fields: `jpegToWebPResultBytes`, `pngToWebPResultBytes`, `gifToWebPResultBytes`, `webpToWebPResultBytes`, `heicToWebPResultBytes`, `heifToWebPResultBytes`, and `avifToWebPResultBytes`.
+- Snapshot `webpTargetSizeResultBytes` as a required conditional field when `webpOutputAvailable=true`.
+- Prove `unsupportedOutputs` excludes `webp` when WebP destination support is available.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.39 candidate.
+
+### iOS WebP Output PASS Payload Schema Snapshots
+
+`scripts/ios-smoke-contract.mjs` now exposes `IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS`, `IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS`, and `getIOSSmokePassPayloadRequiredFields()` so WebP-output available PASS payloads can be checked without launching Xcode, Metro, or a simulator.
+
+`test/iosSmokeContract.test.mjs` parses a prefixed `RNICK_IOS_SMOKE_PASS` log fixture with `webpOutputAvailable=true`, snapshots the payload key order and type schema for all WebP output byte fields plus `webpTargetSizeResultBytes`, and verifies missing conditional WebP fields are reported by `listMissingIOSSmokePassPayloadFields()`.
+
+The fixture also pins `unsupportedOutputs: ['heic', 'heif', 'avif']`, proving the WebP-output available branch no longer reports `webp` as unsupported while HEIC, HEIF, and AVIF output remain unsupported.
+
+### Included
+
+- `package.json` version bump to `0.2.39`.
+- Conditional WebP-output available PASS payload schema helpers in `scripts/ios-smoke-contract.mjs`.
+- Exact `webpOutputAvailable=true` `RNICK_IOS_SMOKE_PASS` payload fixture expectations in `test/iosSmokeContract.test.mjs`.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.39 candidate state and the published v0.2.38 npm baseline.
+
+### Not Included
+
+- iOS native feature changes.
+- WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.39`.
+- Forced simulator capability changes.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.38
 
-Status: unpublished release candidate for iOS smoke PASS payload schema snapshot coverage. npm `latest` remains `0.2.19`; no `v0.2.38` tag, GitHub Release, or npm publish is part of this candidate.
+Status: published to npm as the `0.2.38` latest iOS smoke PASS payload schema snapshot release. No `v0.2.38` tag or GitHub Release is part of this package-page promotion.
 
 This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while pinning the JSON payload schema emitted by successful `RNICK_IOS_SMOKE_PASS` host-app smoke logs.
 
@@ -33,7 +80,7 @@ The fixture also verifies missing required fields, missing marker logs, missing 
 - iOS feature changes.
 - AVIF output enablement.
 - Actual AVIF file returns from `compressImage()`.
-- npm publish, git tag, or GitHub Release promotion for `v0.2.38`.
+- Git tag or GitHub Release promotion for `v0.2.38`.
 - Forced simulator smoke failures.
 
 ### Validation

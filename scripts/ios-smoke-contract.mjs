@@ -32,6 +32,42 @@ export const IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS = Object.freeze([
   'unsupportedOutputs',
 ]);
 
+export const IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS = Object.freeze([
+  'jpegToWebPResultBytes',
+  'pngToWebPResultBytes',
+  'gifToWebPResultBytes',
+  'webpToWebPResultBytes',
+  'heicToWebPResultBytes',
+  'heifToWebPResultBytes',
+  'avifToWebPResultBytes',
+  'webpTargetSizeResultBytes',
+]);
+
+export const IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS = Object.freeze([
+  'platform',
+  'jpegResultBytes',
+  'jpegPreserveResultBytes',
+  'pngResultBytes',
+  'gifResultBytes',
+  'webpResultBytes',
+  'heicResultBytes',
+  'heifResultBytes',
+  'avifResultBytes',
+  'jpegToPngResultBytes',
+  'pngToPngResultBytes',
+  'gifToPngResultBytes',
+  'webpToPngResultBytes',
+  'heicToPngResultBytes',
+  'heifToPngResultBytes',
+  'avifToPngResultBytes',
+  'webpOutputAvailable',
+  'avifInputAvailable',
+  ...IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS,
+  'targetSizeResultBytes',
+  'unsupportedInputs',
+  'unsupportedOutputs',
+]);
+
 export function createIOSValidationConfig(env = {}) {
   return {
     metroPort: parsePositiveInteger(
@@ -114,12 +150,21 @@ function isIOSSmokePassPayloadLine(line, passMarker) {
 
 export function listMissingIOSSmokePassPayloadFields(
   payload,
-  requiredFields = IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS
+  requiredFields
 ) {
   const source = payload && typeof payload === 'object' ? payload : {};
-  return requiredFields.filter(
+  const fields = requiredFields ?? getIOSSmokePassPayloadRequiredFields(source);
+  return fields.filter(
     (field) => !Object.prototype.hasOwnProperty.call(source, field)
   );
+}
+
+export function getIOSSmokePassPayloadRequiredFields(payload) {
+  return payload &&
+    typeof payload === 'object' &&
+    payload.webpOutputAvailable === true
+    ? IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
+    : IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS;
 }
 
 export function formatIOSSmokePassPayloadSchema(payload) {
