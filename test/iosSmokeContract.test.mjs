@@ -83,6 +83,17 @@ const IOS_SMOKE_PASS_MATRIX_FIELD_PROBES = Object.freeze({
   ]),
 });
 
+const IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE = [
+  'iOS host-app smoke\tRun iOS host-app smoke\t2026-07-08T08:25:57.8580780Z 2026-07-08 08:25:57.760 Df ImageCompressionKitExample[19401:e5d6] (ImageCompressionKitExample.debug.dylib) RNICK_IOS_SMOKE_STEP_PASS reject-png-metadata-preserve',
+  [
+    'iOS host-app smoke\tRun iOS host-app smoke\t2026-07-08T08:25:57.8583890Z',
+    '2026-07-08 08:25:57.761 Df ImageCompressionKitExample[19401:db3e]',
+    '(ImageCompressionKitExample.debug.dylib)',
+    'RNICK_IOS_SMOKE_PASS',
+    '{"platform":"ios","jpegResultBytes":883,"jpegPreserveResultBytes":942,"pngResultBytes":970,"gifResultBytes":776,"webpResultBytes":772,"heicResultBytes":1000,"heifResultBytes":1000,"avifResultBytes":998,"jpegToPngResultBytes":625,"pngToPngResultBytes":672,"gifToPngResultBytes":331,"webpToPngResultBytes":248,"heicToPngResultBytes":1071,"heifToPngResultBytes":1071,"avifToPngResultBytes":1066,"webpOutputAvailable":false,"avifInputAvailable":true,"targetSizeResultBytes":940,"unsupportedInputs":[],"unsupportedOutputs":["webp","heic","heif","avif"]}',
+  ].join(' '),
+].join('\n');
+
 function createIOSSmokePassPayloadFixture({
   webpOutputAvailable,
   avifInputAvailable,
@@ -565,6 +576,31 @@ describe('iOS smoke contract helpers', () => {
     expect(
       IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
     ).not.toContain('avifToWebPResultBytes');
+  });
+
+  it('replays a successful GitHub Actions iOS smoke PASS log line against the matrix schema', () => {
+    const schemaCase = IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX.find(
+      ({ id }) => id === 'webp-output-unavailable-avif-input-available'
+    );
+    const payload = parseIOSSmokePassPayload(
+      IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE
+    );
+
+    expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE).toContain(
+      'iOS host-app smoke\tRun iOS host-app smoke\t2026-07-08T08:25:57.8583890Z'
+    );
+    expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE).toContain(
+      '(ImageCompressionKitExample.debug.dylib) RNICK_IOS_SMOKE_PASS'
+    );
+    expect(payload).toEqual(createIOSSmokePassPayloadFixture(schemaCase));
+    expect(Object.keys(payload)).toEqual(schemaCase.requiredFields);
+    expect(getIOSSmokePassPayloadRequiredFields(payload)).toEqual(
+      schemaCase.requiredFields
+    );
+    expect(listMissingIOSSmokePassPayloadFields(payload)).toEqual([]);
+    expect(formatIOSSmokePassPayloadSchema(payload)).toBe(
+      formatExpectedIOSSmokePassPayloadSchema(payload)
+    );
   });
 
   it('handles missing and malformed iOS smoke PASS payload logs', () => {

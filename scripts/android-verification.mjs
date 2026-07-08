@@ -322,7 +322,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.41',
+    packageJson.version === '0.2.42',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -337,20 +337,19 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.41` is an unpublished iOS PASS payload schema matrix helper candidate for `react-native-image-compression-kit`.'),
-    readmeContents.includes('required field sets are generated from one `IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX` instead of duplicated arrays'),
-    readmeContents.includes('fixture factory for all four WebP output x AVIF input combinations'),
-    readmeContents.includes('keeps missing conditional WebP and AVIF payload field coverage'),
-    readmeContents.includes('proves `unsupportedInputs` includes `avif` when AVIF source support is unavailable'),
-    readmeContents.includes('proves `unsupportedOutputs` excludes `webp` when WebP destination support is available'),
+    readmeContents.includes('Version `0.2.42` is an unpublished iOS PASS payload CI log replay fixture candidate for `react-native-image-compression-kit`.'),
+    readmeContents.includes('adds a simulator-free replay fixture copied from a successful GitHub Actions iOS Validation `RNICK_IOS_SMOKE_PASS` log line'),
+    readmeContents.includes('preserves the GitHub Actions job/step/timestamp prefix and the `ImageCompressionKitExample.debug.dylib` unified-log prefix'),
+    readmeContents.includes('compares the payload against the matrix-derived `webp-output-unavailable-avif-input-available` schema'),
+    readmeContents.includes('The existing matrix fixture factory still covers all four WebP output x AVIF input combinations'),
     readmeContents.includes('uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'),
     readmeContents.includes('The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'),
     readmeContents.includes("The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"),
     readmeContents.includes('npm `latest` remains `0.2.40`'),
     readmeContents.includes('the previous GitHub Release remains [v0.2.17]'),
     readmeContents.includes('Version `0.2.40` remains the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.'),
-    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.41 candidate.'),
-    readmeContents.includes('The `0.2.41` package metadata is prepared as an unpublished iOS PASS payload schema matrix helper candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.42 candidate.'),
+    readmeContents.includes('The `0.2.42` package metadata is prepared as an unpublished iOS PASS payload CI log replay fixture candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -393,6 +392,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.39` is the unpublished iOS WebP-output available PASS payload schema snapshot candidate'),
     readmeContents.includes('version `0.2.40` is the published iOS AVIF-input unavailable PASS payload schema snapshot release'),
     readmeContents.includes('version `0.2.41` is the unpublished iOS PASS payload schema matrix helper candidate'),
+    readmeContents.includes('version `0.2.42` is the unpublished iOS PASS payload CI log replay fixture candidate'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -425,6 +425,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.39` hardens iOS WebP-output available PASS payload schema snapshot coverage without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.40` hardens iOS AVIF-input unavailable PASS payload schema snapshot coverage without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.41` hardens iOS PASS payload schema matrix helper coverage without enabling AVIF output.'),
+    readmeContents.includes('Version `0.2.42` hardens iOS PASS payload CI log replay fixture coverage without enabling AVIF output.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes('Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
@@ -482,9 +483,9 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.41 iOS PASS payload schema matrix helper candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.42 iOS PASS payload CI log replay fixture candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README iOS PASS payload schema matrix helper candidate status are aligned'
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README iOS PASS payload CI log replay fixture candidate status are aligned'
       : 'expected package.json release metadata or README iOS PASS payload schema matrix helper candidate guidance is missing/mismatched',
   };
 }
@@ -771,6 +772,23 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.42',
+    'Status: unpublished release candidate for iOS PASS payload CI log replay fixture coverage. npm `latest` remains `0.2.40`; no `v0.2.42` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, or add iOS native features. It keeps iOS native compression behavior unchanged while pinning the real GitHub Actions log shape emitted by a successful `RNICK_IOS_SMOKE_PASS` host-app smoke.',
+    'Add a replay fixture copied from a successful GitHub Actions iOS Validation `RNICK_IOS_SMOKE_PASS` line.',
+    'Preserve the GitHub Actions job/step/timestamp prefix and the `ImageCompressionKitExample.debug.dylib` unified-log prefix in simulator-free Vitest coverage.',
+    'Prove `parseIOSSmokePassPayload()` extracts the payload from the real CI-shaped line.',
+    'Compare the replay payload against the matrix-derived required fields and formatted schema.',
+    'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.42 candidate.',
+    '### iOS PASS Payload CI Log Replay Fixture',
+    '`test/iosSmokeContract.test.mjs` now includes `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE`',
+    'The replay test parses that line through `parseIOSSmokePassPayload()`',
+    'The existing matrix test still owns all four WebP output x AVIF input combinations',
+    '`package.json` version bump to `0.2.42`.',
+    'Successful GitHub Actions iOS Validation PASS log replay fixture in `test/iosSmokeContract.test.mjs`.',
+    'Matrix-derived required-field and schema checks against the replayed payload.',
+    'README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.42 candidate state and the published v0.2.40 npm baseline.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.42`.',
     '## v0.2.41',
     'Status: unpublished release candidate for iOS PASS payload schema matrix helper coverage. npm `latest` remains `0.2.40`; no `v0.2.41` tag, GitHub Release, or npm publish is part of this candidate.',
     'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, or add iOS native features. It keeps iOS native compression behavior unchanged while making the simulator-free `RNICK_IOS_SMOKE_PASS` payload schema tests table-driven across the four WebP output x AVIF input capability combinations.',
@@ -1931,7 +1949,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'See [RELEASE.md](RELEASE.md) for the v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
+    'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
   ];
@@ -1943,18 +1961,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.41' && missing.length === 0;
+  const ok = packageJson.version === '0.2.42' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.41 iOS PASS payload schema matrix helper candidate notes and previous release notes are current',
+    label: 'v0.2.42 iOS PASS payload CI log replay fixture candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.41'
+          ...(packageJson.version === '0.2.42'
             ? []
-            : ['package.json version 0.2.41']),
+            : ['package.json version 0.2.42']),
         ].join(' | ')}`,
   };
 }
@@ -2633,6 +2651,7 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'exact AVIF-input unavailable `RNICK_IOS_SMOKE_PASS` payload schema snapshots for omitted `avifResultBytes`, `avifToPngResultBytes`, and `avifToWebPResultBytes`'],
     [readmeContents, 'matrix-driven `RNICK_IOS_SMOKE_PASS` payload schema snapshots for WebP output x AVIF input combinations'],
     [readmeContents, 'shared PASS payload fixture factory coverage'],
+    [readmeContents, 'successful GitHub Actions iOS Validation PASS log replay fixture coverage'],
     [readmeContents, 'missing or malformed PASS payload log handling'],
     [readmeContents, 'missing conditional WebP and AVIF payload field handling'],
     [readmeContents, '`unsupportedInputs` including `avif` when AVIF input is unavailable'],
@@ -2793,8 +2812,11 @@ function checkIOSHostAppValidation() {
     [smokeContractTestContents, 'snapshots empty and no-marker diagnostics summaries'],
     [smokeContractTestContents, 'bounds very long diagnostics summaries to marker and tail windows'],
     [smokeContractTestContents, 'snapshots every iOS smoke PASS payload schema matrix case from a fixture factory'],
+    [smokeContractTestContents, 'replays a successful GitHub Actions iOS smoke PASS log line against the matrix schema'],
     [smokeContractTestContents, 'createIOSSmokePassPayloadFixture'],
     [smokeContractTestContents, 'createIOSSmokePassLogFixture'],
+    [smokeContractTestContents, 'IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE'],
+    [smokeContractTestContents, 'iOS host-app smoke\\tRun iOS host-app smoke\\t2026-07-08T08:25:57.8583890Z'],
     [smokeContractTestContents, 'IOS_SMOKE_PASS_MATRIX_FIELD_PROBES'],
     [smokeContractTestContents, 'handles missing and malformed iOS smoke PASS payload logs'],
     [smokeContractTestContents, 'jpegPreserveResultBytes'],

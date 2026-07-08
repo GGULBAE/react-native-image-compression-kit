@@ -1,5 +1,53 @@
 # Release Notes
 
+## v0.2.42
+
+Status: unpublished release candidate for iOS PASS payload CI log replay fixture coverage. npm `latest` remains `0.2.40`; no `v0.2.42` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, or add iOS native features. It keeps iOS native compression behavior unchanged while pinning the real GitHub Actions log shape emitted by a successful `RNICK_IOS_SMOKE_PASS` host-app smoke.
+
+### Goals
+
+- Add a replay fixture copied from a successful GitHub Actions iOS Validation `RNICK_IOS_SMOKE_PASS` line.
+- Preserve the GitHub Actions job/step/timestamp prefix and the `ImageCompressionKitExample.debug.dylib` unified-log prefix in simulator-free Vitest coverage.
+- Prove `parseIOSSmokePassPayload()` extracts the payload from the real CI-shaped line.
+- Compare the replay payload against the matrix-derived required fields and formatted schema.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.42 candidate.
+
+### iOS PASS Payload CI Log Replay Fixture
+
+`test/iosSmokeContract.test.mjs` now includes `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE`, copied from a successful GitHub Actions iOS Validation run. The fixture keeps the workflow job name, step name, GitHub timestamp, unified-log timestamp, process/thread marker, debug dylib prefix, `RNICK_IOS_SMOKE_PASS` marker, and JSON payload on the same line.
+
+The replay test parses that line through `parseIOSSmokePassPayload()`, verifies the payload matches the fixture-factory payload for the `webp-output-unavailable-avif-input-available` matrix case, checks that `Object.keys(payload)` equals the matrix-derived required fields, and keeps `listMissingIOSSmokePassPayloadFields()` plus `formatIOSSmokePassPayloadSchema()` aligned with the real CI payload shape.
+
+The existing matrix test still owns all four WebP output x AVIF input combinations; this candidate adds real-log replay coverage so a future parser or log-prefix change cannot silently break successful iOS smoke PASS extraction.
+
+### Included
+
+- `package.json` version bump to `0.2.42`.
+- Successful GitHub Actions iOS Validation PASS log replay fixture in `test/iosSmokeContract.test.mjs`.
+- Matrix-derived required-field and schema checks against the replayed payload.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.42 candidate state and the published v0.2.40 npm baseline.
+
+### Not Included
+
+- iOS native feature changes.
+- AVIF input support forced available or unavailable on real simulators.
+- WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.42`.
+- Forced simulator capability changes or forced simulator failures.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.41
 
 Status: unpublished release candidate for iOS PASS payload schema matrix helper coverage. npm `latest` remains `0.2.40`; no `v0.2.41` tag, GitHub Release, or npm publish is part of this candidate.
