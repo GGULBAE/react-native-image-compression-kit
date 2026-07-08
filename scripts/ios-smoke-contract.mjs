@@ -8,7 +8,7 @@ export const DEFAULT_IOS_VALIDATION_CONFIG = Object.freeze({
   podInstallMaxAttempts: 2,
 });
 
-export const IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS = Object.freeze([
+const IOS_SMOKE_PASS_BASE_RESULT_FIELDS = Object.freeze([
   'platform',
   'jpegResultBytes',
   'jpegPreserveResultBytes',
@@ -17,109 +17,153 @@ export const IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS = Object.freeze([
   'webpResultBytes',
   'heicResultBytes',
   'heifResultBytes',
+]);
+
+const IOS_SMOKE_PASS_AVIF_INPUT_RESULT_FIELDS = Object.freeze([
   'avifResultBytes',
+]);
+
+const IOS_SMOKE_PASS_PNG_OUTPUT_RESULT_FIELDS = Object.freeze([
   'jpegToPngResultBytes',
   'pngToPngResultBytes',
   'gifToPngResultBytes',
   'webpToPngResultBytes',
   'heicToPngResultBytes',
   'heifToPngResultBytes',
-  'avifToPngResultBytes',
-  'webpOutputAvailable',
-  'avifInputAvailable',
-  'targetSizeResultBytes',
-  'unsupportedInputs',
-  'unsupportedOutputs',
 ]);
 
-export const IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS =
-  Object.freeze([
-    'platform',
-    'jpegResultBytes',
-    'jpegPreserveResultBytes',
-    'pngResultBytes',
-    'gifResultBytes',
-    'webpResultBytes',
-    'heicResultBytes',
-    'heifResultBytes',
-    'jpegToPngResultBytes',
-    'pngToPngResultBytes',
-    'gifToPngResultBytes',
-    'webpToPngResultBytes',
-    'heicToPngResultBytes',
-    'heifToPngResultBytes',
-    'webpOutputAvailable',
-    'avifInputAvailable',
-    'targetSizeResultBytes',
-    'unsupportedInputs',
-    'unsupportedOutputs',
-  ]);
+const IOS_SMOKE_PASS_AVIF_TO_PNG_RESULT_FIELDS = Object.freeze([
+  'avifToPngResultBytes',
+]);
 
-export const IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS = Object.freeze([
+const IOS_SMOKE_PASS_CAPABILITY_FIELDS = Object.freeze([
+  'webpOutputAvailable',
+  'avifInputAvailable',
+]);
+
+const IOS_SMOKE_PASS_WEBP_OUTPUT_NON_AVIF_RESULT_FIELDS = Object.freeze([
   'jpegToWebPResultBytes',
   'pngToWebPResultBytes',
   'gifToWebPResultBytes',
   'webpToWebPResultBytes',
   'heicToWebPResultBytes',
   'heifToWebPResultBytes',
+]);
+
+const IOS_SMOKE_PASS_AVIF_TO_WEBP_RESULT_FIELDS = Object.freeze([
   'avifToWebPResultBytes',
+]);
+
+const IOS_SMOKE_PASS_WEBP_TARGET_SIZE_FIELDS = Object.freeze([
   'webpTargetSizeResultBytes',
 ]);
 
-export const IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS = Object.freeze([
-  'platform',
-  'jpegResultBytes',
-  'jpegPreserveResultBytes',
-  'pngResultBytes',
-  'gifResultBytes',
-  'webpResultBytes',
-  'heicResultBytes',
-  'heifResultBytes',
-  'avifResultBytes',
-  'jpegToPngResultBytes',
-  'pngToPngResultBytes',
-  'gifToPngResultBytes',
-  'webpToPngResultBytes',
-  'heicToPngResultBytes',
-  'heifToPngResultBytes',
-  'avifToPngResultBytes',
-  'webpOutputAvailable',
-  'avifInputAvailable',
-  ...IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS,
+const IOS_SMOKE_PASS_TRAILING_FIELDS = Object.freeze([
   'targetSizeResultBytes',
   'unsupportedInputs',
   'unsupportedOutputs',
 ]);
 
-export const IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS =
-  Object.freeze([
-    'platform',
-    'jpegResultBytes',
-    'jpegPreserveResultBytes',
-    'pngResultBytes',
-    'gifResultBytes',
-    'webpResultBytes',
-    'heicResultBytes',
-    'heifResultBytes',
-    'jpegToPngResultBytes',
-    'pngToPngResultBytes',
-    'gifToPngResultBytes',
-    'webpToPngResultBytes',
-    'heicToPngResultBytes',
-    'heifToPngResultBytes',
-    'webpOutputAvailable',
-    'avifInputAvailable',
-    'jpegToWebPResultBytes',
-    'pngToWebPResultBytes',
-    'gifToWebPResultBytes',
-    'webpToWebPResultBytes',
-    'heicToWebPResultBytes',
-    'heifToWebPResultBytes',
-    'webpTargetSizeResultBytes',
-    'targetSizeResultBytes',
-    'unsupportedInputs',
-    'unsupportedOutputs',
+function createIOSSmokePassPayloadRequiredFields({
+  webpOutputAvailable,
+  avifInputAvailable,
+}) {
+  return Object.freeze([
+    ...IOS_SMOKE_PASS_BASE_RESULT_FIELDS,
+    ...(avifInputAvailable ? IOS_SMOKE_PASS_AVIF_INPUT_RESULT_FIELDS : []),
+    ...IOS_SMOKE_PASS_PNG_OUTPUT_RESULT_FIELDS,
+    ...(avifInputAvailable ? IOS_SMOKE_PASS_AVIF_TO_PNG_RESULT_FIELDS : []),
+    ...IOS_SMOKE_PASS_CAPABILITY_FIELDS,
+    ...(webpOutputAvailable
+      ? [
+          ...IOS_SMOKE_PASS_WEBP_OUTPUT_NON_AVIF_RESULT_FIELDS,
+          ...(avifInputAvailable ? IOS_SMOKE_PASS_AVIF_TO_WEBP_RESULT_FIELDS : []),
+          ...IOS_SMOKE_PASS_WEBP_TARGET_SIZE_FIELDS,
+        ]
+      : []),
+    ...IOS_SMOKE_PASS_TRAILING_FIELDS,
   ]);
+}
+
+export const IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS = Object.freeze([
+  ...IOS_SMOKE_PASS_WEBP_OUTPUT_NON_AVIF_RESULT_FIELDS,
+  ...IOS_SMOKE_PASS_AVIF_TO_WEBP_RESULT_FIELDS,
+  ...IOS_SMOKE_PASS_WEBP_TARGET_SIZE_FIELDS,
+]);
+
+function createIOSSmokePassPayloadSchemaCase({
+  id,
+  webpOutputAvailable,
+  avifInputAvailable,
+}) {
+  return Object.freeze({
+    id,
+    webpOutputAvailable,
+    avifInputAvailable,
+    requiredFields: createIOSSmokePassPayloadRequiredFields({
+      webpOutputAvailable,
+      avifInputAvailable,
+    }),
+  });
+}
+
+export const IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX = Object.freeze([
+  createIOSSmokePassPayloadSchemaCase({
+    id: 'webp-output-unavailable-avif-input-available',
+    webpOutputAvailable: false,
+    avifInputAvailable: true,
+  }),
+  createIOSSmokePassPayloadSchemaCase({
+    id: 'webp-output-unavailable-avif-input-unavailable',
+    webpOutputAvailable: false,
+    avifInputAvailable: false,
+  }),
+  createIOSSmokePassPayloadSchemaCase({
+    id: 'webp-output-available-avif-input-available',
+    webpOutputAvailable: true,
+    avifInputAvailable: true,
+  }),
+  createIOSSmokePassPayloadSchemaCase({
+    id: 'webp-output-available-avif-input-unavailable',
+    webpOutputAvailable: true,
+    avifInputAvailable: false,
+  }),
+]);
+
+function getIOSSmokePassPayloadSchemaCase({
+  webpOutputAvailable,
+  avifInputAvailable,
+}) {
+  return IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX.find(
+    (schemaCase) =>
+      schemaCase.webpOutputAvailable === webpOutputAvailable &&
+      schemaCase.avifInputAvailable === avifInputAvailable
+  );
+}
+
+export const IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS =
+  getIOSSmokePassPayloadSchemaCase({
+    webpOutputAvailable: false,
+    avifInputAvailable: true,
+  }).requiredFields;
+
+export const IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS =
+  getIOSSmokePassPayloadSchemaCase({
+    webpOutputAvailable: false,
+    avifInputAvailable: false,
+  }).requiredFields;
+
+export const IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS =
+  getIOSSmokePassPayloadSchemaCase({
+    webpOutputAvailable: true,
+    avifInputAvailable: true,
+  }).requiredFields;
+
+export const IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS =
+  getIOSSmokePassPayloadSchemaCase({
+    webpOutputAvailable: true,
+    avifInputAvailable: false,
+  }).requiredFields;
 
 export function createIOSValidationConfig(env = {}) {
   return {
@@ -217,15 +261,12 @@ export function getIOSSmokePassPayloadRequiredFields(payload) {
     return IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS;
   }
 
-  if (payload.webpOutputAvailable === true) {
-    return payload.avifInputAvailable === false
-      ? IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
-      : IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS;
-  }
+  const schemaCase = getIOSSmokePassPayloadSchemaCase({
+    webpOutputAvailable: payload.webpOutputAvailable === true,
+    avifInputAvailable: payload.avifInputAvailable !== false,
+  });
 
-  return payload.avifInputAvailable === false
-    ? IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS
-    : IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS;
+  return schemaCase.requiredFields;
 }
 
 export function formatIOSSmokePassPayloadSchema(payload) {

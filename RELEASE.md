@@ -1,5 +1,55 @@
 # Release Notes
 
+## v0.2.41
+
+Status: unpublished release candidate for iOS PASS payload schema matrix helper coverage. npm `latest` remains `0.2.40`; no `v0.2.41` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, or add iOS native features. It keeps iOS native compression behavior unchanged while making the simulator-free `RNICK_IOS_SMOKE_PASS` payload schema tests table-driven across the four WebP output x AVIF input capability combinations.
+
+### Goals
+
+- Derive iOS PASS payload required-field schemas from one WebP output x AVIF input matrix.
+- Keep legacy exported required-field constants compatible while making them matrix-derived.
+- Replace duplicated PASS log JSON fixtures with a shared fixture factory for all four capability combinations.
+- Preserve missing conditional WebP and AVIF result-field coverage.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.41 candidate.
+
+### iOS PASS Payload Schema Matrix Helper
+
+`scripts/ios-smoke-contract.mjs` now exposes `IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX`, and the existing `IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS`, `IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS`, `IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS`, and `IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS` exports are derived from that matrix.
+
+`getIOSSmokePassPayloadRequiredFields()` now chooses the matrix case from `webpOutputAvailable` and `avifInputAvailable` instead of branching across duplicated required-field arrays.
+
+`test/iosSmokeContract.test.mjs` now builds prefixed `RNICK_IOS_SMOKE_PASS` payloads with a fixture factory, loops through all four matrix cases, and pins payload key order, type schema, unsupported input/output arrays, and missing-field probes without repeating full JSON payload strings.
+
+The matrix keeps `avifResultBytes`, `avifToPngResultBytes`, and `avifToWebPResultBytes` conditional on AVIF input availability; keeps WebP output result bytes and `webpTargetSizeResultBytes` conditional on WebP output availability; and keeps `unsupportedInputs: ['avif']` plus `unsupportedOutputs` WebP exclusion behavior covered.
+
+### Included
+
+- `package.json` version bump to `0.2.41`.
+- Matrix-driven PASS payload required-field helper in `scripts/ios-smoke-contract.mjs`.
+- Four-case WebP output x AVIF input fixture factory coverage in `test/iosSmokeContract.test.mjs`.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.41 candidate state and the published v0.2.40 npm baseline.
+
+### Not Included
+
+- iOS native feature changes.
+- AVIF input support forced available or unavailable on real simulators.
+- WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.41`.
+- Forced simulator capability changes.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.40
 
 Status: published to npm as the `0.2.40` latest iOS AVIF-input unavailable PASS payload schema snapshot release. No `v0.2.40` tag or GitHub Release is part of this package-page promotion.

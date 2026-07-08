@@ -155,6 +155,12 @@ describe('Android verification scripts', () => {
       'version `0.2.40` is the unpublished iOS AVIF-input unavailable PASS payload schema snapshot candidate',
       'The v0.2.40 candidate fixes iOS AVIF-input unavailable PASS payload schema snapshot coverage.',
       'v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot candidate notes',
+      'Status: v0.2.40 npm latest',
+      'v0.2.40%20npm%20latest',
+      'Version `0.2.40` is published to npm as the `latest` iOS AVIF-input unavailable PASS payload schema snapshot release',
+      'Version `0.2.40` is the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.',
+      'No git tag or GitHub Release is part of this package-page promotion.',
+      'The `0.2.40` package is published as the npm `latest` iOS AVIF-input unavailable PASS payload schema snapshot release',
     ];
     const expectedKeywords = [
       'react-native',
@@ -172,7 +178,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.40');
+    expect(packageJson.version).toBe('0.2.41');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -200,16 +206,16 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.40` is published to npm as the `latest` iOS AVIF-input unavailable PASS payload schema snapshot release for `react-native-image-compression-kit`.'
+      'Version `0.2.41` is an unpublished iOS PASS payload schema matrix helper candidate for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
-      'simulator-free `RNICK_IOS_SMOKE_PASS` fixtures for the `avifInputAvailable=false` branches'
+      'required field sets are generated from one `IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX` instead of duplicated arrays'
     );
     expect(readmeSource).toContain(
-      'conditional AVIF result byte fields, PNG-output result byte fields, conditional WebP output byte fields'
+      'fixture factory for all four WebP output x AVIF input combinations'
     );
     expect(readmeSource).toContain(
-      'verifies missing conditional WebP and AVIF payload field handling'
+      'keeps missing conditional WebP and AVIF payload field coverage'
     );
     expect(readmeSource).toContain(
       'proves `unsupportedInputs` includes `avif` when AVIF source support is unavailable'
@@ -226,16 +232,16 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       "The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"
     );
-    expect(readmeSource).toContain('npm `latest` is `0.2.40`');
+    expect(readmeSource).toContain('npm `latest` remains `0.2.40`');
     expect(readmeSource).toContain('the previous GitHub Release remains [v0.2.17]');
     expect(readmeSource).toContain(
-      'Version `0.2.40` is the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.'
+      'Version `0.2.40` remains the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.'
     );
     expect(readmeSource).toContain(
-      'No git tag or GitHub Release is part of this package-page promotion.'
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.41 candidate.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.40` package is published as the npm `latest` iOS AVIF-input unavailable PASS payload schema snapshot release for `react-native-image-compression-kit`'
+      'The `0.2.41` package metadata is prepared as an unpublished iOS PASS payload schema matrix helper candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -361,6 +367,9 @@ describe('Android verification scripts', () => {
       'version `0.2.40` is the published iOS AVIF-input unavailable PASS payload schema snapshot release'
     );
     expect(readmeSource).toContain(
+      'version `0.2.41` is the unpublished iOS PASS payload schema matrix helper candidate'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -452,6 +461,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.40` hardens iOS AVIF-input unavailable PASS payload schema snapshot coverage without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.41` hardens iOS PASS payload schema matrix helper coverage without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -858,6 +870,12 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       'exact AVIF-input unavailable `RNICK_IOS_SMOKE_PASS` payload schema snapshots for omitted `avifResultBytes`, `avifToPngResultBytes`, and `avifToWebPResultBytes`'
     );
+    expect(readmeSource).toContain(
+      'matrix-driven `RNICK_IOS_SMOKE_PASS` payload schema snapshots for WebP output x AVIF input combinations'
+    );
+    expect(readmeSource).toContain(
+      'shared PASS payload fixture factory coverage'
+    );
     expect(readmeSource).toContain('missing or malformed PASS payload log handling');
     expect(readmeSource).toContain('missing conditional WebP and AVIF payload field handling');
     expect(readmeSource).toContain(
@@ -936,6 +954,7 @@ describe('Android verification scripts', () => {
     expect(smokeContractSource).toContain('formatIOSSmokeDiagnosticsSummary');
     expect(smokeContractSource).toContain('parseIOSSmokePassPayload');
     expect(smokeContractSource).toContain('IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS');
+    expect(smokeContractSource).toContain('IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX');
     expect(smokeContractSource).toContain(
       'IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS'
     );
@@ -1018,17 +1037,11 @@ describe('Android verification scripts', () => {
       'bounds very long diagnostics summaries to marker and tail windows'
     );
     expect(smokeContractTestSource).toContain(
-      'snapshots the iOS smoke PASS payload schema from a log fixture'
+      'snapshots every iOS smoke PASS payload schema matrix case from a fixture factory'
     );
-    expect(smokeContractTestSource).toContain(
-      'snapshots the iOS smoke PASS payload schema when AVIF input is unavailable'
-    );
-    expect(smokeContractTestSource).toContain(
-      'snapshots the iOS smoke PASS payload schema when WebP output is available'
-    );
-    expect(smokeContractTestSource).toContain(
-      'snapshots the iOS smoke PASS payload schema when WebP output is available and AVIF input is unavailable'
-    );
+    expect(smokeContractTestSource).toContain('createIOSSmokePassPayloadFixture');
+    expect(smokeContractTestSource).toContain('createIOSSmokePassLogFixture');
+    expect(smokeContractTestSource).toContain('IOS_SMOKE_PASS_MATRIX_FIELD_PROBES');
     expect(smokeContractTestSource).toContain(
       'handles missing and malformed iOS smoke PASS payload logs'
     );
@@ -1036,9 +1049,13 @@ describe('Android verification scripts', () => {
     expect(smokeContractTestSource).toContain('avifToPngResultBytes');
     expect(smokeContractTestSource).toContain('jpegToWebPResultBytes');
     expect(smokeContractTestSource).toContain('webpTargetSizeResultBytes');
-    expect(smokeContractTestSource).toContain('unsupportedInputs: array<string>(1)');
-    expect(smokeContractTestSource).toContain('unsupportedOutputs: array<string>(4)');
-    expect(smokeContractTestSource).toContain('unsupportedOutputs: array<string>(3)');
+    expect(smokeContractTestSource).toContain('describeExpectedFixtureSchemaValue');
+    expect(smokeContractTestSource).toContain(
+      "unsupportedInputs: avifInputAvailable ? [] : ['avif']"
+    );
+    expect(smokeContractTestSource).toContain(
+      "['webp', 'heic', 'heif', 'avif']"
+    );
     expect(smokeContractTestSource).toContain(
       '(no RNICK_IOS_SMOKE markers or diagnostics lines captured)'
     );
@@ -1061,11 +1078,59 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes and previous release notes', () => {
+  it('documents the v0.2.41 iOS PASS payload schema matrix helper candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.40');
+    expect(packageJson.version).toBe('0.2.41');
+    expect(releaseSource).toContain('## v0.2.41');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for iOS PASS payload schema matrix helper coverage. npm `latest` remains `0.2.40`; no `v0.2.41` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, or add iOS native features. It keeps iOS native compression behavior unchanged while making the simulator-free `RNICK_IOS_SMOKE_PASS` payload schema tests table-driven across the four WebP output x AVIF input capability combinations.'
+    );
+    expect(releaseSource).toContain(
+      'Derive iOS PASS payload required-field schemas from one WebP output x AVIF input matrix.'
+    );
+    expect(releaseSource).toContain(
+      'Keep legacy exported required-field constants compatible while making them matrix-derived.'
+    );
+    expect(releaseSource).toContain(
+      'Replace duplicated PASS log JSON fixtures with a shared fixture factory for all four capability combinations.'
+    );
+    expect(releaseSource).toContain(
+      'Preserve missing conditional WebP and AVIF result-field coverage.'
+    );
+    expect(releaseSource).toContain(
+      'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.41 candidate.'
+    );
+    expect(releaseSource).toContain('### iOS PASS Payload Schema Matrix Helper');
+    expect(releaseSource).toContain(
+      '`scripts/ios-smoke-contract.mjs` now exposes `IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX`'
+    );
+    expect(releaseSource).toContain(
+      '`getIOSSmokePassPayloadRequiredFields()` now chooses the matrix case from `webpOutputAvailable` and `avifInputAvailable`'
+    );
+    expect(releaseSource).toContain(
+      '`test/iosSmokeContract.test.mjs` now builds prefixed `RNICK_IOS_SMOKE_PASS` payloads with a fixture factory'
+    );
+    expect(releaseSource).toContain(
+      'The matrix keeps `avifResultBytes`, `avifToPngResultBytes`, and `avifToWebPResultBytes` conditional on AVIF input availability'
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.41`.');
+    expect(releaseSource).toContain(
+      'Matrix-driven PASS payload required-field helper in `scripts/ios-smoke-contract.mjs`.'
+    );
+    expect(releaseSource).toContain(
+      'Four-case WebP output x AVIF input fixture factory coverage in `test/iosSmokeContract.test.mjs`.'
+    );
+    expect(releaseSource).toContain(
+      'README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.41 candidate state and the published v0.2.40 npm baseline.'
+    );
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.41`.'
+    );
     expect(releaseSource).toContain('## v0.2.40');
     expect(releaseSource).toContain(
       'Status: published to npm as the `0.2.40` latest iOS AVIF-input unavailable PASS payload schema snapshot release. No `v0.2.40` tag or GitHub Release is part of this package-page promotion.'
@@ -3923,7 +3988,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

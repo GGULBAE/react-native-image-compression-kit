@@ -10,12 +10,140 @@ import {
   IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS,
   IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS,
   IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS,
+  IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX,
   IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS,
   IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS,
   listMissingIOSSmokePassPayloadFields,
   parseIOSSmokePassPayload,
   shouldRetrySmokeTimeout,
 } from '../scripts/ios-smoke-contract.mjs';
+
+const IOS_SMOKE_PASS_FIXTURE_FIELD_VALUES = Object.freeze({
+  platform: 'ios',
+  jpegResultBytes: 883,
+  jpegPreserveResultBytes: 942,
+  pngResultBytes: 970,
+  gifResultBytes: 776,
+  webpResultBytes: 772,
+  heicResultBytes: 1000,
+  heifResultBytes: 1000,
+  avifResultBytes: 998,
+  jpegToPngResultBytes: 625,
+  pngToPngResultBytes: 672,
+  gifToPngResultBytes: 331,
+  webpToPngResultBytes: 248,
+  heicToPngResultBytes: 1071,
+  heifToPngResultBytes: 1071,
+  avifToPngResultBytes: 1066,
+  jpegToWebPResultBytes: 512,
+  pngToWebPResultBytes: 528,
+  gifToWebPResultBytes: 416,
+  webpToWebPResultBytes: 380,
+  heicToWebPResultBytes: 544,
+  heifToWebPResultBytes: 544,
+  avifToWebPResultBytes: 540,
+  webpTargetSizeResultBytes: 872,
+  targetSizeResultBytes: 940,
+});
+
+const IOS_SMOKE_PASS_REQUIRED_FIELDS_BY_MATRIX_ID = new Map([
+  ['webp-output-unavailable-avif-input-available', IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS],
+  [
+    'webp-output-unavailable-avif-input-unavailable',
+    IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS,
+  ],
+  [
+    'webp-output-available-avif-input-available',
+    IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS,
+  ],
+  [
+    'webp-output-available-avif-input-unavailable',
+    IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS,
+  ],
+]);
+
+const IOS_SMOKE_PASS_MATRIX_FIELD_PROBES = Object.freeze({
+  'webp-output-unavailable-avif-input-available': Object.freeze([
+    'avifResultBytes',
+  ]),
+  'webp-output-unavailable-avif-input-unavailable': Object.freeze([
+    'unsupportedInputs',
+  ]),
+  'webp-output-available-avif-input-available': Object.freeze([
+    'jpegToWebPResultBytes',
+    'pngToWebPResultBytes',
+    'gifToWebPResultBytes',
+    'webpToWebPResultBytes',
+    'heicToWebPResultBytes',
+    'heifToWebPResultBytes',
+    'avifToWebPResultBytes',
+  ]),
+  'webp-output-available-avif-input-unavailable': Object.freeze([
+    'heifToWebPResultBytes',
+  ]),
+});
+
+function createIOSSmokePassPayloadFixture({
+  webpOutputAvailable,
+  avifInputAvailable,
+}) {
+  const requiredFields = getIOSSmokePassPayloadRequiredFields({
+    webpOutputAvailable,
+    avifInputAvailable,
+  });
+  const fieldValues = {
+    ...IOS_SMOKE_PASS_FIXTURE_FIELD_VALUES,
+    webpOutputAvailable,
+    avifInputAvailable,
+    unsupportedInputs: avifInputAvailable ? [] : ['avif'],
+    unsupportedOutputs: webpOutputAvailable
+      ? ['heic', 'heif', 'avif']
+      : ['webp', 'heic', 'heif', 'avif'],
+  };
+
+  return Object.fromEntries(
+    requiredFields.map((field) => [field, fieldValues[field]])
+  );
+}
+
+function createIOSSmokePassLogFixture(schemaCase) {
+  return [
+    'Metro ready on fixture port 8081',
+    [
+      '2026-07-08 07:41:00.000 Df ImageCompressionKitExample[24100:9f1b]',
+      'RNICK_IOS_SMOKE_PASS',
+      JSON.stringify(createIOSSmokePassPayloadFixture(schemaCase)),
+    ].join(' '),
+    'post-pass cleanup line',
+  ].join('\n');
+}
+
+function omitFields(source, fields) {
+  const clone = { ...source };
+  for (const field of fields) {
+    delete clone[field];
+  }
+  return clone;
+}
+
+function formatExpectedIOSSmokePassPayloadSchema(payload) {
+  return Object.entries(payload)
+    .map(([key, value]) => `${key}: ${describeExpectedFixtureSchemaValue(value)}`)
+    .join('\n');
+}
+
+function describeExpectedFixtureSchemaValue(value) {
+  if (Array.isArray(value)) {
+    const elementType = value.length === 0 ? 'empty' : typeof value[0];
+    return `array<${elementType}>(${value.length})`;
+  }
+
+  if (Number.isInteger(value)) {
+    return 'integer';
+  }
+
+  return typeof value;
+}
 
 describe('iOS smoke contract helpers', () => {
   it('parses default and overridden iOS validation environment values', () => {
@@ -355,241 +483,13 @@ describe('iOS smoke contract helpers', () => {
     );
   });
 
-  it('snapshots the iOS smoke PASS payload schema from a log fixture', () => {
-    const passLogText = [
-      'Metro ready on fixture port 8081',
-      [
-        '2026-07-08 03:59:29.520 Df ImageCompressionKitExample[12372:92a8]',
-        'RNICK_IOS_SMOKE_PASS',
-        '{"platform":"ios","jpegResultBytes":883,"jpegPreserveResultBytes":942,"pngResultBytes":970,"gifResultBytes":776,"webpResultBytes":772,"heicResultBytes":1000,"heifResultBytes":1000,"avifResultBytes":998,"jpegToPngResultBytes":625,"pngToPngResultBytes":672,"gifToPngResultBytes":331,"webpToPngResultBytes":248,"heicToPngResultBytes":1071,"heifToPngResultBytes":1071,"avifToPngResultBytes":1066,"webpOutputAvailable":false,"avifInputAvailable":true,"targetSizeResultBytes":940,"unsupportedInputs":[],"unsupportedOutputs":["webp","heic","heif","avif"]}',
-      ].join(' '),
-      'post-pass cleanup line',
-    ].join('\n');
-
-    const payload = parseIOSSmokePassPayload(passLogText);
-
-    expect(payload).toEqual({
-      platform: 'ios',
-      jpegResultBytes: 883,
-      jpegPreserveResultBytes: 942,
-      pngResultBytes: 970,
-      gifResultBytes: 776,
-      webpResultBytes: 772,
-      heicResultBytes: 1000,
-      heifResultBytes: 1000,
-      avifResultBytes: 998,
-      jpegToPngResultBytes: 625,
-      pngToPngResultBytes: 672,
-      gifToPngResultBytes: 331,
-      webpToPngResultBytes: 248,
-      heicToPngResultBytes: 1071,
-      heifToPngResultBytes: 1071,
-      avifToPngResultBytes: 1066,
-      webpOutputAvailable: false,
-      avifInputAvailable: true,
-      targetSizeResultBytes: 940,
-      unsupportedInputs: [],
-      unsupportedOutputs: ['webp', 'heic', 'heif', 'avif'],
-    });
-    expect(Object.keys(payload)).toEqual([
-      'platform',
-      'jpegResultBytes',
-      'jpegPreserveResultBytes',
-      'pngResultBytes',
-      'gifResultBytes',
-      'webpResultBytes',
-      'heicResultBytes',
-      'heifResultBytes',
-      'avifResultBytes',
-      'jpegToPngResultBytes',
-      'pngToPngResultBytes',
-      'gifToPngResultBytes',
-      'webpToPngResultBytes',
-      'heicToPngResultBytes',
-      'heifToPngResultBytes',
-      'avifToPngResultBytes',
-      'webpOutputAvailable',
-      'avifInputAvailable',
-      'targetSizeResultBytes',
-      'unsupportedInputs',
-      'unsupportedOutputs',
+  it('snapshots every iOS smoke PASS payload schema matrix case from a fixture factory', () => {
+    expect(IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX.map(({ id }) => id)).toEqual([
+      'webp-output-unavailable-avif-input-available',
+      'webp-output-unavailable-avif-input-unavailable',
+      'webp-output-available-avif-input-available',
+      'webp-output-available-avif-input-unavailable',
     ]);
-    expect(IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS).toEqual(Object.keys(payload));
-    expect(listMissingIOSSmokePassPayloadFields(payload)).toEqual([]);
-    const { avifResultBytes, ...payloadWithoutAvifResultBytes } = payload;
-    expect(listMissingIOSSmokePassPayloadFields(payloadWithoutAvifResultBytes)).toEqual([
-      'avifResultBytes',
-    ]);
-    expect(listMissingIOSSmokePassPayloadFields({ platform: 'ios' })).toEqual([
-      'jpegResultBytes',
-      'jpegPreserveResultBytes',
-      'pngResultBytes',
-      'gifResultBytes',
-      'webpResultBytes',
-      'heicResultBytes',
-      'heifResultBytes',
-      'avifResultBytes',
-      'jpegToPngResultBytes',
-      'pngToPngResultBytes',
-      'gifToPngResultBytes',
-      'webpToPngResultBytes',
-      'heicToPngResultBytes',
-      'heifToPngResultBytes',
-      'avifToPngResultBytes',
-      'webpOutputAvailable',
-      'avifInputAvailable',
-      'targetSizeResultBytes',
-      'unsupportedInputs',
-      'unsupportedOutputs',
-    ]);
-    expect(formatIOSSmokePassPayloadSchema(payload)).toBe(
-      [
-        'platform: string',
-        'jpegResultBytes: integer',
-        'jpegPreserveResultBytes: integer',
-        'pngResultBytes: integer',
-        'gifResultBytes: integer',
-        'webpResultBytes: integer',
-        'heicResultBytes: integer',
-        'heifResultBytes: integer',
-        'avifResultBytes: integer',
-        'jpegToPngResultBytes: integer',
-        'pngToPngResultBytes: integer',
-        'gifToPngResultBytes: integer',
-        'webpToPngResultBytes: integer',
-        'heicToPngResultBytes: integer',
-        'heifToPngResultBytes: integer',
-        'avifToPngResultBytes: integer',
-        'webpOutputAvailable: boolean',
-        'avifInputAvailable: boolean',
-        'targetSizeResultBytes: integer',
-        'unsupportedInputs: array<empty>(0)',
-        'unsupportedOutputs: array<string>(4)',
-      ].join('\n')
-    );
-  });
-
-  it('snapshots the iOS smoke PASS payload schema when AVIF input is unavailable', () => {
-    const passLogText = [
-      'Metro ready on fixture port 8081',
-      [
-        '2026-07-08 05:44:18.711 Df ImageCompressionKitExample[22984:1d24]',
-        'RNICK_IOS_SMOKE_PASS',
-        '{"platform":"ios","jpegResultBytes":883,"jpegPreserveResultBytes":942,"pngResultBytes":970,"gifResultBytes":776,"webpResultBytes":772,"heicResultBytes":1000,"heifResultBytes":1000,"jpegToPngResultBytes":625,"pngToPngResultBytes":672,"gifToPngResultBytes":331,"webpToPngResultBytes":248,"heicToPngResultBytes":1071,"heifToPngResultBytes":1071,"webpOutputAvailable":false,"avifInputAvailable":false,"targetSizeResultBytes":940,"unsupportedInputs":["avif"],"unsupportedOutputs":["webp","heic","heif","avif"]}',
-      ].join(' '),
-      'post-pass cleanup line',
-    ].join('\n');
-
-    const payload = parseIOSSmokePassPayload(passLogText);
-
-    expect(payload).toEqual({
-      platform: 'ios',
-      jpegResultBytes: 883,
-      jpegPreserveResultBytes: 942,
-      pngResultBytes: 970,
-      gifResultBytes: 776,
-      webpResultBytes: 772,
-      heicResultBytes: 1000,
-      heifResultBytes: 1000,
-      jpegToPngResultBytes: 625,
-      pngToPngResultBytes: 672,
-      gifToPngResultBytes: 331,
-      webpToPngResultBytes: 248,
-      heicToPngResultBytes: 1071,
-      heifToPngResultBytes: 1071,
-      webpOutputAvailable: false,
-      avifInputAvailable: false,
-      targetSizeResultBytes: 940,
-      unsupportedInputs: ['avif'],
-      unsupportedOutputs: ['webp', 'heic', 'heif', 'avif'],
-    });
-    expect(Object.keys(payload)).toEqual(
-      IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS
-    );
-    expect(getIOSSmokePassPayloadRequiredFields(payload)).toEqual(
-      IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS
-    );
-    expect(listMissingIOSSmokePassPayloadFields(payload)).toEqual([]);
-    expect(payload).not.toHaveProperty('avifResultBytes');
-    expect(payload).not.toHaveProperty('avifToPngResultBytes');
-    expect(payload.unsupportedInputs).toEqual(['avif']);
-
-    const { unsupportedInputs, ...payloadWithoutUnsupportedInputs } = payload;
-    expect(listMissingIOSSmokePassPayloadFields(payloadWithoutUnsupportedInputs)).toEqual([
-      'unsupportedInputs',
-    ]);
-    expect(formatIOSSmokePassPayloadSchema(payload)).toBe(
-      [
-        'platform: string',
-        'jpegResultBytes: integer',
-        'jpegPreserveResultBytes: integer',
-        'pngResultBytes: integer',
-        'gifResultBytes: integer',
-        'webpResultBytes: integer',
-        'heicResultBytes: integer',
-        'heifResultBytes: integer',
-        'jpegToPngResultBytes: integer',
-        'pngToPngResultBytes: integer',
-        'gifToPngResultBytes: integer',
-        'webpToPngResultBytes: integer',
-        'heicToPngResultBytes: integer',
-        'heifToPngResultBytes: integer',
-        'webpOutputAvailable: boolean',
-        'avifInputAvailable: boolean',
-        'targetSizeResultBytes: integer',
-        'unsupportedInputs: array<string>(1)',
-        'unsupportedOutputs: array<string>(4)',
-      ].join('\n')
-    );
-  });
-
-  it('snapshots the iOS smoke PASS payload schema when WebP output is available', () => {
-    const passLogText = [
-      'Metro ready on fixture port 8081',
-      [
-        '2026-07-08 05:18:42.102 Df ImageCompressionKitExample[22311:9f1b]',
-        'RNICK_IOS_SMOKE_PASS',
-        '{"platform":"ios","jpegResultBytes":883,"jpegPreserveResultBytes":942,"pngResultBytes":970,"gifResultBytes":776,"webpResultBytes":772,"heicResultBytes":1000,"heifResultBytes":1000,"avifResultBytes":998,"jpegToPngResultBytes":625,"pngToPngResultBytes":672,"gifToPngResultBytes":331,"webpToPngResultBytes":248,"heicToPngResultBytes":1071,"heifToPngResultBytes":1071,"avifToPngResultBytes":1066,"webpOutputAvailable":true,"avifInputAvailable":true,"jpegToWebPResultBytes":512,"pngToWebPResultBytes":528,"gifToWebPResultBytes":416,"webpToWebPResultBytes":380,"heicToWebPResultBytes":544,"heifToWebPResultBytes":544,"avifToWebPResultBytes":540,"webpTargetSizeResultBytes":872,"targetSizeResultBytes":940,"unsupportedInputs":[],"unsupportedOutputs":["heic","heif","avif"]}',
-      ].join(' '),
-      'post-pass cleanup line',
-    ].join('\n');
-
-    const payload = parseIOSSmokePassPayload(passLogText);
-
-    expect(payload).toEqual({
-      platform: 'ios',
-      jpegResultBytes: 883,
-      jpegPreserveResultBytes: 942,
-      pngResultBytes: 970,
-      gifResultBytes: 776,
-      webpResultBytes: 772,
-      heicResultBytes: 1000,
-      heifResultBytes: 1000,
-      avifResultBytes: 998,
-      jpegToPngResultBytes: 625,
-      pngToPngResultBytes: 672,
-      gifToPngResultBytes: 331,
-      webpToPngResultBytes: 248,
-      heicToPngResultBytes: 1071,
-      heifToPngResultBytes: 1071,
-      avifToPngResultBytes: 1066,
-      webpOutputAvailable: true,
-      avifInputAvailable: true,
-      jpegToWebPResultBytes: 512,
-      pngToWebPResultBytes: 528,
-      gifToWebPResultBytes: 416,
-      webpToWebPResultBytes: 380,
-      heicToWebPResultBytes: 544,
-      heifToWebPResultBytes: 544,
-      avifToWebPResultBytes: 540,
-      webpTargetSizeResultBytes: 872,
-      targetSizeResultBytes: 940,
-      unsupportedInputs: [],
-      unsupportedOutputs: ['heic', 'heif', 'avif'],
-    });
-    expect(Object.keys(payload)).toEqual(
-      IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
-    );
     expect(IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS).toEqual([
       'jpegToWebPResultBytes',
       'pngToWebPResultBytes',
@@ -600,160 +500,71 @@ describe('iOS smoke contract helpers', () => {
       'avifToWebPResultBytes',
       'webpTargetSizeResultBytes',
     ]);
-    expect(getIOSSmokePassPayloadRequiredFields(payload)).toEqual(
-      IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
-    );
-    expect(listMissingIOSSmokePassPayloadFields(payload)).toEqual([]);
-    expect(payload.unsupportedOutputs).not.toContain('webp');
-    const { webpTargetSizeResultBytes, ...payloadWithoutWebPTargetSize } = payload;
-    expect(listMissingIOSSmokePassPayloadFields(payloadWithoutWebPTargetSize)).toEqual([
-      'webpTargetSizeResultBytes',
-    ]);
-    const {
-      jpegToWebPResultBytes,
-      pngToWebPResultBytes,
-      gifToWebPResultBytes,
-      webpToWebPResultBytes,
-      heicToWebPResultBytes,
-      heifToWebPResultBytes,
-      avifToWebPResultBytes,
-      ...payloadWithoutWebPOutputResults
-    } = payload;
-    expect(listMissingIOSSmokePassPayloadFields(payloadWithoutWebPOutputResults)).toEqual([
-      'jpegToWebPResultBytes',
-      'pngToWebPResultBytes',
-      'gifToWebPResultBytes',
-      'webpToWebPResultBytes',
-      'heicToWebPResultBytes',
-      'heifToWebPResultBytes',
-      'avifToWebPResultBytes',
-    ]);
-    expect(formatIOSSmokePassPayloadSchema(payload)).toBe(
-      [
-        'platform: string',
-        'jpegResultBytes: integer',
-        'jpegPreserveResultBytes: integer',
-        'pngResultBytes: integer',
-        'gifResultBytes: integer',
-        'webpResultBytes: integer',
-        'heicResultBytes: integer',
-        'heifResultBytes: integer',
-        'avifResultBytes: integer',
-        'jpegToPngResultBytes: integer',
-        'pngToPngResultBytes: integer',
-        'gifToPngResultBytes: integer',
-        'webpToPngResultBytes: integer',
-        'heicToPngResultBytes: integer',
-        'heifToPngResultBytes: integer',
-        'avifToPngResultBytes: integer',
-        'webpOutputAvailable: boolean',
-        'avifInputAvailable: boolean',
-        'jpegToWebPResultBytes: integer',
-        'pngToWebPResultBytes: integer',
-        'gifToWebPResultBytes: integer',
-        'webpToWebPResultBytes: integer',
-        'heicToWebPResultBytes: integer',
-        'heifToWebPResultBytes: integer',
-        'avifToWebPResultBytes: integer',
-        'webpTargetSizeResultBytes: integer',
-        'targetSizeResultBytes: integer',
-        'unsupportedInputs: array<empty>(0)',
-        'unsupportedOutputs: array<string>(3)',
-      ].join('\n')
-    );
-  });
 
-  it('snapshots the iOS smoke PASS payload schema when WebP output is available and AVIF input is unavailable', () => {
-    const passLogText = [
-      'Metro ready on fixture port 8081',
-      [
-        '2026-07-08 06:01:03.284 Df ImageCompressionKitExample[23490:9f1b]',
-        'RNICK_IOS_SMOKE_PASS',
-        '{"platform":"ios","jpegResultBytes":883,"jpegPreserveResultBytes":942,"pngResultBytes":970,"gifResultBytes":776,"webpResultBytes":772,"heicResultBytes":1000,"heifResultBytes":1000,"jpegToPngResultBytes":625,"pngToPngResultBytes":672,"gifToPngResultBytes":331,"webpToPngResultBytes":248,"heicToPngResultBytes":1071,"heifToPngResultBytes":1071,"webpOutputAvailable":true,"avifInputAvailable":false,"jpegToWebPResultBytes":512,"pngToWebPResultBytes":528,"gifToWebPResultBytes":416,"webpToWebPResultBytes":380,"heicToWebPResultBytes":544,"heifToWebPResultBytes":544,"webpTargetSizeResultBytes":872,"targetSizeResultBytes":940,"unsupportedInputs":["avif"],"unsupportedOutputs":["heic","heif","avif"]}',
-      ].join(' '),
-      'post-pass cleanup line',
-    ].join('\n');
+    for (const schemaCase of IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX) {
+      const payload = parseIOSSmokePassPayload(
+        createIOSSmokePassLogFixture(schemaCase)
+      );
+      const expectedPayload = createIOSSmokePassPayloadFixture(schemaCase);
+      const expectedRequiredFields =
+        IOS_SMOKE_PASS_REQUIRED_FIELDS_BY_MATRIX_ID.get(schemaCase.id);
+      const missingFieldProbe =
+        IOS_SMOKE_PASS_MATRIX_FIELD_PROBES[schemaCase.id];
 
-    const payload = parseIOSSmokePassPayload(passLogText);
+      expect(payload).toEqual(expectedPayload);
+      expect(Object.keys(payload)).toEqual(schemaCase.requiredFields);
+      expect(schemaCase.requiredFields).toEqual(expectedRequiredFields);
+      expect(getIOSSmokePassPayloadRequiredFields(payload)).toEqual(
+        schemaCase.requiredFields
+      );
+      expect(listMissingIOSSmokePassPayloadFields(payload)).toEqual([]);
+      expect(payload.webpOutputAvailable).toBe(schemaCase.webpOutputAvailable);
+      expect(payload.avifInputAvailable).toBe(schemaCase.avifInputAvailable);
+      expect(payload.unsupportedInputs).toEqual(
+        schemaCase.avifInputAvailable ? [] : ['avif']
+      );
+      expect(payload.unsupportedOutputs).toEqual(
+        schemaCase.webpOutputAvailable
+          ? ['heic', 'heif', 'avif']
+          : ['webp', 'heic', 'heif', 'avif']
+      );
+      expect(formatIOSSmokePassPayloadSchema(payload)).toBe(
+        formatExpectedIOSSmokePassPayloadSchema(expectedPayload)
+      );
+      expect(listMissingIOSSmokePassPayloadFields(
+        omitFields(payload, missingFieldProbe)
+      )).toEqual(missingFieldProbe);
 
-    expect(payload).toEqual({
-      platform: 'ios',
-      jpegResultBytes: 883,
-      jpegPreserveResultBytes: 942,
-      pngResultBytes: 970,
-      gifResultBytes: 776,
-      webpResultBytes: 772,
-      heicResultBytes: 1000,
-      heifResultBytes: 1000,
-      jpegToPngResultBytes: 625,
-      pngToPngResultBytes: 672,
-      gifToPngResultBytes: 331,
-      webpToPngResultBytes: 248,
-      heicToPngResultBytes: 1071,
-      heifToPngResultBytes: 1071,
-      webpOutputAvailable: true,
-      avifInputAvailable: false,
-      jpegToWebPResultBytes: 512,
-      pngToWebPResultBytes: 528,
-      gifToWebPResultBytes: 416,
-      webpToWebPResultBytes: 380,
-      heicToWebPResultBytes: 544,
-      heifToWebPResultBytes: 544,
-      webpTargetSizeResultBytes: 872,
-      targetSizeResultBytes: 940,
-      unsupportedInputs: ['avif'],
-      unsupportedOutputs: ['heic', 'heif', 'avif'],
-    });
-    expect(Object.keys(payload)).toEqual(
-      IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
+      if (schemaCase.avifInputAvailable) {
+        expect(payload).toHaveProperty('avifResultBytes');
+        expect(payload).toHaveProperty('avifToPngResultBytes');
+      } else {
+        expect(payload).not.toHaveProperty('avifResultBytes');
+        expect(payload).not.toHaveProperty('avifToPngResultBytes');
+      }
+
+      if (schemaCase.webpOutputAvailable) {
+        expect(payload).toHaveProperty('webpTargetSizeResultBytes');
+        expect(payload.unsupportedOutputs).not.toContain('webp');
+      } else {
+        expect(payload).not.toHaveProperty('webpTargetSizeResultBytes');
+      }
+
+      if (schemaCase.webpOutputAvailable && schemaCase.avifInputAvailable) {
+        expect(payload).toHaveProperty('avifToWebPResultBytes');
+      } else {
+        expect(payload).not.toHaveProperty('avifToWebPResultBytes');
+      }
+    }
+
+    expect(listMissingIOSSmokePassPayloadFields({ platform: 'ios' })).toEqual(
+      IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS.filter(
+        (field) => field !== 'platform'
+      )
     );
-    expect(getIOSSmokePassPayloadRequiredFields(payload)).toEqual(
-      IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
-    );
-    expect(listMissingIOSSmokePassPayloadFields(payload)).toEqual([]);
-    expect(payload).not.toHaveProperty('avifResultBytes');
-    expect(payload).not.toHaveProperty('avifToPngResultBytes');
-    expect(payload).not.toHaveProperty('avifToWebPResultBytes');
-    expect(payload.unsupportedInputs).toEqual(['avif']);
-    expect(payload.unsupportedOutputs).not.toContain('webp');
     expect(
       IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
     ).not.toContain('avifToWebPResultBytes');
-
-    const { heifToWebPResultBytes, ...payloadWithoutHeifToWebP } = payload;
-    expect(listMissingIOSSmokePassPayloadFields(payloadWithoutHeifToWebP)).toEqual([
-      'heifToWebPResultBytes',
-    ]);
-    expect(formatIOSSmokePassPayloadSchema(payload)).toBe(
-      [
-        'platform: string',
-        'jpegResultBytes: integer',
-        'jpegPreserveResultBytes: integer',
-        'pngResultBytes: integer',
-        'gifResultBytes: integer',
-        'webpResultBytes: integer',
-        'heicResultBytes: integer',
-        'heifResultBytes: integer',
-        'jpegToPngResultBytes: integer',
-        'pngToPngResultBytes: integer',
-        'gifToPngResultBytes: integer',
-        'webpToPngResultBytes: integer',
-        'heicToPngResultBytes: integer',
-        'heifToPngResultBytes: integer',
-        'webpOutputAvailable: boolean',
-        'avifInputAvailable: boolean',
-        'jpegToWebPResultBytes: integer',
-        'pngToWebPResultBytes: integer',
-        'gifToWebPResultBytes: integer',
-        'webpToWebPResultBytes: integer',
-        'heicToWebPResultBytes: integer',
-        'heifToWebPResultBytes: integer',
-        'webpTargetSizeResultBytes: integer',
-        'targetSizeResultBytes: integer',
-        'unsupportedInputs: array<string>(1)',
-        'unsupportedOutputs: array<string>(3)',
-      ].join('\n')
-    );
   });
 
   it('handles missing and malformed iOS smoke PASS payload logs', () => {
