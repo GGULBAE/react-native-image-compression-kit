@@ -198,4 +198,151 @@ describe('iOS smoke contract helpers', () => {
       summary.indexOf('### Packed log tail')
     );
   });
+
+  it('snapshots the diagnostics summary markdown schema', () => {
+    const logText = [
+      'Installing ImageCompressionKitExample.app',
+      'Starting iOS smoke attempt 1/2 with timeout=45000ms.',
+      'RNICK_IOS_SMOKE_START',
+      'Metro unrelated line',
+      'Timed out waiting for RNICK_IOS_SMOKE_PASS after 45000ms.',
+      'iOS smoke diagnostics:',
+      '- captured RNICK_IOS_SMOKE stream tail:',
+      '  RNICK_IOS_SMOKE_STEP_START compress-jpeg-to-jpeg',
+      'Retrying after terminating the app so the next attempt gets a fresh launch and log stream.',
+      'final cleanup line',
+    ].join('\n');
+
+    expect(
+      formatIOSSmokeDiagnosticsSummary({
+        logText,
+        markerMaxLines: 20,
+        tailMaxLines: 4,
+      })
+    ).toBe(
+      [
+        '## iOS smoke diagnostics',
+        '',
+        '### Key markers and diagnostics',
+        '',
+        '```text',
+        'Starting iOS smoke attempt 1/2 with timeout=45000ms.',
+        'RNICK_IOS_SMOKE_START',
+        'Timed out waiting for RNICK_IOS_SMOKE_PASS after 45000ms.',
+        'iOS smoke diagnostics:',
+        '- captured RNICK_IOS_SMOKE stream tail:',
+        '  RNICK_IOS_SMOKE_STEP_START compress-jpeg-to-jpeg',
+        'Retrying after terminating the app so the next attempt gets a fresh launch and log stream.',
+        '```',
+        '',
+        '### Packed log tail',
+        '',
+        '```text',
+        '- captured RNICK_IOS_SMOKE stream tail:',
+        '  RNICK_IOS_SMOKE_STEP_START compress-jpeg-to-jpeg',
+        'Retrying after terminating the app so the next attempt gets a fresh launch and log stream.',
+        'final cleanup line',
+        '```',
+      ].join('\n')
+    );
+  });
+
+  it('snapshots empty and no-marker diagnostics summaries', () => {
+    expect(
+      formatIOSSmokeDiagnosticsSummary({
+        logText: '',
+        markerMaxLines: 5,
+        tailMaxLines: 5,
+      })
+    ).toBe(
+      [
+        '## iOS smoke diagnostics',
+        '',
+        '### Key markers and diagnostics',
+        '',
+        '```text',
+        '(no RNICK_IOS_SMOKE markers or diagnostics lines captured)',
+        '```',
+        '',
+        '### Packed log tail',
+        '',
+        '```text',
+        '(no iOS smoke log captured)',
+        '```',
+      ].join('\n')
+    );
+
+    expect(
+      formatIOSSmokeDiagnosticsSummary({
+        logText: [
+          'Installing ImageCompressionKitExample.app',
+          'Metro ready without smoke markers',
+          'final cleanup line',
+        ].join('\n'),
+        markerMaxLines: 5,
+        tailMaxLines: 5,
+      })
+    ).toBe(
+      [
+        '## iOS smoke diagnostics',
+        '',
+        '### Key markers and diagnostics',
+        '',
+        '```text',
+        '(no RNICK_IOS_SMOKE markers or diagnostics lines captured)',
+        '```',
+        '',
+        '### Packed log tail',
+        '',
+        '```text',
+        'Installing ImageCompressionKitExample.app',
+        'Metro ready without smoke markers',
+        'final cleanup line',
+        '```',
+      ].join('\n')
+    );
+  });
+
+  it('bounds very long diagnostics summaries to marker and tail windows', () => {
+    const markerLines = Array.from(
+      { length: 12 },
+      (_, index) => `RNICK_IOS_SMOKE_STEP_${index + 1}`
+    );
+    const logLines = markerLines.flatMap((line, index) => [
+      `noise line ${index + 1}`,
+      line,
+    ]);
+    logLines.push('final cleanup line');
+
+    expect(
+      formatIOSSmokeDiagnosticsSummary({
+        logText: logLines.join('\n'),
+        markerMaxLines: 4,
+        tailMaxLines: 5,
+      })
+    ).toBe(
+      [
+        '## iOS smoke diagnostics',
+        '',
+        '### Key markers and diagnostics',
+        '',
+        '```text',
+        'RNICK_IOS_SMOKE_STEP_9',
+        'RNICK_IOS_SMOKE_STEP_10',
+        'RNICK_IOS_SMOKE_STEP_11',
+        'RNICK_IOS_SMOKE_STEP_12',
+        '```',
+        '',
+        '### Packed log tail',
+        '',
+        '```text',
+        'noise line 11',
+        'RNICK_IOS_SMOKE_STEP_11',
+        'noise line 12',
+        'RNICK_IOS_SMOKE_STEP_12',
+        'final cleanup line',
+        '```',
+      ].join('\n')
+    );
+  });
 });

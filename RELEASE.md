@@ -1,5 +1,50 @@
 # Release Notes
 
+## v0.2.37
+
+Status: unpublished release candidate for iOS smoke diagnostics artifact schema snapshot coverage. npm `latest` remains `0.2.19`; no `v0.2.37` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while pinning the exact markdown schema that failed iOS smoke diagnostics artifacts expose in `ios-smoke-diagnostics/ios-smoke-summary.md` and the GitHub Step Summary.
+
+### Goals
+
+- Add exact `formatIOSSmokeDiagnosticsSummary()` markdown schema fixture expectations.
+- Cover empty-log and no-marker fallback text for failed smoke summaries.
+- Cover very-long-log marker and packed-tail window bounds without forcing a simulator failure.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.37 candidate.
+
+### iOS Smoke Diagnostics Artifact Schema Snapshots
+
+`test/iosSmokeContract.test.mjs` now snapshots the full `formatIOSSmokeDiagnosticsSummary()` markdown shape: `## iOS smoke diagnostics`, `### Key markers and diagnostics`, `### Packed log tail`, and the fenced `text` blocks used by GitHub summary rendering.
+
+The empty-log fixture pins `(no RNICK_IOS_SMOKE markers or diagnostics lines captured)` and `(no iOS smoke log captured)` fallback text. The no-marker fixture pins the same marker fallback while preserving ordinary smoke command output in the packed log tail.
+
+The very-long-log fixture pins marker and tail truncation independently, proving the marker section keeps the last diagnostic lines while the packed tail keeps the final raw log lines.
+
+### Included
+
+- `package.json` version bump to `0.2.37`.
+- Exact markdown schema snapshot coverage for `formatIOSSmokeDiagnosticsSummary()`.
+- Empty-log, no-marker, and very-long-log summary fixture expectations.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.37 candidate state.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.37`.
+- Forced simulator smoke failures.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.36
 
 Status: unpublished release candidate for iOS smoke artifact failure-path dry-run fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.36` tag, GitHub Release, or npm publish is part of this candidate.
