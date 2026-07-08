@@ -2,9 +2,9 @@
 
 ## v0.2.40
 
-Status: unpublished release candidate for iOS AVIF-input unavailable PASS payload schema snapshot coverage. npm `latest` remains `0.2.38`; no `v0.2.40` tag, GitHub Release, or npm publish is part of this candidate.
+Status: published to npm as the `0.2.40` latest iOS AVIF-input unavailable PASS payload schema snapshot release. No `v0.2.40` tag or GitHub Release is part of this package-page promotion.
 
-This candidate does not enable AVIF output, force AVIF input unavailability, force WebP output availability, or add iOS native features. It keeps iOS native compression behavior unchanged while pinning the JSON payload fields emitted by successful `RNICK_IOS_SMOKE_PASS` host-app smoke logs when `avifInputAvailable=false`.
+This release does not enable AVIF output, force AVIF input unavailability, force WebP output availability, or add iOS native features. It keeps iOS native compression behavior unchanged while pinning the JSON payload fields emitted by successful `RNICK_IOS_SMOKE_PASS` host-app smoke logs when `avifInputAvailable=false`.
 
 ### Goals
 
@@ -12,7 +12,7 @@ This candidate does not enable AVIF output, force AVIF input unavailability, for
 - Snapshot omission of `avifResultBytes` and `avifToPngResultBytes` when `avifInputAvailable=false`.
 - Snapshot omission of `avifToWebPResultBytes` when WebP output is available but AVIF input is unavailable.
 - Prove `unsupportedInputs` includes `avif` when AVIF source support is unavailable.
-- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.40 candidate.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.40 npm latest release.
 
 ### iOS AVIF-Input Unavailable PASS Payload Schema Snapshots
 
@@ -27,7 +27,8 @@ The fixtures also pin `unsupportedInputs: ['avif']`, proving the AVIF-input unav
 - `package.json` version bump to `0.2.40`.
 - Conditional AVIF-input unavailable PASS payload schema helpers in `scripts/ios-smoke-contract.mjs`.
 - Exact `avifInputAvailable=false` `RNICK_IOS_SMOKE_PASS` payload fixture expectations in `test/iosSmokeContract.test.mjs`.
-- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.40 candidate state and the published v0.2.38 npm baseline.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.40 npm latest release state.
+- npm publish promotion for `0.2.40` with the `latest` dist-tag.
 
 ### Not Included
 
@@ -36,7 +37,7 @@ The fixtures also pin `unsupportedInputs: ['avif']`, proving the AVIF-input unav
 - WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
 - AVIF output enablement.
 - Actual AVIF file returns from `compressImage()`.
-- npm publish, git tag, or GitHub Release promotion for `v0.2.40`.
+- Git tag or GitHub Release promotion for `v0.2.40`.
 - Forced simulator capability changes.
 
 ### Validation
@@ -46,7 +47,9 @@ The fixtures also pin `unsupportedInputs: ['avif']`, proving the AVIF-input unav
 - `git diff --check`
 - `pnpm pack --dry-run`
 - `pnpm release:dry-run`
-- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+- `npm view react-native-image-compression-kit version dist-tags --json`
+- `pnpm smoke:registry -- --version 0.2.40`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the package-page promotion commit.
 
 ## v0.2.39
 
