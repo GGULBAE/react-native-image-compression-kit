@@ -162,7 +162,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.33');
+    expect(packageJson.version).toBe('0.2.34');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -190,13 +190,13 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.33` is an unpublished iOS smoke process lifecycle fixture coverage candidate for `react-native-image-compression-kit`.'
+      'Version `0.2.34` is an unpublished iOS smoke log stream error fixture coverage candidate for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
-      'moving iOS smoke attempt listener cleanup, log stream process termination, and log process reference clearing behind `createSmokeAttemptLifecycle()`'
+      'fixing `createSmokeAttemptLifecycle()` log process `error` events so `iOS smoke log stream error:` messages are written to the smoke output, retained in marker and smoke-log snapshot state, and available to timeout diagnostics'
     );
     expect(readmeSource).toContain(
-      '`test/iosSmokeLifecycle.test.mjs` now fixes simulator-free fake EventEmitter expectations for Metro stdout/stderr listeners, unified log stream stdout/stderr listeners, log stream `error` listeners, log process stop, and `setLogProcess(null)` after PASS, FAIL, and timeout settle paths'
+      '`test/iosSmokeLifecycle.test.mjs` now fixes simulator-free fake EventEmitter expectations for log stream error output, snapshot state, timeout diagnostic propagation, listener cleanup, log process stop, and `setLogProcess(null)` after timeout settle'
     );
     expect(readmeSource).toContain(
       'The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'
@@ -210,10 +210,10 @@ describe('Android verification scripts', () => {
       'Version `0.2.19` remains the latest published npm package and AVIF output production gate release.'
     );
     expect(readmeSource).toContain(
-      'No npm publish, git tag, or GitHub Release is part of the v0.2.33 candidate.'
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.34 candidate.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.33` package metadata is prepared as an unpublished iOS smoke process lifecycle fixture coverage candidate for `react-native-image-compression-kit`'
+      'The `0.2.34` package metadata is prepared as an unpublished iOS smoke log stream error fixture coverage candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'Version `0.2.19` remains the latest published npm package.'
@@ -321,6 +321,9 @@ describe('Android verification scripts', () => {
       'version `0.2.33` is the unpublished iOS smoke process lifecycle fixture coverage candidate'
     );
     expect(readmeSource).toContain(
+      'version `0.2.34` is the unpublished iOS smoke log stream error fixture coverage candidate'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -391,6 +394,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.33` hardens iOS smoke process lifecycle fixture coverage without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.34` hardens iOS smoke log stream error fixture coverage without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -782,6 +788,9 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       'fake EventEmitter Metro/log stream listener cleanup plus log process stop and `setLogProcess(null)` after PASS, FAIL, and timeout settle paths'
     );
+    expect(readmeSource).toContain(
+      'log stream error output/snapshot/timeout diagnostics propagation'
+    );
     expect(readmeSource).toContain('Xcode 26.5 and the iPhoneSimulator26.5 SDK');
     expect(readmeSource).toContain('Ruby 3.1 or newer');
     expect(readmeSource).toContain('patched ActiveSupport and Concurrent Ruby ranges');
@@ -818,6 +827,7 @@ describe('Android verification scripts', () => {
     expect(smokeContractSource).toContain('formatSmokeRetryWarningMessages');
     expect(smokeContractSource).toContain('formatSmokeRetryWarning');
     expect(smokeContractSource).toContain('iOS smoke diagnostics:');
+    expect(smokeContractSource).toContain('iOS smoke log stream error:');
     expect(smokeContractSource).toContain('RNICK_IOS_SMOKE_PASS');
     expect(smokeContractSource).toContain('RNICK_IOS_SMOKE_FAIL');
     expect(smokeContractSource).toContain('Retrying after terminating the app');
@@ -835,6 +845,13 @@ describe('Android verification scripts', () => {
     expect(smokeLifecycleTestSource).toContain(
       'removes listeners, stops the log process, and clears the reference after timeout settle'
     );
+    expect(smokeLifecycleTestSource).toContain(
+      'records log stream errors in output, snapshot state, and timeout diagnostics'
+    );
+    expect(smokeLifecycleTestSource).toContain('fixture log stream disconnected');
+    expect(smokeLifecycleTestSource).toContain('createSmokeTimeoutErrorFromCLIState');
+    expect(smokeLifecycleTestSource).toContain('smokeLogOutput');
+    expect(smokeLifecycleTestSource).toContain('iOS smoke log stream error:');
     expect(smokeLifecycleTestSource).toContain('listenerCount');
     expect(smokeLifecycleTestSource).toContain('setLogProcess');
     expect(smokeLifecycleTestSource).toContain('stopProcess');
@@ -864,11 +881,53 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes and previous release notes', () => {
+  it('documents the v0.2.34 iOS smoke log stream error fixture coverage candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.33');
+    expect(packageJson.version).toBe('0.2.34');
+    expect(releaseSource).toContain('## v0.2.34');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for iOS smoke log stream error fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.34` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while adding simulator-free fixture coverage for log stream `error` events flowing through output, lifecycle snapshot state, and timeout diagnostics used by `scripts/ios-validation.mjs smoke`.'
+    );
+    expect(releaseSource).toContain(
+      'Treat log process `error` events as smoke log output inside `createSmokeAttemptLifecycle()`.'
+    );
+    expect(releaseSource).toContain(
+      'Cover fake EventEmitter log stream `error` output and snapshot state without launching Xcode, Metro, or a simulator.'
+    );
+    expect(releaseSource).toContain(
+      'Verify timeout diagnostics receive the log stream error text through `createSmokeTimeoutErrorFromCLIState()`.'
+    );
+    expect(releaseSource).toContain(
+      'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.34 candidate.'
+    );
+    expect(releaseSource).toContain('### iOS Smoke Log Stream Error Fixtures');
+    expect(releaseSource).toContain(
+      '`createSmokeAttemptLifecycle()` now records log process `error` events as `iOS smoke log stream error:` output and includes that text in `markerBuffer` and `smokeLogOutput` snapshot state.'
+    );
+    expect(releaseSource).toContain(
+      '`test/iosSmokeLifecycle.test.mjs` validates the log stream error path with a fake EventEmitter process.'
+    );
+    expect(releaseSource).toContain(
+      'The test pins output writing, snapshot state, timeout diagnostic propagation through `createSmokeTimeoutErrorFromCLIState()`, and cleanup after timeout settle.'
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.34`.');
+    expect(releaseSource).toContain(
+      '`createSmokeAttemptLifecycle()` log process `error` events now populate smoke-log snapshot state.'
+    );
+    expect(releaseSource).toContain(
+      '`test/iosSmokeLifecycle.test.mjs` Node-level fixture coverage for log stream error output, snapshot state, and timeout diagnostics propagation.'
+    );
+    expect(releaseSource).toContain(
+      'README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.34 candidate state.'
+    );
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.34`.'
+    );
     expect(releaseSource).toContain('## v0.2.33');
     expect(releaseSource).toContain(
       'Status: unpublished release candidate for iOS smoke process lifecycle fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.33` tag, GitHub Release, or npm publish is part of this candidate.'
@@ -3408,7 +3467,7 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](RELEASE.md) for the v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

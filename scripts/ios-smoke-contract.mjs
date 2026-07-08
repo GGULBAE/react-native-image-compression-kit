@@ -151,7 +151,9 @@ export function createSmokeAttemptLifecycle({
     onData(chunk, { smokeLog: true });
   };
   const onLogProcessError = (error) => {
-    onData(Buffer.from(`iOS smoke log stream error: ${error.message}\n`));
+    onData(Buffer.from(`iOS smoke log stream error: ${error.message}\n`), {
+      smokeLog: true,
+    });
   };
 
   const attach = () => {

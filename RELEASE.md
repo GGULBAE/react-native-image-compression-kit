@@ -1,5 +1,49 @@
 # Release Notes
 
+## v0.2.34
+
+Status: unpublished release candidate for iOS smoke log stream error fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.34` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while adding simulator-free fixture coverage for log stream `error` events flowing through output, lifecycle snapshot state, and timeout diagnostics used by `scripts/ios-validation.mjs smoke`.
+
+### Goals
+
+- Treat log process `error` events as smoke log output inside `createSmokeAttemptLifecycle()`.
+- Cover fake EventEmitter log stream `error` output and snapshot state without launching Xcode, Metro, or a simulator.
+- Verify timeout diagnostics receive the log stream error text through `createSmokeTimeoutErrorFromCLIState()`.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.34 candidate.
+
+### iOS Smoke Log Stream Error Fixtures
+
+`createSmokeAttemptLifecycle()` now records log process `error` events as `iOS smoke log stream error:` output and includes that text in `markerBuffer` and `smokeLogOutput` snapshot state.
+
+`test/iosSmokeLifecycle.test.mjs` validates the log stream error path with a fake EventEmitter process. The test pins output writing, snapshot state, timeout diagnostic propagation through `createSmokeTimeoutErrorFromCLIState()`, and cleanup after timeout settle.
+
+The runtime smoke still uses Xcode, Metro, simulator log streaming, and unified logs for end-to-end validation. The fixture coverage makes a broken log stream visible in timeout diagnostics instead of losing the process error outside the captured smoke-log state.
+
+### Included
+
+- `package.json` version bump to `0.2.34`.
+- `createSmokeAttemptLifecycle()` log process `error` events now populate smoke-log snapshot state.
+- `test/iosSmokeLifecycle.test.mjs` Node-level fixture coverage for log stream error output, snapshot state, and timeout diagnostics propagation.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.34 candidate state.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.34`.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation after push.
+
 ## v0.2.33
 
 Status: unpublished release candidate for iOS smoke process lifecycle fixture coverage. npm `latest` remains `0.2.19`; no `v0.2.33` tag, GitHub Release, or npm publish is part of this candidate.
