@@ -1,5 +1,50 @@
 # Release Notes
 
+## v0.2.38
+
+Status: unpublished release candidate for iOS smoke PASS payload schema snapshot coverage. npm `latest` remains `0.2.19`; no `v0.2.38` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output or add iOS features. It keeps iOS native compression behavior unchanged while pinning the JSON payload schema emitted by successful `RNICK_IOS_SMOKE_PASS` host-app smoke logs.
+
+### Goals
+
+- Add simulator-free `RNICK_IOS_SMOKE_PASS` log line fixture parsing coverage.
+- Snapshot the required PASS payload key order and type schema for platform, result byte, capability, target-size, and unsupported format fields.
+- Cover missing or malformed PASS payload logs without forcing a real simulator failure.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.38 candidate.
+
+### iOS Smoke PASS Payload Schema Snapshots
+
+`scripts/ios-smoke-contract.mjs` now exposes `parseIOSSmokePassPayload()`, `IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS`, `listMissingIOSSmokePassPayloadFields()`, and `formatIOSSmokePassPayloadSchema()` so the successful smoke marker can be tested without launching Xcode, Metro, or a simulator.
+
+`test/iosSmokeContract.test.mjs` parses a prefixed `RNICK_IOS_SMOKE_PASS` log fixture and snapshots the payload shape for `platform`, JPEG/PNG/GIF/WebP/HEIC/HEIF/AVIF result byte fields, PNG-output result byte fields, `targetSizeResultBytes`, `webpOutputAvailable`, `avifInputAvailable`, `unsupportedInputs`, and `unsupportedOutputs`.
+
+The fixture also verifies missing required fields, missing marker logs, missing JSON payloads, malformed JSON payloads, and non-object JSON payloads, so a green smoke run cannot silently drop or rename the key success fields.
+
+### Included
+
+- `package.json` version bump to `0.2.38`.
+- PASS payload parser and schema helper coverage in `scripts/ios-smoke-contract.mjs`.
+- Exact `RNICK_IOS_SMOKE_PASS` payload fixture expectations in `test/iosSmokeContract.test.mjs`.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.38 candidate state.
+
+### Not Included
+
+- iOS feature changes.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.38`.
+- Forced simulator smoke failures.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.37
 
 Status: unpublished release candidate for iOS smoke diagnostics artifact schema snapshot coverage. npm `latest` remains `0.2.19`; no `v0.2.37` tag, GitHub Release, or npm publish is part of this candidate.

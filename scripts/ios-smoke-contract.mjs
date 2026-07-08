@@ -8,6 +8,30 @@ export const DEFAULT_IOS_VALIDATION_CONFIG = Object.freeze({
   podInstallMaxAttempts: 2,
 });
 
+export const IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS = Object.freeze([
+  'platform',
+  'jpegResultBytes',
+  'jpegPreserveResultBytes',
+  'pngResultBytes',
+  'gifResultBytes',
+  'webpResultBytes',
+  'heicResultBytes',
+  'heifResultBytes',
+  'avifResultBytes',
+  'jpegToPngResultBytes',
+  'pngToPngResultBytes',
+  'gifToPngResultBytes',
+  'webpToPngResultBytes',
+  'heicToPngResultBytes',
+  'heifToPngResultBytes',
+  'avifToPngResultBytes',
+  'webpOutputAvailable',
+  'avifInputAvailable',
+  'targetSizeResultBytes',
+  'unsupportedInputs',
+  'unsupportedOutputs',
+]);
+
 export function createIOSValidationConfig(env = {}) {
   return {
     metroPort: parsePositiveInteger(
@@ -39,6 +63,70 @@ export function createIOSValidationConfig(env = {}) {
       DEFAULT_IOS_VALIDATION_CONFIG.podInstallMaxAttempts
     ),
   };
+}
+
+export function parseIOSSmokePassPayload(logText) {
+  const passMarker = 'RNICK_IOS_SMOKE_PASS';
+  const passLine = String(logText ?? '')
+    .split(/\r?\n/)
+    .find((line) => isIOSSmokePassPayloadLine(line, passMarker));
+
+  if (!passLine) {
+    return null;
+  }
+
+  const payloadText = passLine
+    .slice(passLine.indexOf(passMarker) + passMarker.length)
+    .trim();
+
+  if (payloadText.length === 0) {
+    throw new Error('RNICK_IOS_SMOKE_PASS payload is missing.');
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(payloadText);
+  } catch (error) {
+    throw new Error(
+      `RNICK_IOS_SMOKE_PASS payload JSON could not be parsed: ${error.message}`
+    );
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('RNICK_IOS_SMOKE_PASS payload must be a JSON object.');
+  }
+
+  return parsed;
+}
+
+function isIOSSmokePassPayloadLine(line, passMarker) {
+  const markerIndex = line.indexOf(passMarker);
+  if (markerIndex === -1) {
+    return false;
+  }
+
+  const prefix = line.slice(0, markerIndex).toLowerCase();
+  return (
+    !prefix.includes('timed out waiting for') &&
+    !prefix.includes('timed out before')
+  );
+}
+
+export function listMissingIOSSmokePassPayloadFields(
+  payload,
+  requiredFields = IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS
+) {
+  const source = payload && typeof payload === 'object' ? payload : {};
+  return requiredFields.filter(
+    (field) => !Object.prototype.hasOwnProperty.call(source, field)
+  );
+}
+
+export function formatIOSSmokePassPayloadSchema(payload) {
+  const source = payload && typeof payload === 'object' ? payload : {};
+  return Object.entries(source)
+    .map(([key, value]) => `${key}: ${describePayloadValueSchema(value)}`)
+    .join('\n');
 }
 
 export function isSmokeTimeoutError(error) {
@@ -327,6 +415,19 @@ function formatInline(value) {
 function formatBlock(value, fallback) {
   const parsed = String(value ?? '').trim();
   return parsed.length > 0 ? parsed : fallback;
+}
+
+function describePayloadValueSchema(value) {
+  if (Array.isArray(value)) {
+    const itemTypes = [...new Set(value.map((entry) => typeof entry))];
+    return `array<${itemTypes.length > 0 ? itemTypes.join('|') : 'empty'}>(${value.length})`;
+  }
+
+  if (Number.isInteger(value)) {
+    return 'integer';
+  }
+
+  return typeof value;
 }
 
 function indentBlock(value) {
