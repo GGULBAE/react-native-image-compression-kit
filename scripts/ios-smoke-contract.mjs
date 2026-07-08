@@ -32,6 +32,29 @@ export const IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS = Object.freeze([
   'unsupportedOutputs',
 ]);
 
+export const IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS =
+  Object.freeze([
+    'platform',
+    'jpegResultBytes',
+    'jpegPreserveResultBytes',
+    'pngResultBytes',
+    'gifResultBytes',
+    'webpResultBytes',
+    'heicResultBytes',
+    'heifResultBytes',
+    'jpegToPngResultBytes',
+    'pngToPngResultBytes',
+    'gifToPngResultBytes',
+    'webpToPngResultBytes',
+    'heicToPngResultBytes',
+    'heifToPngResultBytes',
+    'webpOutputAvailable',
+    'avifInputAvailable',
+    'targetSizeResultBytes',
+    'unsupportedInputs',
+    'unsupportedOutputs',
+  ]);
+
 export const IOS_SMOKE_PASS_WEBP_OUTPUT_REQUIRED_FIELDS = Object.freeze([
   'jpegToWebPResultBytes',
   'pngToWebPResultBytes',
@@ -67,6 +90,36 @@ export const IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS = Object.freez
   'unsupportedInputs',
   'unsupportedOutputs',
 ]);
+
+export const IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS =
+  Object.freeze([
+    'platform',
+    'jpegResultBytes',
+    'jpegPreserveResultBytes',
+    'pngResultBytes',
+    'gifResultBytes',
+    'webpResultBytes',
+    'heicResultBytes',
+    'heifResultBytes',
+    'jpegToPngResultBytes',
+    'pngToPngResultBytes',
+    'gifToPngResultBytes',
+    'webpToPngResultBytes',
+    'heicToPngResultBytes',
+    'heifToPngResultBytes',
+    'webpOutputAvailable',
+    'avifInputAvailable',
+    'jpegToWebPResultBytes',
+    'pngToWebPResultBytes',
+    'gifToWebPResultBytes',
+    'webpToWebPResultBytes',
+    'heicToWebPResultBytes',
+    'heifToWebPResultBytes',
+    'webpTargetSizeResultBytes',
+    'targetSizeResultBytes',
+    'unsupportedInputs',
+    'unsupportedOutputs',
+  ]);
 
 export function createIOSValidationConfig(env = {}) {
   return {
@@ -160,10 +213,18 @@ export function listMissingIOSSmokePassPayloadFields(
 }
 
 export function getIOSSmokePassPayloadRequiredFields(payload) {
-  return payload &&
-    typeof payload === 'object' &&
-    payload.webpOutputAvailable === true
-    ? IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
+  if (!payload || typeof payload !== 'object') {
+    return IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS;
+  }
+
+  if (payload.webpOutputAvailable === true) {
+    return payload.avifInputAvailable === false
+      ? IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
+      : IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS;
+  }
+
+  return payload.avifInputAvailable === false
+    ? IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS
     : IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS;
 }
 
