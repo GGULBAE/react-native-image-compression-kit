@@ -322,7 +322,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.43',
+    packageJson.version === '0.2.44',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -337,13 +337,15 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.43` is an unpublished iOS PASS payload replay fixture provenance candidate for `react-native-image-compression-kit`.'),
-    readmeContents.includes('pins the successful GitHub Actions source metadata behind the simulator-free `RNICK_IOS_SMOKE_PASS` replay fixture'),
+    readmeContents.includes('Version `0.2.44` is an unpublished iOS PASS replay fixture source-line integrity digest candidate for `react-native-image-compression-kit`.'),
+    readmeContents.includes('binds the provenance metadata to the exact simulator-free `RNICK_IOS_SMOKE_PASS` replay source line with SHA-256'),
     readmeContents.includes('The replay fixture provenance is fixed in `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE`'),
     readmeContents.includes('workflow `iOS Validation`, [run 28928015548]'),
     readmeContents.includes('head SHA `c6981c3b6b06e5e6e34f42147a94e4299a0f82b2`'),
-    readmeContents.includes('update the provenance object and replay fixture together'),
-    readmeContents.includes('preserves the GitHub Actions job/step/timestamp prefix and the `ImageCompressionKitExample.debug.dylib` unified-log prefix'),
+    readmeContents.includes('source-line SHA-256 `c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6`'),
+    readmeContents.includes('calculate SHA-256 over that exact UTF-8 line without a trailing newline'),
+    readmeContents.includes('update `sourceLineSha256`, the remaining provenance fields, and the replay fixture together'),
+    readmeContents.includes('extracts exactly one PASS source line, rejects missing or duplicate source lines'),
     readmeContents.includes('compares the payload against the matrix-derived `webp-output-unavailable-avif-input-available` schema'),
     readmeContents.includes('The existing matrix fixture factory still covers all four WebP output x AVIF input combinations'),
     readmeContents.includes('uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'),
@@ -352,8 +354,8 @@ function checkPackageMetadata() {
     readmeContents.includes('npm `latest` remains `0.2.40`'),
     readmeContents.includes('the previous GitHub Release remains [v0.2.17]'),
     readmeContents.includes('Version `0.2.40` remains the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.'),
-    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.43 candidate.'),
-    readmeContents.includes('The `0.2.43` package metadata is prepared as an unpublished iOS PASS payload replay fixture provenance candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.44 candidate.'),
+    readmeContents.includes('The `0.2.44` package metadata is prepared as an unpublished iOS PASS replay fixture source-line integrity digest candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -398,6 +400,7 @@ function checkPackageMetadata() {
     readmeContents.includes('version `0.2.41` is the unpublished iOS PASS payload schema matrix helper candidate'),
     readmeContents.includes('version `0.2.42` is the unpublished iOS PASS payload CI log replay fixture candidate'),
     readmeContents.includes('Version `0.2.43` is the unpublished iOS PASS payload replay fixture provenance candidate.'),
+    readmeContents.includes('Version `0.2.44` is the unpublished iOS PASS replay fixture source-line integrity digest candidate.'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -432,6 +435,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.41` hardens iOS PASS payload schema matrix helper coverage without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.42` hardens iOS PASS payload CI log replay fixture coverage without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.43` hardens iOS PASS payload replay fixture provenance and refresh guidance without enabling AVIF output.'),
+    readmeContents.includes('Version `0.2.44` hardens iOS PASS replay fixture source-line SHA-256 integrity without enabling AVIF output.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes('Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
@@ -489,10 +493,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.43 iOS PASS payload replay fixture provenance candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.44 iOS PASS replay fixture source-line integrity digest candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README replay fixture provenance candidate status are aligned'
-      : 'expected package.json release metadata or README replay fixture provenance candidate guidance is missing/mismatched',
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README source-line integrity digest candidate status are aligned'
+      : 'expected package.json release metadata or README source-line integrity digest candidate guidance is missing/mismatched',
   };
 }
 
@@ -778,6 +782,23 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.44',
+    'Status: unpublished release candidate for iOS PASS replay fixture source-line integrity digest coverage. npm `latest` remains `0.2.40`; no `v0.2.44` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, add iOS native features, or access GitHub during tests. It keeps runtime behavior unchanged while binding the replay provenance to the exact successful `RNICK_IOS_SMOKE_PASS` source line with SHA-256.',
+    'Add the exact PASS source-line SHA-256 to `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE`.',
+    'Extract exactly one `RNICK_IOS_SMOKE_PASS` source line and reject missing or duplicate lines.',
+    'Verify the replay source line matches the provenance digest before parsing its payload against the existing matrix schema.',
+    'Document digest recalculation when a stale replay fixture is refreshed.',
+    'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.44 candidate.',
+    '### iOS PASS Replay Source-Line Integrity Digest',
+    '`test/iosSmokeContract.test.mjs` now pins `sourceLineSha256` to `c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6`.',
+    '`extractSingleIOSSmokePassCIReplaySourceLine()` requires exactly one PASS source line',
+    'calculate SHA-256 over that exact UTF-8 line without a trailing newline',
+    '`package.json` version bump to `0.2.44`.',
+    'Exact PASS source-line SHA-256 provenance and local Node crypto assertion.',
+    'Missing and duplicate PASS source-line rejection coverage.',
+    'README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.44 candidate state and the published v0.2.40 npm baseline.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.44`.',
     '## v0.2.43',
     'Status: unpublished release candidate for iOS PASS payload replay fixture provenance coverage. npm `latest` remains `0.2.40`; no `v0.2.43` tag, GitHub Release, or npm publish is part of this candidate.',
     'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, or add iOS native features. It keeps runtime behavior unchanged while making the successful GitHub Actions source behind `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE` explicit and testable.',
@@ -1971,7 +1992,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'The current v0.2.43 iOS PASS payload replay fixture provenance candidate notes are in [RELEASE.md](RELEASE.md).',
+    'The current v0.2.44 iOS PASS replay fixture source-line integrity digest candidate notes are in [RELEASE.md](RELEASE.md).',
     'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
@@ -1984,18 +2005,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.43' && missing.length === 0;
+  const ok = packageJson.version === '0.2.44' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.43 iOS PASS payload replay fixture provenance candidate notes and previous release notes are current',
+    label: 'v0.2.44 iOS PASS replay fixture source-line integrity digest candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.43'
+          ...(packageJson.version === '0.2.44'
             ? []
-            : ['package.json version 0.2.43']),
+            : ['package.json version 0.2.44']),
         ].join(' | ')}`,
   };
 }
@@ -2676,7 +2697,9 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'shared PASS payload fixture factory coverage'],
     [readmeContents, 'successful GitHub Actions iOS Validation PASS log replay fixture coverage'],
     [readmeContents, 'The replay fixture provenance is fixed in `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE`'],
-    [readmeContents, 'update the provenance object and replay fixture together'],
+    [readmeContents, 'source-line SHA-256 `c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6`'],
+    [readmeContents, 'calculate SHA-256 over that exact UTF-8 line without a trailing newline'],
+    [readmeContents, 'update `sourceLineSha256`, the remaining provenance fields, and the replay fixture together'],
     [readmeContents, 'missing or malformed PASS payload log handling'],
     [readmeContents, 'missing conditional WebP and AVIF payload field handling'],
     [readmeContents, '`unsupportedInputs` including `avif` when AVIF input is unavailable'],
@@ -2837,11 +2860,16 @@ function checkIOSHostAppValidation() {
     [smokeContractTestContents, 'snapshots empty and no-marker diagnostics summaries'],
     [smokeContractTestContents, 'bounds very long diagnostics summaries to marker and tail windows'],
     [smokeContractTestContents, 'snapshots every iOS smoke PASS payload schema matrix case from a fixture factory'],
-    [smokeContractTestContents, 'pins provenance and replays a successful GitHub Actions iOS smoke PASS log line against the matrix schema'],
+    [smokeContractTestContents, 'pins provenance and source-line digest while replaying a successful GitHub Actions iOS smoke PASS log line'],
     [smokeContractTestContents, 'createIOSSmokePassPayloadFixture'],
     [smokeContractTestContents, 'createIOSSmokePassLogFixture'],
     [smokeContractTestContents, 'IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE'],
     [smokeContractTestContents, 'IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE'],
+    [smokeContractTestContents, 'extractSingleIOSSmokePassCIReplaySourceLine'],
+    [smokeContractTestContents, "createHash('sha256')"],
+    [smokeContractTestContents, 'sourceLineSha256'],
+    [smokeContractTestContents, 'c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6'],
+    [smokeContractTestContents, 'Expected exactly one RNICK_IOS_SMOKE_PASS source line'],
     [smokeContractTestContents, '28928015548'],
     [smokeContractTestContents, 'c6981c3b6b06e5e6e34f42147a94e4299a0f82b2'],
     [smokeContractTestContents, "workflowName: 'iOS Validation'"],

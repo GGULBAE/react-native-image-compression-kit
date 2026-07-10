@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {
   createIOSValidationConfig,
@@ -92,6 +93,8 @@ const IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE = Object.freeze({
   jobName: 'iOS host-app smoke',
   stepName: 'Run iOS host-app smoke',
   logTimestamp: '2026-07-08T08:25:57.8583890Z',
+  sourceLineSha256:
+    'c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6',
 });
 
 const IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE = [
@@ -104,6 +107,20 @@ const IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE = [
     '{"platform":"ios","jpegResultBytes":883,"jpegPreserveResultBytes":942,"pngResultBytes":970,"gifResultBytes":776,"webpResultBytes":772,"heicResultBytes":1000,"heifResultBytes":1000,"avifResultBytes":998,"jpegToPngResultBytes":625,"pngToPngResultBytes":672,"gifToPngResultBytes":331,"webpToPngResultBytes":248,"heicToPngResultBytes":1071,"heifToPngResultBytes":1071,"avifToPngResultBytes":1066,"webpOutputAvailable":false,"avifInputAvailable":true,"targetSizeResultBytes":940,"unsupportedInputs":[],"unsupportedOutputs":["webp","heic","heif","avif"]}',
   ].join(' '),
 ].join('\n');
+
+function extractSingleIOSSmokePassCIReplaySourceLine(log) {
+  const sourceLines = log
+    .split(/\r?\n/)
+    .filter((line) => line.includes(' RNICK_IOS_SMOKE_PASS '));
+
+  if (sourceLines.length !== 1) {
+    throw new Error(
+      `Expected exactly one RNICK_IOS_SMOKE_PASS source line, found ${sourceLines.length}.`
+    );
+  }
+
+  return sourceLines[0];
+}
 
 function createIOSSmokePassPayloadFixture({
   webpOutputAvailable,
@@ -589,9 +606,12 @@ describe('iOS smoke contract helpers', () => {
     ).not.toContain('avifToWebPResultBytes');
   });
 
-  it('pins provenance and replays a successful GitHub Actions iOS smoke PASS log line against the matrix schema', () => {
+  it('pins provenance and source-line digest while replaying a successful GitHub Actions iOS smoke PASS log line', () => {
     const schemaCase = IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX.find(
       ({ id }) => id === 'webp-output-unavailable-avif-input-available'
+    );
+    const sourceLine = extractSingleIOSSmokePassCIReplaySourceLine(
+      IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE
     );
     const payload = parseIOSSmokePassPayload(
       IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE
@@ -606,19 +626,37 @@ describe('iOS smoke contract helpers', () => {
       jobName: 'iOS host-app smoke',
       stepName: 'Run iOS host-app smoke',
       logTimestamp: '2026-07-08T08:25:57.8583890Z',
+      sourceLineSha256:
+        'c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6',
     });
     expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.runUrl).toContain(
       `/actions/runs/${IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.runId}`
     );
-    expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE).toContain(
+    expect(sourceLine).toBe(
+      IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE.split('\n')[1]
+    );
+    expect(sourceLine).toContain(
       [
         IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.jobName,
         IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.stepName,
         IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.logTimestamp,
       ].join('\t')
     );
-    expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE).toContain(
+    expect(sourceLine).toContain(
       '(ImageCompressionKitExample.debug.dylib) RNICK_IOS_SMOKE_PASS'
+    );
+    expect(createHash('sha256').update(sourceLine, 'utf8').digest('hex')).toBe(
+      IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.sourceLineSha256
+    );
+    expect(() => extractSingleIOSSmokePassCIReplaySourceLine('')).toThrow(
+      'Expected exactly one RNICK_IOS_SMOKE_PASS source line, found 0.'
+    );
+    expect(() =>
+      extractSingleIOSSmokePassCIReplaySourceLine(
+        `${sourceLine}\n${sourceLine}`
+      )
+    ).toThrow(
+      'Expected exactly one RNICK_IOS_SMOKE_PASS source line, found 2.'
     );
     expect(payload).toEqual(createIOSSmokePassPayloadFixture(schemaCase));
     expect(Object.keys(payload)).toEqual(schemaCase.requiredFields);

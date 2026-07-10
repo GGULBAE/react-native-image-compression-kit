@@ -1,5 +1,54 @@
 # Release Notes
 
+## v0.2.44
+
+Status: unpublished release candidate for iOS PASS replay fixture source-line integrity digest coverage. npm `latest` remains `0.2.40`; no `v0.2.44` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, add iOS native features, or access GitHub during tests. It keeps runtime behavior unchanged while binding the replay provenance to the exact successful `RNICK_IOS_SMOKE_PASS` source line with SHA-256.
+
+### Goals
+
+- Add the exact PASS source-line SHA-256 to `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE`.
+- Extract exactly one `RNICK_IOS_SMOKE_PASS` source line and reject missing or duplicate lines.
+- Verify the replay source line matches the provenance digest before parsing its payload against the existing matrix schema.
+- Document digest recalculation when a stale replay fixture is refreshed.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.44 candidate.
+
+### iOS PASS Replay Source-Line Integrity Digest
+
+`test/iosSmokeContract.test.mjs` now pins `sourceLineSha256` to `c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6`. The digest covers the complete GitHub Actions-prefixed `RNICK_IOS_SMOKE_PASS` line as UTF-8 without a trailing newline, including the job, step, Actions timestamp, unified-log prefix, marker, and JSON payload.
+
+`extractSingleIOSSmokePassCIReplaySourceLine()` requires exactly one PASS source line in `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE`. The replay test verifies missing and duplicate lines fail, hashes the extracted line with Node `createHash('sha256')`, compares it with provenance, and then runs the existing payload and matrix-schema assertions without network access.
+
+When the replay fixture becomes stale, select a newer successful `iOS Validation` run, copy the complete `RNICK_IOS_SMOKE_PASS` line from the `iOS host-app smoke` / `Run iOS host-app smoke` log, calculate SHA-256 over that exact UTF-8 line without a trailing newline, and update `sourceLineSha256`, the remaining provenance fields, and `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE` together before running the local validation checklist.
+
+### Included
+
+- `package.json` version bump to `0.2.44`.
+- Exact PASS source-line SHA-256 provenance and local Node crypto assertion.
+- Missing and duplicate PASS source-line rejection coverage.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.44 candidate state and the published v0.2.40 npm baseline.
+
+### Not Included
+
+- Network access from tests.
+- iOS native feature changes.
+- AVIF input support forced available or unavailable on real simulators.
+- WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.44`.
+- Forced simulator capability changes or forced simulator failures.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.43
 
 Status: unpublished release candidate for iOS PASS payload replay fixture provenance coverage. npm `latest` remains `0.2.40`; no `v0.2.43` tag, GitHub Release, or npm publish is part of this candidate.
