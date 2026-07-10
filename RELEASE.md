@@ -1,5 +1,52 @@
 # Release Notes
 
+## v0.2.43
+
+Status: unpublished release candidate for iOS PASS payload replay fixture provenance coverage. npm `latest` remains `0.2.40`; no `v0.2.43` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, or add iOS native features. It keeps runtime behavior unchanged while making the successful GitHub Actions source behind `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE` explicit and testable.
+
+### Goals
+
+- Pin workflow `iOS Validation`, source run `28928015548`, head SHA `c6981c3b6b06e5e6e34f42147a94e4299a0f82b2`, source URL, job, step, and timestamp beside the replay fixture.
+- Verify the GitHub Actions job/step/timestamp prefix is derived from the pinned provenance metadata.
+- Document how to refresh the replay fixture when its successful CI payload becomes stale.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.43 candidate.
+
+### iOS PASS Payload Replay Fixture Provenance
+
+`test/iosSmokeContract.test.mjs` now includes `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE`, which points to [iOS Validation run 28928015548](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28928015548) at head SHA `c6981c3b6b06e5e6e34f42147a94e4299a0f82b2`. The provenance object also pins the `iOS host-app smoke` job, `Run iOS host-app smoke` step, and `2026-07-08T08:25:57.8583890Z` PASS-line timestamp.
+
+The replay test asserts the full provenance object, checks that its run URL contains the pinned run id, and builds the expected GitHub Actions prefix from the provenance job, step, and timestamp before parsing the payload against the existing matrix schema.
+
+When the replay fixture becomes stale, select a newer successful `iOS Validation` run, copy the complete `RNICK_IOS_SMOKE_PASS` line from the `iOS host-app smoke` / `Run iOS host-app smoke` log, update `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE` and `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE` together, then run the local validation checklist below.
+
+### Included
+
+- `package.json` version bump to `0.2.43`.
+- Replay fixture source workflow, run id, head SHA, URL, job, step, and timestamp provenance in `test/iosSmokeContract.test.mjs`.
+- Provenance-to-log-prefix Vitest assertions and stale fixture refresh guidance.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.43 candidate state and the published v0.2.40 npm baseline.
+
+### Not Included
+
+- iOS native feature changes.
+- AVIF input support forced available or unavailable on real simulators.
+- WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.43`.
+- Forced simulator capability changes or forced simulator failures.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.42
 
 Status: unpublished release candidate for iOS PASS payload CI log replay fixture coverage. npm `latest` remains `0.2.40`; no `v0.2.42` tag, GitHub Release, or npm publish is part of this candidate.

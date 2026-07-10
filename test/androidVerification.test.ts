@@ -178,7 +178,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.42');
+    expect(packageJson.version).toBe('0.2.43');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -206,10 +206,22 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.42` is an unpublished iOS PASS payload CI log replay fixture candidate for `react-native-image-compression-kit`.'
+      'Version `0.2.43` is an unpublished iOS PASS payload replay fixture provenance candidate for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
-      'adds a simulator-free replay fixture copied from a successful GitHub Actions iOS Validation `RNICK_IOS_SMOKE_PASS` log line'
+      'pins the successful GitHub Actions source metadata behind the simulator-free `RNICK_IOS_SMOKE_PASS` replay fixture'
+    );
+    expect(readmeSource).toContain(
+      'The replay fixture provenance is fixed in `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE`'
+    );
+    expect(readmeSource).toContain(
+      'workflow `iOS Validation`, [run 28928015548]'
+    );
+    expect(readmeSource).toContain(
+      'head SHA `c6981c3b6b06e5e6e34f42147a94e4299a0f82b2`'
+    );
+    expect(readmeSource).toContain(
+      'update the provenance object and replay fixture together'
     );
     expect(readmeSource).toContain(
       'preserves the GitHub Actions job/step/timestamp prefix and the `ImageCompressionKitExample.debug.dylib` unified-log prefix'
@@ -236,10 +248,10 @@ describe('Android verification scripts', () => {
       'Version `0.2.40` remains the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.'
     );
     expect(readmeSource).toContain(
-      'No npm publish, git tag, or GitHub Release is part of the v0.2.42 candidate.'
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.43 candidate.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.42` package metadata is prepared as an unpublished iOS PASS payload CI log replay fixture candidate for `react-native-image-compression-kit`'
+      'The `0.2.43` package metadata is prepared as an unpublished iOS PASS payload replay fixture provenance candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -371,6 +383,9 @@ describe('Android verification scripts', () => {
       'version `0.2.42` is the unpublished iOS PASS payload CI log replay fixture candidate'
     );
     expect(readmeSource).toContain(
+      'Version `0.2.43` is the unpublished iOS PASS payload replay fixture provenance candidate.'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -468,6 +483,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.42` hardens iOS PASS payload CI log replay fixture coverage without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.43` hardens iOS PASS payload replay fixture provenance and refresh guidance without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -883,6 +901,12 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       'successful GitHub Actions iOS Validation PASS log replay fixture coverage'
     );
+    expect(readmeSource).toContain(
+      'The replay fixture provenance is fixed in `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE`'
+    );
+    expect(readmeSource).toContain(
+      'update the provenance object and replay fixture together'
+    );
     expect(readmeSource).toContain('missing or malformed PASS payload log handling');
     expect(readmeSource).toContain('missing conditional WebP and AVIF payload field handling');
     expect(readmeSource).toContain(
@@ -1047,11 +1071,19 @@ describe('Android verification scripts', () => {
       'snapshots every iOS smoke PASS payload schema matrix case from a fixture factory'
     );
     expect(smokeContractTestSource).toContain(
-      'replays a successful GitHub Actions iOS smoke PASS log line against the matrix schema'
+      'pins provenance and replays a successful GitHub Actions iOS smoke PASS log line against the matrix schema'
     );
     expect(smokeContractTestSource).toContain('createIOSSmokePassPayloadFixture');
     expect(smokeContractTestSource).toContain('createIOSSmokePassLogFixture');
+    expect(smokeContractTestSource).toContain(
+      'IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE'
+    );
     expect(smokeContractTestSource).toContain('IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE');
+    expect(smokeContractTestSource).toContain('28928015548');
+    expect(smokeContractTestSource).toContain(
+      'c6981c3b6b06e5e6e34f42147a94e4299a0f82b2'
+    );
+    expect(smokeContractTestSource).toContain("workflowName: 'iOS Validation'");
     expect(smokeContractTestSource).toContain(
       'iOS host-app smoke\\tRun iOS host-app smoke\\t2026-07-08T08:25:57.8583890Z'
     );
@@ -1092,11 +1124,55 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.42 iOS PASS payload CI log replay fixture candidate notes and previous release notes', () => {
+  it('documents the v0.2.43 iOS PASS payload replay fixture provenance candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.42');
+    expect(packageJson.version).toBe('0.2.43');
+    expect(releaseSource).toContain('## v0.2.43');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for iOS PASS payload replay fixture provenance coverage. npm `latest` remains `0.2.40`; no `v0.2.43` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, or add iOS native features. It keeps runtime behavior unchanged while making the successful GitHub Actions source behind `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE` explicit and testable.'
+    );
+    expect(releaseSource).toContain(
+      'Pin workflow `iOS Validation`, source run `28928015548`, head SHA `c6981c3b6b06e5e6e34f42147a94e4299a0f82b2`, source URL, job, step, and timestamp beside the replay fixture.'
+    );
+    expect(releaseSource).toContain(
+      'Verify the GitHub Actions job/step/timestamp prefix is derived from the pinned provenance metadata.'
+    );
+    expect(releaseSource).toContain(
+      'Document how to refresh the replay fixture when its successful CI payload becomes stale.'
+    );
+    expect(releaseSource).toContain(
+      'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.43 candidate.'
+    );
+    expect(releaseSource).toContain(
+      '### iOS PASS Payload Replay Fixture Provenance'
+    );
+    expect(releaseSource).toContain(
+      '`test/iosSmokeContract.test.mjs` now includes `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE`'
+    );
+    expect(releaseSource).toContain(
+      'The replay test asserts the full provenance object'
+    );
+    expect(releaseSource).toContain(
+      'update `IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE` and `IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE` together'
+    );
+    expect(releaseSource).toContain('`package.json` version bump to `0.2.43`.');
+    expect(releaseSource).toContain(
+      'Replay fixture source workflow, run id, head SHA, URL, job, step, and timestamp provenance in `test/iosSmokeContract.test.mjs`.'
+    );
+    expect(releaseSource).toContain(
+      'Provenance-to-log-prefix Vitest assertions and stale fixture refresh guidance.'
+    );
+    expect(releaseSource).toContain(
+      'README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.43 candidate state and the published v0.2.40 npm baseline.'
+    );
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.43`.'
+    );
     expect(releaseSource).toContain('## v0.2.42');
     expect(releaseSource).toContain(
       'Status: unpublished release candidate for iOS PASS payload CI log replay fixture coverage. npm `latest` remains `0.2.40`; no `v0.2.42` tag, GitHub Release, or npm publish is part of this candidate.'
@@ -4048,6 +4124,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+    );
+    expect(readmeSource).toContain(
+      'The current v0.2.43 iOS PASS payload replay fixture provenance candidate notes are in [RELEASE.md](RELEASE.md).'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

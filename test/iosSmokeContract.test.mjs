@@ -83,6 +83,17 @@ const IOS_SMOKE_PASS_MATRIX_FIELD_PROBES = Object.freeze({
   ]),
 });
 
+const IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE = Object.freeze({
+  workflowName: 'iOS Validation',
+  runId: 28928015548,
+  runUrl:
+    'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28928015548',
+  headSha: 'c6981c3b6b06e5e6e34f42147a94e4299a0f82b2',
+  jobName: 'iOS host-app smoke',
+  stepName: 'Run iOS host-app smoke',
+  logTimestamp: '2026-07-08T08:25:57.8583890Z',
+});
+
 const IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE = [
   'iOS host-app smoke\tRun iOS host-app smoke\t2026-07-08T08:25:57.8580780Z 2026-07-08 08:25:57.760 Df ImageCompressionKitExample[19401:e5d6] (ImageCompressionKitExample.debug.dylib) RNICK_IOS_SMOKE_STEP_PASS reject-png-metadata-preserve',
   [
@@ -578,7 +589,7 @@ describe('iOS smoke contract helpers', () => {
     ).not.toContain('avifToWebPResultBytes');
   });
 
-  it('replays a successful GitHub Actions iOS smoke PASS log line against the matrix schema', () => {
+  it('pins provenance and replays a successful GitHub Actions iOS smoke PASS log line against the matrix schema', () => {
     const schemaCase = IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX.find(
       ({ id }) => id === 'webp-output-unavailable-avif-input-available'
     );
@@ -586,8 +597,25 @@ describe('iOS smoke contract helpers', () => {
       IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE
     );
 
+    expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE).toEqual({
+      workflowName: 'iOS Validation',
+      runId: 28928015548,
+      runUrl:
+        'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28928015548',
+      headSha: 'c6981c3b6b06e5e6e34f42147a94e4299a0f82b2',
+      jobName: 'iOS host-app smoke',
+      stepName: 'Run iOS host-app smoke',
+      logTimestamp: '2026-07-08T08:25:57.8583890Z',
+    });
+    expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.runUrl).toContain(
+      `/actions/runs/${IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.runId}`
+    );
     expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE).toContain(
-      'iOS host-app smoke\tRun iOS host-app smoke\t2026-07-08T08:25:57.8583890Z'
+      [
+        IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.jobName,
+        IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.stepName,
+        IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.logTimestamp,
+      ].join('\t')
     );
     expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE).toContain(
       '(ImageCompressionKitExample.debug.dylib) RNICK_IOS_SMOKE_PASS'
