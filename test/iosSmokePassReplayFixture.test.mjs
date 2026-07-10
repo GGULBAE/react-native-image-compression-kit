@@ -3,6 +3,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -13,6 +14,7 @@ import {
   createIOSSmokePassReplayFixture,
   extractSingleIOSSmokePassSourceLine,
   formatIOSSmokePassReplayFixture,
+  getIOSSmokePassReplayFixtureDifferences,
   validateIOSSmokePassReplayFixture,
 } from '../scripts/ios-smoke-pass-replay-fixture.mjs';
 
@@ -125,6 +127,30 @@ describe('iOS PASS replay fixture artifact', () => {
     );
   });
 
+  it('reports deterministic schema, provenance, digest, and source-line differences', () => {
+    const expected = createIOSSmokePassReplayFixture({
+      logText: FAKE_LOG,
+      ...FAKE_PROVENANCE_INPUT,
+    });
+    const actual = {
+      ...expected,
+      schemaVersion: 2,
+      provenance: {
+        ...expected.provenance,
+        workflowName: 'Previous iOS Validation',
+        sourceLineSha256: '0'.repeat(64),
+      },
+      sourceLine: `${FAKE_SOURCE_LINE} `,
+    };
+
+    expect(getIOSSmokePassReplayFixtureDifferences(expected, actual)).toEqual([
+      'schemaVersion',
+      'provenance.workflowName',
+      'provenance.sourceLineSha256',
+      'sourceLine',
+    ]);
+  });
+
   it('refreshes deterministic fixture files from a fake local log without network access', () => {
     const tempDir = mkdtempSync(join(tmpdir(), 'rnick-ios-pass-replay-'));
 
@@ -167,6 +193,171 @@ describe('iOS PASS replay fixture artifact', () => {
     }
   });
 
+  it('checks a current fake-log artifact without modifying it', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'rnick-ios-pass-check-'));
+
+    try {
+      const logPath = join(tempDir, 'actions.log');
+      const outputPath = join(tempDir, 'fixture.json');
+      writeFileSync(logPath, FAKE_LOG);
+      expect(runRefreshCli(logPath, outputPath).status).toBe(0);
+
+      const sourceBefore = readFileSync(outputPath, 'utf8');
+      const modifiedBefore = statSync(outputPath).mtimeMs;
+      const result = runRefreshCli(logPath, outputPath, { check: true });
+
+      expect(result.status).toBe(0);
+      expect(result.stderr).toBe('');
+      expect(result.stdout).toBe(
+        `iOS PASS replay fixture is current: ${outputPath}\n`
+      );
+      expect(readFileSync(outputPath, 'utf8')).toBe(sourceBefore);
+      expect(statSync(outputPath).mtimeMs).toBe(modifiedBefore);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects stale provenance without modifying the artifact', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'rnick-ios-pass-stale-'));
+
+    try {
+      const logPath = join(tempDir, 'actions.log');
+      const outputPath = join(tempDir, 'fixture.json');
+      writeFileSync(logPath, FAKE_LOG);
+      writeFileSync(
+        outputPath,
+        formatIOSSmokePassReplayFixture(
+          createIOSSmokePassReplayFixture({
+            logText: FAKE_LOG,
+            ...FAKE_PROVENANCE_INPUT,
+            workflowName: 'Previous iOS Validation',
+          })
+        )
+      );
+
+      const sourceBefore = readFileSync(outputPath, 'utf8');
+      const modifiedBefore = statSync(outputPath).mtimeMs;
+      const result = runRefreshCli(logPath, outputPath, { check: true });
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(
+        'Fixture artifact is stale; differences: provenance.workflowName.'
+      );
+      expect(readFileSync(outputPath, 'utf8')).toBe(sourceBefore);
+      expect(statSync(outputPath).mtimeMs).toBe(modifiedBefore);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects source-line drift and reports its digest without modifying the artifact', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'rnick-ios-pass-source-'));
+
+    try {
+      const logPath = join(tempDir, 'actions.log');
+      const outputPath = join(tempDir, 'fixture.json');
+      const previousLog = FAKE_LOG.replaceAll(
+        '2026-07-10T08:00:00.1234567Z',
+        '2026-07-09T08:00:00.1234567Z'
+      );
+      writeFileSync(logPath, FAKE_LOG);
+      writeFileSync(
+        outputPath,
+        formatIOSSmokePassReplayFixture(
+          createIOSSmokePassReplayFixture({
+            logText: previousLog,
+            ...FAKE_PROVENANCE_INPUT,
+          })
+        )
+      );
+
+      const sourceBefore = readFileSync(outputPath, 'utf8');
+      const result = runRefreshCli(logPath, outputPath, { check: true });
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('provenance.logTimestamp');
+      expect(result.stderr).toContain('provenance.sourceLineSha256');
+      expect(result.stderr).toContain('sourceLine');
+      expect(readFileSync(outputPath, 'utf8')).toBe(sourceBefore);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it.each([
+    [
+      'missing',
+      undefined,
+      'Fixture artifact not found:',
+    ],
+    [
+      'malformed',
+      '{not-json}\n',
+      'Fixture artifact JSON is invalid:',
+    ],
+    [
+      'invalid schema',
+      `${JSON.stringify({ schemaVersion: 2, provenance: {}, sourceLine: '' })}\n`,
+      'Fixture artifact is invalid; differences: schemaVersion, provenance.schema',
+    ],
+  ])('rejects a %s artifact without creating or modifying it', (_, source, error) => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'rnick-ios-pass-invalid-'));
+
+    try {
+      const logPath = join(tempDir, 'actions.log');
+      const outputPath = join(tempDir, 'fixture.json');
+      writeFileSync(logPath, FAKE_LOG);
+      if (source !== undefined) {
+        writeFileSync(outputPath, source);
+      }
+
+      const sourceBefore = source === undefined ? undefined : readFileSync(outputPath, 'utf8');
+      const result = runRefreshCli(logPath, outputPath, { check: true });
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain(
+        'iOS PASS replay fixture check failed:'
+      );
+      expect(result.stderr).toContain(error);
+      if (source === undefined) {
+        expect(() => statSync(outputPath)).toThrow();
+      } else {
+        expect(readFileSync(outputPath, 'utf8')).toBe(sourceBefore);
+      }
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects noncanonical artifact bytes without modifying them', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'rnick-ios-pass-format-'));
+
+    try {
+      const logPath = join(tempDir, 'actions.log');
+      const outputPath = join(tempDir, 'fixture.json');
+      const fixture = createIOSSmokePassReplayFixture({
+        logText: FAKE_LOG,
+        ...FAKE_PROVENANCE_INPUT,
+      });
+      writeFileSync(logPath, FAKE_LOG);
+      writeFileSync(outputPath, JSON.stringify(fixture));
+
+      const sourceBefore = readFileSync(outputPath, 'utf8');
+      const result = runRefreshCli(logPath, outputPath, { check: true });
+
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain(
+        'Fixture artifact is stale; differences: canonicalFormat.'
+      );
+      expect(readFileSync(outputPath, 'utf8')).toBe(sourceBefore);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it.each([
     ['missing', 'no PASS line', 'found 0'],
     ['duplicate', `${FAKE_SOURCE_LINE}\n${FAKE_SOURCE_LINE}`, 'found 2'],
@@ -192,12 +383,13 @@ describe('iOS PASS replay fixture artifact', () => {
   });
 });
 
-function runRefreshCli(logPath, outputPath) {
+function runRefreshCli(logPath, outputPath, { check = false } = {}) {
   return spawnSync(
     process.execPath,
     [
       CLI_PATH,
       '--',
+      ...(check ? ['--check'] : []),
       '--log-file',
       logPath,
       '--workflow-name',

@@ -123,6 +123,49 @@ export function formatIOSSmokePassReplayFixture(fixture) {
   return `${JSON.stringify(fixture, null, 2)}\n`;
 }
 
+export function getIOSSmokePassReplayFixtureDifferences(
+  expectedFixture,
+  actualFixture
+) {
+  validateIOSSmokePassReplayFixture(expectedFixture);
+
+  if (!isRecord(actualFixture)) {
+    return ['schema'];
+  }
+
+  const differences = [];
+
+  if (!hasExactFields(actualFixture, ROOT_FIELDS)) {
+    differences.push('schema');
+  }
+
+  if (actualFixture.schemaVersion !== expectedFixture.schemaVersion) {
+    differences.push('schemaVersion');
+  }
+
+  if (!isRecord(actualFixture.provenance)) {
+    differences.push('provenance');
+  } else {
+    if (!hasExactFields(actualFixture.provenance, PROVENANCE_FIELDS)) {
+      differences.push('provenance.schema');
+    } else {
+      for (const field of PROVENANCE_FIELDS) {
+        if (
+          actualFixture.provenance[field] !== expectedFixture.provenance[field]
+        ) {
+          differences.push(`provenance.${field}`);
+        }
+      }
+    }
+  }
+
+  if (actualFixture.sourceLine !== expectedFixture.sourceLine) {
+    differences.push('sourceLine');
+  }
+
+  return differences;
+}
+
 function parseGitHubActionsLogPrefix(sourceLine) {
   const fields = sourceLine.split('\t');
 
@@ -150,19 +193,27 @@ function parseGitHubActionsLogPrefix(sourceLine) {
 }
 
 function requireRecord(value, label) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+  if (!isRecord(value)) {
     throw new Error(`${label} must be an object.`);
   }
 }
 
 function requireExactFields(value, expectedFields, label) {
-  const fields = Object.keys(value);
-
-  if (JSON.stringify(fields) !== JSON.stringify(expectedFields)) {
+  if (!hasExactFields(value, expectedFields)) {
     throw new Error(
       `${label} fields must be: ${expectedFields.join(', ')}.`
     );
   }
+}
+
+function isRecord(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasExactFields(value, expectedFields) {
+  return (
+    JSON.stringify(Object.keys(value)) === JSON.stringify(expectedFields)
+  );
 }
 
 function requireNonEmptyString(value, label) {

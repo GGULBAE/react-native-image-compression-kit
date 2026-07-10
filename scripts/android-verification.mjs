@@ -326,7 +326,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.45',
+    packageJson.version === '0.2.46',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -341,14 +341,16 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.45` is an unpublished iOS PASS replay fixture offline refresh artifact candidate for `react-native-image-compression-kit`.'),
-    readmeContents.includes('moves the replay provenance plus exact `RNICK_IOS_SMOKE_PASS` source line into `test/fixtures/ios-smoke-pass-ci-replay.json`'),
-    readmeContents.includes('`scripts/ios-smoke-pass-replay-fixture.mjs` validates the schema version, exact root/provenance fields'),
-    readmeContents.includes('`scripts/refresh-ios-smoke-pass-replay.mjs` reads a downloaded local Actions log plus provenance arguments'),
-    readmeContents.includes('`test/iosSmokePassReplayFixture.test.mjs` pins the schema and byte output with fake logs'),
+    readmeContents.includes('Version `0.2.46` is an unpublished iOS PASS replay fixture offline check mode candidate for `react-native-image-compression-kit`.'),
+    readmeContents.includes('adds a read-only freshness check for `test/fixtures/ios-smoke-pass-ci-replay.json`'),
+    readmeContents.includes('`scripts/ios-smoke-pass-replay-fixture.mjs` validates the schema and reports deterministic `schemaVersion`, `provenance.<field>`, and `sourceLine` differences'),
+    readmeContents.includes('`--check` builds the expected fixture in memory, validates the existing artifact, compares exact canonical bytes'),
+    readmeContents.includes('`test/iosSmokePassReplayFixture.test.mjs` covers current, stale provenance, stale source-line/digest, missing, malformed, invalid-schema, and noncanonical artifacts'),
     readmeContents.includes('The CLI performs no GitHub or other network requests.'),
     readmeContents.includes('pnpm fixtures:ios-pass-replay --'),
+    readmeContents.includes('pnpm fixtures:ios-pass-replay:check --'),
     readmeContents.includes('regenerates the structured JSON fields'),
+    readmeContents.includes('Check mode performs no writes and neither mode performs network requests.'),
     readmeContents.includes('The existing matrix fixture factory still covers all four WebP output x AVIF input combinations'),
     readmeContents.includes('uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'),
     readmeContents.includes('The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'),
@@ -356,8 +358,8 @@ function checkPackageMetadata() {
     readmeContents.includes('npm `latest` remains `0.2.40`'),
     readmeContents.includes('the previous GitHub Release remains [v0.2.17]'),
     readmeContents.includes('Version `0.2.40` remains the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.'),
-    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.45 candidate.'),
-    readmeContents.includes('The `0.2.45` package metadata is prepared as an unpublished iOS PASS replay fixture offline refresh artifact candidate for `react-native-image-compression-kit`'),
+    readmeContents.includes('No npm publish, git tag, or GitHub Release is part of the v0.2.46 candidate.'),
+    readmeContents.includes('The `0.2.46` package metadata is prepared as an unpublished iOS PASS replay fixture offline check mode candidate for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -404,6 +406,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.43` is the unpublished iOS PASS payload replay fixture provenance candidate.'),
     readmeContents.includes('Version `0.2.44` is the unpublished iOS PASS replay fixture source-line integrity digest candidate.'),
     readmeContents.includes('Version `0.2.45` is the unpublished iOS PASS replay fixture offline refresh artifact candidate.'),
+    readmeContents.includes('Version `0.2.46` is the unpublished iOS PASS replay fixture offline check mode candidate.'),
     readmeContents.includes('Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'),
     readmeContents.includes('Version `0.2.11` corrects the packaged npm README without runtime behavior changes.'),
     readmeContents.includes('Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output.'),
@@ -440,6 +443,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Version `0.2.43` hardens iOS PASS payload replay fixture provenance and refresh guidance without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.44` hardens iOS PASS replay fixture source-line SHA-256 integrity without enabling AVIF output.'),
     readmeContents.includes('Version `0.2.45` adds the structured replay artifact and offline deterministic refresh CLI without enabling AVIF output.'),
+    readmeContents.includes('Version `0.2.46` adds read-only offline artifact freshness checking without enabling AVIF output.'),
     readmeContents.includes("Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."),
     readmeContents.includes('Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.'),
     readmeContents.includes("AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input."),
@@ -497,10 +501,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the v0.2.45 iOS PASS replay fixture offline refresh artifact candidate',
+    label: 'npm package metadata and README status are aligned for the v0.2.46 iOS PASS replay fixture offline check mode candidate',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README offline refresh artifact candidate status are aligned'
-      : 'expected package.json release metadata or README offline refresh artifact candidate guidance is missing/mismatched',
+      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and README offline check mode candidate status are aligned'
+      : 'expected package.json release metadata or README offline check mode candidate guidance is missing/mismatched',
   };
 }
 
@@ -786,6 +790,24 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.46',
+    'Status: unpublished release candidate for iOS PASS replay fixture offline check mode coverage. npm `latest` remains `0.2.40`; no `v0.2.46` tag, GitHub Release, or npm publish is part of this candidate.',
+    'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, add iOS native features, download GitHub Actions logs, write artifacts in check mode, or access the network during tests.',
+    'Add `--check` mode to the existing offline replay fixture CLI.',
+    'Compare the in-memory expected fixture with the existing artifact\'s validated canonical JSON bytes.',
+    'Exit `0` for a current artifact and `1` for missing, malformed, invalid, stale, or noncanonical artifacts.',
+    'Report concise schema, provenance, source-line SHA-256, source-line, and canonical-format differences.',
+    'Prove fake-log check paths never create or modify the target artifact and retain the existing no-network boundary.',
+    'Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.46 candidate.',
+    '### iOS PASS Replay Offline Check Mode',
+    '`getIOSSmokePassReplayFixtureDifferences()` returns deterministic `schema`, `schemaVersion`, `provenance.schema`, `provenance.<field>`, and `sourceLine` labels',
+    '`pnpm fixtures:ios-pass-replay:check -- --log-file <local-log> --workflow-name <workflow> --run-id <run-id> --run-url <run-url> --head-sha <head-sha>`',
+    '`test/iosSmokePassReplayFixture.test.mjs` covers current, stale provenance, stale source-line/digest, missing, malformed, invalid-schema, and noncanonical fake artifacts.',
+    '`package.json` version bump to `0.2.46` and `fixtures:ios-pass-replay:check` command.',
+    'Read-only `--check` mode with deterministic drift labels and canonical-byte comparison.',
+    'Fake-log current/stale/missing/invalid/noncanonical no-write Vitest coverage.',
+    'README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.46 candidate state and the published v0.2.40 npm baseline.',
+    'npm publish, git tag, or GitHub Release promotion for `v0.2.46`.',
     '## v0.2.45',
     'Status: unpublished release candidate for iOS PASS replay fixture offline refresh artifact coverage. npm `latest` remains `0.2.40`; no `v0.2.45` tag, GitHub Release, or npm publish is part of this candidate.',
     'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, add iOS native features, access GitHub from the refresh CLI, or access the network during tests. It keeps runtime behavior unchanged while moving replay provenance and the exact PASS source line into a canonical JSON artifact with a deterministic offline refresh path.',
@@ -2015,7 +2037,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'The current v0.2.45 iOS PASS replay fixture offline refresh artifact candidate notes are in [RELEASE.md](RELEASE.md).',
+    'The current v0.2.46 iOS PASS replay fixture offline check mode candidate notes are in [RELEASE.md](RELEASE.md).',
     'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
@@ -2028,18 +2050,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.45' && missing.length === 0;
+  const ok = packageJson.version === '0.2.46' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.45 iOS PASS replay fixture offline refresh artifact candidate notes and previous release notes are current',
+    label: 'v0.2.46 iOS PASS replay fixture offline check mode candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the candidate scope, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.45'
+          ...(packageJson.version === '0.2.46'
             ? []
-            : ['package.json version 0.2.45']),
+            : ['package.json version 0.2.46']),
         ].join(' | ')}`,
   };
 }
@@ -2704,6 +2726,8 @@ function checkIOSHostAppValidation() {
     'example:ios:smoke': 'node scripts/ios-validation.mjs smoke',
     'fixtures:ios-pass-replay':
       'node scripts/refresh-ios-smoke-pass-replay.mjs',
+    'fixtures:ios-pass-replay:check':
+      'node scripts/refresh-ios-smoke-pass-replay.mjs --check',
   };
   const expectedSnippets = [
     [examplePackageJson, '@react-native-community/cli-platform-ios'],
@@ -2751,7 +2775,9 @@ function checkIOSHostAppValidation() {
     [readmeContents, 'scripts/ios-smoke-pass-replay-fixture.mjs'],
     [readmeContents, 'scripts/refresh-ios-smoke-pass-replay.mjs'],
     [readmeContents, 'pnpm fixtures:ios-pass-replay --'],
+    [readmeContents, 'pnpm fixtures:ios-pass-replay:check --'],
     [readmeContents, 'The CLI performs no GitHub or other network requests.'],
+    [readmeContents, 'Check mode performs no writes and neither mode performs network requests.'],
     [readmeContents, 'summarize-smoke-log` CLI stdout/`$GITHUB_STEP_SUMMARY` dry-run contracts'],
     [readmeContents, 'summarize-smoke-log` CLI stdout/`$GITHUB_STEP_SUMMARY` parity from a fake `ios-smoke.log`'],
     [readmeContents, 'CLI timeout input assembly from fake launch/log stream/Metro/unified-log output'],
@@ -2917,6 +2943,7 @@ function checkIOSHostAppValidation() {
     [replayFixtureModuleContents, 'createIOSSmokePassReplayFixture'],
     [replayFixtureModuleContents, 'validateIOSSmokePassReplayFixture'],
     [replayFixtureModuleContents, 'formatIOSSmokePassReplayFixture'],
+    [replayFixtureModuleContents, 'getIOSSmokePassReplayFixtureDifferences'],
     [replayFixtureModuleContents, "createHash('sha256')"],
     [replayRefreshCliContents, "const DEFAULT_OUTPUT = 'test/fixtures/ios-smoke-pass-ci-replay.json'"],
     [replayRefreshCliContents, "if (arg === '--')"],
@@ -2925,9 +2952,18 @@ function checkIOSHostAppValidation() {
     [replayRefreshCliContents, "['--run-id', 'runId']"],
     [replayRefreshCliContents, "['--run-url', 'runUrl']"],
     [replayRefreshCliContents, "['--head-sha', 'headSha']"],
+    [replayRefreshCliContents, "arg === '--check'"],
+    [replayRefreshCliContents, 'Fixture artifact is stale'],
+    [replayRefreshCliContents, 'canonicalFormat'],
+    [replayRefreshCliContents, 'never writes a file'],
     [replayRefreshCliContents, 'This command performs no network access.'],
     [replayFixtureTestContents, 'creates and formats the exact deterministic fixture schema from a fake log'],
     [replayFixtureTestContents, 'refreshes deterministic fixture files from a fake local log without network access'],
+    [replayFixtureTestContents, 'checks a current fake-log artifact without modifying it'],
+    [replayFixtureTestContents, 'rejects stale provenance without modifying the artifact'],
+    [replayFixtureTestContents, 'rejects source-line drift and reports its digest without modifying the artifact'],
+    [replayFixtureTestContents, 'rejects a %s artifact without creating or modifying it'],
+    [replayFixtureTestContents, 'rejects noncanonical artifact bytes without modifying them'],
     [replayFixtureTestContents, 'rejects a %s PASS source line in the CLI fake log'],
     [replayFixtureTestContents, 'node:(?:child_process|http|https|net|tls)'],
     [replayFixtureContents, '"schemaVersion": 1'],
