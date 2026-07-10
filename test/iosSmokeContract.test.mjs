@@ -1,5 +1,9 @@
-import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import {
+  formatIOSSmokePassReplayFixture,
+  validateIOSSmokePassReplayFixture,
+} from '../scripts/ios-smoke-pass-replay-fixture.mjs';
 import {
   createIOSValidationConfig,
   createSmokeTimeoutError,
@@ -84,43 +88,18 @@ const IOS_SMOKE_PASS_MATRIX_FIELD_PROBES = Object.freeze({
   ]),
 });
 
-const IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE = Object.freeze({
-  workflowName: 'iOS Validation',
-  runId: 28928015548,
-  runUrl:
-    'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28928015548',
-  headSha: 'c6981c3b6b06e5e6e34f42147a94e4299a0f82b2',
-  jobName: 'iOS host-app smoke',
-  stepName: 'Run iOS host-app smoke',
-  logTimestamp: '2026-07-08T08:25:57.8583890Z',
-  sourceLineSha256:
-    'c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6',
-});
-
-const IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE = [
-  'iOS host-app smoke\tRun iOS host-app smoke\t2026-07-08T08:25:57.8580780Z 2026-07-08 08:25:57.760 Df ImageCompressionKitExample[19401:e5d6] (ImageCompressionKitExample.debug.dylib) RNICK_IOS_SMOKE_STEP_PASS reject-png-metadata-preserve',
-  [
-    'iOS host-app smoke\tRun iOS host-app smoke\t2026-07-08T08:25:57.8583890Z',
-    '2026-07-08 08:25:57.761 Df ImageCompressionKitExample[19401:db3e]',
-    '(ImageCompressionKitExample.debug.dylib)',
-    'RNICK_IOS_SMOKE_PASS',
-    '{"platform":"ios","jpegResultBytes":883,"jpegPreserveResultBytes":942,"pngResultBytes":970,"gifResultBytes":776,"webpResultBytes":772,"heicResultBytes":1000,"heifResultBytes":1000,"avifResultBytes":998,"jpegToPngResultBytes":625,"pngToPngResultBytes":672,"gifToPngResultBytes":331,"webpToPngResultBytes":248,"heicToPngResultBytes":1071,"heifToPngResultBytes":1071,"avifToPngResultBytes":1066,"webpOutputAvailable":false,"avifInputAvailable":true,"targetSizeResultBytes":940,"unsupportedInputs":[],"unsupportedOutputs":["webp","heic","heif","avif"]}',
-  ].join(' '),
-].join('\n');
-
-function extractSingleIOSSmokePassCIReplaySourceLine(log) {
-  const sourceLines = log
-    .split(/\r?\n/)
-    .filter((line) => line.includes(' RNICK_IOS_SMOKE_PASS '));
-
-  if (sourceLines.length !== 1) {
-    throw new Error(
-      `Expected exactly one RNICK_IOS_SMOKE_PASS source line, found ${sourceLines.length}.`
-    );
-  }
-
-  return sourceLines[0];
-}
+const IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT_SOURCE = readFileSync(
+  new URL('./fixtures/ios-smoke-pass-ci-replay.json', import.meta.url),
+  'utf8'
+);
+const IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT = JSON.parse(
+  IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT_SOURCE
+);
+const IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE = Object.freeze(
+  IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT.provenance
+);
+const IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE =
+  IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT.sourceLine;
 
 function createIOSSmokePassPayloadFixture({
   webpOutputAvailable,
@@ -606,17 +585,29 @@ describe('iOS smoke contract helpers', () => {
     ).not.toContain('avifToWebPResultBytes');
   });
 
-  it('pins provenance and source-line digest while replaying a successful GitHub Actions iOS smoke PASS log line', () => {
+  it('loads the structured fixture artifact and replays its successful GitHub Actions iOS smoke PASS log line', () => {
     const schemaCase = IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX.find(
       ({ id }) => id === 'webp-output-unavailable-avif-input-available'
     );
-    const sourceLine = extractSingleIOSSmokePassCIReplaySourceLine(
-      IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE
-    );
+    const sourceLine = IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT.sourceLine;
     const payload = parseIOSSmokePassPayload(
       IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE
     );
 
+    expect(
+      validateIOSSmokePassReplayFixture(
+        IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT
+      )
+    ).toBe(IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT);
+    expect(
+      formatIOSSmokePassReplayFixture(IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT)
+    ).toBe(IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT_SOURCE);
+    expect(Object.keys(IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT)).toEqual([
+      'schemaVersion',
+      'provenance',
+      'sourceLine',
+    ]);
+    expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_ARTIFACT.schemaVersion).toBe(1);
     expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE).toEqual({
       workflowName: 'iOS Validation',
       runId: 28928015548,
@@ -632,9 +623,7 @@ describe('iOS smoke contract helpers', () => {
     expect(IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.runUrl).toContain(
       `/actions/runs/${IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.runId}`
     );
-    expect(sourceLine).toBe(
-      IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE.split('\n')[1]
-    );
+    expect(sourceLine).toBe(IOS_SMOKE_PASS_CI_LOG_REPLAY_FIXTURE);
     expect(sourceLine).toContain(
       [
         IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.jobName,
@@ -644,19 +633,6 @@ describe('iOS smoke contract helpers', () => {
     );
     expect(sourceLine).toContain(
       '(ImageCompressionKitExample.debug.dylib) RNICK_IOS_SMOKE_PASS'
-    );
-    expect(createHash('sha256').update(sourceLine, 'utf8').digest('hex')).toBe(
-      IOS_SMOKE_PASS_CI_LOG_REPLAY_PROVENANCE.sourceLineSha256
-    );
-    expect(() => extractSingleIOSSmokePassCIReplaySourceLine('')).toThrow(
-      'Expected exactly one RNICK_IOS_SMOKE_PASS source line, found 0.'
-    );
-    expect(() =>
-      extractSingleIOSSmokePassCIReplaySourceLine(
-        `${sourceLine}\n${sourceLine}`
-      )
-    ).toThrow(
-      'Expected exactly one RNICK_IOS_SMOKE_PASS source line, found 2.'
     );
     expect(payload).toEqual(createIOSSmokePassPayloadFixture(schemaCase));
     expect(Object.keys(payload)).toEqual(schemaCase.requiredFields);

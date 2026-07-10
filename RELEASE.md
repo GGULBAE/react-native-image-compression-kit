@@ -1,5 +1,58 @@
 # Release Notes
 
+## v0.2.45
+
+Status: unpublished release candidate for iOS PASS replay fixture offline refresh artifact coverage. npm `latest` remains `0.2.40`; no `v0.2.45` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, add iOS native features, access GitHub from the refresh CLI, or access the network during tests. It keeps runtime behavior unchanged while moving replay provenance and the exact PASS source line into a canonical JSON artifact with a deterministic offline refresh path.
+
+### Goals
+
+- Move replay provenance and the exact `RNICK_IOS_SMOKE_PASS` source line into a structured fixture artifact.
+- Add an offline CLI that accepts a local Actions log plus workflow/run/head SHA provenance arguments.
+- Derive job, step, timestamp, and source-line SHA-256 while writing canonical deterministic JSON.
+- Pin the fixture schema, canonical formatting, and fake-log CLI success/error behavior without network access.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.45 candidate.
+
+### iOS PASS Replay Offline Refresh Artifact
+
+`test/fixtures/ios-smoke-pass-ci-replay.json` now owns `schemaVersion`, the ordered provenance fields, and the exact successful GitHub Actions-prefixed PASS source line. `test/iosSmokeContract.test.mjs` loads that artifact, verifies canonical byte formatting through `formatIOSSmokePassReplayFixture()`, and replays the source line against the existing payload matrix schema.
+
+`scripts/ios-smoke-pass-replay-fixture.mjs` owns single PASS-line extraction, GitHub Actions prefix parsing, exact schema validation, run URL/head SHA validation, PASS JSON validation, source metadata matching, SHA-256 calculation, and deterministic two-space JSON formatting with one trailing newline.
+
+`pnpm fixtures:ios-pass-replay -- --log-file <local-log> --workflow-name <workflow> --run-id <run-id> --run-url <run-url> --head-sha <head-sha>` runs `scripts/refresh-ios-smoke-pass-replay.mjs`. The CLI only reads a local log and writes the artifact; downloading or exporting the Actions log remains a separate explicit step.
+
+`test/iosSmokePassReplayFixture.test.mjs` builds exact fake-log schema expectations, compares repeated formatter output, runs the CLI twice into separate files and compares their bytes, rejects missing/duplicate/malformed/hash-mismatched source lines, and asserts the CLI has no child-process, HTTP, HTTPS, socket, `fetch()`, or `gh run` path.
+
+### Included
+
+- `package.json` version bump to `0.2.45`.
+- Canonical structured replay fixture under `test/fixtures`.
+- Reusable replay fixture schema/format module and offline refresh CLI.
+- Fake-log deterministic output and error-path Vitest coverage.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.45 candidate state and the published v0.2.40 npm baseline.
+
+### Not Included
+
+- GitHub Actions download or API access from the refresh CLI.
+- Network access from tests.
+- iOS native feature changes.
+- AVIF input support forced available or unavailable on real simulators.
+- WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
+- AVIF output enablement.
+- Actual AVIF file returns from `compressImage()`.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.45`.
+- Forced simulator capability changes or forced simulator failures.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.44
 
 Status: unpublished release candidate for iOS PASS replay fixture source-line integrity digest coverage. npm `latest` remains `0.2.40`; no `v0.2.44` tag, GitHub Release, or npm publish is part of this candidate.

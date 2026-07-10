@@ -1,6 +1,6 @@
 {
   "name": "react-native-image-compression-kit",
-  "version": "0.2.44",
+  "version": "0.2.45",
   "description": "Native-first image compression and transcoding pipeline for React Native.",
   "license": "MIT",
   "repository": {
@@ -48,6 +48,7 @@
     "fixtures:avif:check": "node scripts/generate-avif-fixtures.mjs --check",
     "fixtures:heic-heif": "node scripts/generate-heic-heif-fixtures.mjs",
     "fixtures:heic-heif:check": "node scripts/generate-heic-heif-fixtures.mjs --check",
+    "fixtures:ios-pass-replay": "node scripts/refresh-ios-smoke-pass-replay.mjs",
     "hooks:install": "node scripts/install-git-hooks.mjs",
     "release:dry-run": "node scripts/release-dry-run.mjs",
     "smoke:consumer": "pnpm build && node scripts/consumer-smoke-test.mjs",

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "provenance": {
+    "workflowName": "iOS Validation",
+    "runId": 28928015548,
+    "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28928015548",
+    "headSha": "c6981c3b6b06e5e6e34f42147a94e4299a0f82b2",
+    "jobName": "iOS host-app smoke",
+    "stepName": "Run iOS host-app smoke",
+    "logTimestamp": "2026-07-08T08:25:57.8583890Z",
+    "sourceLineSha256": "c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6"
+  },
+  "sourceLine": "iOS host-app smoke\tRun iOS host-app smoke\t2026-07-08T08:25:57.8583890Z 2026-07-08 08:25:57.761 Df ImageCompressionKitExample[19401:db3e] (ImageCompressionKitExample.debug.dylib) RNICK_IOS_SMOKE_PASS {\"platform\":\"ios\",\"jpegResultBytes\":883,\"jpegPreserveResultBytes\":942,\"pngResultBytes\":970,\"gifResultBytes\":776,\"webpResultBytes\":772,\"heicResultBytes\":1000,\"heifResultBytes\":1000,\"avifResultBytes\":998,\"jpegToPngResultBytes\":625,\"pngToPngResultBytes\":672,\"gifToPngResultBytes\":331,\"webpToPngResultBytes\":248,\"heicToPngResultBytes\":1071,\"heifToPngResultBytes\":1071,\"avifToPngResultBytes\":1066,\"webpOutputAvailable\":false,\"avifInputAvailable\":true,\"targetSizeResultBytes\":940,\"unsupportedInputs\":[],\"unsupportedOutputs\":[\"webp\",\"heic\",\"heif\",\"avif\"]}"
+}
