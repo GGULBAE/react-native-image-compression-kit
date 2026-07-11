@@ -6,7 +6,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const SCRIPT_PATH = fileURLToPath(import.meta.url);
+const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
 
 const STALE_PACKED_README_SNIPPETS = [
   'Status: v0.2.10 candidate',
@@ -104,6 +105,14 @@ const STALE_PACKED_README_SNIPPETS = [
   'The `0.2.19` package metadata is prepared as an unpublished AVIF output production gate candidate for `react-native-image-compression-kit`',
   'version `0.2.19` is the unpublished AVIF output production gate candidate',
   'v0.2.19 AVIF output production gate candidate notes',
+  'Status: v0.2.47 candidate',
+  'v0.2.47%20candidate',
+  'Version `0.2.47` is an unpublished iOS PASS replay automation gate candidate for `react-native-image-compression-kit`.',
+  'No npm publish, git tag, or GitHub Release is part of the v0.2.47 candidate.',
+  'The `0.2.47` package metadata is prepared as an unpublished iOS PASS replay automation gate candidate for `react-native-image-compression-kit`',
+  'Version `0.2.47` is the unpublished iOS PASS replay automation gate candidate.',
+  'The v0.2.47 candidate fixes semantic PASS payload validation',
+  'The current v0.2.47 iOS PASS replay automation gate candidate notes',
 ];
 
 const STEPS = [
@@ -143,18 +152,20 @@ const STEPS = [
   },
 ];
 
-console.log('Release dry run only validates publish readiness. It does not publish to npm.');
+function main() {
+  console.log('Release dry run only validates publish readiness. It does not publish to npm.');
 
-for (const step of STEPS) {
-  console.log(`\n> ${step.name}`);
-  if (step.run) {
-    step.run();
-  } else {
-    run(step.command, step.args);
+  for (const step of STEPS) {
+    console.log(`\n> ${step.name}`);
+    if (step.run) {
+      step.run();
+    } else {
+      run(step.command, step.args);
+    }
   }
-}
 
-console.log('\nRelease dry run completed.');
+  console.log('\nRelease dry run completed.');
+}
 
 function checkPackedReadmeStatus() {
   const tempDir = mkdtempSync(path.join(os.tmpdir(), 'rnick-release-readme-'));
@@ -163,21 +174,34 @@ function checkPackedReadmeStatus() {
     run('pnpm', ['pack', '--pack-destination', tempDir]);
     const tarballPath = findPackedTarball(tempDir);
     const readmeContents = extractTarballFile(tarballPath, 'package/README.md');
-    const staleSnippets = STALE_PACKED_README_SNIPPETS.filter((snippet) =>
-      readmeContents.includes(snippet)
-    );
 
-    if (staleSnippets.length > 0) {
-      fail(
-        `Packed README contains stale package-page status snippets: ${staleSnippets.join(
-          ' | '
-        )}`
-      );
+    try {
+      validatePackedReadmeStatus(readmeContents);
+    } catch (error) {
+      fail(error instanceof Error ? error.message : String(error));
     }
 
-    console.log('Packed README published status check completed.');
+    console.log('Packed README release status check completed.');
   } finally {
     rmSync(tempDir, { recursive: true, force: true });
+  }
+}
+
+export function getPackedReadmeStatusViolations(readmeContents) {
+  return STALE_PACKED_README_SNIPPETS.filter((snippet) =>
+    readmeContents.includes(snippet)
+  );
+}
+
+export function validatePackedReadmeStatus(readmeContents) {
+  const staleSnippets = getPackedReadmeStatusViolations(readmeContents);
+
+  if (staleSnippets.length > 0) {
+    throw new Error(
+      `Packed README contains stale package-page status snippets: ${staleSnippets.join(
+        ' | '
+      )}`
+    );
   }
 }
 
@@ -230,4 +254,8 @@ function run(command, args) {
 function fail(message) {
   console.error(message);
   process.exit(1);
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_PATH) {
+  main();
 }

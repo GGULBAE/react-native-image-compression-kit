@@ -161,6 +161,14 @@ describe('Android verification scripts', () => {
       'Version `0.2.40` is the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.',
       'No git tag or GitHub Release is part of this package-page promotion.',
       'The `0.2.40` package is published as the npm `latest` iOS AVIF-input unavailable PASS payload schema snapshot release',
+      'Status: v0.2.47 candidate',
+      'v0.2.47%20candidate',
+      'Version `0.2.47` is an unpublished iOS PASS replay automation gate candidate for `react-native-image-compression-kit`.',
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.47 candidate.',
+      'The `0.2.47` package metadata is prepared as an unpublished iOS PASS replay automation gate candidate for `react-native-image-compression-kit`',
+      'Version `0.2.47` is the unpublished iOS PASS replay automation gate candidate.',
+      'The v0.2.47 candidate fixes semantic PASS payload validation',
+      'The current v0.2.47 iOS PASS replay automation gate candidate notes',
     ];
     const expectedKeywords = [
       'react-native',
@@ -206,7 +214,7 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.47` is an unpublished iOS PASS replay automation gate candidate for `react-native-image-compression-kit`.'
+      'Version `0.2.47` is the iOS PASS replay automation gate release for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
       '`validateIOSSmokePassPayload()` now enforces the exact capability-selected field order'
@@ -253,16 +261,14 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       "The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"
     );
-    expect(readmeSource).toContain('npm `latest` remains `0.2.40`');
-    expect(readmeSource).toContain('the previous GitHub Release remains [v0.2.17]');
     expect(readmeSource).toContain(
-      'Version `0.2.40` remains the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.'
+      'The package README uses registry-independent v0.2.47 release wording so the same tarball remains accurate before and after npm publication.'
     );
     expect(readmeSource).toContain(
-      'No npm publish, git tag, or GitHub Release is part of the v0.2.47 candidate.'
+      'Git tags and GitHub Releases are managed separately and are not implied by this package status.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.47` package metadata is prepared as an unpublished iOS PASS replay automation gate candidate for `react-native-image-compression-kit`'
+      'The `0.2.47` package metadata defines the iOS PASS replay automation gate release for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -406,7 +412,7 @@ describe('Android verification scripts', () => {
       'Version `0.2.46` is the unpublished iOS PASS replay fixture offline check mode candidate.'
     );
     expect(readmeSource).toContain(
-      'Version `0.2.47` is the unpublished iOS PASS replay automation gate candidate.'
+      'Version `0.2.47` is the iOS PASS replay automation gate release.'
     );
     expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
@@ -821,8 +827,8 @@ describe('Android verification scripts', () => {
     expect(registrySmokeScriptSource).toContain('RNICK_REGISTRY_SMOKE_KEEP');
     expect(registrySmokeScriptSource).toContain('compressImage(options)');
     expect(registrySmokeScriptSource).toContain('getImageCompressionCapabilities()');
-    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.40');
-    expect(readmeSource).toContain('published npm registry package');
+    expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.47');
+    expect(readmeSource).toContain('validates the v0.2.47 registry package');
     expect(readmeSource).toContain('npm install --ignore-scripts --legacy-peer-deps');
     expect(readmeSource).toContain(
       'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'
@@ -834,6 +840,7 @@ describe('Android verification scripts', () => {
 
   it('documents and wires the release dry-run checklist', () => {
     const releaseScriptSource = readProjectFile('scripts/release-dry-run.mjs');
+    const releaseTestSource = readProjectFile('test/releaseDryRun.test.mjs');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.scripts['release:dry-run']).toBe(
@@ -849,9 +856,21 @@ describe('Android verification scripts', () => {
     expect(releaseScriptSource).toContain('Check packed README status');
     expect(releaseScriptSource).toContain('STALE_PACKED_README_SNIPPETS');
     expect(releaseScriptSource).toContain('checkPackedReadmeStatus');
+    expect(releaseScriptSource).toContain('getPackedReadmeStatusViolations');
+    expect(releaseScriptSource).toContain('validatePackedReadmeStatus');
+    expect(releaseScriptSource).toContain('Status: v0.2.47 candidate');
+    expect(releaseScriptSource).toContain(
+      'Version `0.2.47` is an unpublished iOS PASS replay automation gate candidate'
+    );
     expect(releaseScriptSource).toContain('package/README.md');
     expect(releaseScriptSource).toContain(
-      'Packed README published status check completed.'
+      'Packed README release status check completed.'
+    );
+    expect(releaseTestSource).toContain(
+      'rejects the v0.2.47 candidate snippet'
+    );
+    expect(releaseTestSource).toContain(
+      'accepts registry-independent v0.2.47 release wording'
     );
     expect(releaseScriptSource).toContain("args: ['smoke:consumer']");
     expect(releaseScriptSource).toContain(
@@ -869,7 +888,9 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('packed README stale status check');
     expect(readmeSource).toContain('pnpm smoke:consumer');
     expect(readmeSource).toContain('pnpm publish --dry-run --no-git-checks');
-    expect(readmeSource).toContain('successful GitHub Actions CI run');
+    expect(readmeSource).toContain(
+      'successful GitHub Actions CI, Android Instrumentation, and iOS Validation runs'
+    );
   });
 
   it('documents and guards iOS host-app validation stability', () => {
@@ -1340,17 +1361,17 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.47 iOS PASS replay automation gate candidate notes and previous release notes', () => {
+  it('documents the v0.2.47 iOS PASS replay automation gate release-ready notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.47');
     expect(releaseSource).toContain('## v0.2.47');
     expect(releaseSource).toContain(
-      'Status: unpublished release candidate for iOS PASS replay automation gate coverage. npm `latest` remains `0.2.40`; no `v0.2.47` tag, GitHub Release, or npm publish is part of this candidate.'
+      'Status: release-ready for npm `latest` promotion as the iOS PASS replay automation gate release. npm `latest` remains `0.2.40` until the one-time publish step; no `v0.2.47` tag or GitHub Release is part of this promotion.'
     );
     expect(releaseSource).toContain(
-      'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests.'
+      'This release does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests.'
     );
     expect(releaseSource).toContain(
       'Add a reusable `RNICK_IOS_SMOKE_PASS` payload validator for exact capability-driven field order and value semantics.'
@@ -1387,7 +1408,22 @@ describe('Android verification scripts', () => {
       'iOS Validation workflow audit gate before simulator smoke.'
     );
     expect(releaseSource).toContain(
-      'npm publish, git tag, or GitHub Release promotion for `v0.2.47`.'
+      '### Promotion Plan'
+    );
+    expect(releaseSource).toContain(
+      'Confirm npm authentication, then run `npm publish --tag latest` exactly once.'
+    );
+    expect(releaseSource).toContain(
+      'If publish output is interrupted or ambiguous, query npm for `0.2.47` and `dist-tags.latest` before considering any retry.'
+    );
+    expect(releaseSource).toContain(
+      '`pnpm smoke:registry -- --version 0.2.47`'
+    );
+    expect(releaseSource).toContain(
+      'Keep git tag and GitHub Release creation outside this npm promotion.'
+    );
+    expect(releaseSource).toContain(
+      'Git tag or GitHub Release promotion for `v0.2.47`.'
     );
     expect(releaseSource).toContain('## v0.2.46');
     expect(releaseSource).toContain(
@@ -4536,11 +4572,11 @@ describe('Android verification scripts', () => {
       'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain(
-      'The current v0.2.47 iOS PASS replay automation gate candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.47 iOS PASS replay automation gate release notes are in [RELEASE.md](RELEASE.md).'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(
-      'Tag, npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`'
+      'npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`'
     );
   });
 

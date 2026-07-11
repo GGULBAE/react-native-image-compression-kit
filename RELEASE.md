@@ -2,9 +2,9 @@
 
 ## v0.2.47
 
-Status: unpublished release candidate for iOS PASS replay automation gate coverage. npm `latest` remains `0.2.40`; no `v0.2.47` tag, GitHub Release, or npm publish is part of this candidate.
+Status: release-ready for npm `latest` promotion as the iOS PASS replay automation gate release. npm `latest` remains `0.2.40` until the one-time publish step; no `v0.2.47` tag or GitHub Release is part of this promotion.
 
-This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests. It keeps runtime behavior unchanged while making the committed iOS PASS replay artifact an explicit semantic, local, and CI quality gate.
+This release does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests. It keeps runtime behavior unchanged while making the committed iOS PASS replay artifact an explicit semantic, local, and CI quality gate.
 
 ### Goals
 
@@ -15,7 +15,7 @@ This candidate does not enable AVIF output, force AVIF input availability or una
 - Add stable `--check --json` and `--audit --json` machine-readable reports.
 - Preserve existing text-mode check output, `0`/`1` exit behavior, and no-write/no-network boundaries.
 - Run the standalone audit from `pnpm verify` and the iOS Validation workflow.
-- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.47 candidate.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.47 release.
 
 ### iOS PASS Replay Automation Gate
 
@@ -36,7 +36,7 @@ This candidate does not enable AVIF output, force AVIF input availability or una
 - Standalone `--audit` plus stable check/audit JSON result schema.
 - iOS Validation workflow audit gate before simulator smoke.
 - Matrix-wide semantic validator and CLI JSON/no-write/no-network Vitest coverage.
-- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.47 candidate state and the published v0.2.40 npm baseline.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.47 release-ready state.
 
 ### Not Included
 
@@ -49,7 +49,15 @@ This candidate does not enable AVIF output, force AVIF input availability or una
 - WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
 - AVIF output enablement or actual AVIF file returns from `compressImage()`.
 - Forced simulator capability changes or simulator failures.
-- npm publish, git tag, or GitHub Release promotion for `v0.2.47`.
+- Git tag or GitHub Release promotion for `v0.2.47`.
+
+### Promotion Plan
+
+- Require the full local release gate and green GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed release-ready commit.
+- Confirm npm authentication, then run `npm publish --tag latest` exactly once.
+- If publish output is interrupted or ambiguous, query npm for `0.2.47` and `dist-tags.latest` before considering any retry.
+- Verify npm `version` and `dist-tags.latest` are both `0.2.47`, run `pnpm smoke:registry -- --version 0.2.47`, and inspect the real registry tarball README and development-file exclusions.
+- Keep git tag and GitHub Release creation outside this npm promotion.
 
 ### Validation
 
@@ -59,7 +67,10 @@ This candidate does not enable AVIF output, force AVIF input availability or una
 - `git diff --check`
 - `pnpm pack --dry-run`
 - `pnpm release:dry-run`
-- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+- `npm view react-native-image-compression-kit version dist-tags.latest time.modified --json`
+- `pnpm smoke:registry -- --version 0.2.47`
+- Real registry tarball README and development-only file exclusion inspection.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release-ready and final published-status commits.
 
 ## v0.2.46
 
