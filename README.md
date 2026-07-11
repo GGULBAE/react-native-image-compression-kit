@@ -64,7 +64,7 @@ pnpm fixtures:ios-pass-replay:audit -- --json
 
 Audit mode validates canonical JSON, fixture schema, provenance fields, the exact source-line SHA-256, and the capability-driven PASS payload contract owned by `scripts/ios-smoke-contract.mjs` and `scripts/ios-smoke-pass-replay-fixture.mjs`. Check additionally compares the artifact with a supplied local log and provenance. Check and audit modes perform no writes; refresh, check, and audit perform no GitHub or other network requests.
 
-Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.47`. The real 51-file registry tarball retained the registry-independent `Status: v0.2.47 release` package README, contained no v0.2.47 candidate status or development-only files, and passed clean consumer installation and public API typechecking. No git tag or GitHub Release was created as part of this npm-only promotion.
+Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.47`. The real 51-file registry tarball retained the registry-independent `Status: v0.2.47 release` package README, contained no guarded stale-status snippets or development-only files, and passed clean consumer installation and public API typechecking. No git tag or GitHub Release was created as part of this npm-only promotion.
 
 The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry, keeps `avif.output=false`, and leaves metadata preserve, target-size, and animated AVIF production semantics disabled.
 
