@@ -11,6 +11,7 @@ import {
   formatIOSSmokePassPayloadSchema,
   formatIOSSmokeDiagnosticsSummary,
   formatSmokeTimeoutDiagnostics,
+  getIOSSmokePassPayloadContractDifferences,
   getIOSSmokePassPayloadRequiredFields,
   IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_REQUIRED_FIELDS,
   IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS,
@@ -21,6 +22,7 @@ import {
   listMissingIOSSmokePassPayloadFields,
   parseIOSSmokePassPayload,
   shouldRetrySmokeTimeout,
+  validateIOSSmokePassPayload,
 } from '../scripts/ios-smoke-contract.mjs';
 
 const IOS_SMOKE_PASS_FIXTURE_FIELD_VALUES = Object.freeze({
@@ -536,6 +538,8 @@ describe('iOS smoke contract helpers', () => {
         schemaCase.requiredFields
       );
       expect(listMissingIOSSmokePassPayloadFields(payload)).toEqual([]);
+      expect(getIOSSmokePassPayloadContractDifferences(payload)).toEqual([]);
+      expect(validateIOSSmokePassPayload(payload)).toBe(payload);
       expect(payload.webpOutputAvailable).toBe(schemaCase.webpOutputAvailable);
       expect(payload.avifInputAvailable).toBe(schemaCase.avifInputAvailable);
       expect(payload.unsupportedInputs).toEqual(
@@ -573,6 +577,17 @@ describe('iOS smoke contract helpers', () => {
       } else {
         expect(payload).not.toHaveProperty('avifToWebPResultBytes');
       }
+
+      for (const field of Object.keys(payload).filter((key) =>
+        key.endsWith('ResultBytes')
+      )) {
+        expect(
+          getIOSSmokePassPayloadContractDifferences({
+            ...payload,
+            [field]: 0,
+          })
+        ).toContain(`payload.${field}`);
+      }
     }
 
     expect(listMissingIOSSmokePassPayloadFields({ platform: 'ios' })).toEqual(
@@ -583,6 +598,115 @@ describe('iOS smoke contract helpers', () => {
     expect(
       IOS_SMOKE_PASS_AVIF_INPUT_UNAVAILABLE_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS
     ).not.toContain('avifToWebPResultBytes');
+  });
+
+  it('validates iOS PASS payload ordering, values, and capability semantics', () => {
+    const basePayload = createIOSSmokePassPayloadFixture({
+      webpOutputAvailable: false,
+      avifInputAvailable: true,
+    });
+    const reorderedEntries = Object.entries(basePayload);
+    [reorderedEntries[0], reorderedEntries[1]] = [
+      reorderedEntries[1],
+      reorderedEntries[0],
+    ];
+
+    expect(
+      getIOSSmokePassPayloadContractDifferences(
+        Object.fromEntries(reorderedEntries)
+      )
+    ).toEqual(['payload.schema']);
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...basePayload,
+        platform: 'android',
+      })
+    ).toEqual(['payload.platform']);
+
+    for (const invalidByteSize of [
+      0,
+      -1,
+      1.5,
+      Number.MAX_SAFE_INTEGER + 1,
+      '1',
+    ]) {
+      expect(
+        getIOSSmokePassPayloadContractDifferences({
+          ...basePayload,
+          jpegResultBytes: invalidByteSize,
+        })
+      ).toEqual(['payload.jpegResultBytes']);
+    }
+
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...basePayload,
+        webpOutputAvailable: 'false',
+      })
+    ).toEqual(['payload.schema', 'payload.webpOutputAvailable']);
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...basePayload,
+        avifInputAvailable: 1,
+      })
+    ).toEqual(['payload.schema', 'payload.avifInputAvailable']);
+
+    const avifUnavailablePayload = createIOSSmokePassPayloadFixture({
+      webpOutputAvailable: false,
+      avifInputAvailable: false,
+    });
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...avifUnavailablePayload,
+        unsupportedInputs: ['avif', 'avif'],
+      })
+    ).toEqual(['payload.unsupportedInputs']);
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...avifUnavailablePayload,
+        unsupportedInputs: [],
+      })
+    ).toEqual(['payload.unsupportedInputs']);
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...avifUnavailablePayload,
+        unsupportedInputs: 'avif',
+      })
+    ).toEqual(['payload.unsupportedInputs']);
+
+    const webpAvailablePayload = createIOSSmokePassPayloadFixture({
+      webpOutputAvailable: true,
+      avifInputAvailable: true,
+    });
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...webpAvailablePayload,
+        unsupportedOutputs: ['webp', 'heic', 'heif', 'avif'],
+      })
+    ).toEqual(['payload.unsupportedOutputs']);
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...webpAvailablePayload,
+        unsupportedOutputs: 'heic,heif,avif',
+      })
+    ).toEqual(['payload.unsupportedOutputs']);
+    expect(
+      getIOSSmokePassPayloadContractDifferences({
+        ...webpAvailablePayload,
+        unsupportedOutputs: ['heic', 'heic', 'heif', 'avif'],
+      })
+    ).toEqual(['payload.unsupportedOutputs']);
+    expect(getIOSSmokePassPayloadContractDifferences([])).toEqual([
+      'payload.schema',
+    ]);
+    expect(() =>
+      validateIOSSmokePassPayload({
+        ...basePayload,
+        targetSizeResultBytes: 0,
+      })
+    ).toThrow(
+      'RNICK_IOS_SMOKE_PASS payload contract is invalid; differences: payload.targetSizeResultBytes.'
+    );
   });
 
   it('loads the structured fixture artifact and replays its successful GitHub Actions iOS smoke PASS log line', () => {

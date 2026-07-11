@@ -1,4 +1,8 @@
 import { createHash } from 'node:crypto';
+import {
+  getIOSSmokePassPayloadContractDifferences,
+  validateIOSSmokePassPayload,
+} from './ios-smoke-contract.mjs';
 
 export const IOS_SMOKE_PASS_REPLAY_FIXTURE_SCHEMA_VERSION = 1;
 
@@ -99,7 +103,7 @@ export function validateIOSSmokePassReplayFixture(fixture) {
   const payloadText = sourceLine.slice(
     sourceLine.indexOf(PASS_MARKER) + PASS_MARKER.length
   );
-  requireJsonObject(payloadText);
+  validateIOSSmokePassPayload(parsePayloadObject(payloadText));
 
   for (const field of ['jobName', 'stepName', 'logTimestamp']) {
     if (provenance[field] !== sourceMetadata[field]) {
@@ -164,6 +168,86 @@ export function getIOSSmokePassReplayFixtureDifferences(
   }
 
   return differences;
+}
+
+export function getIOSSmokePassReplayFixtureValidationDifferences(fixture) {
+  if (!isRecord(fixture)) {
+    return ['schema'];
+  }
+
+  const differences = [];
+
+  if (!hasExactFields(fixture, ROOT_FIELDS)) {
+    differences.push('schema');
+  }
+
+  if (fixture.schemaVersion !== IOS_SMOKE_PASS_REPLAY_FIXTURE_SCHEMA_VERSION) {
+    differences.push('schemaVersion');
+  }
+
+  const provenance = fixture.provenance;
+  if (!isRecord(provenance)) {
+    differences.push('provenance');
+  } else {
+    if (!hasExactFields(provenance, PROVENANCE_FIELDS)) {
+      differences.push('provenance.schema');
+    }
+
+    for (const [field, validator] of [
+      ['workflowName', () => requireNonEmptyString(provenance.workflowName, '')],
+      ['runId', () => requirePositiveSafeInteger(provenance.runId, '')],
+      ['runUrl', () => requireRunUrl(provenance.runUrl, provenance.runId)],
+      ['headSha', () => requireHeadSha(provenance.headSha)],
+      ['jobName', () => requireNonEmptyString(provenance.jobName, '')],
+      ['stepName', () => requireNonEmptyString(provenance.stepName, '')],
+      ['logTimestamp', () => requireLogTimestamp(provenance.logTimestamp)],
+      ['sourceLineSha256', () => requireSha256(provenance.sourceLineSha256)],
+    ]) {
+      try {
+        validator();
+      } catch {
+        differences.push(`provenance.${field}`);
+      }
+    }
+  }
+
+  let sourceLine;
+  let sourceMetadata;
+  try {
+    sourceLine = extractSingleIOSSmokePassSourceLine(fixture.sourceLine);
+    sourceMetadata = parseGitHubActionsLogPrefix(sourceLine);
+  } catch {
+    differences.push('sourceLine');
+  }
+
+  if (sourceLine && isRecord(provenance)) {
+    if (sourceMetadata) {
+      for (const field of ['jobName', 'stepName', 'logTimestamp']) {
+        if (provenance[field] !== sourceMetadata[field]) {
+          differences.push(`provenance.${field}`);
+        }
+      }
+    }
+
+    if (provenance.sourceLineSha256 !== sha256(sourceLine)) {
+      differences.push('provenance.sourceLineSha256');
+    }
+
+    try {
+      const payloadText = sourceLine.slice(
+        sourceLine.indexOf(PASS_MARKER) + PASS_MARKER.length
+      );
+      differences.push(
+        ...getIOSSmokePassPayloadContractDifferences(
+          parsePayloadObject(payloadText)
+        )
+      );
+    } catch {
+      differences.push('payload.schema');
+    }
+  }
+
+  return [...new Set(differences)];
 }
 
 function parseGitHubActionsLogPrefix(sourceLine) {
@@ -280,7 +364,7 @@ function requireSha256(value) {
   }
 }
 
-function requireJsonObject(payloadText) {
+function parsePayloadObject(payloadText) {
   let payload;
   try {
     payload = JSON.parse(payloadText);
@@ -289,6 +373,7 @@ function requireJsonObject(payloadText) {
   }
 
   requireRecord(payload, 'RNICK_IOS_SMOKE_PASS source line payload');
+  return payload;
 }
 
 function sha256(value) {

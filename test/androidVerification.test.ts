@@ -178,7 +178,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.46');
+    expect(packageJson.version).toBe('0.2.47');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -206,19 +206,22 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.46` is an unpublished iOS PASS replay fixture offline check mode candidate for `react-native-image-compression-kit`.'
+      'Version `0.2.47` is an unpublished iOS PASS replay automation gate candidate for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
-      'adds a read-only freshness check for `test/fixtures/ios-smoke-pass-ci-replay.json`'
+      '`validateIOSSmokePassPayload()` now enforces the exact capability-selected field order'
     );
     expect(readmeSource).toContain(
-      '`scripts/ios-smoke-pass-replay-fixture.mjs` validates the schema and reports deterministic `schemaVersion`, `provenance.<field>`, and `sourceLine` differences'
+      '`validateIOSSmokePassReplayFixture()` applies that semantic contract'
     );
     expect(readmeSource).toContain(
-      '`--check` builds the expected fixture in memory, validates the existing artifact, compares exact canonical bytes'
+      'adds source-log-free `--audit`'
     );
     expect(readmeSource).toContain(
-      '`test/iosSmokePassReplayFixture.test.mjs` covers current, stale provenance, stale source-line/digest, missing, malformed, invalid-schema, and noncanonical artifacts'
+      'stable machine-readable `schemaVersion`, `mode`, `status`, `artifactPath`, `differences`, and `error` fields'
+    );
+    expect(readmeSource).toContain(
+      '`pnpm verify` and the iOS Validation workflow now run the standalone audit'
     );
     expect(readmeSource).toContain(
       'The CLI performs no GitHub or other network requests.'
@@ -230,15 +233,17 @@ describe('Android verification scripts', () => {
       'pnpm fixtures:ios-pass-replay:check --'
     );
     expect(readmeSource).toContain(
+      'pnpm fixtures:ios-pass-replay:audit -- --json'
+    );
+    expect(readmeSource).toContain(
       'regenerates the structured JSON fields'
     );
     expect(readmeSource).toContain(
-      'Check mode performs no writes and neither mode performs network requests.'
+      'Check and audit modes perform no writes; refresh, check, and audit perform no GitHub or other network requests.'
     );
     expect(readmeSource).toContain(
-      'The existing matrix fixture factory still covers all four WebP output x AVIF input combinations'
+      'reusable semantic payload validator coverage across exact field order, positive result bytes, capability booleans, and unsupported-format consistency'
     );
-    expect(readmeSource).toContain('`unsupportedInputs`, and `unsupportedOutputs`');
     expect(readmeSource).toContain(
       'uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'
     );
@@ -254,10 +259,10 @@ describe('Android verification scripts', () => {
       'Version `0.2.40` remains the latest published npm package and iOS AVIF-input unavailable PASS payload schema snapshot release.'
     );
     expect(readmeSource).toContain(
-      'No npm publish, git tag, or GitHub Release is part of the v0.2.46 candidate.'
+      'No npm publish, git tag, or GitHub Release is part of the v0.2.47 candidate.'
     );
     expect(readmeSource).toContain(
-      'The `0.2.46` package metadata is prepared as an unpublished iOS PASS replay fixture offline check mode candidate for `react-native-image-compression-kit`'
+      'The `0.2.47` package metadata is prepared as an unpublished iOS PASS replay automation gate candidate for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -401,6 +406,9 @@ describe('Android verification scripts', () => {
       'Version `0.2.46` is the unpublished iOS PASS replay fixture offline check mode candidate.'
     );
     expect(readmeSource).toContain(
+      'Version `0.2.47` is the unpublished iOS PASS replay automation gate candidate.'
+    );
+    expect(readmeSource).toContain(
       'Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image.'
     );
     expect(readmeSource).toContain(
@@ -510,6 +518,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Version `0.2.46` adds read-only offline artifact freshness checking without enabling AVIF output.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.47` adds semantic payload validation, standalone audit mode, machine-readable reports, and local/CI audit gating without enabling AVIF output.'
     );
     expect(readmeSource).toContain(
       "Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`."
@@ -904,6 +915,12 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts['fixtures:ios-pass-replay:check']).toBe(
       'node scripts/refresh-ios-smoke-pass-replay.mjs --check'
     );
+    expect(packageJson.scripts['fixtures:ios-pass-replay:audit']).toBe(
+      'node scripts/refresh-ios-smoke-pass-replay.mjs --audit'
+    );
+    expect(packageJson.scripts.verify).toBe(
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm android:doctor'
+    );
     expect(readmeSource).toContain('## iOS Host-App Validation');
     expect(readmeSource).toContain('pnpm example:ios:smoke');
     expect(readmeSource).toContain('RNICK_IOS_SMOKE_PASS');
@@ -981,10 +998,19 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('pnpm fixtures:ios-pass-replay --');
     expect(readmeSource).toContain('pnpm fixtures:ios-pass-replay:check --');
     expect(readmeSource).toContain(
+      'pnpm fixtures:ios-pass-replay:audit -- --json'
+    );
+    expect(readmeSource).toContain(
       'The CLI performs no GitHub or other network requests.'
     );
     expect(readmeSource).toContain(
-      'Check mode performs no writes and neither mode performs network requests.'
+      'Check and audit modes perform no writes; refresh, check, and audit perform no GitHub or other network requests.'
+    );
+    expect(readmeSource).toContain(
+      '`schemaVersion`, `mode`, `status`, `artifactPath`, `differences`, and `error`'
+    );
+    expect(readmeSource).toContain(
+      '`status` is `current`, `stale`, or `invalid`'
     );
     expect(readmeSource).toContain(
       'summarize-smoke-log` CLI stdout/`$GITHUB_STEP_SUMMARY` dry-run contracts'
@@ -1018,6 +1044,10 @@ describe('Android verification scripts', () => {
     expect(gemfileSource).toContain("gem 'concurrent-ruby', '>= 1.3.7'");
     expect(workflowSource).toContain(
       'pnpm example:ios:smoke 2>&1 | tee ios-smoke-diagnostics/ios-smoke.log'
+    );
+    expect(workflowSource).toContain('name: Audit iOS PASS replay fixture');
+    expect(workflowSource).toContain(
+      'pnpm fixtures:ios-pass-replay:audit -- --json'
     );
     expect(workflowSource).toContain(
       'node scripts/ios-validation.mjs summarize-smoke-log ios-smoke-diagnostics/ios-smoke.log'
@@ -1063,6 +1093,10 @@ describe('Android verification scripts', () => {
       'IOS_SMOKE_PASS_WEBP_OUTPUT_AVAILABLE_REQUIRED_FIELDS'
     );
     expect(smokeContractSource).toContain('getIOSSmokePassPayloadRequiredFields');
+    expect(smokeContractSource).toContain(
+      'getIOSSmokePassPayloadContractDifferences'
+    );
+    expect(smokeContractSource).toContain('validateIOSSmokePassPayload');
     expect(smokeContractSource).toContain('listMissingIOSSmokePassPayloadFields');
     expect(smokeContractSource).toContain('formatIOSSmokePassPayloadSchema');
     expect(smokeContractSource).toContain('Key markers and diagnostics');
@@ -1137,6 +1171,13 @@ describe('Android verification scripts', () => {
       'snapshots every iOS smoke PASS payload schema matrix case from a fixture factory'
     );
     expect(smokeContractTestSource).toContain(
+      'validates iOS PASS payload ordering, values, and capability semantics'
+    );
+    expect(smokeContractTestSource).toContain(
+      'getIOSSmokePassPayloadContractDifferences'
+    );
+    expect(smokeContractTestSource).toContain('validateIOSSmokePassPayload');
+    expect(smokeContractTestSource).toContain(
       'loads the structured fixture artifact and replays its successful GitHub Actions iOS smoke PASS log line'
     );
     expect(smokeContractTestSource).toContain('createIOSSmokePassPayloadFixture');
@@ -1175,6 +1216,10 @@ describe('Android verification scripts', () => {
     expect(replayFixtureModuleSource).toContain(
       'getIOSSmokePassReplayFixtureDifferences'
     );
+    expect(replayFixtureModuleSource).toContain(
+      'getIOSSmokePassReplayFixtureValidationDifferences'
+    );
+    expect(replayFixtureModuleSource).toContain('validateIOSSmokePassPayload');
     expect(replayFixtureModuleSource).toContain("createHash('sha256')");
     expect(replayRefreshCliSource).toContain(
       "const DEFAULT_OUTPUT = 'test/fixtures/ios-smoke-pass-ci-replay.json'"
@@ -1188,6 +1233,17 @@ describe('Android verification scripts', () => {
     expect(replayRefreshCliSource).toContain("['--run-url', 'runUrl']");
     expect(replayRefreshCliSource).toContain("['--head-sha', 'headSha']");
     expect(replayRefreshCliSource).toContain("arg === '--check'");
+    expect(replayRefreshCliSource).toContain("arg === '--audit'");
+    expect(replayRefreshCliSource).toContain("arg === '--json'");
+    expect(replayRefreshCliSource).toContain(
+      'IOS_SMOKE_PASS_REPLAY_REPORT_SCHEMA_VERSION = 1'
+    );
+    expect(replayRefreshCliSource).toContain("status: 'current'");
+    expect(replayRefreshCliSource).toContain("status: 'stale'");
+    expect(replayRefreshCliSource).toContain("status: 'invalid'");
+    expect(replayRefreshCliSource).toContain('artifactPath');
+    expect(replayRefreshCliSource).toContain('differences');
+    expect(replayRefreshCliSource).toContain('error');
     expect(replayRefreshCliSource).toContain('Fixture artifact is stale');
     expect(replayRefreshCliSource).toContain('canonicalFormat');
     expect(replayRefreshCliSource).toContain('never writes a file');
@@ -1214,6 +1270,21 @@ describe('Android verification scripts', () => {
     );
     expect(replayFixtureTestSource).toContain(
       'rejects noncanonical artifact bytes without modifying them'
+    );
+    expect(replayFixtureTestSource).toContain(
+      'audits the committed artifact without a source log or file writes'
+    );
+    expect(replayFixtureTestSource).toContain(
+      'snapshots current check and audit JSON stdout contracts'
+    );
+    expect(replayFixtureTestSource).toContain(
+      'snapshots stale check JSON stdout without modifying the artifact'
+    );
+    expect(replayFixtureTestSource).toContain(
+      'snapshots $name audit JSON stdout without file writes'
+    );
+    expect(replayFixtureTestSource).toContain(
+      'rejects conflicting CLI modes and pins text and JSON stream behavior'
     );
     expect(replayFixtureTestSource).toContain(
       'rejects a %s PASS source line in the CLI fake log'
@@ -1269,11 +1340,55 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.46 iOS PASS replay fixture offline check mode candidate notes and previous release notes', () => {
+  it('documents the v0.2.47 iOS PASS replay automation gate candidate notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.46');
+    expect(packageJson.version).toBe('0.2.47');
+    expect(releaseSource).toContain('## v0.2.47');
+    expect(releaseSource).toContain(
+      'Status: unpublished release candidate for iOS PASS replay automation gate coverage. npm `latest` remains `0.2.40`; no `v0.2.47` tag, GitHub Release, or npm publish is part of this candidate.'
+    );
+    expect(releaseSource).toContain(
+      'This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests.'
+    );
+    expect(releaseSource).toContain(
+      'Add a reusable `RNICK_IOS_SMOKE_PASS` payload validator for exact capability-driven field order and value semantics.'
+    );
+    expect(releaseSource).toContain(
+      "Validate `platform: 'ios'`, positive safe-integer `*ResultBytes`, boolean capability flags, and duplicate-free capability-consistent unsupported format arrays."
+    );
+    expect(releaseSource).toContain(
+      'Add source-log-free `--audit` mode for the committed artifact.'
+    );
+    expect(releaseSource).toContain(
+      'Add stable `--check --json` and `--audit --json` machine-readable reports.'
+    );
+    expect(releaseSource).toContain(
+      'Run the standalone audit from `pnpm verify` and the iOS Validation workflow.'
+    );
+    expect(releaseSource).toContain('### iOS PASS Replay Automation Gate');
+    expect(releaseSource).toContain(
+      '`getIOSSmokePassPayloadContractDifferences()` and `validateIOSSmokePassPayload()` now enforce the exact field order selected by the WebP-output x AVIF-input capability matrix.'
+    );
+    expect(releaseSource).toContain(
+      '`pnpm fixtures:ios-pass-replay:audit -- --json` reads the committed artifact without requiring the original Actions log.'
+    );
+    expect(releaseSource).toContain(
+      '`--check --json` and `--audit --json` emit exactly one compact JSON object to stdout with ordered `schemaVersion`, `mode`, `status`, `artifactPath`, `differences`, and `error` fields.'
+    );
+    expect(releaseSource).toContain(
+      '`test/iosSmokePassReplayFixture.test.mjs` snapshots current, stale, noncanonical, missing, malformed, schema-invalid, payload-invalid, and flag-conflict text/JSON stream behavior'
+    );
+    expect(releaseSource).toContain(
+      '`package.json` version bump to `0.2.47`, `fixtures:ios-pass-replay:audit`, and the audit step in `pnpm verify`.'
+    );
+    expect(releaseSource).toContain(
+      'iOS Validation workflow audit gate before simulator smoke.'
+    );
+    expect(releaseSource).toContain(
+      'npm publish, git tag, or GitHub Release promotion for `v0.2.47`.'
+    );
     expect(releaseSource).toContain('## v0.2.46');
     expect(releaseSource).toContain(
       'Status: unpublished release candidate for iOS PASS replay fixture offline check mode coverage. npm `latest` remains `0.2.40`; no `v0.2.46` tag, GitHub Release, or npm publish is part of this candidate.'
@@ -4421,7 +4536,7 @@ describe('Android verification scripts', () => {
       'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain(
-      'The current v0.2.46 iOS PASS replay fixture offline check mode candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The current v0.2.47 iOS PASS replay automation gate candidate notes are in [RELEASE.md](RELEASE.md).'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

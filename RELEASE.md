@@ -1,5 +1,66 @@
 # Release Notes
 
+## v0.2.47
+
+Status: unpublished release candidate for iOS PASS replay automation gate coverage. npm `latest` remains `0.2.40`; no `v0.2.47` tag, GitHub Release, or npm publish is part of this candidate.
+
+This candidate does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests. It keeps runtime behavior unchanged while making the committed iOS PASS replay artifact an explicit semantic, local, and CI quality gate.
+
+### Goals
+
+- Add a reusable `RNICK_IOS_SMOKE_PASS` payload validator for exact capability-driven field order and value semantics.
+- Validate `platform: 'ios'`, positive safe-integer `*ResultBytes`, boolean capability flags, and duplicate-free capability-consistent unsupported format arrays.
+- Apply the semantic payload validator from the replay fixture validator.
+- Add source-log-free `--audit` mode for the committed artifact.
+- Add stable `--check --json` and `--audit --json` machine-readable reports.
+- Preserve existing text-mode check output, `0`/`1` exit behavior, and no-write/no-network boundaries.
+- Run the standalone audit from `pnpm verify` and the iOS Validation workflow.
+- Update README, release notes, Android verification doctor checks, and Vitest expectations for the v0.2.47 candidate.
+
+### iOS PASS Replay Automation Gate
+
+`getIOSSmokePassPayloadContractDifferences()` and `validateIOSSmokePassPayload()` now enforce the exact field order selected by the WebP-output x AVIF-input capability matrix. Every present `*ResultBytes` field must be a positive safe integer, `platform` must be `ios`, both capability fields must be booleans, and `unsupportedInputs` / `unsupportedOutputs` must be unique ordered string arrays that agree with those capabilities.
+
+`validateIOSSmokePassReplayFixture()` now applies that payload contract after validating the fixture schema, provenance, GitHub Actions source-line metadata, and SHA-256 integrity. `getIOSSmokePassReplayFixtureValidationDifferences()` provides deterministic artifact-side labels for audit and machine-readable failures.
+
+`pnpm fixtures:ios-pass-replay:audit -- --json` reads the committed artifact without requiring the original Actions log. It validates JSON parsing, canonical bytes, schema, provenance, source-line digest, and payload semantics. The command exits `0` only for a current artifact and exits `1` for stale or invalid artifacts without creating or modifying files.
+
+`--check --json` and `--audit --json` emit exactly one compact JSON object to stdout with ordered `schemaVersion`, `mode`, `status`, `artifactPath`, `differences`, and `error` fields. `status` is `current`, `stale`, or `invalid`; text mode keeps the existing human-readable check contract. Conflicting `--check` / `--audit` flags and audit source arguments fail deterministically.
+
+`test/iosSmokeContract.test.mjs` covers all four capability matrix cases, every selected result byte field, field ordering, platform, capability types, duplicate arrays, and capability consistency. `test/iosSmokePassReplayFixture.test.mjs` snapshots current, stale, noncanonical, missing, malformed, schema-invalid, payload-invalid, and flag-conflict text/JSON stream behavior while pinning no-write and no-network boundaries.
+
+### Included
+
+- `package.json` version bump to `0.2.47`, `fixtures:ios-pass-replay:audit`, and the audit step in `pnpm verify`.
+- Reusable semantic PASS payload validator and replay artifact validation differences.
+- Standalone `--audit` plus stable check/audit JSON result schema.
+- iOS Validation workflow audit gate before simulator smoke.
+- Matrix-wide semantic validator and CLI JSON/no-write/no-network Vitest coverage.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.47 candidate state and the published v0.2.40 npm baseline.
+
+### Not Included
+
+- GitHub Actions log download or API access from the replay fixture CLI.
+- Automatic fixture refresh or writes from check/audit modes.
+- Network access from tests.
+- Changes to the live `RNICK_IOS_SMOKE_PASS` payload fields.
+- iOS or Android native feature changes.
+- AVIF input support forced available or unavailable on real simulators.
+- WebP output forced on runtimes that do not advertise ImageIO WebP destination support.
+- AVIF output enablement or actual AVIF file returns from `compressImage()`.
+- Forced simulator capability changes or simulator failures.
+- npm publish, git tag, or GitHub Release promotion for `v0.2.47`.
+
+### Validation
+
+- `pnpm fixtures:ios-pass-replay:audit -- --json`
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the release candidate commit.
+
 ## v0.2.46
 
 Status: unpublished release candidate for iOS PASS replay fixture offline check mode coverage. npm `latest` remains `0.2.40`; no `v0.2.46` tag, GitHub Release, or npm publish is part of this candidate.

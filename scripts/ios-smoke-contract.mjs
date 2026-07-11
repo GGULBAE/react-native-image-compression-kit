@@ -64,6 +64,25 @@ const IOS_SMOKE_PASS_TRAILING_FIELDS = Object.freeze([
   'unsupportedOutputs',
 ]);
 
+const IOS_SMOKE_PASS_ALL_RESULT_FIELDS = Object.freeze([
+  ...IOS_SMOKE_PASS_BASE_RESULT_FIELDS.slice(1),
+  ...IOS_SMOKE_PASS_AVIF_INPUT_RESULT_FIELDS,
+  ...IOS_SMOKE_PASS_PNG_OUTPUT_RESULT_FIELDS,
+  ...IOS_SMOKE_PASS_AVIF_TO_PNG_RESULT_FIELDS,
+  ...IOS_SMOKE_PASS_WEBP_OUTPUT_NON_AVIF_RESULT_FIELDS,
+  ...IOS_SMOKE_PASS_AVIF_TO_WEBP_RESULT_FIELDS,
+  ...IOS_SMOKE_PASS_WEBP_TARGET_SIZE_FIELDS,
+  'targetSizeResultBytes',
+]);
+
+const IOS_SMOKE_PASS_UNSUPPORTED_INPUT_FORMATS = Object.freeze(['avif']);
+const IOS_SMOKE_PASS_UNSUPPORTED_OUTPUT_FORMATS = Object.freeze([
+  'webp',
+  'heic',
+  'heif',
+  'avif',
+]);
+
 function createIOSSmokePassPayloadRequiredFields({
   webpOutputAvailable,
   avifInputAvailable,
@@ -256,6 +275,95 @@ export function listMissingIOSSmokePassPayloadFields(
   );
 }
 
+export function getIOSSmokePassPayloadContractDifferences(payload) {
+  if (!isRecord(payload)) {
+    return ['payload.schema'];
+  }
+
+  const differences = [];
+  const webpOutputAvailableValid =
+    typeof payload.webpOutputAvailable === 'boolean';
+  const avifInputAvailableValid =
+    typeof payload.avifInputAvailable === 'boolean';
+  const requiredFields =
+    webpOutputAvailableValid && avifInputAvailableValid
+      ? getIOSSmokePassPayloadRequiredFields(payload)
+      : null;
+
+  if (!requiredFields || !hasExactOrderedFields(payload, requiredFields)) {
+    differences.push('payload.schema');
+  }
+
+  if (payload.platform !== 'ios') {
+    differences.push('payload.platform');
+  }
+
+  for (const field of IOS_SMOKE_PASS_ALL_RESULT_FIELDS) {
+    if (
+      Object.prototype.hasOwnProperty.call(payload, field) &&
+      !isPositiveSafeInteger(payload[field])
+    ) {
+      differences.push(`payload.${field}`);
+    }
+  }
+
+  if (!webpOutputAvailableValid) {
+    differences.push('payload.webpOutputAvailable');
+  }
+
+  if (!avifInputAvailableValid) {
+    differences.push('payload.avifInputAvailable');
+  }
+
+  const unsupportedInputsValid = isUniqueAllowedStringArray(
+    payload.unsupportedInputs,
+    IOS_SMOKE_PASS_UNSUPPORTED_INPUT_FORMATS
+  );
+  const expectedUnsupportedInputs = avifInputAvailableValid
+    ? payload.avifInputAvailable
+      ? []
+      : ['avif']
+    : null;
+  if (
+    !unsupportedInputsValid ||
+    (expectedUnsupportedInputs &&
+      !arraysEqual(payload.unsupportedInputs, expectedUnsupportedInputs))
+  ) {
+    differences.push('payload.unsupportedInputs');
+  }
+
+  const unsupportedOutputsValid = isUniqueAllowedStringArray(
+    payload.unsupportedOutputs,
+    IOS_SMOKE_PASS_UNSUPPORTED_OUTPUT_FORMATS
+  );
+  const expectedUnsupportedOutputs = webpOutputAvailableValid
+    ? payload.webpOutputAvailable
+      ? ['heic', 'heif', 'avif']
+      : ['webp', 'heic', 'heif', 'avif']
+    : null;
+  if (
+    !unsupportedOutputsValid ||
+    (expectedUnsupportedOutputs &&
+      !arraysEqual(payload.unsupportedOutputs, expectedUnsupportedOutputs))
+  ) {
+    differences.push('payload.unsupportedOutputs');
+  }
+
+  return differences;
+}
+
+export function validateIOSSmokePassPayload(payload) {
+  const differences = getIOSSmokePassPayloadContractDifferences(payload);
+
+  if (differences.length > 0) {
+    throw new Error(
+      `RNICK_IOS_SMOKE_PASS payload contract is invalid; differences: ${differences.join(', ')}.`
+    );
+  }
+
+  return payload;
+}
+
 export function getIOSSmokePassPayloadRequiredFields(payload) {
   if (!payload || typeof payload !== 'object') {
     return IOS_SMOKE_PASS_PAYLOAD_REQUIRED_FIELDS;
@@ -274,6 +382,35 @@ export function formatIOSSmokePassPayloadSchema(payload) {
   return Object.entries(source)
     .map(([key, value]) => `${key}: ${describePayloadValueSchema(value)}`)
     .join('\n');
+}
+
+function isRecord(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasExactOrderedFields(value, expectedFields) {
+  return arraysEqual(Object.keys(value), expectedFields);
+}
+
+function isPositiveSafeInteger(value) {
+  return Number.isSafeInteger(value) && value > 0;
+}
+
+function isUniqueAllowedStringArray(value, allowedValues) {
+  return (
+    Array.isArray(value) &&
+    value.every(
+      (entry) => typeof entry === 'string' && allowedValues.includes(entry)
+    ) &&
+    new Set(value).size === value.length
+  );
+}
+
+function arraysEqual(left, right) {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
 }
 
 export function isSmokeTimeoutError(error) {

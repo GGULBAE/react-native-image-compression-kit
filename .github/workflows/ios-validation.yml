@@ -39,6 +39,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit iOS PASS replay fixture
+        run: pnpm fixtures:ios-pass-replay:audit -- --json
+
       - name: Run iOS host-app smoke
         shell: bash
         run: |
