@@ -2,7 +2,7 @@
 
 ## v0.2.47
 
-Status: release-ready for npm `latest` promotion as the iOS PASS replay automation gate release. npm `latest` remains `0.2.40` until the one-time publish step; no `v0.2.47` tag or GitHub Release is part of this promotion.
+Status: published to npm as the `0.2.47` latest iOS PASS replay automation gate release. npm `version` and `dist-tags.latest` are both `0.2.47`; no `v0.2.47` tag or GitHub Release was created.
 
 This release does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests. It keeps runtime behavior unchanged while making the committed iOS PASS replay artifact an explicit semantic, local, and CI quality gate.
 
@@ -36,7 +36,7 @@ This release does not enable AVIF output, force AVIF input availability or unava
 - Standalone `--audit` plus stable check/audit JSON result schema.
 - iOS Validation workflow audit gate before simulator smoke.
 - Matrix-wide semantic validator and CLI JSON/no-write/no-network Vitest coverage.
-- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.47 release-ready state.
+- README, release notes, Android verification doctor expectations, and Vitest coverage updated for the v0.2.47 published state.
 
 ### Not Included
 
@@ -51,13 +51,14 @@ This release does not enable AVIF output, force AVIF input availability or unava
 - Forced simulator capability changes or simulator failures.
 - Git tag or GitHub Release promotion for `v0.2.47`.
 
-### Promotion Plan
+### Promotion Result
 
-- Require the full local release gate and green GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed release-ready commit.
-- Confirm npm authentication, then run `npm publish --tag latest` exactly once.
-- If publish output is interrupted or ambiguous, query npm for `0.2.47` and `dist-tags.latest` before considering any retry.
-- Verify npm `version` and `dist-tags.latest` are both `0.2.47`, run `pnpm smoke:registry -- --version 0.2.47`, and inspect the real registry tarball README and development-file exclusions.
-- Keep git tag and GitHub Release creation outside this npm promotion.
+- Release-ready commit `9434f5fe02c3030b178a2c5d0f6cc871b7e0262a` passed GitHub Actions [CI](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29146930316), [Android Instrumentation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29146930311), and [iOS Validation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29146930321).
+- npm authentication was confirmed as `ggulbae`, then `npm publish --tag latest` was executed exactly once and published `react-native-image-compression-kit@0.2.47`.
+- Registry metadata reports `version=0.2.47`, `dist-tags.latest=0.2.47`, and modified time `2026-07-11T11:23:46.074Z`.
+- `pnpm smoke:registry -- --version 0.2.47` downloaded the registry tarball, matched integrity `sha512-BH2Kupv1OhlKtyjZ2BZnM6uvjJV+OQDXS064/oTi4rj6fEIzWWOefDBgHXokNlxxqwVBxhfawbudzvuYFpJBoQ==` and shasum `a17b89f89d49dce1092d46bc02cea20c8a7e0228`, installed it into a clean consumer, and passed public API typechecking.
+- Independent inspection of the 51-file registry tarball confirmed the packed README retains registry-independent v0.2.47 release wording, contains no guarded v0.2.47 candidate snippets, and excludes development-only scripts, tests, fixtures, examples, workflows, and `RELEASE.md`.
+- No git tag, GitHub Release, extra publish attempt, or manual dist-tag change was performed.
 
 ### Validation
 

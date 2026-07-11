@@ -214,7 +214,7 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.47` is the iOS PASS replay automation gate release for `react-native-image-compression-kit`.'
+      'Version `0.2.47` is published to npm as the `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
       '`validateIOSSmokePassPayload()` now enforces the exact capability-selected field order'
@@ -262,13 +262,16 @@ describe('Android verification scripts', () => {
       "The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"
     );
     expect(readmeSource).toContain(
-      'The package README uses registry-independent v0.2.47 release wording so the same tarball remains accurate before and after npm publication.'
+      'Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.47`.'
     );
     expect(readmeSource).toContain(
-      'Git tags and GitHub Releases are managed separately and are not implied by this package status.'
+      'The real 51-file registry tarball retained the registry-independent `Status: v0.2.47 release` package README'
     );
     expect(readmeSource).toContain(
-      'The `0.2.47` package metadata defines the iOS PASS replay automation gate release for `react-native-image-compression-kit`'
+      'No git tag or GitHub Release was created as part of this npm-only promotion.'
+    );
+    expect(readmeSource).toContain(
+      'The `0.2.47` package is published as the npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -1361,14 +1364,14 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.47 iOS PASS replay automation gate release-ready notes and previous release notes', () => {
+  it('documents the v0.2.47 iOS PASS replay automation gate published notes and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.47');
     expect(releaseSource).toContain('## v0.2.47');
     expect(releaseSource).toContain(
-      'Status: release-ready for npm `latest` promotion as the iOS PASS replay automation gate release. npm `latest` remains `0.2.40` until the one-time publish step; no `v0.2.47` tag or GitHub Release is part of this promotion.'
+      'Status: published to npm as the `0.2.47` latest iOS PASS replay automation gate release. npm `version` and `dist-tags.latest` are both `0.2.47`; no `v0.2.47` tag or GitHub Release was created.'
     );
     expect(releaseSource).toContain(
       'This release does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests.'
@@ -1408,19 +1411,25 @@ describe('Android verification scripts', () => {
       'iOS Validation workflow audit gate before simulator smoke.'
     );
     expect(releaseSource).toContain(
-      '### Promotion Plan'
+      '### Promotion Result'
     );
     expect(releaseSource).toContain(
-      'Confirm npm authentication, then run `npm publish --tag latest` exactly once.'
+      'Release-ready commit `9434f5fe02c3030b178a2c5d0f6cc871b7e0262a` passed GitHub Actions'
     );
     expect(releaseSource).toContain(
-      'If publish output is interrupted or ambiguous, query npm for `0.2.47` and `dist-tags.latest` before considering any retry.'
+      '`npm publish --tag latest` was executed exactly once and published `react-native-image-compression-kit@0.2.47`.'
     );
     expect(releaseSource).toContain(
-      '`pnpm smoke:registry -- --version 0.2.47`'
+      'Registry metadata reports `version=0.2.47`, `dist-tags.latest=0.2.47`, and modified time `2026-07-11T11:23:46.074Z`.'
     );
     expect(releaseSource).toContain(
-      'Keep git tag and GitHub Release creation outside this npm promotion.'
+      '`pnpm smoke:registry -- --version 0.2.47` downloaded the registry tarball'
+    );
+    expect(releaseSource).toContain(
+      'Independent inspection of the 51-file registry tarball confirmed the packed README retains registry-independent v0.2.47 release wording'
+    );
+    expect(releaseSource).toContain(
+      'No git tag, GitHub Release, extra publish attempt, or manual dist-tag change was performed.'
     );
     expect(releaseSource).toContain(
       'Git tag or GitHub Release promotion for `v0.2.47`.'
