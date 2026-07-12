@@ -1,6 +1,6 @@
 {
   "name": "react-native-image-compression-kit",
-  "version": "0.2.47",
+  "version": "0.2.48",
   "description": "Native-first image compression and transcoding pipeline for React Native.",
   "license": "MIT",
   "repository": {

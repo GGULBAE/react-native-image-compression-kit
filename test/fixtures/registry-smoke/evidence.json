@@ -1,0 +1,40 @@
+{
+  "packageName": "react-native-image-compression-kit",
+  "requestedVersion": "0.2.47",
+  "expectedTag": "latest",
+  "tagVersion": "0.2.47",
+  "registryMetadata": {
+    "version": "0.2.47",
+    "dist.tarball": "https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.47.tgz",
+    "dist.integrity": "sha512-fixture-integrity",
+    "dist.shasum": "fixture-shasum",
+    "time": {
+      "0.2.47": "2026-07-11T11:23:46.074Z"
+    }
+  },
+  "packInfo": {
+    "name": "react-native-image-compression-kit",
+    "version": "0.2.47",
+    "filename": "react-native-image-compression-kit-0.2.47.tgz",
+    "integrity": "sha512-fixture-integrity",
+    "shasum": "fixture-shasum",
+    "size": 42910,
+    "unpackedSize": 176204,
+    "files": [
+      { "path": "package.json" },
+      { "path": "README.md" },
+      { "path": "SECURITY.md" },
+      { "path": "LICENSE" },
+      { "path": "lib/index.js" },
+      { "path": "lib/index.d.ts" },
+      { "path": "android/build.gradle" },
+      { "path": "android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt" },
+      { "path": "ios/RCTImageCompressionKit.h" },
+      { "path": "ios/RCTImageCompressionKit.mm" },
+      { "path": "react-native-image-compression-kit.podspec" },
+      { "path": "react-native.config.js" }
+    ]
+  },
+  "registryInstallSmoke": true,
+  "installError": null
+}

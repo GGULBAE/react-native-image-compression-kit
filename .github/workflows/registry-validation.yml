@@ -1,0 +1,92 @@
+name: Registry Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact published npm version to validate
+        required: true
+        default: "0.2.47"
+        type: string
+      expected_tag:
+        description: Dist-tag that must resolve to the same version
+        required: true
+        default: latest
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  registry-provenance:
+    name: npm registry provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 11.7.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Validate registry package
+        id: validate
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p registry-validation
+          set -o pipefail
+          pnpm smoke:registry -- \
+            --version "${{ inputs.version }}" \
+            --expect-tag "${{ inputs.expected_tag }}" \
+            --json \
+            --report-file registry-validation/registry-provenance.json \
+            | tee registry-validation/stdout.json
+          cmp registry-validation/stdout.json registry-validation/registry-provenance.json
+
+      - name: Write registry validation summary
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+          const path = 'registry-validation/registry-provenance.json';
+          let markdown = '## Registry Validation\n\n';
+          try {
+            const report = JSON.parse(readFileSync(path, 'utf8'));
+            markdown += `- Status: **${report.status}**\n`;
+            markdown += `- Package: \`${report.package}@${report.resolvedVersion}\`\n`;
+            markdown += `- Requested version: \`${report.requestedVersion}\`\n`;
+            markdown += `- Expected tag: \`${report.expectedTag}\` → \`${report.tagVersion}\`\n`;
+            markdown += `- Published at: \`${report.publishedAt}\`\n`;
+            markdown += `- Integrity: \`${report.integrity}\`\n`;
+            markdown += `- Shasum: \`${report.shasum}\`\n`;
+            markdown += `- Package shape: ${report.fileCount} files, ${report.packageSize} packed bytes, ${report.unpackedSize} unpacked bytes\n`;
+            markdown += `- README status: \`${report.readmeStatus}\`\n`;
+            markdown += `- Consumer install/typecheck: \`${report.registryInstallSmoke}\`\n`;
+            if (report.error) markdown += `- Error: ${report.error}\n`;
+          } catch (error) {
+            markdown += `- Status: **failed before a report could be read**\n- Error: ${error.message}\n`;
+          }
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown, 'utf8');
+          NODE
+
+      - name: Upload registry provenance artifact
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: registry-provenance-${{ inputs.version }}
+          path: registry-validation
+          if-no-files-found: error
+
+      - name: Enforce registry validation result
+        if: steps.validate.outcome == 'failure'
+        run: exit 1

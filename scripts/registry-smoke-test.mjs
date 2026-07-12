@@ -12,8 +12,17 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  FORBIDDEN_PACKAGE_FILES,
+  REQUIRED_PACKAGE_FILES,
+  canonicalRegistryReport,
+  createRegistryReport,
+  validateRegistryEvidence,
+  writeRegistryReportAtomic,
+} from './registry-smoke-core.mjs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const SCRIPT_PATH = fileURLToPath(import.meta.url);
+const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
 const rootPackageJson = readJson(path.join(ROOT, 'package.json'));
 const TEMP_PARENT = process.env.RNICK_REGISTRY_SMOKE_TMPDIR
   ? path.resolve(process.env.RNICK_REGISTRY_SMOKE_TMPDIR)
@@ -24,224 +33,301 @@ const REACT_NATIVE_VERSION = '0.86.0';
 const TYPESCRIPT_VERSION = '^5.8.3';
 const TYPES_REACT_VERSION = '^19.2.0';
 
-const options = parseArgs(process.argv.slice(2));
-const packageName = options.packageName ?? rootPackageJson.name;
-const selector =
-  options.version ??
-  options.tag ??
-  process.env.RNICK_REGISTRY_SMOKE_VERSION ??
-  process.env.RNICK_REGISTRY_SMOKE_TAG ??
-  rootPackageJson.version;
-
-if (!packageName) {
-  fail('Missing package name.');
-}
-
-if (!selector) {
-  fail('Missing registry version or tag.');
-}
-
-mkdirSync(TEMP_PARENT, { recursive: true });
-
-const requestedSpec = `${packageName}@${selector}`;
-const registryMetadata = npmView(requestedSpec);
-const publishedVersion = String(registryMetadata.version ?? '');
-
-if (!publishedVersion) {
-  fail(`Could not resolve published version for ${requestedSpec}.`);
-}
-
-if (options.version && publishedVersion !== options.version) {
-  fail(`Expected ${options.version}, but npm resolved ${publishedVersion}.`);
-}
-
-const publishedSpec = `${packageName}@${publishedVersion}`;
-const tempRoot = mkdtempSync(path.join(TEMP_PARENT, 'rnick-registry-smoke-'));
-const packDir = path.join(tempRoot, 'pack');
-const consumerDir = path.join(tempRoot, 'consumer');
-
-try {
-  mkdirSync(packDir, { recursive: true });
-  mkdirSync(path.join(consumerDir, 'src'), { recursive: true });
-
-  const packInfo = npmPack(publishedSpec, packDir);
-  assertPackedTarball(packInfo, registryMetadata, publishedVersion);
-
-  writeConsumerProject(consumerDir, packageName, publishedVersion);
-  run('npm', ['install', '--ignore-scripts', '--legacy-peer-deps'], consumerDir);
-  assertInstalledPackageFiles(consumerDir, packageName, publishedVersion);
-  run('npm', ['run', 'typecheck'], consumerDir);
-
-  console.log(
-    JSON.stringify(
-      {
-        package: publishedSpec,
-        tarball: registryMetadata['dist.tarball'],
-        integrity: registryMetadata['dist.integrity'],
-        shasum: registryMetadata['dist.shasum'],
-        fileCount: packInfo.files.length,
-        packageSize: packInfo.size,
-        unpackedSize: packInfo.unpackedSize,
-        registryInstallSmoke: true,
-      },
-      null,
-      2
-    )
-  );
-} finally {
-  if (KEEP_TEMP) {
-    console.log(`Keeping registry smoke test directory: ${tempRoot}`);
-  } else {
-    rmSync(tempRoot, { recursive: true, force: true });
-  }
-}
-
-function parseArgs(args) {
+export function parseRegistrySmokeArgs(args) {
   const parsed = {};
 
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
-
-    if (arg === '--') {
-      continue;
-    }
-
+    if (arg === '--') continue;
     if (arg === '--help' || arg === '-h') {
-      console.log(`Usage: pnpm smoke:registry -- [--version 0.2.9 | --tag latest]
-
-Options:
-  --version <version>  Smoke-test an exact published version.
-  --tag <tag>          Resolve and smoke-test a published npm dist-tag.
-  --package <name>     Override the package name. Defaults to package.json name.
-
-Environment:
-  RNICK_REGISTRY_SMOKE_VERSION  Default exact version when no CLI selector is set.
-  RNICK_REGISTRY_SMOKE_TAG      Default dist-tag when no CLI selector is set.
-  RNICK_REGISTRY_SMOKE_KEEP=1   Keep the temporary project for inspection.
-  RNICK_REGISTRY_SMOKE_TMPDIR   Parent directory for the temporary project.
-`);
-      process.exit(0);
+      parsed.help = true;
+      continue;
     }
 
-    if (arg === '--version') {
-      parsed.version = readValue(args, index, arg);
+    const flags = {
+      '--version': 'version',
+      '--tag': 'tag',
+      '--expect-tag': 'expectedTag',
+      '--package': 'packageName',
+      '--report-file': 'reportFile',
+    };
+
+    if (flags[arg]) {
+      parsed[flags[arg]] = readValue(args, index, arg);
       index += 1;
       continue;
     }
 
-    if (arg === '--tag') {
-      parsed.tag = readValue(args, index, arg);
-      index += 1;
+    if (arg === '--json') {
+      parsed.json = true;
       continue;
     }
 
-    if (arg === '--package') {
-      parsed.packageName = readValue(args, index, arg);
-      index += 1;
-      continue;
-    }
-
-    fail(`Unknown argument: ${arg}`);
+    throw new Error(`Unknown argument: ${arg}`);
   }
 
   if (parsed.version && parsed.tag) {
-    fail('Use either --version or --tag, not both.');
+    throw new Error('Use either --version or --tag, not both.');
   }
 
   return parsed;
 }
 
-function readValue(args, index, flag) {
-  const value = args[index + 1];
+export function runRegistrySmoke(options, dependencies = {}) {
+  const captureJson = dependencies.captureJson ?? captureCommandJson;
+  const run = dependencies.run ?? runCommand;
+  const extractReadme = dependencies.extractReadme ?? extractTarballReadme;
+  const packageName = options.packageName ?? rootPackageJson.name;
+  const requestedTag = options.tag ?? process.env.RNICK_REGISTRY_SMOKE_TAG ?? null;
+  let requestedVersion =
+    options.version ?? process.env.RNICK_REGISTRY_SMOKE_VERSION ?? null;
+  const selector = requestedVersion ?? requestedTag ?? rootPackageJson.version;
+  if (!requestedVersion && !requestedTag) {
+    requestedVersion = rootPackageJson.version;
+  }
+  let tempRoot = null;
+  let registryMetadata = null;
+  let tagVersion = null;
+  let packInfo = null;
+  let readmeContents = null;
+  let registryInstallSmoke = false;
+  let installError = null;
 
-  if (!value || value.startsWith('--')) {
-    fail(`Missing value for ${flag}.`);
+  try {
+    if (!packageName) throw new Error('Missing package name.');
+    if (!selector) throw new Error('Missing registry version or tag.');
+
+    mkdirSync(TEMP_PARENT, { recursive: true });
+    registryMetadata = captureJson(
+      'npm',
+      [
+        'view',
+        `${packageName}@${selector}`,
+        'version',
+        'dist.tarball',
+        'dist.integrity',
+        'dist.shasum',
+        'time',
+        '--json',
+      ],
+      ROOT
+    );
+    const resolvedVersion = String(registryMetadata?.version ?? '');
+    requestedVersion ??= resolvedVersion;
+
+    if (options.expectedTag) {
+      tagVersion = captureJson(
+        'npm',
+        ['view', packageName, `dist-tags.${options.expectedTag}`, '--json'],
+        ROOT
+      );
+      if (typeof tagVersion === 'object' && tagVersion !== null) {
+        tagVersion = tagVersion[options.expectedTag] ?? null;
+      }
+      if (tagVersion != null) tagVersion = String(tagVersion);
+    }
+
+    tempRoot = mkdtempSync(path.join(TEMP_PARENT, 'rnick-registry-smoke-'));
+    const packDir = path.join(tempRoot, 'pack');
+    const consumerDir = path.join(tempRoot, 'consumer');
+    mkdirSync(packDir, { recursive: true });
+    mkdirSync(path.join(consumerDir, 'src'), { recursive: true });
+
+    const packed = captureJson(
+      'npm',
+      [
+        'pack',
+        `${packageName}@${resolvedVersion}`,
+        '--pack-destination',
+        packDir,
+        '--json',
+      ],
+      ROOT
+    );
+    if (!Array.isArray(packed) || packed.length !== 1) {
+      throw new Error(
+        `Expected npm pack to return one tarball entry for ${packageName}@${resolvedVersion}.`
+      );
+    }
+    packInfo = packed[0];
+    const tarballPath = path.join(packDir, packInfo.filename);
+    readmeContents = extractReadme(tarballPath);
+
+    const preflightReport = validateRegistryEvidence({
+      packageName,
+      requestedVersion,
+      expectedTag: options.expectedTag ?? null,
+      tagVersion,
+      registryMetadata,
+      packInfo,
+      readmeContents,
+      registryInstallSmoke: true,
+    });
+    if (preflightReport.status !== 'passed') {
+      return { ...preflightReport, registryInstallSmoke: false };
+    }
+
+    writeConsumerProject(consumerDir, packageName, resolvedVersion);
+    try {
+      run('npm', ['install', '--ignore-scripts', '--legacy-peer-deps'], consumerDir);
+      assertInstalledPackageFiles(consumerDir, packageName, resolvedVersion);
+      run('npm', ['run', 'typecheck'], consumerDir);
+      registryInstallSmoke = true;
+    } catch (error) {
+      installError = error instanceof Error ? error.message : String(error);
+    }
+
+    return validateRegistryEvidence({
+      packageName,
+      requestedVersion,
+      expectedTag: options.expectedTag ?? null,
+      tagVersion,
+      registryMetadata,
+      packInfo,
+      readmeContents,
+      registryInstallSmoke,
+      installError,
+    });
+  } catch (error) {
+    return createRegistryReport({
+      packageName: packageName ?? null,
+      requestedVersion: requestedVersion ?? null,
+      resolvedVersion: registryMetadata?.version
+        ? String(registryMetadata.version)
+        : null,
+      expectedTag: options.expectedTag ?? null,
+      tagVersion,
+      publishedAt: registryMetadata?.version
+        ? registryMetadata?.time?.[registryMetadata.version] ?? null
+        : null,
+      tarball: registryMetadata?.['dist.tarball'] ?? null,
+      integrity: registryMetadata?.['dist.integrity'] ?? null,
+      shasum: registryMetadata?.['dist.shasum'] ?? null,
+      fileCount: Array.isArray(packInfo?.files) ? packInfo.files.length : null,
+      packageSize: Number.isFinite(packInfo?.size) ? packInfo.size : null,
+      unpackedSize: Number.isFinite(packInfo?.unpackedSize)
+        ? packInfo.unpackedSize
+        : null,
+      readmeStatus: readmeContents == null ? 'not-run' : 'failed',
+      forbiddenFiles: [],
+      registryInstallSmoke,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  } finally {
+    if (tempRoot && !KEEP_TEMP) {
+      rmSync(tempRoot, { recursive: true, force: true });
+    } else if (tempRoot && KEEP_TEMP && !options.json) {
+      process.stderr.write(`Keeping registry smoke test directory: ${tempRoot}\n`);
+    }
+  }
+}
+
+function main() {
+  let options;
+  let report;
+
+  try {
+    options = parseRegistrySmokeArgs(process.argv.slice(2));
+    if (options.help) {
+      process.stdout.write(usage());
+      return;
+    }
+    report = runRegistrySmoke(options);
+  } catch (error) {
+    report = createRegistryReport({
+      packageName: rootPackageJson.name ?? null,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    options ??= {};
   }
 
+  if (options.reportFile) {
+    try {
+      writeRegistryReportAtomic(options.reportFile, report);
+    } catch (error) {
+      report = {
+        ...report,
+        status: 'failed',
+      error: `Could not write report atomically: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+      };
+    }
+  }
+
+  const canonical = canonicalRegistryReport(report);
+  if (options.json) {
+    process.stdout.write(canonical);
+  } else if (report.status === 'passed') {
+    process.stdout.write(canonical);
+  } else {
+    process.stderr.write(`${report.error}\n`);
+    process.stdout.write(canonical);
+  }
+
+  if (report.status !== 'passed') process.exitCode = 1;
+}
+
+function usage() {
+  return `Usage: pnpm smoke:registry -- [--version 0.2.47 | --tag latest]\n\nOptions:\n  --version <version>   Smoke-test an exact published version.\n  --tag <tag>           Resolve and smoke-test a published npm dist-tag.\n  --expect-tag <tag>    Require this dist-tag to resolve the tested version.\n  --package <name>      Override the package name. Defaults to package.json name.\n  --json                Emit exactly one canonical JSON object to stdout.\n  --report-file <path>  Atomically write the same canonical JSON report.\n`;
+}
+
+function readValue(args, index, flag) {
+  const value = args[index + 1];
+  if (!value || value.startsWith('--')) {
+    throw new Error(`Missing value for ${flag}.`);
+  }
   return value;
 }
 
-function npmView(spec) {
-  return captureJson('npm', [
-    'view',
-    spec,
-    'version',
-    'dist.tarball',
-    'dist.integrity',
-    'dist.shasum',
-    'time',
-    '--json',
-  ]);
+function captureCommandJson(command, args, cwd) {
+  const result = spawnSync(command, args, {
+    cwd,
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error(
+      `${command} ${args.join(' ')} failed (${result.status ?? 1}): ${(result.stderr || result.stdout || '').trim()}`
+    );
+  }
+  try {
+    return JSON.parse(result.stdout);
+  } catch (error) {
+    throw new Error(
+      `Could not parse JSON output from ${command} ${args.join(' ')}: ${error.message}`
+    );
+  }
 }
 
-function npmPack(spec, packDir) {
-  const result = captureJson('npm', [
-    'pack',
-    spec,
-    '--pack-destination',
-    packDir,
-    '--json',
-  ]);
-
-  if (!Array.isArray(result) || result.length !== 1) {
-    fail(`Expected npm pack to return one tarball entry for ${spec}.`);
+function runCommand(command, args, cwd) {
+  const result = spawnSync(command, args, {
+    cwd,
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error(
+      `${command} ${args.join(' ')} failed (${result.status ?? 1}): ${(result.stderr || result.stdout || '').trim()}`
+    );
   }
-
-  return result[0];
 }
 
-function assertPackedTarball(packInfo, registryMetadata, expectedVersion) {
-  if (packInfo.name !== packageName) {
-    fail(`Expected packed package name ${packageName}, got ${packInfo.name}.`);
+function extractTarballReadme(tarballPath) {
+  const result = spawnSync('tar', ['-xOf', tarballPath, 'package/README.md'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    shell: process.platform === 'win32',
+  });
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    throw new Error(
+      result.stderr || `Could not extract package/README.md from ${tarballPath}.`
+    );
   }
-
-  if (packInfo.version !== expectedVersion) {
-    fail(`Expected packed version ${expectedVersion}, got ${packInfo.version}.`);
-  }
-
-  if (registryMetadata['dist.integrity'] && packInfo.integrity !== registryMetadata['dist.integrity']) {
-    fail('Packed tarball integrity does not match npm registry metadata.');
-  }
-
-  if (registryMetadata['dist.shasum'] && packInfo.shasum !== registryMetadata['dist.shasum']) {
-    fail('Packed tarball shasum does not match npm registry metadata.');
-  }
-
-  const filePaths = packInfo.files.map((file) => file.path);
-  const requiredFiles = [
-    'package.json',
-    'README.md',
-    'SECURITY.md',
-    'LICENSE',
-    'lib/index.js',
-    'lib/index.d.ts',
-    'android/build.gradle',
-    'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt',
-    'ios/RCTImageCompressionKit.h',
-    'ios/RCTImageCompressionKit.mm',
-    'react-native-image-compression-kit.podspec',
-    'react-native.config.js',
-  ];
-  const forbiddenFiles = [
-    'scripts/consumer-smoke-test.mjs',
-    'scripts/registry-smoke-test.mjs',
-    'scripts/android-verification.mjs',
-    'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
-    'android/src/test/assets/heic-heif/sample.heic',
-    'android/src/test/assets/avif/sample.avif',
-    'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
-    'example/package.json',
-  ];
-  const missing = requiredFiles.filter((filePath) => !filePaths.includes(filePath));
-  const presentForbidden = forbiddenFiles.filter((filePath) => filePaths.includes(filePath));
-
-  if (missing.length > 0) {
-    fail(`Packed registry tarball is missing expected files: ${missing.join(', ')}`);
-  }
-
-  if (presentForbidden.length > 0) {
-    fail(`Packed registry tarball contains development-only files: ${presentForbidden.join(', ')}`);
-  }
+  return result.stdout;
 }
 
 function writeConsumerProject(projectDir, dependencyName, dependencyVersion) {
@@ -261,11 +347,8 @@ function writeConsumerProject(projectDir, dependencyName, dependencyVersion) {
       '@types/react': TYPES_REACT_VERSION,
       typescript: TYPESCRIPT_VERSION,
     },
-    engines: {
-      node: '>=22.11.0',
-    },
+    engines: { node: '>=22.11.0' },
   });
-
   writeJson(path.join(projectDir, 'tsconfig.json'), {
     compilerOptions: {
       target: 'ES2020',
@@ -280,10 +363,11 @@ function writeConsumerProject(projectDir, dependencyName, dependencyVersion) {
     },
     include: ['src'],
   });
+  writeFileSync(path.join(projectDir, 'src/index.ts'), consumerSource(), 'utf8');
+}
 
-  writeFileSync(
-    path.join(projectDir, 'src/index.ts'),
-    `import {
+function consumerSource() {
+  return `import {
   IMAGE_FORMATS,
   ImageCompressionKitError,
   METADATA_POLICIES,
@@ -360,101 +444,38 @@ void firstCapability;
 void formats;
 void unavailableError;
 void exercisePublicTypes;
-`,
-    'utf8'
-  );
+`;
 }
 
 function assertInstalledPackageFiles(projectDir, dependencyName, expectedVersion) {
   const packageDir = path.join(projectDir, 'node_modules', dependencyName);
   const installedPackageJsonPath = path.join(packageDir, 'package.json');
-
   if (!existsSync(installedPackageJsonPath)) {
-    fail(`Installed package is missing package.json at ${installedPackageJsonPath}.`);
+    throw new Error(
+      `Installed package is missing package.json at ${installedPackageJsonPath}.`
+    );
   }
-
   const installedPackageJson = readJson(installedPackageJsonPath);
-
   if (installedPackageJson.version !== expectedVersion) {
-    fail(`Expected installed version ${expectedVersion}, got ${installedPackageJson.version}.`);
+    throw new Error(
+      `Expected installed version ${expectedVersion}, got ${installedPackageJson.version}.`
+    );
   }
-
-  const requiredFiles = [
-    'package.json',
-    'README.md',
-    'SECURITY.md',
-    'LICENSE',
-    'lib/index.js',
-    'lib/index.d.ts',
-    'android/build.gradle',
-    'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt',
-    'ios/RCTImageCompressionKit.h',
-    'ios/RCTImageCompressionKit.mm',
-    'react-native.config.js',
-  ];
-  const forbiddenFiles = [
-    'scripts/consumer-smoke-test.mjs',
-    'scripts/registry-smoke-test.mjs',
-    'scripts/android-verification.mjs',
-    'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
-    'android/src/test/assets/heic-heif/sample.heic',
-    'android/src/test/assets/avif/sample.avif',
-    'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
-    'example/package.json',
-  ];
-  const missing = requiredFiles.filter(
+  const missing = REQUIRED_PACKAGE_FILES.filter(
     (filePath) => !existsSync(path.join(packageDir, filePath))
   );
-  const presentForbidden = forbiddenFiles.filter((filePath) =>
+  const forbidden = FORBIDDEN_PACKAGE_FILES.filter((filePath) =>
     existsSync(path.join(packageDir, filePath))
   );
-
-  if (missing.length > 0) {
-    fail(`Installed package is missing expected files: ${missing.join(', ')}`);
+  if (missing.length) {
+    throw new Error(
+      `Installed package is missing expected files: ${missing.join(', ')}`
+    );
   }
-
-  if (presentForbidden.length > 0) {
-    fail(`Installed package contains development-only files: ${presentForbidden.join(', ')}`);
-  }
-}
-
-function captureJson(command, args) {
-  const result = spawnSync(command, args, {
-    cwd: ROOT,
-    encoding: 'utf8',
-    shell: process.platform === 'win32',
-  });
-
-  if (result.error) {
-    fail(result.error.message);
-  }
-
-  if (result.status !== 0) {
-    process.stdout.write(result.stdout ?? '');
-    process.stderr.write(result.stderr ?? '');
-    process.exit(result.status ?? 1);
-  }
-
-  try {
-    return JSON.parse(result.stdout);
-  } catch (error) {
-    fail(`Could not parse JSON output from ${command} ${args.join(' ')}: ${error.message}`);
-  }
-}
-
-function run(command, args, cwd) {
-  const result = spawnSync(command, args, {
-    cwd,
-    stdio: 'inherit',
-    shell: process.platform === 'win32',
-  });
-
-  if (result.error) {
-    fail(result.error.message);
-  }
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
+  if (forbidden.length) {
+    throw new Error(
+      `Installed package contains development-only files: ${forbidden.join(', ')}`
+    );
   }
 }
 
@@ -466,7 +487,4 @@ function writeJson(filePath, value) {
   writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
-function fail(message) {
-  console.error(message);
-  process.exit(1);
-}
+if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_PATH) main();

@@ -5,6 +5,10 @@ import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  getReadmeStatusViolations,
+  validateReadmeStatus,
+} from './readme-status-validator.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
@@ -188,19 +192,21 @@ function checkPackedReadmeStatus() {
 }
 
 export function getPackedReadmeStatusViolations(readmeContents) {
-  return STALE_PACKED_README_SNIPPETS.filter((snippet) =>
-    readmeContents.includes(snippet)
-  );
+  return getReadmeStatusViolations(readmeContents, {
+    forbiddenSnippets: STALE_PACKED_README_SNIPPETS,
+  });
 }
 
 export function validatePackedReadmeStatus(readmeContents) {
-  const staleSnippets = getPackedReadmeStatusViolations(readmeContents);
-
-  if (staleSnippets.length > 0) {
+  try {
+    validateReadmeStatus(readmeContents, {
+      forbiddenSnippets: STALE_PACKED_README_SNIPPETS,
+    });
+  } catch (error) {
+    const staleSnippets = getPackedReadmeStatusViolations(readmeContents);
     throw new Error(
-      `Packed README contains stale package-page status snippets: ${staleSnippets.join(
-        ' | '
-      )}`
+      `Packed README contains stale package-page status snippets: ${staleSnippets.join(' | ')}`,
+      { cause: error }
     );
   }
 }

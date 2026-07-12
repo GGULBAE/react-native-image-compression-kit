@@ -335,7 +335,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.47',
+    packageJson.version === '0.2.48',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -350,6 +350,7 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
+    readmeContents.includes('Version `0.2.48` is an unpublished registry provenance and manual CI gate candidate for `react-native-image-compression-kit`; npm `latest` remains the published `0.2.47` iOS PASS replay automation gate release.'),
     readmeContents.includes('Version `0.2.47` is published to npm as the `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('`validateIOSSmokePassPayload()` now enforces the exact capability-selected field order'),
     readmeContents.includes('`validateIOSSmokePassReplayFixture()` applies that semantic contract'),
@@ -513,10 +514,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status are aligned for the published v0.2.47 iOS PASS replay automation gate release',
+    label: 'npm package metadata and README status distinguish the v0.2.48 candidate from npm latest v0.2.47',
     detail: checks.every(Boolean)
-      ? 'name, version, license, repository, bugs, homepage, exports, peer dependency, keywords, and npm latest README release status are aligned'
-      : 'expected package.json release metadata or published README automation gate guidance is missing/mismatched',
+      ? 'name, version, package metadata, candidate status, and npm latest v0.2.47 baseline are aligned'
+      : 'expected package.json metadata or v0.2.48 candidate/npm latest v0.2.47 README guidance is missing/mismatched',
   };
 }
 
@@ -707,20 +708,31 @@ function checkConsumerSmokeTestEnvironment() {
 function checkRegistrySmokeTestEnvironment() {
   const packageJson = readJson('package.json');
   const registryScriptContents = readText('scripts/registry-smoke-test.mjs');
+  const registryCoreContents = readText('scripts/registry-smoke-core.mjs');
+  const readmeValidatorContents = readText('scripts/readme-status-validator.mjs');
+  const registryWorkflowContents = readText('.github/workflows/registry-validation.yml');
   const readmeContents = readText('README.md');
   const expectedSnippets = [
-    [registryScriptContents, "npmView(requestedSpec)"],
-    [registryScriptContents, "npmPack(publishedSpec, packDir)"],
+    [registryScriptContents, "'--expect-tag': 'expectedTag'"],
+    [registryScriptContents, "'--report-file': 'reportFile'"],
+    [registryScriptContents, "'dist.integrity'"],
+    [registryScriptContents, "'dist.shasum'"],
     [registryScriptContents, "run('npm', ['install', '--ignore-scripts', '--legacy-peer-deps'], consumerDir)"],
     [registryScriptContents, "run('npm', ['run', 'typecheck'], consumerDir)"],
-    [registryScriptContents, "'scripts/registry-smoke-test.mjs'"],
-    [registryScriptContents, "'android/src/test/assets/heic-heif/sample.heic'"],
+    [registryCoreContents, "'scripts/registry-smoke-test.mjs'"],
+    [registryCoreContents, "'android/src/test/assets/heic-heif/sample.heic'"],
+    [registryCoreContents, 'validateRegistryEvidence'],
+    [registryCoreContents, 'writeRegistryReportAtomic'],
+    [readmeValidatorContents, 'validateReadmeStatus'],
+    [registryWorkflowContents, 'workflow_dispatch:'],
+    [registryWorkflowContents, 'GITHUB_STEP_SUMMARY'],
+    [registryWorkflowContents, 'actions/upload-artifact@v6'],
     [registryScriptContents, "const REACT_NATIVE_VERSION = '0.86.0'"],
     [registryScriptContents, 'RNICK_REGISTRY_SMOKE_VERSION'],
     [registryScriptContents, 'RNICK_REGISTRY_SMOKE_KEEP'],
     [registryScriptContents, 'compressImage(options)'],
     [registryScriptContents, 'getImageCompressionCapabilities()'],
-    [readmeContents, 'pnpm smoke:registry -- --version 0.2.47'],
+    [readmeContents, 'pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json'],
     [readmeContents, 'validates the v0.2.47 registry package'],
     [readmeContents, 'npm install --ignore-scripts --legacy-peer-deps'],
     [readmeContents, 'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'],
@@ -738,7 +750,7 @@ function checkRegistrySmokeTestEnvironment() {
     label: 'registry package smoke test is wired',
     detail:
       hasScript && missing.length === 0
-        ? 'package script, registry tarball checks, clean npm install, public typecheck smoke, and README guidance are present'
+        ? 'package script, canonical provenance validation, shared README guard, clean install/typecheck, manual workflow, and README guidance are present'
         : `missing snippets or package script: ${[
             ...missing,
             ...(hasScript ? [] : ['package.json smoke:registry script']),
@@ -809,6 +821,10 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.48',
+    'Status: unpublished registry provenance and manual CI gate candidate. npm `latest` remains `0.2.47`; no npm publish, dist-tag change, `v0.2.48` git tag, or GitHub Release is part of this candidate.',
+    '`pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json --report-file registry-provenance.json`',
+    'Offline fixtures cover success, version/tag mismatch, stale candidate/unpublished/no-publish README wording, integrity mismatch, forbidden files, install failure, stable field order, canonical bytes, and atomic-write failure without a partial replacement.',
     '## v0.2.47',
     'Status: published to npm as the `0.2.47` latest iOS PASS replay automation gate release. npm `version` and `dist-tags.latest` are both `0.2.47`; no `v0.2.47` tag or GitHub Release was created.',
     'This release does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests.',
@@ -2079,7 +2095,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'The v0.2.47 iOS PASS replay automation gate release notes are in [RELEASE.md](RELEASE.md).',
+    'The v0.2.48 registry provenance and manual CI gate candidate notes are in [RELEASE.md](RELEASE.md).',
     'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
@@ -2092,18 +2108,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.47' && missing.length === 0;
+  const ok = packageJson.version === '0.2.48' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.47 iOS PASS replay automation gate published notes and previous release notes are current',
+    label: 'v0.2.48 registry provenance candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.47'
+          ...(packageJson.version === '0.2.48'
             ? []
-            : ['package.json version 0.2.47']),
+            : ['package.json version 0.2.48']),
         ].join(' | ')}`,
   };
 }

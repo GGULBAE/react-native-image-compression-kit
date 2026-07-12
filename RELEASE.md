@@ -1,5 +1,54 @@
 # Release Notes
 
+## v0.2.48
+
+Status: unpublished registry provenance and manual CI gate candidate. npm `latest` remains `0.2.47`; no npm publish, dist-tag change, `v0.2.48` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native and public API behavior unchanged. It makes the existing post-publish registry smoke evidence deterministic, machine-consumable, reproducible from one command, and runnable through an explicit manual GitHub Actions gate.
+
+### Goals
+
+- Require an exact published version and optionally prove a named dist-tag resolves the same version.
+- Emit one stable canonical JSON provenance report to stdout and an atomic report file.
+- Validate the real registry tarball README, integrity/shasum, required/forbidden files, and clean consumer install/typecheck.
+- Separate command execution from validation so all success/failure contracts run offline in Vitest fixtures.
+- Add a workflow-dispatch-only Registry Validation workflow with Step Summary and uploaded evidence.
+
+### Registry Provenance Contract
+
+`pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json --report-file registry-provenance.json` resolves the exact version, separately resolves `dist-tags.latest`, packs the resolved registry tarball, extracts its actual `README.md`, and runs the clean consumer smoke. `--json` emits exactly one canonical JSON object to stdout. `--report-file` uses a same-directory temporary file plus atomic rename, and its bytes match stdout.
+
+The ordered report fields are `schemaVersion`, `status`, `package`, `requestedVersion`, `resolvedVersion`, `expectedTag`, `tagVersion`, `publishedAt`, `tarball`, `integrity`, `shasum`, `fileCount`, `packageSize`, `unpackedSize`, `readmeStatus`, `forbiddenFiles`, `registryInstallSmoke`, and `error`.
+
+`scripts/readme-status-validator.mjs` is shared by `release:dry-run` and the registry validator. Offline fixtures cover success, version/tag mismatch, stale candidate/unpublished/no-publish README wording, integrity mismatch, forbidden files, install failure, stable field order, canonical bytes, and atomic-write failure without a partial replacement.
+
+### Included
+
+- `package.json` version bump to `0.2.48`.
+- Shared README status validator and pure registry provenance validation module.
+- Extended `scripts/registry-smoke-test.mjs` CLI with `--expect-tag`, `--json`, and `--report-file`.
+- Offline registry evidence fixtures and Vitest failure contracts.
+- Manual `.github/workflows/registry-validation.yml` report, summary, artifact, and failure gate.
+- README, release notes, Android verification doctor expectations, and Vitest expectations aligned to the v0.2.48 candidate with npm `latest` still at v0.2.47.
+
+### Not Included
+
+- npm publish, npm authentication storage, login automation, or dist-tag changes.
+- Git tag or GitHub Release creation.
+- Registry access from default `pnpm verify` or the default CI workflow.
+- Native/API behavior changes or AVIF output implementation.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- `pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json`
+- Canonical stdout/report-file byte comparison.
+- GitHub Actions CI, Android Instrumentation, iOS Validation, and manual Registry Validation.
+
 ## v0.2.47
 
 Status: published to npm as the `0.2.47` latest iOS PASS replay automation gate release. npm `version` and `dist-tags.latest` are both `0.2.47`; no `v0.2.47` tag or GitHub Release was created.
