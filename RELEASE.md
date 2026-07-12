@@ -1,5 +1,63 @@
 # Release Notes
 
+## v0.2.50
+
+Status: unpublished GitHub artifact attestation and offline identity verification candidate. npm `version` and `dist-tags.latest` remain `0.2.48`; no npm publish, dist-tag change, `v0.2.50` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, the registry provenance report schema, and the exact four-file v0.2.49 provenance bundle unchanged. It binds the canonical `bundle-manifest.json` to GitHub's OIDC-issued artifact attestation and adds a deterministic verifier for the attested subject digest and workflow identity without registry or network access.
+
+### Goals
+
+- Attest the existing canonical `registry-validation/bundle-manifest.json` with `actions/attest@v4`.
+- Require repository, signer workflow, source ref, source commit, subject digest, OIDC issuer, SLSA predicate, GitHub-hosted runner, and verified timestamps to match explicit expectations.
+- Download both the attestation bundle and GitHub CLI trusted root, pin the root bytes by SHA-256, and replay verification with network access disabled.
+- Emit one fixed canonical JSON verifier report to stdout and atomically write byte-identical `--report-file` output.
+- Preserve the existing `registry-provenance-<version>` artifact as exactly four files and upload attestation trust material separately.
+
+### Attestation Contract
+
+The manual Registry Validation workflow grants only `contents: read`, `id-token: write`, and `attestations: write` job permissions. After the existing registry smoke and four-file offline verification pass, `actions/attest@v4` signs the SHA-256 subject for `registry-validation/bundle-manifest.json`. The workflow performs an online GitHub CLI verification, downloads the attestation bundle, fetches the trusted root, checks the pinned trusted-root SHA-256 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`, and runs the repository verifier before either artifact can satisfy the final gate.
+
+`pnpm verify:registry-attestation -- --manifest registry-validation/bundle-manifest.json --attestation-bundle registry-attestation/attestation.jsonl --trusted-root registry-attestation/trusted-root.jsonl --expect-repository GGULBAE/react-native-image-compression-kit --expect-workflow GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml --expect-ref refs/heads/master --expect-head-sha <workflow-head-sha> --json --report-file registry-attestation/attestation-verification.json` passes the bundle and trusted root to `gh attestation verify` with closed proxy endpoints, then validates GitHub CLI's JSON independently.
+
+The ordered verifier result fields are `schemaVersion`, `status`, `subject`, `subjectSha256`, `repository`, `signerWorkflow`, `sourceRef`, `sourceDigest`, `oidcIssuer`, `predicateType`, `verifiedTimestamps`, and `error`. The canonical manifest must retain its existing schema and field ordering, and its bytes must hash to the single attestation subject. The certificate and SLSA v1 predicate must identify the expected repository, `.github/workflows/registry-validation.yml`, `refs/heads/master`, caller-supplied workflow head SHA, `https://token.actions.githubusercontent.com`, and a GitHub-hosted runner.
+
+Official GitHub CLI offline verification requires both `--bundle` and `--custom-trusted-root`; therefore the separate `registry-provenance-attestation-<version>` artifact contains exactly `attestation.jsonl`, `trusted-root.jsonl`, and `attestation-verification.json`. The trusted-root file is security-critical rather than optional evidence and is accepted only when its bytes match the pinned SHA-256 above. The original `registry-provenance-<version>` artifact remains exactly `registry-provenance.json`, `stdout.json`, `package.tgz`, and `bundle-manifest.json`.
+
+### Included
+
+- `package.json` version bump to `0.2.50` and `verify:registry-attestation` command.
+- Pure attestation JSON validation separated from GitHub CLI execution.
+- Fixed canonical success/failure report schema and atomic report-file replacement.
+- Offline Vitest fixtures for identity, subject, issuer, predicate, runner, timestamp, malformed JSON, multi-subject, trusted-root, GitHub CLI failure, and atomic-write contracts.
+- Registry Validation permissions, official attestation action, online policy check, downloaded trust material, offline verifier gate, separate artifact, and Step Summary identity evidence.
+- README, release notes, Android verification doctor checks, and Vitest expectations aligned to the v0.2.50 candidate and npm latest v0.2.48.
+
+### Not Included
+
+- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- Changes to the existing registry provenance report or four-file bundle schema.
+- Registry or GitHub access from default `pnpm verify` or default CI.
+- Native/API behavior changes or AVIF output implementation.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- Network-free offline success/failure Vitest fixtures.
+- Registry Validation dispatched with `version=0.2.48` and `expected_tag=latest`.
+- Downloaded provenance and attestation artifacts verified with network access disabled.
+- Attestation subject SHA-256 equal to the downloaded canonical manifest SHA-256.
+- Canonical verifier stdout and report-file byte equality.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed candidate commit.
+
+### Candidate Validation Result
+
+- Pending the pushed candidate commit and manual Registry Validation run. This section will be replaced with the actual workflow head SHA, run URL, attestation identity, subject digest, artifact digests, and offline replay result; no evidence value is predeclared.
+
 ## v0.2.49
 
 Status: unpublished Registry provenance bundle offline verification candidate. npm `version` and `dist-tags.latest` remain `0.2.48`; no npm publish, dist-tag change, `v0.2.49` git tag, or GitHub Release is part of this candidate.

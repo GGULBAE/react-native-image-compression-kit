@@ -16,6 +16,8 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+  attestations: write
 
 jobs:
   registry-provenance:
@@ -65,8 +67,99 @@ jobs:
           cmp registry-verification.json registry-verification-stdout.json
           rm registry-stdout.json registry-verification-stdout.json
 
+      - name: Attest canonical bundle manifest
+        id: attest
+        if: steps.validate.outcome == 'success'
+        continue-on-error: true
+        uses: actions/attest@v4
+        with:
+          subject-path: registry-validation/bundle-manifest.json
+
+      - name: Verify and package attestation trust material
+        id: verify_attestation
+        if: steps.validate.outcome == 'success' && steps.attest.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        env:
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+          EXPECTED_WORKFLOW: ${{ github.repository }}/.github/workflows/registry-validation.yml
+          EXPECTED_REF: ${{ github.ref }}
+          EXPECTED_HEAD_SHA: ${{ github.sha }}
+        run: |
+          rm -rf registry-attestation registry-attestation-download
+          rm -f registry-attestation-online.json registry-attestation-verification-stdout.json
+          mkdir -p registry-attestation registry-attestation-download
+
+          policy=(
+            --repo "$EXPECTED_REPOSITORY"
+            --signer-workflow "$EXPECTED_WORKFLOW"
+            --source-ref "$EXPECTED_REF"
+            --source-digest "$EXPECTED_HEAD_SHA"
+            --cert-oidc-issuer https://token.actions.githubusercontent.com
+            --predicate-type https://slsa.dev/provenance/v1
+            --deny-self-hosted-runners
+          )
+          gh attestation verify \
+            registry-validation/bundle-manifest.json \
+            "${policy[@]}" \
+            --format json \
+            > registry-attestation-online.json
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const results = JSON.parse(readFileSync('registry-attestation-online.json', 'utf8'));
+          if (!Array.isArray(results) || results.length === 0) {
+            throw new Error('Online attestation verification returned no results.');
+          }
+          NODE
+
+          (
+            cd registry-attestation-download
+            gh attestation download \
+              ../registry-validation/bundle-manifest.json \
+              --repo "$EXPECTED_REPOSITORY"
+          )
+          mapfile -t downloaded_bundles < <(
+            find registry-attestation-download -maxdepth 1 -type f -name 'sha256*.jsonl' -print
+          )
+          if [[ "${#downloaded_bundles[@]}" -ne 1 ]]; then
+            echo "Expected exactly one downloaded attestation JSONL, found ${#downloaded_bundles[@]}." >&2
+            exit 1
+          fi
+          mv "${downloaded_bundles[0]}" registry-attestation/attestation.jsonl
+
+          gh attestation trusted-root > registry-attestation/trusted-root.jsonl
+          trusted_root_sha256=$(sha256sum registry-attestation/trusted-root.jsonl | cut -d ' ' -f 1)
+          if [[ "$trusted_root_sha256" != "65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c" ]]; then
+            echo "Unexpected GitHub trusted root SHA-256: $trusted_root_sha256" >&2
+            exit 1
+          fi
+
+          pnpm verify:registry-attestation -- \
+            --manifest registry-validation/bundle-manifest.json \
+            --attestation-bundle registry-attestation/attestation.jsonl \
+            --expect-repository "$EXPECTED_REPOSITORY" \
+            --expect-workflow "$EXPECTED_WORKFLOW" \
+            --expect-ref "$EXPECTED_REF" \
+            --expect-head-sha "$EXPECTED_HEAD_SHA" \
+            --json \
+            --report-file registry-attestation/attestation-verification.json \
+            | tee registry-attestation-verification-stdout.json
+          cmp \
+            registry-attestation/attestation-verification.json \
+            registry-attestation-verification-stdout.json
+          rm registry-attestation-verification-stdout.json
+
       - name: Write registry validation summary
         if: always()
+        env:
+          ATTESTATION_ID: ${{ steps.attest.outputs.attestation-id }}
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
+          ATTESTATION_OUTCOME: ${{ steps.attest.outcome }}
+          ATTESTATION_VERIFY_OUTCOME: ${{ steps.verify_attestation.outcome }}
+          SOURCE_REPOSITORY: ${{ github.repository }}
+          SOURCE_WORKFLOW: ${{ github.repository }}/.github/workflows/registry-validation.yml
+          SOURCE_REF: ${{ github.ref }}
+          SOURCE_DIGEST: ${{ github.sha }}
         shell: bash
         run: |
           node --input-type=module <<'NODE'
@@ -83,6 +176,17 @@ jobs:
             const verification = existsSync('registry-verification.json')
               ? JSON.parse(readFileSync('registry-verification.json', 'utf8'))
               : { status: 'not-run' };
+            const onlineAttestation = existsSync('registry-attestation-online.json')
+              ? JSON.parse(readFileSync('registry-attestation-online.json', 'utf8'))
+              : [];
+            const offlineAttestation = existsSync('registry-attestation/attestation-verification.json')
+              ? JSON.parse(readFileSync('registry-attestation/attestation-verification.json', 'utf8'))
+              : { status: 'not-run', subjectSha256: null };
+            const trustedRootSha256 = existsSync('registry-attestation/trusted-root.jsonl')
+              ? createHash('sha256')
+                  .update(readFileSync('registry-attestation/trusted-root.jsonl'))
+                  .digest('hex')
+              : null;
             markdown += `- Status: **${report.status}**\n`;
             markdown += `- Package: \`${report.package}@${report.resolvedVersion}\`\n`;
             markdown += `- Requested version: \`${report.requestedVersion}\`\n`;
@@ -100,6 +204,18 @@ jobs:
             markdown += `- Bundled tarball integrity: \`${manifest.tarballIntegrity}\`\n`;
             markdown += `- Bundled tarball shasum: \`${manifest.tarballShasum}\`\n`;
             markdown += `- Offline bundle verification: \`${verification.status}\`\n`;
+            markdown += `- Manifest attestation: \`${process.env.ATTESTATION_OUTCOME}\`\n`;
+            markdown += `- Attestation ID: \`${process.env.ATTESTATION_ID || 'not-created'}\`\n`;
+            markdown += `- Attestation URL: ${process.env.ATTESTATION_URL || 'not-created'}\n`;
+            markdown += `- Attestation subject SHA-256: \`${offlineAttestation.subjectSha256 || manifestSha256}\`\n`;
+            markdown += `- Attestation repository: \`${process.env.SOURCE_REPOSITORY}\`\n`;
+            markdown += `- Attestation signer workflow: \`${process.env.SOURCE_WORKFLOW}\`\n`;
+            markdown += `- Attestation source ref: \`${process.env.SOURCE_REF}\`\n`;
+            markdown += `- Attestation source digest: \`${process.env.SOURCE_DIGEST}\`\n`;
+            markdown += `- Online attestation verification: \`${onlineAttestation.length > 0 ? 'passed' : 'not-run'}\`\n`;
+            markdown += `- Downloaded-bundle offline attestation verification: \`${offlineAttestation.status}\`\n`;
+            markdown += `- Trusted root SHA-256: \`${trustedRootSha256 || 'not-downloaded'}\`\n`;
+            markdown += `- Attestation verification step: \`${process.env.ATTESTATION_VERIFY_OUTCOME}\`\n`;
             if (report.error) markdown += `- Error: ${report.error}\n`;
           } catch (error) {
             markdown += `- Status: **failed before a report could be read**\n- Error: ${error.message}\n`;
@@ -115,6 +231,17 @@ jobs:
           path: registry-validation
           if-no-files-found: error
 
+      - name: Upload registry provenance attestation artifact
+        if: always() && steps.attest.outcome == 'success'
+        uses: actions/upload-artifact@v6
+        with:
+          name: registry-provenance-attestation-${{ inputs.version }}
+          path: registry-attestation
+          if-no-files-found: error
+
       - name: Enforce registry validation result
-        if: steps.validate.outcome == 'failure'
+        if: >-
+          steps.validate.outcome != 'success' ||
+          steps.attest.outcome != 'success' ||
+          steps.verify_attestation.outcome != 'success'
         run: exit 1
