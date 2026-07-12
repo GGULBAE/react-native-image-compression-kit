@@ -2,7 +2,7 @@
 
 ## v0.2.48
 
-Status: release-ready registry provenance and manual CI gate release. npm `latest` remains `0.2.47` until the single approved publish; no `v0.2.48` git tag or GitHub Release is part of this promotion.
+Status: published to npm as the `0.2.48` latest registry provenance and manual CI gate release. npm `version` and `dist-tags.latest` are both `0.2.48`; no `v0.2.48` git tag or GitHub Release was created.
 
 This release keeps native and public API behavior unchanged. It makes the existing post-publish registry smoke evidence deterministic, machine-consumable, reproducible from one command, and runnable through an explicit manual GitHub Actions gate.
 
@@ -29,11 +29,11 @@ The ordered report fields are `schemaVersion`, `status`, `package`, `requestedVe
 - Extended `scripts/registry-smoke-test.mjs` CLI with `--expect-tag`, `--json`, and `--report-file`.
 - Offline registry evidence fixtures and Vitest failure contracts.
 - Manual `.github/workflows/registry-validation.yml` report, summary, artifact, and failure gate.
-- README, release notes, Android verification doctor expectations, and Vitest expectations aligned to registry-independent v0.2.48 release wording with npm `latest` still at v0.2.47 before promotion.
+- README, release notes, Android verification doctor expectations, and Vitest expectations aligned to registry-independent packed wording and the final v0.2.48 published state.
 
 ### Not Included
 
-- Repeated or automatic npm publish attempts, npm authentication storage, login automation, or manual dist-tag changes outside the single approved `latest` promotion.
+- Additional or automatic npm publish attempts, npm authentication storage, login automation, or manual dist-tag changes outside the completed single `latest` promotion.
 - Git tag or GitHub Release creation.
 - Registry access from default `pnpm verify` or the default CI workflow.
 - Native/API behavior changes or AVIF output implementation.
@@ -45,9 +45,18 @@ The ordered report fields are `schemaVersion`, `status`, `package`, `requestedVe
 - `git diff --check`
 - `pnpm pack --dry-run`
 - `pnpm release:dry-run`
-- `pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json`
+- `pnpm smoke:registry -- --version 0.2.48 --expect-tag latest --json --report-file registry-provenance.json`
 - Canonical stdout/report-file byte comparison.
 - GitHub Actions CI, Android Instrumentation, iOS Validation, and manual Registry Validation.
+
+### Promotion Result
+
+- Release-ready commit `80bf1c3808aaab32db984df7c1df83d0fca8b149` passed GitHub Actions [CI](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29180643528), [Android Instrumentation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29180643527), and [iOS Validation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29180643530).
+- npm authentication was confirmed as `ggulbae`, then `npm publish --tag latest` was executed exactly once and published `react-native-image-compression-kit@0.2.48`.
+- Registry metadata reports `version=0.2.48`, `dist-tags.latest=0.2.48`, publish time `2026-07-12T05:47:42.131Z`, and modified time `2026-07-12T05:47:42.234Z`.
+- `pnpm smoke:registry -- --version 0.2.48 --expect-tag latest --json --report-file registry-provenance.json` matched integrity `sha512-NBk5Gb56Wc/va1p3bTQ7PS93ihoTBE0Fdh8ekvhXt/fQQ2UWcH0xBaIIomybHUi1PnrCAuIFiAO4gm5AMvhO6g==`, shasum `dcc1b43534c6a9620d2704f692f335f28ff2f0d4`, 51 files, 66,099-byte package size, and 291,340-byte unpacked size; README status and clean consumer install/typecheck passed.
+- Manual [Registry Validation run 29181708376](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29181708376) passed, produced the GitHub Step Summary, and uploaded byte-identical one-line provenance report/stdout artifacts.
+- No additional publish attempt, manual dist-tag change, git tag, or GitHub Release was performed.
 
 ## v0.2.47
 

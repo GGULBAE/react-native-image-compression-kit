@@ -358,8 +358,8 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.48` is the registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
-    readmeContents.includes('Version `0.2.47` is published to npm as the `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'),
+    readmeContents.includes('Version `0.2.48` is published to npm as the `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
+    readmeContents.includes('Version `0.2.47` was the previous npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('`validateIOSSmokePassPayload()` now enforces the exact capability-selected field order'),
     readmeContents.includes('`validateIOSSmokePassReplayFixture()` applies that semantic contract'),
     readmeContents.includes('adds source-log-free `--audit`'),
@@ -375,10 +375,10 @@ function checkPackageMetadata() {
     readmeContents.includes('uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'),
     readmeContents.includes('The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'),
     readmeContents.includes("The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"),
-    readmeContents.includes('Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.47`.'),
-    readmeContents.includes('The real 51-file registry tarball retained the registry-independent `Status: v0.2.47 release` package README'),
+    readmeContents.includes('Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.48`.'),
+    readmeContents.includes('The real 51-file registry tarball retained the registry-independent `Status: v0.2.48 release` package README'),
     readmeContents.includes('No git tag or GitHub Release was created as part of this npm-only promotion.'),
-    readmeContents.includes('The `0.2.47` package is published as the npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`'),
+    readmeContents.includes('The `0.2.48` package is published as the npm `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -522,10 +522,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README use registry-independent v0.2.48 release wording',
+    label: 'npm package metadata and README are aligned for the published v0.2.48 registry provenance release',
     detail: checks.every(Boolean)
-      ? 'name, version, package metadata, v0.2.48 release status, and stale candidate exclusions are aligned'
-      : 'expected package.json metadata or registry-independent v0.2.48 README release guidance is missing/mismatched',
+      ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
+      : 'expected package.json metadata or published v0.2.48 README registry guidance is missing/mismatched',
   };
 }
 
@@ -733,6 +733,7 @@ function checkRegistrySmokeTestEnvironment() {
     [registryCoreContents, 'writeRegistryReportAtomic'],
     [readmeValidatorContents, 'validateReadmeStatus'],
     [registryWorkflowContents, 'workflow_dispatch:'],
+    [registryWorkflowContents, 'default: "0.2.48"'],
     [registryWorkflowContents, 'run: pnpm install --frozen-lockfile'],
     [registryWorkflowContents, 'GITHUB_STEP_SUMMARY'],
     [registryWorkflowContents, 'actions/upload-artifact@v6'],
@@ -835,9 +836,15 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.48',
-    'Status: release-ready registry provenance and manual CI gate release. npm `latest` remains `0.2.47` until the single approved publish; no `v0.2.48` git tag or GitHub Release is part of this promotion.',
-    '`pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json --report-file registry-provenance.json`',
+    'Status: published to npm as the `0.2.48` latest registry provenance and manual CI gate release. npm `version` and `dist-tags.latest` are both `0.2.48`; no `v0.2.48` git tag or GitHub Release was created.',
+    '`pnpm smoke:registry -- --version 0.2.48 --expect-tag latest --json --report-file registry-provenance.json`',
     'Offline fixtures cover success, version/tag mismatch, stale candidate/unpublished/no-publish README wording, integrity mismatch, forbidden files, install failure, stable field order, canonical bytes, and atomic-write failure without a partial replacement.',
+    'Release-ready commit `80bf1c3808aaab32db984df7c1df83d0fca8b149` passed GitHub Actions',
+    '`npm publish --tag latest` was executed exactly once and published `react-native-image-compression-kit@0.2.48`.',
+    'Registry metadata reports `version=0.2.48`, `dist-tags.latest=0.2.48`, publish time `2026-07-12T05:47:42.131Z`, and modified time `2026-07-12T05:47:42.234Z`.',
+    'matched integrity `sha512-NBk5Gb56Wc/va1p3bTQ7PS93ihoTBE0Fdh8ekvhXt/fQQ2UWcH0xBaIIomybHUi1PnrCAuIFiAO4gm5AMvhO6g==`, shasum `dcc1b43534c6a9620d2704f692f335f28ff2f0d4`, 51 files, 66,099-byte package size, and 291,340-byte unpacked size',
+    'Manual [Registry Validation run 29181708376](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29181708376) passed',
+    'No additional publish attempt, manual dist-tag change, git tag, or GitHub Release was performed.',
     '## v0.2.47',
     'Status: published to npm as the `0.2.47` latest iOS PASS replay automation gate release. npm `version` and `dist-tags.latest` are both `0.2.47`; no `v0.2.47` tag or GitHub Release was created.',
     'This release does not enable AVIF output, force AVIF input availability or unavailability, force WebP output availability, change the live iOS PASS payload, add native features, download GitHub Actions logs, refresh artifacts automatically, write from check/audit modes, or access the network during tests.',
@@ -2125,7 +2132,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.48 registry provenance release-ready notes and previous release notes are current',
+    label: 'v0.2.48 registry provenance published notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
