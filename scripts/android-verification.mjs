@@ -318,6 +318,14 @@ function checkPackageMetadata() {
     'Version `0.2.47` is the unpublished iOS PASS replay automation gate candidate.',
     'The v0.2.47 candidate fixes semantic PASS payload validation',
     'The current v0.2.47 iOS PASS replay automation gate candidate notes',
+    'Status: v0.2.48 candidate',
+    'v0.2.48%20candidate',
+    'Version `0.2.48` is an unpublished registry provenance and manual CI gate candidate for `react-native-image-compression-kit`',
+    'No npm publish, dist-tag change, git tag, or GitHub Release is part of this candidate.',
+    'The repository is preparing `0.2.48` as an unpublished registry provenance and manual CI gate candidate.',
+    'Version `0.2.48` is the unpublished registry provenance and manual CI gate candidate.',
+    'The v0.2.48 candidate adds a canonical registry provenance report',
+    'The v0.2.48 registry provenance and manual CI gate candidate notes',
   ];
   const expectedKeywords = [
     'react-native',
@@ -350,7 +358,7 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.48` is an unpublished registry provenance and manual CI gate candidate for `react-native-image-compression-kit`; npm `latest` remains the published `0.2.47` iOS PASS replay automation gate release.'),
+    readmeContents.includes('Version `0.2.48` is the registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.47` is published to npm as the `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('`validateIOSSmokePassPayload()` now enforces the exact capability-selected field order'),
     readmeContents.includes('`validateIOSSmokePassReplayFixture()` applies that semantic contract'),
@@ -514,10 +522,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README status distinguish the v0.2.48 candidate from npm latest v0.2.47',
+    label: 'npm package metadata and README use registry-independent v0.2.48 release wording',
     detail: checks.every(Boolean)
-      ? 'name, version, package metadata, candidate status, and npm latest v0.2.47 baseline are aligned'
-      : 'expected package.json metadata or v0.2.48 candidate/npm latest v0.2.47 README guidance is missing/mismatched',
+      ? 'name, version, package metadata, v0.2.48 release status, and stale candidate exclusions are aligned'
+      : 'expected package.json metadata or registry-independent v0.2.48 README release guidance is missing/mismatched',
   };
 }
 
@@ -733,8 +741,8 @@ function checkRegistrySmokeTestEnvironment() {
     [registryScriptContents, 'RNICK_REGISTRY_SMOKE_KEEP'],
     [registryScriptContents, 'compressImage(options)'],
     [registryScriptContents, 'getImageCompressionCapabilities()'],
-    [readmeContents, 'pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json'],
-    [readmeContents, 'validates the v0.2.47 registry package'],
+    [readmeContents, 'pnpm smoke:registry -- --version <published-version> --expect-tag latest --json'],
+    [readmeContents, 'validates the requested registry package'],
     [readmeContents, 'npm install --ignore-scripts --legacy-peer-deps'],
     [readmeContents, 'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'],
     [readmeContents, 'After npm publish, run `pnpm smoke:registry -- --version <published-version>`'],
@@ -780,10 +788,14 @@ function checkReleaseDryRunChecklist() {
     [releaseScriptContents, 'validatePackedReadmeStatus'],
     [releaseScriptContents, 'Status: v0.2.47 candidate'],
     [releaseScriptContents, 'Version `0.2.47` is an unpublished iOS PASS replay automation gate candidate'],
+    [releaseScriptContents, 'Status: v0.2.48 candidate'],
+    [releaseScriptContents, 'Version `0.2.48` is an unpublished registry provenance and manual CI gate candidate'],
     [releaseScriptContents, 'package/README.md'],
     [releaseScriptContents, 'Packed README release status check completed.'],
     [releaseTestContents, 'rejects the v0.2.47 candidate snippet'],
     [releaseTestContents, 'accepts registry-independent v0.2.47 release wording'],
+    [releaseTestContents, 'rejects the v0.2.48 candidate snippet'],
+    [releaseTestContents, 'accepts registry-independent v0.2.48 release wording'],
     [releaseScriptContents, "args: ['smoke:consumer']"],
     [releaseScriptContents, "args: ['publish', '--dry-run', '--no-git-checks']"],
     [readmeContents, '## Release Dry Run Checklist'],
@@ -823,7 +835,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.48',
-    'Status: unpublished registry provenance and manual CI gate candidate. npm `latest` remains `0.2.47`; no npm publish, dist-tag change, `v0.2.48` git tag, or GitHub Release is part of this candidate.',
+    'Status: release-ready registry provenance and manual CI gate release. npm `latest` remains `0.2.47` until the single approved publish; no `v0.2.48` git tag or GitHub Release is part of this promotion.',
     '`pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json --report-file registry-provenance.json`',
     'Offline fixtures cover success, version/tag mismatch, stale candidate/unpublished/no-publish README wording, integrity mismatch, forbidden files, install failure, stable field order, canonical bytes, and atomic-write failure without a partial replacement.',
     '## v0.2.47',
@@ -2096,7 +2108,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'The v0.2.48 registry provenance and manual CI gate candidate notes are in [RELEASE.md](RELEASE.md).',
+    'The v0.2.48 registry provenance and manual CI gate release notes are in [RELEASE.md](RELEASE.md).',
     'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
@@ -2113,7 +2125,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.48 registry provenance candidate notes and previous release notes are current',
+    label: 'v0.2.48 registry provenance release-ready notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[

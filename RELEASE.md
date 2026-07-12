@@ -2,9 +2,9 @@
 
 ## v0.2.48
 
-Status: unpublished registry provenance and manual CI gate candidate. npm `latest` remains `0.2.47`; no npm publish, dist-tag change, `v0.2.48` git tag, or GitHub Release is part of this candidate.
+Status: release-ready registry provenance and manual CI gate release. npm `latest` remains `0.2.47` until the single approved publish; no `v0.2.48` git tag or GitHub Release is part of this promotion.
 
-This candidate keeps native and public API behavior unchanged. It makes the existing post-publish registry smoke evidence deterministic, machine-consumable, reproducible from one command, and runnable through an explicit manual GitHub Actions gate.
+This release keeps native and public API behavior unchanged. It makes the existing post-publish registry smoke evidence deterministic, machine-consumable, reproducible from one command, and runnable through an explicit manual GitHub Actions gate.
 
 ### Goals
 
@@ -29,11 +29,11 @@ The ordered report fields are `schemaVersion`, `status`, `package`, `requestedVe
 - Extended `scripts/registry-smoke-test.mjs` CLI with `--expect-tag`, `--json`, and `--report-file`.
 - Offline registry evidence fixtures and Vitest failure contracts.
 - Manual `.github/workflows/registry-validation.yml` report, summary, artifact, and failure gate.
-- README, release notes, Android verification doctor expectations, and Vitest expectations aligned to the v0.2.48 candidate with npm `latest` still at v0.2.47.
+- README, release notes, Android verification doctor expectations, and Vitest expectations aligned to registry-independent v0.2.48 release wording with npm `latest` still at v0.2.47 before promotion.
 
 ### Not Included
 
-- npm publish, npm authentication storage, login automation, or dist-tag changes.
+- Repeated or automatic npm publish attempts, npm authentication storage, login automation, or manual dist-tag changes outside the single approved `latest` promotion.
 - Git tag or GitHub Release creation.
 - Registry access from default `pnpm verify` or the default CI workflow.
 - Native/API behavior changes or AVIF output implementation.

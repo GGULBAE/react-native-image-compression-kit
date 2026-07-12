@@ -117,6 +117,14 @@ const STALE_PACKED_README_SNIPPETS = [
   'Version `0.2.47` is the unpublished iOS PASS replay automation gate candidate.',
   'The v0.2.47 candidate fixes semantic PASS payload validation',
   'The current v0.2.47 iOS PASS replay automation gate candidate notes',
+  'Status: v0.2.48 candidate',
+  'v0.2.48%20candidate',
+  'Version `0.2.48` is an unpublished registry provenance and manual CI gate candidate for `react-native-image-compression-kit`',
+  'No npm publish, dist-tag change, git tag, or GitHub Release is part of this candidate.',
+  'The repository is preparing `0.2.48` as an unpublished registry provenance and manual CI gate candidate.',
+  'Version `0.2.48` is the unpublished registry provenance and manual CI gate candidate.',
+  'The v0.2.48 candidate adds a canonical registry provenance report',
+  'The v0.2.48 registry provenance and manual CI gate candidate notes',
 ];
 
 const STEPS = [
