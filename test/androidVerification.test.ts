@@ -905,6 +905,7 @@ describe('Android verification scripts', () => {
     expect(registryWorkflowSource).toContain('id-token: write');
     expect(registryWorkflowSource).toContain('attestations: write');
     expect(registryWorkflowSource).toContain('actions/attest@v4');
+    expect(registryWorkflowSource).toContain('GH_TOKEN: ${{ github.token }}');
     expect(registryWorkflowSource).toContain('gh attestation trusted-root');
     expect(registryWorkflowSource).toContain('verify:registry-attestation');
     expect(registryWorkflowSource).toContain('registry-provenance-attestation-${{ inputs.version }}');

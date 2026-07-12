@@ -774,6 +774,7 @@ function checkRegistrySmokeTestEnvironment() {
     [registryWorkflowContents, 'id-token: write'],
     [registryWorkflowContents, 'attestations: write'],
     [registryWorkflowContents, 'actions/attest@v4'],
+    [registryWorkflowContents, 'GH_TOKEN: ${{ github.token }}'],
     [registryWorkflowContents, 'gh attestation trusted-root'],
     [registryWorkflowContents, 'verify:registry-attestation'],
     [registryWorkflowContents, 'registry-provenance-attestation-${{ inputs.version }}'],
