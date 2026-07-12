@@ -1449,6 +1449,15 @@ describe('Android verification scripts', () => {
       'The ordered bundle manifest fields are `schemaVersion`, `status`, `package`, `version`, `expectedTag`, `reportFile`, `reportSha256`, `stdoutFile`, `stdoutSha256`, `tarballFile`, `tarballIntegrity`, `tarballShasum`, `fileCount`, `packageSize`, `unpackedSize`, and `error`.'
     );
     expect(releaseSource).toContain('Tar entries are parsed in memory and never extracted.');
+    expect(releaseSource).toContain(
+      'Manual [Registry Validation run 29182554246](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29182554246) passed for `version=0.2.48` and `expected_tag=latest`'
+    );
+    expect(releaseSource).toContain(
+      'GitHub digest `sha256:9039f1c127ce2f743d17a80e4469972a65343cabf91f3b5074808294ac670fa3`'
+    );
+    expect(releaseSource).toContain(
+      'Offline verification reported all `manifest`, `report`, `stdout`, `tarball`, `packageContents`, and `readme` checks as `true`.'
+    );
     expect(releaseSource).toContain('## v0.2.48');
     expect(releaseSource).toContain(
       'Status: published to npm as the `0.2.48` latest registry provenance and manual CI gate release. npm `version` and `dist-tags.latest` are both `0.2.48`; no `v0.2.48` git tag or GitHub Release was created.'
@@ -4688,6 +4697,9 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'The v0.2.49 Registry provenance bundle offline verification candidate notes are in [RELEASE.md](RELEASE.md).'
+    );
+    expect(readmeSource).toContain(
+      'Successful [Registry Validation run 29182554246](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29182554246) on commit `d233529ddb3804b9fff05832bc4b327348f0fc51` uploaded the fixed four-file v0.2.48 bundle'
     );
     expect(readmeSource).toContain('reviewed release notes');
     expect(readmeSource).toContain(

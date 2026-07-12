@@ -56,6 +56,15 @@ The ordered verifier result fields are `schemaVersion`, `status`, `artifactDir`,
 - Report/stdout byte equality and v0.2.48 tarball integrity/shasum agreement.
 - GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed candidate commit.
 
+### Candidate Validation Result
+
+- Candidate implementation commit `d233529ddb3804b9fff05832bc4b327348f0fc51` passed GitHub Actions CI, Android Instrumentation, and iOS Validation.
+- Manual [Registry Validation run 29182554246](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29182554246) passed for `version=0.2.48` and `expected_tag=latest`; its validation, Step Summary, and artifact upload steps all completed successfully.
+- The uploaded `registry-provenance-0.2.48` artifact has GitHub digest `sha256:9039f1c127ce2f743d17a80e4469972a65343cabf91f3b5074808294ac670fa3` and contains exactly the four declared files.
+- Downloaded bundle SHA-256 values are `eea6c859cac11a10d4f564957f49606ed9fb9814d37a9e4aabdbb8375285df53` for `bundle-manifest.json`, `ec118e9c9aae3ecd783e10289fa1e9c52cb4dac73f298b86946d973fa0a2a128` for `package.tgz`, and `cd142b45513e2d27cdfc39b75317df2f447df3f6ac1f99ec59ef9b0e3fa73ba3` for both report and stdout.
+- The downloaded bundle matched the independently generated local bundle byte-for-byte. Offline verification reported all `manifest`, `report`, `stdout`, `tarball`, `packageContents`, and `readme` checks as `true`.
+- npm `version` and `dist-tags.latest` remain `0.2.48`, while `react-native-image-compression-kit@0.2.49` remains unpublished. No publish, dist-tag change, git tag, GitHub Release, or authentication file was created.
+
 ## v0.2.48
 
 Status: published to npm as the `0.2.48` latest registry provenance and manual CI gate release. npm `version` and `dist-tags.latest` are both `0.2.48`; no `v0.2.48` git tag or GitHub Release was created.
