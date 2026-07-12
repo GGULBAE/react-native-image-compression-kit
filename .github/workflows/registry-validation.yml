@@ -37,6 +37,9 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Validate registry package
         id: validate
         continue-on-error: true

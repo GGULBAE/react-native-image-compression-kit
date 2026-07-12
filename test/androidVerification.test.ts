@@ -843,6 +843,7 @@ describe('Android verification scripts', () => {
     expect(registrySmokeCoreSource).toContain('writeRegistryReportAtomic');
     expect(readmeValidatorSource).toContain('validateReadmeStatus');
     expect(registryWorkflowSource).toContain('workflow_dispatch:');
+    expect(registryWorkflowSource).toContain('run: pnpm install --frozen-lockfile');
     expect(registryWorkflowSource).toContain('GITHUB_STEP_SUMMARY');
     expect(registryWorkflowSource).toContain('actions/upload-artifact@v6');
     expect(readmeSource).toContain('pnpm smoke:registry -- --version 0.2.47 --expect-tag latest --json');

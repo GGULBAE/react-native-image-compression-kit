@@ -725,6 +725,7 @@ function checkRegistrySmokeTestEnvironment() {
     [registryCoreContents, 'writeRegistryReportAtomic'],
     [readmeValidatorContents, 'validateReadmeStatus'],
     [registryWorkflowContents, 'workflow_dispatch:'],
+    [registryWorkflowContents, 'run: pnpm install --frozen-lockfile'],
     [registryWorkflowContents, 'GITHUB_STEP_SUMMARY'],
     [registryWorkflowContents, 'actions/upload-artifact@v6'],
     [registryScriptContents, "const REACT_NATIVE_VERSION = '0.86.0'"],
