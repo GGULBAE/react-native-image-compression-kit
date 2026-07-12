@@ -20,6 +20,7 @@ import {
   validateRegistryEvidence,
   writeRegistryReportAtomic,
 } from './registry-smoke-core.mjs';
+import { writeRegistryBundleAtomic } from './registry-provenance-core.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
@@ -50,6 +51,7 @@ export function parseRegistrySmokeArgs(args) {
       '--expect-tag': 'expectedTag',
       '--package': 'packageName',
       '--report-file': 'reportFile',
+      '--artifact-dir': 'artifactDir',
     };
 
     if (flags[arg]) {
@@ -69,6 +71,9 @@ export function parseRegistrySmokeArgs(args) {
   if (parsed.version && parsed.tag) {
     throw new Error('Use either --version or --tag, not both.');
   }
+  if (parsed.reportFile && parsed.artifactDir) {
+    throw new Error('Use either --report-file or --artifact-dir, not both.');
+  }
 
   return parsed;
 }
@@ -77,6 +82,7 @@ export function runRegistrySmoke(options, dependencies = {}) {
   const captureJson = dependencies.captureJson ?? captureCommandJson;
   const run = dependencies.run ?? runCommand;
   const extractReadme = dependencies.extractReadme ?? extractTarballReadme;
+  const writeBundle = dependencies.writeBundle ?? writeRegistryBundleAtomic;
   const packageName = options.packageName ?? rootPackageJson.name;
   const requestedTag = options.tag ?? process.env.RNICK_REGISTRY_SMOKE_TAG ?? null;
   let requestedVersion =
@@ -92,6 +98,17 @@ export function runRegistrySmoke(options, dependencies = {}) {
   let readmeContents = null;
   let registryInstallSmoke = false;
   let installError = null;
+  let tarballBytes = null;
+
+  const finalize = (report) => {
+    if (options.artifactDir) {
+      if (!tarballBytes) {
+        throw new Error('Could not create provenance bundle without the validated tarball.');
+      }
+      writeBundle(options.artifactDir, report, tarballBytes);
+    }
+    return report;
+  };
 
   try {
     if (!packageName) throw new Error('Missing package name.');
@@ -151,6 +168,7 @@ export function runRegistrySmoke(options, dependencies = {}) {
     }
     packInfo = packed[0];
     const tarballPath = path.join(packDir, packInfo.filename);
+    tarballBytes = readFileSync(tarballPath);
     readmeContents = extractReadme(tarballPath);
 
     const preflightReport = validateRegistryEvidence({
@@ -164,7 +182,7 @@ export function runRegistrySmoke(options, dependencies = {}) {
       registryInstallSmoke: true,
     });
     if (preflightReport.status !== 'passed') {
-      return { ...preflightReport, registryInstallSmoke: false };
+      return finalize({ ...preflightReport, registryInstallSmoke: false });
     }
 
     writeConsumerProject(consumerDir, packageName, resolvedVersion);
@@ -177,7 +195,7 @@ export function runRegistrySmoke(options, dependencies = {}) {
       installError = error instanceof Error ? error.message : String(error);
     }
 
-    return validateRegistryEvidence({
+    return finalize(validateRegistryEvidence({
       packageName,
       requestedVersion,
       expectedTag: options.expectedTag ?? null,
@@ -187,7 +205,7 @@ export function runRegistrySmoke(options, dependencies = {}) {
       readmeContents,
       registryInstallSmoke,
       installError,
-    });
+    }));
   } catch (error) {
     return createRegistryReport({
       packageName: packageName ?? null,
@@ -269,7 +287,7 @@ function main() {
 }
 
 function usage() {
-  return `Usage: pnpm smoke:registry -- [--version 0.2.47 | --tag latest]\n\nOptions:\n  --version <version>   Smoke-test an exact published version.\n  --tag <tag>           Resolve and smoke-test a published npm dist-tag.\n  --expect-tag <tag>    Require this dist-tag to resolve the tested version.\n  --package <name>      Override the package name. Defaults to package.json name.\n  --json                Emit exactly one canonical JSON object to stdout.\n  --report-file <path>  Atomically write the same canonical JSON report.\n`;
+  return `Usage: pnpm smoke:registry -- [--version 0.2.48 | --tag latest]\n\nOptions:\n  --version <version>    Smoke-test an exact published version.\n  --tag <tag>            Resolve and smoke-test a published npm dist-tag.\n  --expect-tag <tag>     Require this dist-tag to resolve the tested version.\n  --package <name>       Override the package name. Defaults to package.json name.\n  --json                 Emit exactly one canonical JSON object to stdout.\n  --report-file <path>   Atomically write the same canonical JSON report.\n  --artifact-dir <path>  Atomically write report, stdout, tarball, and manifest.\n`;
 }
 
 function readValue(args, index, flag) {

@@ -40,31 +40,49 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate registry package
+      - name: Validate registry package and build provenance bundle
         id: validate
         continue-on-error: true
         shell: bash
         run: |
-          mkdir -p registry-validation
+          rm -rf registry-validation registry-stdout.json registry-verification.json registry-verification-stdout.json
           set -o pipefail
           pnpm smoke:registry -- \
             --version "${{ inputs.version }}" \
             --expect-tag "${{ inputs.expected_tag }}" \
             --json \
-            --report-file registry-validation/registry-provenance.json \
-            | tee registry-validation/stdout.json
-          cmp registry-validation/stdout.json registry-validation/registry-provenance.json
+            --artifact-dir registry-validation \
+            | tee registry-stdout.json
+          cmp registry-stdout.json registry-validation/stdout.json
+          pnpm verify:registry-provenance -- \
+            --artifact-dir registry-validation \
+            --expect-package react-native-image-compression-kit \
+            --expect-version "${{ inputs.version }}" \
+            --expect-tag "${{ inputs.expected_tag }}" \
+            --json \
+            --report-file registry-verification.json \
+            | tee registry-verification-stdout.json
+          cmp registry-verification.json registry-verification-stdout.json
+          rm registry-stdout.json registry-verification-stdout.json
 
       - name: Write registry validation summary
         if: always()
         shell: bash
         run: |
           node --input-type=module <<'NODE'
-          import { appendFileSync, readFileSync } from 'node:fs';
-          const path = 'registry-validation/registry-provenance.json';
+          import { createHash } from 'node:crypto';
+          import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+          const reportPath = 'registry-validation/registry-provenance.json';
+          const manifestPath = 'registry-validation/bundle-manifest.json';
           let markdown = '## Registry Validation\n\n';
           try {
-            const report = JSON.parse(readFileSync(path, 'utf8'));
+            const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+            const manifestBytes = readFileSync(manifestPath);
+            const manifest = JSON.parse(manifestBytes);
+            const manifestSha256 = createHash('sha256').update(manifestBytes).digest('hex');
+            const verification = existsSync('registry-verification.json')
+              ? JSON.parse(readFileSync('registry-verification.json', 'utf8'))
+              : { status: 'not-run' };
             markdown += `- Status: **${report.status}**\n`;
             markdown += `- Package: \`${report.package}@${report.resolvedVersion}\`\n`;
             markdown += `- Requested version: \`${report.requestedVersion}\`\n`;
@@ -75,6 +93,13 @@ jobs:
             markdown += `- Package shape: ${report.fileCount} files, ${report.packageSize} packed bytes, ${report.unpackedSize} unpacked bytes\n`;
             markdown += `- README status: \`${report.readmeStatus}\`\n`;
             markdown += `- Consumer install/typecheck: \`${report.registryInstallSmoke}\`\n`;
+            markdown += `- Report SHA-256: \`${manifest.reportSha256}\`\n`;
+            markdown += `- Stdout SHA-256: \`${manifest.stdoutSha256}\`\n`;
+            markdown += `- Bundle manifest SHA-256: \`${manifestSha256}\`\n`;
+            markdown += `- Bundled tarball: \`${manifest.tarballFile}\`\n`;
+            markdown += `- Bundled tarball integrity: \`${manifest.tarballIntegrity}\`\n`;
+            markdown += `- Bundled tarball shasum: \`${manifest.tarballShasum}\`\n`;
+            markdown += `- Offline bundle verification: \`${verification.status}\`\n`;
             if (report.error) markdown += `- Error: ${report.error}\n`;
           } catch (error) {
             markdown += `- Status: **failed before a report could be read**\n- Error: ${error.message}\n`;

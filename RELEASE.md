@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.2.49
+
+Status: unpublished Registry provenance bundle offline verification candidate. npm `version` and `dist-tags.latest` remain `0.2.48`; no npm publish, dist-tag change, `v0.2.49` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, and the registry provenance report schema unchanged. It retains the exact tarball bytes already consumed by registry smoke in a fixed atomic bundle and adds a one-command verifier for canonical JSON, digest, archive, package, and README consistency without npm, GitHub, or other network access.
+
+### Goals
+
+- Atomically preserve `registry-provenance.json`, byte-identical `stdout.json`, the exact validated `package.tgz`, and canonical `bundle-manifest.json`.
+- Recompute report/stdout SHA-256 plus tarball SHA-512 integrity and SHA-1 shasum offline.
+- Inspect the gzip/tar archive in memory without extraction and validate package identity, sizes, required/forbidden files, and README status.
+- Reject bundle path traversal, archive traversal, symlink/hardlink entries, duplicate files, unsupported entry types, corrupt archives, and schema drift.
+- Emit one stable canonical verifier JSON object and atomically support `--report-file`.
+- Extend the manual Registry Validation workflow with offline verification, fixed four-file artifact upload, and Step Summary checksums.
+
+### Offline Provenance Bundle Contract
+
+`pnpm smoke:registry -- --version 0.2.48 --expect-tag latest --json --artifact-dir registry-validation` performs the existing networked registry and clean-consumer checks, then writes the bundle through a sibling temporary directory and one atomic rename. The workflow does not download the tarball a second time; `package.tgz` contains the exact bytes that supplied the registry smoke README, package shape, integrity, and install evidence.
+
+The ordered bundle manifest fields are `schemaVersion`, `status`, `package`, `version`, `expectedTag`, `reportFile`, `reportSha256`, `stdoutFile`, `stdoutSha256`, `tarballFile`, `tarballIntegrity`, `tarballShasum`, `fileCount`, `packageSize`, `unpackedSize`, and `error`. The existing ordered registry report fields and `schemaVersion: 1` contract remain unchanged.
+
+`pnpm verify:registry-provenance -- --artifact-dir registry-validation --expect-package react-native-image-compression-kit --expect-version 0.2.48 --expect-tag latest --json` reads only the caller-selected artifact bundle. It requires exactly the four declared regular files, canonical manifest/report bytes, report/stdout byte equality, explicit package/version/tag expectations, matching digests and sizes, a valid `package/package.json`, all required files, no forbidden files, and a registry-independent tarball README. Tar entries are parsed in memory and never extracted. `--report-file` writes the exact verifier stdout bytes through a same-directory temporary file plus atomic rename.
+
+The ordered verifier result fields are `schemaVersion`, `status`, `artifactDir`, `package`, `version`, `expectedTag`, `reportSha256`, `tarballIntegrity`, `tarballShasum`, `checks`, and `error`. Ordered checks are `manifest`, `report`, `stdout`, `tarball`, `packageContents`, and `readme`.
+
+### Included
+
+- `package.json` version bump to `0.2.49` and `verify:registry-provenance` command.
+- Exact-tarball `--artifact-dir` output from the existing registry smoke command.
+- Fixed canonical bundle manifest and atomic directory/report writes.
+- Network-free verifier core plus CLI with secure in-memory tar parsing.
+- Vitest coverage for success, CLI JSON/report parity, report/stdout drift, noncanonical JSON, unsupported schemas, selector mismatch, digest mismatch, corrupt tarball, missing/forbidden files, stale README, traversal, symlinks, and atomic failures.
+- Manual Registry Validation offline gate, bundle checksums in GitHub Step Summary, and fixed four-file artifact upload.
+- README, release notes, Android verification doctor checks, and Vitest expectations aligned to the v0.2.49 candidate and npm latest v0.2.48.
+
+### Not Included
+
+- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- GitHub artifact attestation, signatures, or an external trust anchor; the verifier proves bundle self-consistency against caller-supplied identity expectations.
+- Offline replay of the consumer install/typecheck; the verifier validates the successful structured claim produced by the networked registry smoke.
+- npm registry access from default `pnpm verify` or default CI.
+- Native/API behavior changes or AVIF output implementation.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- Network-free offline success/failure Vitest fixtures.
+- Registry Validation dispatched with `version=0.2.48` and `expected_tag=latest`.
+- Downloaded workflow artifact verified with `pnpm verify:registry-provenance` without registry access.
+- Report/stdout byte equality and v0.2.48 tarball integrity/shasum agreement.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed candidate commit.
+
 ## v0.2.48
 
 Status: published to npm as the `0.2.48` latest registry provenance and manual CI gate release. npm `version` and `dist-tags.latest` are both `0.2.48`; no `v0.2.48` git tag or GitHub Release was created.

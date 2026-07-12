@@ -343,7 +343,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.48',
+    packageJson.version === '0.2.49',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -358,6 +358,7 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
+    readmeContents.includes('Version `0.2.49` is an unpublished Registry provenance bundle offline verification candidate for `react-native-image-compression-kit`; npm `latest` remains the published `0.2.48` release.'),
     readmeContents.includes('Version `0.2.48` is published to npm as the `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.47` was the previous npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('`validateIOSSmokePassPayload()` now enforces the exact capability-selected field order'),
@@ -378,7 +379,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.48`.'),
     readmeContents.includes('The real 51-file registry tarball retained the registry-independent `Status: v0.2.48 release` package README'),
     readmeContents.includes('No git tag or GitHub Release was created as part of this npm-only promotion.'),
-    readmeContents.includes('The `0.2.48` package is published as the npm `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`'),
+    readmeContents.includes('The repository package metadata is `0.2.49` for the unpublished Registry provenance bundle offline verification candidate, while npm `latest` remains the published `0.2.48` registry provenance and manual CI gate release.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -522,10 +523,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README are aligned for the published v0.2.48 registry provenance release',
+    label: 'npm package metadata and README are aligned for the v0.2.49 offline provenance candidate',
     detail: checks.every(Boolean)
       ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
-      : 'expected package.json metadata or published v0.2.48 README registry guidance is missing/mismatched',
+      : 'expected v0.2.49 candidate metadata or published v0.2.48 README registry guidance is missing/mismatched',
   };
 }
 
@@ -717,12 +718,17 @@ function checkRegistrySmokeTestEnvironment() {
   const packageJson = readJson('package.json');
   const registryScriptContents = readText('scripts/registry-smoke-test.mjs');
   const registryCoreContents = readText('scripts/registry-smoke-core.mjs');
+  const provenanceCoreContents = readText('scripts/registry-provenance-core.mjs');
+  const provenanceCliContents = readText('scripts/verify-registry-provenance.mjs');
+  const provenanceTestContents = readText('test/registryProvenance.test.mjs');
   const readmeValidatorContents = readText('scripts/readme-status-validator.mjs');
   const registryWorkflowContents = readText('.github/workflows/registry-validation.yml');
   const readmeContents = readText('README.md');
   const expectedSnippets = [
     [registryScriptContents, "'--expect-tag': 'expectedTag'"],
     [registryScriptContents, "'--report-file': 'reportFile'"],
+    [registryScriptContents, "'--artifact-dir': 'artifactDir'"],
+    [registryScriptContents, 'writeRegistryBundleAtomic'],
     [registryScriptContents, "'dist.integrity'"],
     [registryScriptContents, "'dist.shasum'"],
     [registryScriptContents, "run('npm', ['install', '--ignore-scripts', '--legacy-peer-deps'], consumerDir)"],
@@ -731,18 +737,35 @@ function checkRegistrySmokeTestEnvironment() {
     [registryCoreContents, "'android/src/test/assets/heic-heif/sample.heic'"],
     [registryCoreContents, 'validateRegistryEvidence'],
     [registryCoreContents, 'writeRegistryReportAtomic'],
+    [provenanceCoreContents, 'REGISTRY_BUNDLE_MANIFEST_FIELDS'],
+    [provenanceCoreContents, 'verifyRegistryProvenanceBundle'],
+    [provenanceCoreContents, 'inspectPackageTarball'],
+    [provenanceCoreContents, 'writeRegistryBundleAtomic'],
+    [provenanceCoreContents, 'writeVerificationReportAtomic'],
+    [provenanceCliContents, "'--expect-package': 'expectedPackage'"],
+    [provenanceCliContents, "'--expect-version': 'expectedVersion'"],
+    [provenanceCliContents, "'--expect-tag': 'expectedTag'"],
+    [provenanceTestContents, 'rejects archive traversal and link entries without extracting them'],
+    [provenanceTestContents, 'keeps the offline verifier free of network and registry command paths'],
     [readmeValidatorContents, 'validateReadmeStatus'],
     [registryWorkflowContents, 'workflow_dispatch:'],
     [registryWorkflowContents, 'default: "0.2.48"'],
     [registryWorkflowContents, 'run: pnpm install --frozen-lockfile'],
     [registryWorkflowContents, 'GITHUB_STEP_SUMMARY'],
     [registryWorkflowContents, 'actions/upload-artifact@v6'],
+    [registryWorkflowContents, '--artifact-dir registry-validation'],
+    [registryWorkflowContents, 'verify:registry-provenance'],
+    [registryWorkflowContents, 'manifest.reportSha256'],
+    [registryWorkflowContents, 'manifest.tarballIntegrity'],
+    [registryWorkflowContents, 'Bundle manifest SHA-256'],
+    [registryWorkflowContents, 'verification.status'],
     [registryScriptContents, "const REACT_NATIVE_VERSION = '0.86.0'"],
     [registryScriptContents, 'RNICK_REGISTRY_SMOKE_VERSION'],
     [registryScriptContents, 'RNICK_REGISTRY_SMOKE_KEEP'],
     [registryScriptContents, 'compressImage(options)'],
     [registryScriptContents, 'getImageCompressionCapabilities()'],
-    [readmeContents, 'pnpm smoke:registry -- --version <published-version> --expect-tag latest --json'],
+    [readmeContents, 'pnpm smoke:registry -- --version <published-version> --expect-tag latest --json --artifact-dir registry-validation'],
+    [readmeContents, 'pnpm verify:registry-provenance -- --artifact-dir registry-validation'],
     [readmeContents, 'validates the requested registry package'],
     [readmeContents, 'npm install --ignore-scripts --legacy-peer-deps'],
     [readmeContents, 'This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`'],
@@ -753,17 +776,19 @@ function checkRegistrySmokeTestEnvironment() {
     .map(([, snippet]) => snippet);
   const hasScript =
     packageJson.scripts?.['smoke:registry'] ===
-    'node scripts/registry-smoke-test.mjs';
+      'node scripts/registry-smoke-test.mjs' &&
+    packageJson.scripts?.['verify:registry-provenance'] ===
+      'node scripts/verify-registry-provenance.mjs';
 
   return {
     ok: hasScript && missing.length === 0,
-    label: 'registry package smoke test is wired',
+    label: 'registry package smoke and offline provenance verifier are wired',
     detail:
       hasScript && missing.length === 0
-        ? 'package script, canonical provenance validation, shared README guard, clean install/typecheck, manual workflow, and README guidance are present'
+        ? 'networked smoke, exact-tarball bundle, offline verifier, security fixtures, manual workflow, and README guidance are present'
         : `missing snippets or package script: ${[
             ...missing,
-            ...(hasScript ? [] : ['package.json smoke:registry script']),
+            ...(hasScript ? [] : ['package.json registry smoke/provenance scripts']),
           ].join(' | ')}`,
   };
 }
@@ -835,6 +860,14 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.49',
+    'Status: unpublished Registry provenance bundle offline verification candidate. npm `version` and `dist-tags.latest` remain `0.2.48`; no npm publish, dist-tag change, `v0.2.49` git tag, or GitHub Release is part of this candidate.',
+    '`pnpm smoke:registry -- --version 0.2.48 --expect-tag latest --json --artifact-dir registry-validation`',
+    '`pnpm verify:registry-provenance -- --artifact-dir registry-validation --expect-package react-native-image-compression-kit --expect-version 0.2.48 --expect-tag latest --json`',
+    'The ordered bundle manifest fields are `schemaVersion`, `status`, `package`, `version`, `expectedTag`, `reportFile`, `reportSha256`, `stdoutFile`, `stdoutSha256`, `tarballFile`, `tarballIntegrity`, `tarballShasum`, `fileCount`, `packageSize`, `unpackedSize`, and `error`.',
+    'Tar entries are parsed in memory and never extracted.',
+    'GitHub artifact attestation, signatures, or an external trust anchor',
+    'Offline replay of the consumer install/typecheck',
     '## v0.2.48',
     'Status: published to npm as the `0.2.48` latest registry provenance and manual CI gate release. npm `version` and `dist-tags.latest` are both `0.2.48`; no `v0.2.48` git tag or GitHub Release was created.',
     '`pnpm smoke:registry -- --version 0.2.48 --expect-tag latest --json --report-file registry-provenance.json`',
@@ -2115,7 +2148,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'The v0.2.48 registry provenance and manual CI gate release notes are in [RELEASE.md](RELEASE.md).',
+    'The v0.2.49 Registry provenance bundle offline verification candidate notes are in [RELEASE.md](RELEASE.md).',
     'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.',
     'reviewed release notes',
     'npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md`',
@@ -2128,18 +2161,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.48' && missing.length === 0;
+  const ok = packageJson.version === '0.2.49' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.48 registry provenance published notes and previous release notes are current',
+    label: 'v0.2.49 offline provenance candidate notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.48'
+          ...(packageJson.version === '0.2.49'
             ? []
-            : ['package.json version 0.2.48']),
+            : ['package.json version 0.2.49']),
         ].join(' | ')}`,
   };
 }
