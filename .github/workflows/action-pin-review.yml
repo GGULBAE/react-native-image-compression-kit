@@ -31,6 +31,8 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+  attestations: write
 
 jobs:
   action-pin-review:
@@ -123,11 +125,90 @@ jobs:
           cmp action-pin-review/action-pin-provenance.json action-pin-review-replay.json
           rm action-pin-review-stdout.json action-pin-review-replay.json
 
+      - name: Attest canonical Action pin artifact manifest
+        id: attest
+        if: steps.review.outcome == 'success'
+        continue-on-error: true
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
+        with:
+          subject-path: action-pin-review/artifact-manifest.json
+
+      - name: Verify and package Action pin attestation trust material
+        id: verify_attestation
+        if: steps.review.outcome == 'success' && steps.attest.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPECTED_REPOSITORY: ${{ github.repository }}
+          EXPECTED_WORKFLOW: ${{ github.repository }}/.github/workflows/action-pin-review.yml
+          EXPECTED_REF: ${{ github.ref }}
+          EXPECTED_HEAD_SHA: ${{ github.sha }}
+        run: |
+          rm -rf action-pin-attestation action-pin-attestation-download
+          rm -f action-pin-attestation-online.json action-pin-attestation-verification-stdout.json
+          mkdir -p action-pin-attestation action-pin-attestation-download
+
+          policy=(
+            --repo "$EXPECTED_REPOSITORY"
+            --signer-workflow "$EXPECTED_WORKFLOW"
+            --source-ref "$EXPECTED_REF"
+            --source-digest "$EXPECTED_HEAD_SHA"
+            --cert-oidc-issuer https://token.actions.githubusercontent.com
+            --predicate-type https://slsa.dev/provenance/v1
+            --deny-self-hosted-runners
+          )
+          gh attestation verify \
+            action-pin-review/artifact-manifest.json \
+            "${policy[@]}" \
+            --format json \
+            > action-pin-attestation-online.json
+
+          (
+            cd action-pin-attestation-download
+            gh attestation download \
+              ../action-pin-review/artifact-manifest.json \
+              --repo "$EXPECTED_REPOSITORY"
+          )
+          mapfile -t downloaded_bundles < <(
+            find action-pin-attestation-download -maxdepth 1 -type f -name 'sha256*.jsonl' -print
+          )
+          if [[ "${#downloaded_bundles[@]}" -ne 1 ]]; then
+            echo "Expected exactly one downloaded attestation JSONL, found ${#downloaded_bundles[@]}." >&2
+            exit 1
+          fi
+          mv "${downloaded_bundles[0]}" action-pin-attestation/attestation.jsonl
+
+          gh attestation trusted-root > action-pin-attestation/trusted-root.jsonl
+          trusted_root_sha256=$(sha256sum action-pin-attestation/trusted-root.jsonl | cut -d ' ' -f 1)
+          if [[ "$trusted_root_sha256" != "65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c" ]]; then
+            echo "Unexpected GitHub trusted root SHA-256: $trusted_root_sha256" >&2
+            exit 1
+          fi
+
+          pnpm verify:action-pin-attestation -- \
+            --artifact-dir action-pin-review \
+            --attestation-bundle action-pin-attestation/attestation.jsonl \
+            --trusted-root action-pin-attestation/trusted-root.jsonl \
+            --json \
+            --report-file action-pin-attestation/attestation-verification.json \
+            | tee action-pin-attestation-verification-stdout.json
+          cmp \
+            action-pin-attestation/attestation-verification.json \
+            action-pin-attestation-verification-stdout.json
+          rm action-pin-attestation-verification-stdout.json
+
       - name: Write Action pin review summary
         if: always()
+        env:
+          ATTESTATION_ID: ${{ steps.attest.outputs.attestation-id }}
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
+          ATTESTATION_OUTCOME: ${{ steps.attest.outcome }}
+          ATTESTATION_VERIFY_OUTCOME: ${{ steps.verify_attestation.outcome }}
         shell: bash
         run: |
           node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
           import { appendFileSync, existsSync, readFileSync } from 'node:fs';
           const reportPath = 'action-pin-review/action-pin-provenance.json';
           let markdown = '## Action Pin Review\n\n';
@@ -153,6 +234,22 @@ jobs:
             markdown += `- Candidate lock SHA-256: \`${report.evidence.candidateLockSha256}\`\n`;
             markdown += `- Workflow definition SHA-256: \`${report.evidence.workflowSha256}\`\n`;
             markdown += `- Artifact manifest SHA-256: \`${report.evidence.artifactManifestSha256}\`\n`;
+            const offlineAttestation = existsSync('action-pin-attestation/attestation-verification.json')
+              ? JSON.parse(readFileSync('action-pin-attestation/attestation-verification.json', 'utf8'))
+              : { status: 'not-run' };
+            const trustedRootSha256 = existsSync('action-pin-attestation/trusted-root.jsonl')
+              ? createHash('sha256').update(readFileSync('action-pin-attestation/trusted-root.jsonl')).digest('hex')
+              : null;
+            markdown += `- Manifest attestation: \`${process.env.ATTESTATION_OUTCOME}\`\n`;
+            markdown += `- Attestation ID: \`${process.env.ATTESTATION_ID || 'not-created'}\`\n`;
+            markdown += `- Attestation URL: ${process.env.ATTESTATION_URL || 'not-created'}\n`;
+            markdown += `- Offline attestation verification: \`${offlineAttestation.status}\`\n`;
+            markdown += `- Attestation signer workflow: \`${offlineAttestation.signerWorkflow || 'not-verified'}\`\n`;
+            markdown += `- Attestation source ref: \`${offlineAttestation.sourceRef || 'not-verified'}\`\n`;
+            markdown += `- Attestation source digest: \`${offlineAttestation.sourceHeadSha || 'not-verified'}\`\n`;
+            markdown += `- Attestation workflow digest: \`${offlineAttestation.workflowSha || 'not-verified'}\`\n`;
+            markdown += `- Trusted root SHA-256: \`${trustedRootSha256 || 'not-downloaded'}\`\n`;
+            markdown += `- Attestation verification step: \`${process.env.ATTESTATION_VERIFY_OUTCOME}\`\n`;
             if (report.error) markdown += `- Error: ${report.error}\n`;
           } else {
             markdown += '- Status: **failed before a canonical report was created**\n';
@@ -168,6 +265,17 @@ jobs:
           path: action-pin-review
           if-no-files-found: error
 
+      - name: Upload Action pin attestation artifact
+        if: always() && steps.attest.outcome == 'success'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: action-pin-attestation-${{ github.run_id }}
+          path: action-pin-attestation
+          if-no-files-found: error
+
       - name: Enforce Action pin review result
-        if: steps.review.outcome != 'success'
+        if: >-
+          steps.review.outcome != 'success' ||
+          steps.attest.outcome != 'success' ||
+          steps.verify_attestation.outcome != 'success'
         run: exit 1

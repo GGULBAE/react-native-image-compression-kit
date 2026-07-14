@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 
-import { spawnSync } from 'node:child_process';
-import { lstatSync, readFileSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  GITHUB_ACTIONS_OIDC_ISSUER,
   PINNED_GITHUB_TRUSTED_ROOT_SHA256,
-  SLSA_PROVENANCE_V1,
   canonicalRegistryAttestationReport,
   createRegistryAttestationReport,
   sha256,
   validateRegistryAttestationEvidence,
   writeRegistryAttestationReportAtomic,
 } from './registry-attestation-core.mjs';
+import {
+  buildOfflineGitHubAttestationVerifyArgs,
+  readSecureRegularFile,
+  runOfflineGitHubAttestationVerify,
+} from './github-attestation-cli.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
-const BLOCKED_PROXY = 'http://127.0.0.1:9';
 
 export function parseRegistryAttestationArgs(args) {
   const parsed = {};
@@ -62,35 +62,20 @@ export function buildGhAttestationVerifyArgs({
   expectedRef,
   expectedHeadSha,
 }) {
-  return [
-    'attestation',
-    'verify',
-    path.resolve(manifestPath),
-    '--bundle',
-    path.resolve(attestationBundle),
-    '--custom-trusted-root',
-    path.resolve(trustedRoot),
-    '--repo',
+  return buildOfflineGitHubAttestationVerifyArgs({
+    subjectPath: manifestPath,
+    attestationBundle,
+    trustedRoot,
     expectedRepository,
-    '--signer-workflow',
     expectedWorkflow,
-    '--source-ref',
     expectedRef,
-    '--source-digest',
     expectedHeadSha,
-    '--cert-oidc-issuer',
-    GITHUB_ACTIONS_OIDC_ISSUER,
-    '--predicate-type',
-    SLSA_PROVENANCE_V1,
-    '--deny-self-hosted-runners',
-    '--format',
-    'json',
-  ];
+  });
 }
 
 export function runRegistryAttestationVerification(options, dependencies = {}) {
   const readSecure = dependencies.readSecure ?? readSecureRegularFile;
-  const runGh = dependencies.runGh ?? runGhAttestationVerify;
+  const runGh = dependencies.runGh ?? runOfflineGitHubAttestationVerify;
   const manifestPath = options.manifestPath
     ? path.resolve(options.manifestPath)
     : null;
@@ -213,41 +198,6 @@ function main() {
     process.stdout.write(canonical);
   }
   if (report.status !== 'passed') process.exitCode = 1;
-}
-
-function runGhAttestationVerify(args) {
-  const result = spawnSync('gh', args, {
-    encoding: 'utf8',
-    env: {
-      ...process.env,
-      HTTP_PROXY: BLOCKED_PROXY,
-      HTTPS_PROXY: BLOCKED_PROXY,
-      ALL_PROXY: BLOCKED_PROXY,
-      NO_PROXY: '',
-      GH_PROMPT_DISABLED: '1',
-      GH_NO_UPDATE_NOTIFIER: '1',
-    },
-  });
-  if (result.error) throw result.error;
-  if (result.status !== 0) {
-    throw new Error(
-      `gh attestation verify failed (${result.status ?? 1}): ${(
-        result.stderr || result.stdout || ''
-      ).trim()}`
-    );
-  }
-  return result.stdout;
-}
-
-function readSecureRegularFile(filePath, label) {
-  const stats = lstatSync(filePath);
-  if (stats.isSymbolicLink()) {
-    throw new Error(`${label} must not be a symbolic link.`);
-  }
-  if (!stats.isFile()) {
-    throw new Error(`${label} must be a regular file.`);
-  }
-  return readFileSync(realpathSync(filePath));
 }
 
 function requireOption(value, flag) {

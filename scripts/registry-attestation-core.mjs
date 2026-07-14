@@ -8,6 +8,8 @@ import {
 } from './registry-provenance-core.mjs';
 
 export const REGISTRY_ATTESTATION_SCHEMA_VERSION = 1;
+export const GITHUB_ATTESTATION_SCHEMA_VERSION =
+  REGISTRY_ATTESTATION_SCHEMA_VERSION;
 export const GITHUB_ACTIONS_OIDC_ISSUER =
   'https://token.actions.githubusercontent.com';
 export const SLSA_PROVENANCE_V1 = 'https://slsa.dev/provenance/v1';
@@ -30,12 +32,16 @@ export const REGISTRY_ATTESTATION_REPORT_FIELDS = Object.freeze([
   'verifiedTimestamps',
   'error',
 ]);
+export const GITHUB_ATTESTATION_REPORT_FIELDS =
+  REGISTRY_ATTESTATION_REPORT_FIELDS;
 
 export const REGISTRY_ATTESTATION_TIMESTAMP_FIELDS = Object.freeze([
   'type',
   'uri',
   'timestamp',
 ]);
+export const GITHUB_ATTESTATION_TIMESTAMP_FIELDS =
+  REGISTRY_ATTESTATION_TIMESTAMP_FIELDS;
 
 export function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
@@ -74,9 +80,15 @@ export function createRegistryAttestationReport({
   };
 }
 
+export const createGitHubAttestationReport =
+  createRegistryAttestationReport;
+
 export function canonicalRegistryAttestationReport(report) {
   return `${JSON.stringify(report)}\n`;
 }
+
+export const canonicalGitHubAttestationReport =
+  canonicalRegistryAttestationReport;
 
 export function validateRegistryAttestationEvidence({
   manifestPath,
@@ -87,10 +99,44 @@ export function validateRegistryAttestationEvidence({
   expectedWorkflow,
   expectedRef,
   expectedHeadSha,
+  expectedWorkflowSha = expectedHeadSha,
+  expectedInvocationId,
   expectedTrustedRootSha256 = PINNED_GITHUB_TRUSTED_ROOT_SHA256,
 }) {
-  const subject = manifestPath ? path.basename(manifestPath) : null;
-  const subjectSha256 = manifestBytes ? sha256(manifestBytes) : null;
+  return validateGitHubAttestationEvidence({
+    subjectPath: manifestPath,
+    subjectBytes: manifestBytes,
+    trustedRootBytes,
+    verificationOutput,
+    expectedSubjectName: 'bundle-manifest.json',
+    validateSubjectBytes: validateCanonicalRegistryManifest,
+    expectedRepository,
+    expectedWorkflow,
+    expectedRef,
+    expectedHeadSha,
+    expectedWorkflowSha,
+    expectedInvocationId,
+    expectedTrustedRootSha256,
+  });
+}
+
+export function validateGitHubAttestationEvidence({
+  subjectPath,
+  subjectBytes,
+  trustedRootBytes,
+  verificationOutput,
+  expectedSubjectName,
+  validateSubjectBytes,
+  expectedRepository,
+  expectedWorkflow,
+  expectedRef,
+  expectedHeadSha,
+  expectedWorkflowSha = expectedHeadSha,
+  expectedInvocationId,
+  expectedTrustedRootSha256 = PINNED_GITHUB_TRUSTED_ROOT_SHA256,
+}) {
+  const subject = subjectPath ? path.basename(subjectPath) : null;
+  const subjectSha256 = subjectBytes ? sha256(subjectBytes) : null;
   const state = {
     subject,
     subjectSha256,
@@ -109,9 +155,22 @@ export function validateRegistryAttestationEvidence({
       expectedWorkflow,
       expectedRef,
       expectedHeadSha,
+      expectedWorkflowSha,
+      expectedInvocationId,
     });
-    assert(subject === 'bundle-manifest.json', 'Attestation subject must be bundle-manifest.json.');
-    validateCanonicalManifest(manifestBytes);
+    assert(
+      typeof expectedSubjectName === 'string' && expectedSubjectName.length > 0,
+      'Expected attestation subject name is required.'
+    );
+    assert(
+      subject === expectedSubjectName,
+      `Attestation subject must be ${expectedSubjectName}.`
+    );
+    assert(
+      typeof validateSubjectBytes === 'function',
+      'Attestation subject validator is required.'
+    );
+    validateSubjectBytes(subjectBytes);
     assert(
       sha256(trustedRootBytes) === expectedTrustedRootSha256,
       `Trusted root SHA-256 must be ${expectedTrustedRootSha256}.`
@@ -129,6 +188,8 @@ export function validateRegistryAttestationEvidence({
           expectedWorkflow,
           expectedRef,
           expectedHeadSha,
+          expectedWorkflowSha,
+          expectedInvocationId,
         })
       );
     }
@@ -181,7 +242,10 @@ export function writeRegistryAttestationReportAtomic(
   }
 }
 
-function validateCanonicalManifest(manifestBytes) {
+export const writeGitHubAttestationReportAtomic =
+  writeRegistryAttestationReportAtomic;
+
+function validateCanonicalRegistryManifest(manifestBytes) {
   assert(Buffer.isBuffer(manifestBytes), 'Manifest bytes are required.');
   let manifest;
   try {
@@ -212,6 +276,8 @@ function validateExpectations({
   expectedWorkflow,
   expectedRef,
   expectedHeadSha,
+  expectedWorkflowSha,
+  expectedInvocationId,
 }) {
   assert(
     typeof expectedRepository === 'string' &&
@@ -232,6 +298,18 @@ function validateExpectations({
     typeof expectedHeadSha === 'string' && /^[0-9a-f]{40}$/.test(expectedHeadSha),
     'Expected head SHA must be a lowercase 40-character Git commit digest.'
   );
+  assert(
+    typeof expectedWorkflowSha === 'string' &&
+      /^[0-9a-f]{40}$/.test(expectedWorkflowSha),
+    'Expected workflow SHA must be a lowercase 40-character Git commit digest.'
+  );
+  if (expectedInvocationId !== undefined) {
+    assert(
+      typeof expectedInvocationId === 'string' &&
+        /^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/actions\/runs\/[1-9]\d*\/attempts\/[1-9]\d*$/.test(expectedInvocationId),
+      'Expected invocation ID must be an exact GitHub Actions run attempt URL.'
+    );
+  }
 }
 
 function parseVerificationOutput(value) {
@@ -258,6 +336,8 @@ function validateVerificationResult(
     expectedWorkflow,
     expectedRef,
     expectedHeadSha,
+    expectedWorkflowSha,
+    expectedInvocationId,
   }
 ) {
   assertRecord(result, `verification result ${index}`);
@@ -274,9 +354,9 @@ function validateVerificationResult(
   assertEqual(certificate.sourceRepositoryRef, expectedRef, 'source repository ref');
   assertEqual(certificate.githubWorkflowRef, expectedRef, 'workflow ref');
   assertEqual(certificate.sourceRepositoryDigest, expectedHeadSha, 'source repository digest');
-  assertEqual(certificate.githubWorkflowSHA, expectedHeadSha, 'workflow SHA');
-  assertEqual(certificate.buildSignerDigest, expectedHeadSha, 'build signer digest');
-  assertEqual(certificate.buildConfigDigest, expectedHeadSha, 'build config digest');
+  assertEqual(certificate.githubWorkflowSHA, expectedWorkflowSha, 'workflow SHA');
+  assertEqual(certificate.buildSignerDigest, expectedWorkflowSha, 'build signer digest');
+  assertEqual(certificate.buildConfigDigest, expectedWorkflowSha, 'build config digest');
   assertEqual(certificate.subjectAlternativeName, expectedSigner, 'certificate signer workflow');
   assertEqual(certificate.buildSignerURI, expectedSigner, 'build signer URI');
   assertEqual(certificate.buildConfigURI, expectedSigner, 'build config URI');
@@ -325,6 +405,13 @@ function validateVerificationResult(
     expectedSigner,
     'SLSA builder identity'
   );
+  if (expectedInvocationId !== undefined) {
+    assertEqual(
+      statement.predicate?.runDetails?.metadata?.invocationId,
+      expectedInvocationId,
+      'SLSA invocation ID'
+    );
+  }
 
   const timestamps = verification.verifiedTimestamps;
   assert(

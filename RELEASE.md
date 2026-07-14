@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.2.55
+
+Status: unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.55` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, retained v0.2.50 evidence, immutable Action SHAs, and the pinned GitHub trusted-root policy unchanged. It extends the v0.2.54 execution-bound Action Pin provenance artifact with a GitHub-hosted OIDC attestation over its canonical `artifact-manifest.json` and a network-blocked verifier that cross-checks signer identity against the artifact's reproduced execution identity.
+
+### Goals
+
+- Reuse and generalize the Registry attestation verifier's GitHub OIDC, SLSA v1, hosted-runner, trusted-root, subject, repository, workflow, ref, source commit, and timestamp validation.
+- Attest the successful Action Pin Review `artifact-manifest.json` without changing the provenance artifact layout.
+- Upload the provenance artifact and the attestation bundle/trusted root/verification report as separate GitHub artifacts.
+- Replay the provenance artifact before deriving expected signer identity; never trust caller-supplied repository/workflow/ref/SHA values for the Action Pin verifier.
+- Cross-check manifest SHA-256, source repository/ref/head SHA, workflow path/SHA, run ID, and run attempt with the signed GitHub identity.
+- Reject wrong subject, repository, workflow, ref, source SHA, provenance-to-manifest disagreement, and bundle tampering in offline fixtures.
+- Keep default `pnpm verify` network-free and based only on committed fixtures.
+
+### Action Pin Attestation Contract
+
+The shared GitHub attestation layer builds the official `gh attestation verify` policy with `--bundle`, `--custom-trusted-root`, exact repository, signer workflow, source ref, source digest, GitHub Actions OIDC issuer, SLSA v1 predicate, and `--deny-self-hosted-runners`. It forces HTTP, HTTPS, and all-proxy traffic to a closed local endpoint. Registry validation retains its existing report schema and bytes, while the generalized validator accepts an artifact-specific canonical subject validator and a distinct workflow SHA expectation.
+
+`pnpm verify:action-pin-attestation -- --artifact-dir <provenance-path> --attestation-bundle <attestation.jsonl> --trusted-root <trusted-root.jsonl> --json --report-file <attestation-verification.json>` first runs the complete v0.2.54 provenance replay. It derives repository, signer workflow, source ref, source head SHA, and workflow SHA only from that verified report, requires its bound manifest SHA to match the exact canonical subject bytes, and then validates the downloaded Sigstore evidence offline.
+
+The ordered Action Pin attestation report fields are `schemaVersion`, `status`, `subject`, `subjectSha256`, `sourceRepository`, `signerWorkflow`, `sourceRef`, `sourceHeadSha`, `workflowSha`, `runId`, `runAttempt`, `oidcIssuer`, `predicateType`, `verifiedTimestamps`, `checks`, and `error`. Ordered checks are `provenance`, `manifest`, `subject`, `repository`, `workflow`, `ref`, `sourceDigest`, `workflowDigest`, `invocation`, and `signature`. The signed SLSA invocation ID must equal the provenance run ID/attempt URL. Verified timestamps are normalized to UTC ISO strings, stdout is exactly one canonical JSON object, and `--report-file` uses atomic replacement.
+
+The manual Action Pin Review workflow has `id-token: write` and `attestations: write`, runs `actions/attest@v4` only after provenance succeeds, performs an online policy check, downloads the exact bundle and GitHub trusted root, pins trusted-root SHA-256 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`, and runs the offline verifier before success. It uploads `action-pin-review-<run-id>` separately from the three-file `action-pin-attestation-<run-id>` artifact and records attestation ID/URL, subject and signer identity, offline status, and trusted-root digest in the Step Summary.
+
+### Included
+
+- `package.json` version bump to `0.2.55` and the offline `verify:action-pin-attestation` command.
+- Shared offline GitHub attestation command layer and generalized validation core while preserving the Registry report contract.
+- Action Pin attestation report schema, execution-identity cross-check, canonical JSON, and atomic report writer.
+- Action Pin Review OIDC attestation, separate trust-material artifact, Step Summary evidence, and fail-closed enforcement.
+- Offline Vitest fixtures for success, wrong subject/repository/workflow/ref/source SHA, provenance manifest mismatch, bundle tampering, CLI policy, and atomic-write failure.
+- Canonical workflow lock updated for 30 full-SHA remote Action uses across five workflows; lock SHA-256 `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the v0.2.55 candidate and npm latest v0.2.50.
+
+### Not Included
+
+- Automatic Action/workflow/lock edits or automatic Dependabot PR merge.
+- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- Long-term artifact storage, external signing services, or trusted-root rotation.
+- Native/API behavior changes or AVIF output implementation.
+- Network access from default `pnpm verify`, validation cores, or offline replay CLIs.
+- Credentials, tokens, OTPs, `.npmrc`, or authentication files.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- Offline wrong-identity, bundle-tamper, canonical report, stdout/report parity, and atomic-write fixtures.
+- Manual Action Pin Review workflow provenance and attestation artifacts, byte-identical offline replay, and Step Summary inspection.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed candidate commit.
+
 ## v0.2.54
 
 Status: unpublished Action pin provenance execution identity and artifact manifest binding candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.54` git tag, or GitHub Release is part of this candidate.

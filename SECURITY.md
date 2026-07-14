@@ -71,6 +71,17 @@ pnpm verify:action-pin-provenance -- \
   --json
 ```
 
+Download the separate Action Pin attestation artifact from the same successful
+manual run and verify the GitHub signer identity with network access blocked:
+
+```bash
+pnpm verify:action-pin-attestation -- \
+  --artifact-dir /path/to/action-pin-review \
+  --attestation-bundle /path/to/action-pin-attestation/attestation.jsonl \
+  --trusted-root /path/to/action-pin-attestation/trusted-root.jsonl \
+  --json
+```
+
 The artifact must retain canonical baseline/candidate locks, canonical
 `github-execution.json`, normalized `workflow_dispatch` event evidence, the exact reviewed workflow definition,
 tag-reference evidence, optional annotated-tag evidence, a canonical
@@ -82,6 +93,15 @@ must reject traversal, links, duplicate/missing/additional files, size drift,
 and digest drift before report replay. The offline core and verifier must contain
 no GitHub request or command execution path. Action review artifacts, fixtures,
 resolver scripts, and reports remain repository/CI evidence and must not enter the npm package.
+The attestation verifier must first reproduce this provenance report, then bind
+the exact `artifact-manifest.json` SHA-256 and cross-check its source
+repository/ref/head SHA and workflow path/SHA against the GitHub OIDC signer
+certificate and SLSA statement. It must use only the downloaded bundle and
+pinned trusted root, reject self-hosted runner evidence and wrong
+subject/repository/workflow/ref/source SHA, and perform no attestation download
+or trusted-root refresh. The provenance artifact and the separate three-file
+attestation artifact are repository/CI security evidence and must not enter the
+npm package.
 
 ## Release Evidence Retention
 

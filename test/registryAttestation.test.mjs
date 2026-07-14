@@ -409,9 +409,9 @@ describe('registry provenance attestation', () => {
     }
   });
 
-  it('pins the no-network gh invocation in source', () => {
+  it('pins the shared no-network gh invocation in source', () => {
     const source = readFileSync(
-      path.join(ROOT, 'scripts', 'verify-registry-attestation.mjs'),
+      path.join(ROOT, 'scripts', 'github-attestation-cli.mjs'),
       'utf8'
     );
     for (const snippet of [

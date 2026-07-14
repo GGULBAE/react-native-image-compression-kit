@@ -42,7 +42,7 @@ function extractKotlinArray(source: string, arrayName: string): string {
 }
 
 describe('Android verification scripts', () => {
-  it('declares the v0.2.54 candidate and current npm metadata', () => {
+  it('declares the v0.2.55 candidate and current npm metadata', () => {
     const readmeSource = readProjectFile('README.md');
     const staleReadmeSnippets = [
       'Status: v0.2.8 candidate',
@@ -200,7 +200,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.54');
+    expect(packageJson.version).toBe('0.2.55');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -229,7 +229,10 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.54` is the unpublished Action pin provenance execution identity and artifact manifest binding candidate.'
+      'Version `0.2.55` is the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.54` was the previous unpublished Action pin provenance execution identity and artifact manifest binding candidate.'
     );
     expect(readmeSource).toContain(
       'Version `0.2.53` was the previous unpublished GitHub Action pin update provenance and manual review gate candidate.'
@@ -307,13 +310,13 @@ describe('Android verification scripts', () => {
       'The npm-only promotion used one successful `npm publish --tag latest`; no manual dist-tag change, git tag, or GitHub Release was created.'
     );
     expect(readmeSource).toContain(
-      'The repository package metadata is `0.2.54` for the unpublished Action pin provenance execution identity and artifact manifest binding candidate. npm `latest` remains `0.2.50`.'
+      'The repository package metadata is `0.2.55` for the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate. npm `latest` remains `0.2.50`.'
     );
     expect(readmeSource).toContain(
       'pnpm verify:workflow-supply-chain -- --json'
     );
     expect(readmeSource).toContain(
-      '75bfabd61eb14ad5f26320916ae642c603ca509e942a1c962d97e08c750c6777'
+      '81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c'
     );
     expect(readmeSource).toContain(
       'pnpm verify:action-pin-provenance --'
@@ -866,6 +869,7 @@ describe('Android verification scripts', () => {
     const registryProvenanceTestSource = readProjectFile('test/registryProvenance.test.mjs');
     const registryAttestationCoreSource = readProjectFile('scripts/registry-attestation-core.mjs');
     const registryAttestationCliSource = readProjectFile('scripts/verify-registry-attestation.mjs');
+    const sharedAttestationCliSource = readProjectFile('scripts/github-attestation-cli.mjs');
     const registryAttestationTestSource = readProjectFile('test/registryAttestation.test.mjs');
     const readmeValidatorSource = readProjectFile('scripts/readme-status-validator.mjs');
     const registryWorkflowSource = readProjectFile('.github/workflows/registry-validation.yml');
@@ -922,11 +926,11 @@ describe('Android verification scripts', () => {
     expect(registryAttestationCoreSource).toContain('REGISTRY_ATTESTATION_REPORT_FIELDS');
     expect(registryAttestationCoreSource).toContain('PINNED_GITHUB_TRUSTED_ROOT_SHA256');
     expect(registryAttestationCoreSource).toContain('validateRegistryAttestation');
-    expect(registryAttestationCliSource).toContain("'--custom-trusted-root'");
-    expect(registryAttestationCliSource).toContain("'--deny-self-hosted-runners'");
+    expect(sharedAttestationCliSource).toContain("'--custom-trusted-root'");
+    expect(sharedAttestationCliSource).toContain("'--deny-self-hosted-runners'");
     expect(registryAttestationCliSource).toContain('writeRegistryAttestationReportAtomic');
     expect(registryAttestationTestSource).toContain('rejects a subject digest mismatch');
-    expect(registryAttestationTestSource).toContain('pins the no-network gh invocation in source');
+    expect(registryAttestationTestSource).toContain('pins the shared no-network gh invocation in source');
     expect(readmeValidatorSource).toContain('validateReadmeStatus');
     expect(registryWorkflowSource).toContain('workflow_dispatch:');
     expect(registryWorkflowSource).toContain('default: "0.2.50"');
@@ -1498,11 +1502,22 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.54 Action pin execution identity candidate and previous release notes', () => {
+  it('documents the v0.2.55 Action Pin artifact attestation candidate and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.54');
+    expect(packageJson.version).toBe('0.2.55');
+    expect(releaseSource).toContain('## v0.2.55');
+    expect(releaseSource).toContain(
+      'Status: unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.55` git tag, or GitHub Release is part of this candidate.'
+    );
+    expect(releaseSource).toContain('### Action Pin Attestation Contract');
+    expect(releaseSource).toContain(
+      '`pnpm verify:action-pin-attestation -- --artifact-dir <provenance-path> --attestation-bundle <attestation.jsonl> --trusted-root <trusted-root.jsonl> --json --report-file <attestation-verification.json>`'
+    );
+    expect(releaseSource).toContain(
+      '81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c'
+    );
     expect(releaseSource).toContain('## v0.2.54');
     expect(releaseSource).toContain(
       'Status: unpublished Action pin provenance execution identity and artifact manifest binding candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.54` git tag, or GitHub Release is part of this candidate.'
@@ -4838,7 +4853,7 @@ describe('Android verification scripts', () => {
       'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain(
-      'The v0.2.54 Action pin provenance execution identity and artifact manifest binding candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes are in [RELEASE.md](RELEASE.md).'
     );
     expect(readmeSource).toContain(
       'The v0.2.53 GitHub Action pin update provenance and manual review gate candidate notes are in [RELEASE.md](RELEASE.md).'

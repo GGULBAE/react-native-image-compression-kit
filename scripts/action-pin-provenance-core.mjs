@@ -896,6 +896,10 @@ function parseCanonicalManifest(bytes) {
   return manifest;
 }
 
+export function validateCanonicalActionPinArtifactManifestBytes(bytes) {
+  return parseCanonicalManifest(bytes);
+}
+
 function parseCanonicalEvidence(bytes, fields, label) {
   const value = parseJson(bytes, label);
   assertExactFields(value, fields, label);

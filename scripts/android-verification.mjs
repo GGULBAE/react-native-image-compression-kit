@@ -392,7 +392,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.54',
+    packageJson.version === '0.2.55',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -407,7 +407,8 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.54` is the unpublished Action pin provenance execution identity and artifact manifest binding candidate.'),
+    readmeContents.includes('Version `0.2.55` is the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.'),
+    readmeContents.includes('Version `0.2.54` was the previous unpublished Action pin provenance execution identity and artifact manifest binding candidate.'),
     readmeContents.includes('Version `0.2.53` was the previous unpublished GitHub Action pin update provenance and manual review gate candidate.'),
     readmeContents.includes('Version `0.2.52` was the previous unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate.'),
     readmeContents.includes('Version `0.2.51` was the previous unpublished expiration-independent release evidence archive and offline replay gate candidate.'),
@@ -436,11 +437,11 @@ function checkPackageMetadata() {
     readmeContents.includes('Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`'),
     readmeContents.includes('[attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998)'),
     readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul'),
-    readmeContents.includes('The repository package metadata is `0.2.54` for the unpublished Action pin provenance execution identity and artifact manifest binding candidate. npm `latest` remains `0.2.50`.'),
+    readmeContents.includes('The repository package metadata is `0.2.55` for the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate. npm `latest` remains `0.2.50`.'),
     readmeContents.includes('pnpm verify:release-evidence -- --version 0.2.50'),
     readmeContents.includes('pnpm verify:workflow-supply-chain -- --json'),
-    readmeContents.includes('All 28 remote `uses:` declarations across the five GitHub workflow files are pinned to lowercase 40-character commit SHAs.'),
-    readmeContents.includes('The committed lock SHA-256 is `75bfabd61eb14ad5f26320916ae642c603ca509e942a1c962d97e08c750c6777`.'),
+    readmeContents.includes('All 30 remote `uses:` declarations across the five GitHub workflow files are pinned to lowercase 40-character commit SHAs.'),
+    readmeContents.includes('The committed lock SHA-256 is `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.'),
     readmeContents.includes('### Manual Action pin provenance review'),
     readmeContents.includes('pnpm verify:action-pin-provenance --'),
     readmeContents.includes('pnpm verify:action-pin-fixture'),
@@ -589,10 +590,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README are aligned for the v0.2.54 Action pin provenance manifest candidate',
+    label: 'npm package metadata and README are aligned for the v0.2.55 Action Pin artifact attestation candidate',
     detail: checks.every(Boolean)
       ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
-      : 'expected v0.2.54 candidate metadata, execution-bound Action pin provenance guidance, npm latest v0.2.50 evidence, or package exclusions are missing/mismatched',
+      : 'expected v0.2.55 candidate metadata, Action Pin attestation guidance, npm latest v0.2.50 evidence, or package exclusions are missing/mismatched',
   };
 }
 
@@ -789,6 +790,7 @@ function checkRegistrySmokeTestEnvironment() {
   const provenanceTestContents = readText('test/registryProvenance.test.mjs');
   const attestationCoreContents = readText('scripts/registry-attestation-core.mjs');
   const attestationCliContents = readText('scripts/verify-registry-attestation.mjs');
+  const sharedAttestationCliContents = readText('scripts/github-attestation-cli.mjs');
   const attestationTestContents = readText('test/registryAttestation.test.mjs');
   const readmeValidatorContents = readText('scripts/readme-status-validator.mjs');
   const registryWorkflowContents = readText('.github/workflows/registry-validation.yml');
@@ -819,11 +821,11 @@ function checkRegistrySmokeTestEnvironment() {
     [attestationCoreContents, 'REGISTRY_ATTESTATION_REPORT_FIELDS'],
     [attestationCoreContents, 'PINNED_GITHUB_TRUSTED_ROOT_SHA256'],
     [attestationCoreContents, 'validateRegistryAttestation'],
-    [attestationCliContents, "'--custom-trusted-root'"],
-    [attestationCliContents, "'--deny-self-hosted-runners'"],
+    [sharedAttestationCliContents, "'--custom-trusted-root'"],
+    [sharedAttestationCliContents, "'--deny-self-hosted-runners'"],
     [attestationCliContents, 'writeRegistryAttestationReportAtomic'],
     [attestationTestContents, 'rejects a subject digest mismatch'],
-    [attestationTestContents, 'pins the no-network gh invocation in source'],
+    [attestationTestContents, 'pins the shared no-network gh invocation in source'],
     [readmeValidatorContents, 'validateReadmeStatus'],
     [registryWorkflowContents, 'workflow_dispatch:'],
     [registryWorkflowContents, 'default: "0.2.50"'],
@@ -990,8 +992,8 @@ function checkWorkflowSupplyChain() {
     ['actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6', 5],
     ['gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6', 2],
     ['reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2', 1],
-    ['actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6', 4],
-    ['actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4', 1],
+    ['actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6', 5],
+    ['actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4', 2],
   ];
   const expectedSnippets = [
     [coreContents, 'WORKFLOW_ACTION_LOCK_FIELDS'],
@@ -1012,7 +1014,7 @@ function checkWorkflowSupplyChain() {
     [testContents, 'preserves an existing report and removes the temporary file on atomic failure'],
     [readmeContents, '### Immutable workflow Action supply chain'],
     [readmeContents, 'pnpm verify:workflow-supply-chain -- --json'],
-    [readmeContents, 'The committed lock SHA-256 is `75bfabd61eb14ad5f26320916ae642c603ca509e942a1c962d97e08c750c6777`.'],
+    [readmeContents, 'The committed lock SHA-256 is `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.'],
     [releaseContents, '## v0.2.52'],
     [releaseContents, '### Immutable Action Contract'],
     [securityContents, '## GitHub Actions Supply Chain'],
@@ -1022,7 +1024,7 @@ function checkWorkflowSupplyChain() {
     .filter(([contents, snippet]) => !contents.includes(snippet))
     .map(([, snippet]) => snippet);
   const pinsOk =
-    actionLines.length === 28 &&
+    actionLines.length === 30 &&
     actionLines.every((line) => pinnedLine.test(line)) &&
     expectedPins.every(
       ([pin, count]) => joinedWorkflows.split(pin).length - 1 === count
@@ -1037,9 +1039,9 @@ function checkWorkflowSupplyChain() {
       (total, action) =>
         total + action.usages.reduce((sum, usage) => sum + usage.count, 0),
       0
-    ) === 28 &&
+    ) === 30 &&
     createHash('sha256').update(lockBytes).digest('hex') ===
-      '75bfabd61eb14ad5f26320916ae642c603ca509e942a1c962d97e08c750c6777';
+      '81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c';
   const scriptsOk =
     packageJson.scripts?.['verify:workflow-supply-chain'] ===
       'node scripts/verify-workflow-supply-chain.mjs' &&
@@ -1073,7 +1075,7 @@ function checkWorkflowSupplyChain() {
     ok,
     label: 'GitHub workflows use immutable Action pins and a canonical offline lock',
     detail: ok
-      ? 'five workflows, nine Actions, 28 full-SHA uses, release comments, canonical lock, weekly Dependabot config, offline fixtures, default gate, and npm exclusions are aligned'
+      ? 'five workflows, nine Actions, 30 full-SHA uses, release comments, canonical lock, weekly Dependabot config, offline fixtures, default gate, and npm exclusions are aligned'
       : `workflow supply-chain contract mismatch: ${[
           ...missing,
           ...(pinsOk ? [] : ['full-SHA workflow pins and version comments']),
@@ -1092,7 +1094,11 @@ function checkActionPinProvenance() {
   const resolverContents = readText('scripts/action-pin-review-github.mjs');
   const reviewCliContents = readText('scripts/review-action-pin.mjs');
   const offlineCliContents = readText('scripts/verify-action-pin-provenance.mjs');
+  const attestationCoreContents = readText('scripts/action-pin-attestation-core.mjs');
+  const attestationCliContents = readText('scripts/verify-action-pin-attestation.mjs');
+  const sharedAttestationCliContents = readText('scripts/github-attestation-cli.mjs');
   const testContents = readText('test/actionPinProvenance.test.mjs');
+  const attestationTestContents = readText('test/actionPinAttestation.test.mjs');
   const workflowContents = readText('.github/workflows/action-pin-review.yml');
   const fixtureReport = readJson(
     'test/fixtures/action-pin-review/action-pin-provenance.json'
@@ -1140,6 +1146,15 @@ function checkActionPinProvenance() {
     [reviewCliContents, "'--github-event': 'githubEvent'"],
     [reviewCliContents, "'--artifact-dir': 'artifactDir'"],
     [offlineCliContents, 'verifyActionPinProvenanceArtifact'],
+    [attestationCoreContents, 'ACTION_PIN_ATTESTATION_REPORT_FIELDS'],
+    [attestationCoreContents, 'validateGitHubAttestationEvidence'],
+    [attestationCoreContents, 'writeActionPinAttestationReportAtomic'],
+    [attestationCliContents, 'verifyActionPinProvenanceArtifact'],
+    [attestationCliContents, 'buildOfflineGitHubAttestationVerifyArgs'],
+    [sharedAttestationCliContents, "'--custom-trusted-root'"],
+    [sharedAttestationCliContents, "'--deny-self-hosted-runners'"],
+    [attestationTestContents, 'rejects wrong subject, repository, workflow, ref, and source SHA fixtures'],
+    [attestationTestContents, 'separates offline gh execution and rejects bundle tampering'],
     [testContents, 'rejects version/tag mismatch and resolved commit mismatch'],
     [testContents, 'rejects major downgrade, an unregistered Action, and repository changes'],
     [testContents, 'normalizes a GitHub workflow_dispatch fixture and binds every execution identity field'],
@@ -1159,6 +1174,11 @@ function checkActionPinProvenance() {
     [workflowContents, 'WORKFLOW_REF: ${{ github.workflow_ref }}'],
     [workflowContents, 'RUN_ATTEMPT: ${{ github.run_attempt }}'],
     [workflowContents, 'Artifact manifest SHA-256'],
+    [workflowContents, 'id-token: write'],
+    [workflowContents, 'attestations: write'],
+    [workflowContents, 'actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4'],
+    [workflowContents, 'verify:action-pin-attestation'],
+    [workflowContents, 'action-pin-attestation-${{ github.run_id }}'],
     [workflowContents, 'GITHUB_STEP_SUMMARY'],
     [workflowContents, 'name: action-pin-review-${{ github.run_id }}'],
     [workflowContents, 'steps.review.outcome != \'success\''],
@@ -1167,6 +1187,9 @@ function checkActionPinProvenance() {
     [readmeContents, '`github-execution.json`'],
     [readmeContents, '`sourceRepository`, `sourceRef`, `sourceHeadSha`'],
     [readmeContents, 'pnpm verify:action-pin-fixture'],
+    [readmeContents, 'pnpm verify:action-pin-attestation --'],
+    [releaseContents, '## v0.2.55'],
+    [releaseContents, '### Action Pin Attestation Contract'],
     [releaseContents, '## v0.2.54'],
     [releaseContents, '### Execution Identity and Artifact Manifest Contract'],
     [securityContents, 'Before accepting a proposed Action SHA change'],
@@ -1174,6 +1197,7 @@ function checkActionPinProvenance() {
     [securityContents, '`artifact-manifest.json`'],
     [securityContents, '`github-execution.json`'],
     [securityContents, 'pnpm verify:action-pin-provenance --'],
+    [securityContents, 'pnpm verify:action-pin-attestation --'],
   ];
   const missing = expectedSnippets
     .filter(([contents, snippet]) => !contents.includes(snippet))
@@ -1183,6 +1207,8 @@ function checkActionPinProvenance() {
       'node scripts/review-action-pin.mjs' &&
     packageJson.scripts?.['verify:action-pin-provenance'] ===
       'node scripts/verify-action-pin-provenance.mjs' &&
+    packageJson.scripts?.['verify:action-pin-attestation'] ===
+      'node scripts/verify-action-pin-attestation.mjs' &&
     packageJson.scripts?.['verify:action-pin-fixture'] ===
       'pnpm verify:action-pin-provenance -- --artifact-dir test/fixtures/action-pin-review --json' &&
     packageJson.scripts?.verify?.includes('pnpm verify:action-pin-fixture');
@@ -1202,7 +1228,7 @@ function checkActionPinProvenance() {
     fixtureReport.runAttempt === 1 &&
     Object.values(fixtureReport.checks ?? {}).every((value) => value === true) &&
     fixtureReport.evidence?.candidateLockSha256 ===
-      '75bfabd61eb14ad5f26320916ae642c603ca509e942a1c962d97e08c750c6777' &&
+      '81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c' &&
     fixtureReport.evidence?.artifactManifestSha256 ===
       sha256(Buffer.from(fixtureManifestContents, 'utf8')) &&
     fixtureReport.evidence?.executionSha256 ===
@@ -1231,7 +1257,7 @@ function checkActionPinProvenance() {
     rawEventFixture.ref === fixtureEvent.ref &&
     fixtureWorkflow === workflowContents &&
     fixtureCandidateLock === lockContents;
-  const offlineOnly = [coreContents, offlineCliContents].every(
+  const offlineOnly = [coreContents, offlineCliContents, attestationCoreContents].every(
     (contents) =>
       !contents.includes('node:child_process') &&
       !contents.includes('node:http') &&
@@ -1331,6 +1357,12 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.55',
+    'Status: unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.55` git tag, or GitHub Release is part of this candidate.',
+    '### Action Pin Attestation Contract',
+    '`pnpm verify:action-pin-attestation -- --artifact-dir <provenance-path> --attestation-bundle <attestation.jsonl> --trusted-root <trusted-root.jsonl> --json --report-file <attestation-verification.json>`',
+    'Ordered checks are `provenance`, `manifest`, `subject`, `repository`, `workflow`, `ref`, `sourceDigest`, `workflowDigest`, `invocation`, and `signature`.',
+    'lock SHA-256 `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`',
     '## v0.2.54',
     'Status: unpublished Action pin provenance execution identity and artifact manifest binding candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.54` git tag, or GitHub Release is part of this candidate.',
     '### Execution Identity and Artifact Manifest Contract',
@@ -2662,6 +2694,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
+    'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.54 Action pin provenance execution identity and artifact manifest binding candidate notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.53 GitHub Action pin update provenance and manual review gate candidate notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.52 immutable GitHub Actions pin and workflow supply-chain gate candidate notes are in [RELEASE.md](RELEASE.md).',
@@ -2681,18 +2714,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.54' && missing.length === 0;
+  const ok = packageJson.version === '0.2.55' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.54 Action pin execution identity candidate and previous release notes are current',
+    label: 'v0.2.55 Action Pin artifact attestation candidate and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.54'
+          ...(packageJson.version === '0.2.55'
             ? []
-            : ['package.json version 0.2.54']),
+            : ['package.json version 0.2.55']),
         ].join(' | ')}`,
   };
 }
