@@ -92,7 +92,7 @@ function verificationFixture() {
           {
             type: 'Tlog',
             uri: 'https://rekor.sigstore.dev',
-            timestamp: '2026-07-12T06:22:51Z',
+            timestamp: '2026-07-12T15:22:51+09:00',
           },
         ],
         statement: {
@@ -175,7 +175,7 @@ describe('registry provenance attestation', () => {
         {
           type: 'Tlog',
           uri: 'https://rekor.sigstore.dev',
-          timestamp: '2026-07-12T06:22:51Z',
+          timestamp: '2026-07-12T06:22:51.000Z',
         },
       ],
       error: null,

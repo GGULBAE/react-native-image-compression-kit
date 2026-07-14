@@ -355,7 +355,7 @@ function normalizeTimestamps(timestamps) {
     const normalized = {
       type: timestamp.type,
       uri: timestamp.uri,
-      timestamp: timestamp.timestamp,
+      timestamp: new Date(timestamp.timestamp).toISOString(),
     };
     unique.set(JSON.stringify(normalized), normalized);
   }
