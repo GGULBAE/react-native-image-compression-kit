@@ -80,13 +80,13 @@ pnpm fixtures:ios-pass-replay:audit -- --json
 
 Audit mode validates canonical JSON, fixture schema, provenance fields, the exact source-line SHA-256, and the capability-driven PASS payload contract owned by `scripts/ios-smoke-contract.mjs` and `scripts/ios-smoke-pass-replay-fixture.mjs`. Check additionally compares the artifact with a supplied local log and provenance. Check and audit modes perform no writes; refresh, check, and audit perform no GitHub or other network requests.
 
-Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.50`, published at `2026-07-14T06:05:27.963Z`. The real 51-file registry tarball retained the registry-independent `Status: v0.2.50 release` package README, matched integrity `sha512-FCIEFSpcbb3pUbk7jVWuQxke0+h77q3f2jAtK2C3GILlvi6X7MvjSLH0BBMqd94qHdeluFclW6Rft+SjpjK/rw==` and shasum `da8779a4fb67e52ef081302eec76aa12706691a2`, contained no guarded stale-status snippets or development-only files, and passed clean consumer installation and public API typechecking. The npm-only promotion used one successful `npm publish --tag latest`; no manual dist-tag change, git tag, or GitHub Release was created.
+Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.55`, published at `2026-07-14T12:41:56.173Z`. The real 51-file, 75,022-byte registry tarball retained the registry-independent `Status: v0.2.55 release` package README, matched integrity `sha512-942yS0LCt6Che8zP+ZGNCl7AKA/h4oMEYO4TT1u2F+JIDM0vC3X16y8zStHQE4gIVmYscH8h37fOw/c5RuJbpw==` and shasum `525221309be1eda6fc2fdd80b5e2b9da13faf645`, contained no guarded stale-status snippets or development-only files, and passed clean consumer installation and public API typechecking. Two earlier CLI calls stopped at the pre-write EOTP authentication gate; the npm-only promotion then used one successful `npm publish --tag latest` registry write. No manual dist-tag change, git tag, or GitHub Release was created.
 
 Run the registry smoke with `--artifact-dir` to atomically preserve the exact validated tarball instead of downloading it again in the workflow:
 
 ```bash
 pnpm smoke:registry -- \
-  --version 0.2.50 \
+  --version 0.2.55 \
   --expect-tag latest \
   --json \
   --artifact-dir registry-validation
@@ -100,7 +100,7 @@ After downloading a Registry Validation artifact, verify it without npm, GitHub,
 pnpm verify:registry-provenance -- \
   --artifact-dir /path/to/registry-validation \
   --expect-package react-native-image-compression-kit \
-  --expect-version 0.2.50 \
+  --expect-version 0.2.55 \
   --expect-tag latest \
   --json
 ```
@@ -124,21 +124,21 @@ pnpm verify:registry-attestation -- \
 
 The attestation verifier calls the official GitHub CLI with `--bundle` and `--custom-trusted-root` while network proxies are forced to a closed local endpoint. It pins the trusted-root bytes to SHA-256 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`, requires GitHub's OIDC issuer and SLSA v1 predicate, rejects self-hosted runners, and then independently validates the canonical verifier JSON. Its fixed report fields are `schemaVersion`, `status`, `subject`, `subjectSha256`, `repository`, `signerWorkflow`, `sourceRef`, `sourceDigest`, `oidcIssuer`, `predicateType`, `verifiedTimestamps`, and `error`; verified timestamps are normalized to UTC ISO strings so report bytes are timezone-independent, and `--report-file` atomically writes exactly the stdout bytes. The existing `registry-provenance-<version>` artifact remains exactly four files. The separate `registry-provenance-attestation-<version>` artifact contains `attestation.jsonl`, `trusted-root.jsonl`, and `attestation-verification.json` so the evidence can be replayed without npm, GitHub, Sigstore, or any other network service.
 
-Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0` attested manifest SHA-256 `0a152ce1989267ce5c2fa01096a5e0dc44200245e29843857b24c52d0b746773` as [attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998). The exact four-file `registry-provenance-0.2.50` artifact has GitHub digest `sha256:031302873239c74234179041e6b3f7ff8d6fe281351dfb93a3f5e4ed9573ec71`; the separate three-file `registry-provenance-attestation-0.2.50` artifact has GitHub digest `sha256:01a74cc10cb2c89e309d58ddf83f285ada1a3ceb3af70e78b8cd70dc6c627cea`. Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul, while the Step Summary recorded successful provenance, online attestation, downloaded-bundle offline attestation, and pinned-root checks.
+Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29` attested manifest SHA-256 `45677e0204b46a3f388b5cdb5ac7cfa83269dd03479854c25d7ef203582fe2af` as [attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248). The exact four-file `registry-provenance-0.2.55` artifact has GitHub digest `sha256:7463b03ff6294b5017d9b3cad05d4c3ea87b542398a5cb70f503cea148dca826`; the separate three-file `registry-provenance-attestation-0.2.55` artifact has GitHub digest `sha256:545c63da880d9d91f9ade1cf40ce36a366634c11ff524b87579e6b0fd6d8e28f`. Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4` under both UTC and Asia/Seoul, while the Step Summary recorded successful provenance, online attestation, downloaded-bundle offline attestation, and pinned-root checks.
 
 ### Expiration-independent release evidence
 
-The v0.2.51 candidate commits the downloaded v0.2.50 workflow evidence at `evidence/npm/0.2.50/`. The repository-owned archive contains one canonical `release-evidence-index.json`, exactly four files in `provenance/`, and exactly three files in `attestation/`. The index pins Registry Validation run `29310375801`, both artifact IDs and GitHub archive digests, attestation `35201998`, source commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`, artifact expiration `2026-10-12T06:06:31Z`, every retained file size/SHA-256, and aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`.
+The v0.2.55 publication commits its downloaded workflow evidence at `evidence/npm/0.2.55/`; the historical v0.2.50 archive remains replayable at `evidence/npm/0.2.50/`. Each repository-owned archive contains one canonical `release-evidence-index.json`, exactly four files in `provenance/`, and exactly three files in `attestation/`. The v0.2.55 index pins Registry Validation run `29333540614`, both artifact IDs and GitHub archive digests, attestation `35257248`, source commit `194e9387406f71763bc0d617ece0d7d58e235e29`, artifact expiration `2026-10-12T12:42:48Z`, every retained file size/SHA-256, and aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`.
 
 Replay the entire retained trust chain with one network-free command:
 
 ```bash
-pnpm verify:release-evidence -- --version 0.2.50
+pnpm verify:release-evidence -- --version 0.2.55
 ```
 
 The verifier requires the exact archive layout and canonical index bytes, matches the index against the committed version policy, recomputes all seven file digests and the aggregate evidence digest, runs the existing tarball provenance verifier, and invokes GitHub CLI attestation verification with the retained bundle and pinned trusted root while all network proxies point to a closed local endpoint. It then requires the regenerated attestation report to match the retained `attestation-verification.json` byte-for-byte and checks package/version/tag, repository, workflow, ref, source commit, subject digest, OIDC/SLSA identity, verified timestamp, run chronology, and artifact expiration metadata.
 
-Successful output is one canonical JSON object with ordered `schemaVersion`, `status`, `archiveDir`, `package`, `version`, `expectedTag`, `evidenceSha256`, `provenanceReportSha256`, `manifestSha256`, `attestationReportSha256`, `sourceDigest`, `checks`, and `error` fields. Ordered checks are `layout`, `index`, `files`, `provenance`, `attestation`, `identity`, and `timestamps`; `--report-file` atomically writes the same bytes. `pnpm verify` runs this committed v0.2.50 replay without npm, GitHub, Sigstore, or other network access. The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.
+Successful output is one canonical JSON object with ordered `schemaVersion`, `status`, `archiveDir`, `package`, `version`, `expectedTag`, `evidenceSha256`, `provenanceReportSha256`, `manifestSha256`, `attestationReportSha256`, `sourceDigest`, `checks`, and `error` fields. Ordered checks are `layout`, `index`, `files`, `provenance`, `attestation`, `identity`, and `timestamps`; `--report-file` atomically writes the same bytes. `pnpm verify` runs the committed v0.2.55 replay without npm, GitHub, Sigstore, or other network access. The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.
 
 ### Immutable workflow Action supply chain
 
@@ -877,7 +877,7 @@ Run the JavaScript and TypeScript checks:
 pnpm verify
 ```
 
-`pnpm verify` runs type checking, unit tests (including the committed Action Pin provenance and signer-identity fixtures), the TypeScript build, `pnpm fixtures:ios-pass-replay:audit`, the committed `pnpm verify:release-evidence -- --version 0.2.50` replay, `pnpm verify:workflow-supply-chain -- --json`, `pnpm verify:action-pin-fixture`, the real-bundle `pnpm verify:action-pin-attestation-fixture`, and the Android verification doctor. All committed replay and supply-chain gates are network-free; only the separately invoked `pnpm review:action-pin` command resolves GitHub tags.
+`pnpm verify` runs type checking, unit tests (including the committed Action Pin provenance and signer-identity fixtures), the TypeScript build, `pnpm fixtures:ios-pass-replay:audit`, the committed `pnpm verify:release-evidence -- --version 0.2.55` replay, `pnpm verify:workflow-supply-chain -- --json`, `pnpm verify:action-pin-fixture`, the real-bundle `pnpm verify:action-pin-attestation-fixture`, and the Android verification doctor. All committed replay and supply-chain gates are network-free; only the separately invoked `pnpm review:action-pin` command resolves GitHub tags.
 
 Run the pack-based consumer smoke test before release-oriented changes:
 
@@ -887,22 +887,22 @@ pnpm smoke:consumer
 
 This command builds the package, creates a local tarball with `pnpm pack`, installs it into a separate temporary React Native consumer project, and typechecks public API imports from the packed package.
 
-For the published v0.2.50 npm release, create the exact-tarball provenance bundle and verify it offline:
+For the published v0.2.55 npm release, create the exact-tarball provenance bundle and verify it offline:
 
 ```bash
-pnpm smoke:registry -- --version 0.2.50 --expect-tag latest --json --artifact-dir registry-validation
-pnpm verify:registry-provenance -- --artifact-dir registry-validation --expect-package react-native-image-compression-kit --expect-version 0.2.50 --expect-tag latest --json
+pnpm smoke:registry -- --version 0.2.55 --expect-tag latest --json --artifact-dir registry-validation
+pnpm verify:registry-provenance -- --artifact-dir registry-validation --expect-package react-native-image-compression-kit --expect-version 0.2.55 --expect-tag latest --json
 ```
 
 The first command reads npm registry metadata, validates the published tarball and clean consumer, then atomically retains the exact validated bytes. The second command performs no network access, does not extract the tarball, and verifies canonical JSON, package/version/tag identity, all manifest digests, archive sizes, package contents, and README status. Neither command publishes to npm.
 
-To verify the repository-owned v0.2.50 provenance and attestation evidence after the workflow artifacts expire:
+To verify the repository-owned v0.2.55 provenance and attestation evidence after the workflow artifacts expire:
 
 ```bash
-pnpm verify:release-evidence -- --version 0.2.50
+pnpm verify:release-evidence -- --version 0.2.55
 ```
 
-This command reads only `evidence/npm/0.2.50`, blocks all GitHub CLI network paths, checks the exact seven-file archive and canonical index, and replays both provenance and attestation identity verification. The archive is a repository verification asset and is not packed into `react-native-image-compression-kit`.
+This command reads only `evidence/npm/0.2.55`, blocks all GitHub CLI network paths, checks the exact seven-file archive and canonical index, and replays both provenance and attestation identity verification. The archive is a repository verification asset and is not packed into `react-native-image-compression-kit`; pass `--version 0.2.50` to replay the preserved previous release archive.
 
 To verify immutable third-party Action pins, release-tag comments, the canonical lock, exact workflow usage counts, and weekly Dependabot configuration:
 

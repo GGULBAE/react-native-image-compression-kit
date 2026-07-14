@@ -91,6 +91,14 @@ const REQUIRED_FILES = [
   'evidence/npm/0.2.50/attestation/attestation-verification.json',
   'evidence/npm/0.2.50/attestation/attestation.jsonl',
   'evidence/npm/0.2.50/attestation/trusted-root.jsonl',
+  'evidence/npm/0.2.55/release-evidence-index.json',
+  'evidence/npm/0.2.55/provenance/bundle-manifest.json',
+  'evidence/npm/0.2.55/provenance/package.tgz',
+  'evidence/npm/0.2.55/provenance/registry-provenance.json',
+  'evidence/npm/0.2.55/provenance/stdout.json',
+  'evidence/npm/0.2.55/attestation/attestation-verification.json',
+  'evidence/npm/0.2.55/attestation/attestation.jsonl',
+  'evidence/npm/0.2.55/attestation/trusted-root.jsonl',
   'test/iosSmokeLifecycle.test.mjs',
   'test/iosSmokeCliTimeout.test.mjs',
   'test/iosSmokeContract.test.mjs',
@@ -443,21 +451,21 @@ function checkPackageMetadata() {
     readmeContents.includes('uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'),
     readmeContents.includes('The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'),
     readmeContents.includes("The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"),
-    readmeContents.includes('Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.50`, published at `2026-07-14T06:05:27.963Z`.'),
-    readmeContents.includes('The real 51-file registry tarball retained the registry-independent `Status: v0.2.50 release` package README'),
-    readmeContents.includes('The npm-only promotion used one successful `npm publish --tag latest`; no manual dist-tag change, git tag, or GitHub Release was created.'),
-    readmeContents.includes('Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`'),
-    readmeContents.includes('[attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998)'),
-    readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul'),
+    readmeContents.includes('Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.55`, published at `2026-07-14T12:41:56.173Z`.'),
+    readmeContents.includes('The real 51-file, 75,022-byte registry tarball retained the registry-independent `Status: v0.2.55 release` package README'),
+    readmeContents.includes('Two earlier CLI calls stopped at the pre-write EOTP authentication gate; the npm-only promotion then used one successful `npm publish --tag latest` registry write.'),
+    readmeContents.includes('Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29`'),
+    readmeContents.includes('[attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248)'),
+    readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4` under both UTC and Asia/Seoul'),
     readmeContents.includes('The package metadata is `0.2.55` for the Action Pin artifact GitHub OIDC attestation and offline signer verification release.'),
-    readmeContents.includes('pnpm verify:release-evidence -- --version 0.2.50'),
+    readmeContents.includes('pnpm verify:release-evidence -- --version 0.2.55'),
     readmeContents.includes('pnpm verify:workflow-supply-chain -- --json'),
     readmeContents.includes('All 30 remote `uses:` declarations across the five GitHub workflow files are pinned to lowercase 40-character commit SHAs.'),
     readmeContents.includes('The committed lock SHA-256 is `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.'),
     readmeContents.includes('### Manual Action pin provenance review'),
     readmeContents.includes('pnpm verify:action-pin-provenance --'),
     readmeContents.includes('pnpm verify:action-pin-fixture'),
-    readmeContents.includes('aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`'),
+    readmeContents.includes('aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`'),
     readmeContents.includes('The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
@@ -896,7 +904,10 @@ function checkRegistrySmokeTestEnvironment() {
 
 function checkReleaseEvidenceArchive() {
   const packageJson = readJson('package.json');
-  const index = readJson('evidence/npm/0.2.50/release-evidence-index.json');
+  const index = readJson('evidence/npm/0.2.55/release-evidence-index.json');
+  const previousIndex = readJson(
+    'evidence/npm/0.2.50/release-evidence-index.json'
+  );
   const coreContents = readText('scripts/release-evidence-core.mjs');
   const cliContents = readText('scripts/verify-release-evidence.mjs');
   const testContents = readText('test/releaseEvidence.test.mjs');
@@ -908,27 +919,29 @@ function checkReleaseEvidenceArchive() {
     [coreContents, 'RELEASE_EVIDENCE_FILE_PATHS'],
     [coreContents, 'verifyReleaseEvidenceArchive'],
     [coreContents, 'runRegistryAttestationVerification'],
-    [coreContents, '8301832057'],
-    [coreContents, '8301832253'],
-    [coreContents, '35201998'],
-    [coreContents, '2b198c5f6125de6ad5bae76fc835ff5b935984f0'],
+    [coreContents, '8310985094'],
+    [coreContents, '8310985646'],
+    [coreContents, '35257248'],
+    [coreContents, '194e9387406f71763bc0d617ece0d7d58e235e29'],
     [cliContents, "'--archive-root': 'archiveRoot'"],
     [cliContents, "'--archive-dir': 'archiveDir'"],
     [cliContents, "'--report-file': 'reportFile'"],
     [cliContents, 'writeReleaseEvidenceVerificationAtomic'],
     [testContents, 'runs the real GitHub CLI replay with network proxies blocked and writes identical bytes'],
+    [testContents, 'keeps the previous v0.2.50 release evidence archive replayable'],
     [testContents, 'rejects a missing file and any additional file'],
     [testContents, 'rejects evidence byte tampering and a different trusted root'],
     [testContents, 'rejects wrong run, artifact, attestation, commit, workflow, and timestamp policy'],
     [testContents, 'removes a temporary report and preserves the prior report on atomic failure'],
-    [readmeContents, 'pnpm verify:release-evidence -- --version 0.2.50'],
-    [readmeContents, 'aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`'],
+    [readmeContents, 'pnpm verify:release-evidence -- --version 0.2.55'],
+    [readmeContents, 'aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`'],
     [readmeContents, 'The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.'],
-    [releaseContents, '## v0.2.51'],
-    [releaseContents, 'Repository-owned Evidence Contract'],
+    [releaseContents, '`evidence/npm/0.2.55/`'],
+    [releaseContents, 'The historical `evidence/npm/0.2.50/` archive remains independently replayable.'],
     [securityContents, '## Release Evidence Retention'],
     [securityContents, 'Evidence updates must never'],
     [securityContents, 'include credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, or authentication'],
+    [securityContents, 'pnpm verify:release-evidence -- --version 0.2.55'],
   ];
   const missing = expectedSnippets
     .filter(([contents, snippet]) => !contents.includes(snippet))
@@ -937,35 +950,38 @@ function checkReleaseEvidenceArchive() {
     packageJson.scripts?.['verify:release-evidence'] ===
       'node scripts/verify-release-evidence.mjs' &&
     packageJson.scripts?.verify?.includes(
-      'pnpm verify:release-evidence -- --version 0.2.50'
+      'pnpm verify:release-evidence -- --version 0.2.55'
     );
   const indexOk =
     index.schemaVersion === 1 &&
     index.status === 'passed' &&
     index.package === 'react-native-image-compression-kit' &&
-    index.version === '0.2.50' &&
+    index.version === '0.2.55' &&
     index.expectedTag === 'latest' &&
-    index.registryValidationRun?.id === 29310375801 &&
-    index.provenanceArtifact?.id === 8301832057 &&
-    index.attestation?.id === 35201998 &&
-    index.attestationArtifact?.id === 8301832253 &&
-    index.sourceDigest === '2b198c5f6125de6ad5bae76fc835ff5b935984f0' &&
+    index.registryValidationRun?.id === 29333540614 &&
+    index.provenanceArtifact?.id === 8310985094 &&
+    index.attestation?.id === 35257248 &&
+    index.attestationArtifact?.id === 8310985646 &&
+    index.sourceDigest === '194e9387406f71763bc0d617ece0d7d58e235e29' &&
     index.evidenceSha256 ===
-      '1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149' &&
-    index.files?.length === 7;
+      'e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78' &&
+    index.files?.length === 7 &&
+    previousIndex.version === '0.2.50' &&
+    previousIndex.evidenceSha256 ===
+      '1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149';
   const packageExcludesEvidence = !(packageJson.files ?? []).includes('evidence');
   const ok =
     scriptOk && indexOk && packageExcludesEvidence && missing.length === 0;
 
   return {
     ok,
-    label: 'repository-owned v0.2.50 release evidence archive is replayable',
+    label: 'repository-owned v0.2.55 and historical v0.2.50 release evidence archives are replayable',
     detail: ok
       ? 'exact archive identity, seven retained files, offline verifier, fixture contracts, documentation, default gate, and npm-package exclusion are present'
       : `release evidence contract mismatch: ${[
           ...missing,
           ...(scriptOk ? [] : ['package.json release evidence scripts']),
-          ...(indexOk ? [] : ['canonical v0.2.50 evidence index identity']),
+          ...(indexOk ? [] : ['canonical v0.2.55/current and v0.2.50/historical evidence index identity']),
           ...(packageExcludesEvidence ? [] : ['package.json files includes evidence']),
         ].join(' | ')}`,
   };
@@ -1398,7 +1414,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.55',
-    'Status: release-ready Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` remain `0.2.50` until the separately gated one-time `0.2.55` promotion; no `v0.2.55` git tag or GitHub Release is planned.',
+    'Status: published to npm as the `0.2.55` latest Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` are both `0.2.55`; no `v0.2.55` git tag or GitHub Release was created.',
     '### Action Pin Attestation Contract',
     '`pnpm verify:action-pin-attestation -- --artifact-dir <provenance-path> --attestation-bundle <attestation.jsonl> --trusted-root <trusted-root.jsonl> --json --report-file <attestation-verification.json>`',
     'Ordered checks are `provenance`, `manifest`, `subject`, `repository`, `workflow`, `ref`, `sourceDigest`, `workflowDigest`, `invocation`, and `signature`.',
@@ -1407,6 +1423,14 @@ function checkReleaseNotes() {
     '[Attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280)',
     'sha256:3ffcf711c0c3827636b6a6cfca9f83ee010fcc2f849933d69f4c51b7e0984f76',
     'Blocked-network local replay reproduced `attestation-verification.json` byte-for-byte under UTC and Asia/Seoul.',
+    '### npm Publication and Registry Evidence',
+    'Release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29` was clean, matched `origin/master`, passed the local release gates',
+    'Two CLI calls stopped at npm\'s pre-write EOTP authentication gate and were confirmed to have made no registry write before the next action.',
+    'One web-approved `npm publish --tag latest` then successfully published `react-native-image-compression-kit@0.2.55`',
+    'Manual [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) passed for `version=0.2.55` and `expected_tag=latest`',
+    '[Attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248) binds `bundle-manifest.json` SHA-256 `45677e0204b46a3f388b5cdb5ac7cfa83269dd03479854c25d7ef203582fe2af`',
+    'canonical aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`',
+    'The historical `evidence/npm/0.2.50/` archive remains independently replayable.',
     '## v0.2.54',
     'Status: unpublished Action pin provenance execution identity and artifact manifest binding candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.54` git tag, or GitHub Release is part of this candidate.',
     '### Execution Identity and Artifact Manifest Contract',
@@ -2739,6 +2763,8 @@ function checkReleaseNotes() {
   ];
   const readmeSnippets = [
     'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification release notes are in [RELEASE.md](RELEASE.md).',
+    'Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29`',
+    'aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`',
     'Successful [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736)',
     '[attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280)',
     'The v0.2.54 Action pin provenance execution identity and artifact manifest binding candidate notes are in [RELEASE.md](RELEASE.md).',
@@ -2764,7 +2790,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.55 release-ready Action Pin artifact attestation notes and previous release notes are current',
+    label: 'published v0.2.55 Action Pin artifact attestation and registry evidence notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
@@ -2799,7 +2825,7 @@ function checkSecurityPolicy() {
     [securityContents, 'repository-only and outside the npm package'],
     [securityContents, 'pnpm release:dry-run'],
     [securityContents, '## Release Evidence Retention'],
-    [securityContents, 'pnpm verify:release-evidence -- --version 0.2.50'],
+    [securityContents, 'pnpm verify:release-evidence -- --version 0.2.55'],
     [securityContents, 'the whole `evidence/` tree must remain excluded from'],
     [securityContents, 'Evidence updates must never'],
     [securityContents, 'include credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, or authentication'],
@@ -3461,7 +3487,7 @@ function checkIOSHostAppValidation() {
     'fixtures:ios-pass-replay:audit':
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit',
     verify:
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor',
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.55 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor',
   };
   const expectedSnippets = [
     [examplePackageJson, '@react-native-community/cli-platform-ios'],

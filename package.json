@@ -64,7 +64,7 @@
     "verify:action-pin-attestation": "node scripts/verify-action-pin-attestation.mjs",
     "verify:action-pin-fixture": "pnpm verify:action-pin-provenance -- --artifact-dir test/fixtures/action-pin-review --json",
     "verify:action-pin-attestation-fixture": "pnpm verify:action-pin-attestation -- --artifact-dir test/fixtures/action-pin-review --attestation-bundle test/fixtures/action-pin-attestation/attestation.jsonl --trusted-root test/fixtures/action-pin-attestation/trusted-root.jsonl --json",
-    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor",
+    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.55 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor",
     "android:doctor": "node scripts/android-verification.mjs doctor",
     "android:codegen": "node scripts/android-verification.mjs codegen",
     "android:build": "node scripts/android-verification.mjs build",

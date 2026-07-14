@@ -37,7 +37,7 @@ import { parseReleaseEvidenceArgs } from '../scripts/verify-release-evidence.mjs
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(TEST_DIR, '..');
-const VERSION = '0.2.50';
+const VERSION = '0.2.55';
 const ARCHIVE = path.join(ROOT, 'evidence', 'npm', VERSION);
 const VERIFIER = path.join(ROOT, 'scripts', 'verify-release-evidence.mjs');
 
@@ -133,20 +133,41 @@ describe('committed release evidence archive', () => {
       version: VERSION,
       expectedTag: 'latest',
       evidenceSha256:
-        '1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149',
+        'e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78',
       provenanceReportSha256:
-        '1c6d7e6478fcb910653e8f607fb2bc5babdccc4a0c2e361d2c5a4a5d173d68b3',
+        'aebc75fef227d5c740f6decff008f6e8e5454b845367c58d8a0f5fe5ae3280cd',
       manifestSha256:
-        '0a152ce1989267ce5c2fa01096a5e0dc44200245e29843857b24c52d0b746773',
+        '45677e0204b46a3f388b5cdb5ac7cfa83269dd03479854c25d7ef203582fe2af',
       attestationReportSha256:
-        '380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e',
-      sourceDigest: '2b198c5f6125de6ad5bae76fc835ff5b935984f0',
+        '095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4',
+      sourceDigest: '194e9387406f71763bc0d617ece0d7d58e235e29',
       checks: Object.fromEntries(
         RELEASE_EVIDENCE_CHECK_FIELDS.map((field) => [field, true])
       ),
       error: null,
     });
     expect(canonicalReleaseEvidenceVerification(result).trim().split('\n')).toHaveLength(1);
+  });
+
+  it('keeps the previous v0.2.50 release evidence archive replayable', () => {
+    const version = '0.2.50';
+    const archiveDir = path.join(ROOT, 'evidence', 'npm', version);
+    const result = verifyReleaseEvidenceArchive(
+      { archiveDir, expectedVersion: version },
+      {
+        verifyAttestation: () => storedAttestation(archiveDir),
+      }
+    );
+    expect(result).toMatchObject({
+      status: 'passed',
+      version,
+      evidenceSha256:
+        '1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149',
+      sourceDigest: '2b198c5f6125de6ad5bae76fc835ff5b935984f0',
+      checks: Object.fromEntries(
+        RELEASE_EVIDENCE_CHECK_FIELDS.map((field) => [field, true])
+      ),
+    });
   });
 
   it('parses the version selector and explicit fixture paths', () => {

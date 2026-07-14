@@ -306,13 +306,13 @@ describe('Android verification scripts', () => {
       "The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"
     );
     expect(readmeSource).toContain(
-      'Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.50`, published at `2026-07-14T06:05:27.963Z`.'
+      'Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.55`, published at `2026-07-14T12:41:56.173Z`.'
     );
     expect(readmeSource).toContain(
-      'The real 51-file registry tarball retained the registry-independent `Status: v0.2.50 release` package README'
+      'The real 51-file, 75,022-byte registry tarball retained the registry-independent `Status: v0.2.55 release` package README'
     );
     expect(readmeSource).toContain(
-      'The npm-only promotion used one successful `npm publish --tag latest`; no manual dist-tag change, git tag, or GitHub Release was created.'
+      'Two earlier CLI calls stopped at the pre-write EOTP authentication gate; the npm-only promotion then used one successful `npm publish --tag latest` registry write.'
     );
     expect(readmeSource).toContain(
       'The package metadata is `0.2.55` for the Action Pin artifact GitHub OIDC attestation and offline signer verification release.'
@@ -330,10 +330,10 @@ describe('Android verification scripts', () => {
       'pnpm verify:action-pin-fixture'
     );
     expect(readmeSource).toContain(
-      'pnpm verify:release-evidence -- --version 0.2.50'
+      'pnpm verify:release-evidence -- --version 0.2.55'
     );
     expect(readmeSource).toContain(
-      'aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`'
+      'aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -1090,7 +1090,7 @@ describe('Android verification scripts', () => {
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit'
     );
     expect(packageJson.scripts.verify).toBe(
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor'
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.55 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor'
     );
     expect(readmeSource).toContain('## iOS Host-App Validation');
     expect(readmeSource).toContain('pnpm example:ios:smoke');
@@ -1513,14 +1513,14 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.55 release-ready Action Pin artifact attestation and previous release notes', () => {
+  it('documents the published v0.2.55 Action Pin artifact attestation and registry evidence', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.55');
     expect(releaseSource).toContain('## v0.2.55');
     expect(releaseSource).toContain(
-      'Status: release-ready Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` remain `0.2.50` until the separately gated one-time `0.2.55` promotion; no `v0.2.55` git tag or GitHub Release is planned.'
+      'Status: published to npm as the `0.2.55` latest Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` are both `0.2.55`; no `v0.2.55` git tag or GitHub Release was created.'
     );
     expect(releaseSource).toContain('### Action Pin Attestation Contract');
     expect(releaseSource).toContain(
@@ -1540,6 +1540,19 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'Successful [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736)'
+    );
+    expect(releaseSource).toContain('### npm Publication and Registry Evidence');
+    expect(releaseSource).toContain(
+      'One web-approved `npm publish --tag latest` then successfully published `react-native-image-compression-kit@0.2.55`'
+    );
+    expect(releaseSource).toContain(
+      'Manual [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) passed for `version=0.2.55` and `expected_tag=latest`'
+    );
+    expect(releaseSource).toContain(
+      'canonical aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`'
+    );
+    expect(readmeSource).toContain(
+      'Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29`'
     );
     expect(releaseSource).toContain('## v0.2.54');
     expect(releaseSource).toContain(
@@ -1610,10 +1623,10 @@ describe('Android verification scripts', () => {
       '[Attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998) binds `bundle-manifest.json` SHA-256 `0a152ce1989267ce5c2fa01096a5e0dc44200245e29843857b24c52d0b746773`'
     );
     expect(readmeSource).toContain(
-      'Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`'
+      'Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29`'
     );
     expect(readmeSource).toContain(
-      'Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul'
+      'Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4` under both UTC and Asia/Seoul'
     );
     expect(releaseSource).toContain('## v0.2.49');
     expect(releaseSource).toContain(

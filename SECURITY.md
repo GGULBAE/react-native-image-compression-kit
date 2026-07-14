@@ -111,13 +111,14 @@ tarball, provenance report, canonical manifest, attestation bundle, trusted root
 and verification report, but the whole `evidence/` tree must remain excluded from
 the npm package file list.
 
-For retained v0.2.50 evidence, run the complete trust-chain replay without npm,
-GitHub, Sigstore, or other network access:
+For the current retained v0.2.55 evidence, run the complete trust-chain replay
+without npm, GitHub, Sigstore, or other network access:
 
 ```bash
-pnpm verify:release-evidence -- --version 0.2.50
+pnpm verify:release-evidence -- --version 0.2.55
 ```
 
+The historical v0.2.50 archive remains replayable by passing `--version 0.2.50`.
 The canonical release evidence index and version policy must pin the source run,
 artifact and attestation IDs, GitHub artifact archive digests, source commit,
 artifact expiration, and every retained file digest. Evidence updates must never

@@ -2,9 +2,9 @@
 
 ## v0.2.55
 
-Status: release-ready Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` remain `0.2.50` until the separately gated one-time `0.2.55` promotion; no `v0.2.55` git tag or GitHub Release is planned.
+Status: published to npm as the `0.2.55` latest Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` are both `0.2.55`; no `v0.2.55` git tag or GitHub Release was created.
 
-This release keeps native behavior, the public API, retained v0.2.50 evidence, immutable Action SHAs, and the pinned GitHub trusted-root policy unchanged. It extends the v0.2.54 execution-bound Action Pin provenance artifact with a GitHub-hosted OIDC attestation over its canonical `artifact-manifest.json` and a network-blocked verifier that cross-checks signer identity against the artifact's reproduced execution identity.
+This release keeps native behavior, the public API, historical v0.2.50 evidence, immutable Action SHAs, and the pinned GitHub trusted-root policy unchanged. It extends the v0.2.54 execution-bound Action Pin provenance artifact with a GitHub-hosted OIDC attestation over its canonical `artifact-manifest.json` and a network-blocked verifier that cross-checks signer identity against the artifact's reproduced execution identity.
 
 ### Goals
 
@@ -32,6 +32,16 @@ Manual [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-nati
 
 The provenance artifact ID is `8305522072`, GitHub digest `sha256:d09e9b5d579d6ada53caa6e3d012b6ad7d6665eab9fd8bfbb73c275ee88b2439`, and expiration `2026-10-12T08:59:46Z`. The separate attestation artifact ID is `8305522316`, GitHub digest `sha256:3ffcf711c0c3827636b6a6cfca9f83ee010fcc2f849933d69f4c51b7e0984f76`, and the same expiration. Downloaded evidence fixes attestation report SHA-256 `361a7f8357070c879f620b9db101cef114e82b9b785a5d1511daa0c6ff6c2cd8`, bundle SHA-256 `701fc32bac71bf310f30001b052183f567673ebf867829d53fcb6f8d88ae0e09`, and trusted-root SHA-256 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`. Blocked-network local replay reproduced `attestation-verification.json` byte-for-byte under UTC and Asia/Seoul. The exact downloaded provenance and attestation artifacts are committed as the default offline fixtures.
 
+### npm Publication and Registry Evidence
+
+Release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29` was clean, matched `origin/master`, passed the local release gates, and passed [CI run 29329243341](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29329243341), [Android Instrumentation run 29329243332](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29329243332), and [iOS Validation run 29329243325](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29329243325) before publication. npm authentication resolved to account `ggulbae`; v0.2.55 was absent and `latest` was v0.2.50 immediately before promotion. Two CLI calls stopped at npm's pre-write EOTP authentication gate and were confirmed to have made no registry write before the next action. One web-approved `npm publish --tag latest` then successfully published `react-native-image-compression-kit@0.2.55`; no manual dist-tag change or authentication file was created.
+
+Registry metadata reports `version=0.2.55`, `dist-tags.latest=0.2.55`, publish time `2026-07-14T12:41:56.173Z`, tarball `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.55.tgz`, integrity `sha512-942yS0LCt6Che8zP+ZGNCl7AKA/h4oMEYO4TT1u2F+JIDM0vC3X16y8zStHQE4gIVmYscH8h37fOw/c5RuJbpw==`, and shasum `525221309be1eda6fc2fdd80b5e2b9da13faf645`. `pnpm smoke:registry -- --version 0.2.55 --expect-tag latest --json --artifact-dir registry-validation` matched 51 files, 75,022-byte package size, and 321,480-byte unpacked size; README status, required/forbidden contents, integrity/shasum, and clean consumer install/typecheck passed. The report and stdout were byte-identical at SHA-256 `aebc75fef227d5c740f6decff008f6e8e5454b845367c58d8a0f5fe5ae3280cd`.
+
+Manual [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) passed for `version=0.2.55` and `expected_tag=latest` on source commit `194e9387406f71763bc0d617ece0d7d58e235e29`. [Attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248) binds `bundle-manifest.json` SHA-256 `45677e0204b46a3f388b5cdb5ac7cfa83269dd03479854c25d7ef203582fe2af`. The four-file provenance artifact ID is `8310985094` with GitHub digest `sha256:7463b03ff6294b5017d9b3cad05d4c3ea87b542398a5cb70f503cea148dca826`; the three-file attestation artifact ID is `8310985646` with GitHub digest `sha256:545c63da880d9d91f9ade1cf40ce36a366634c11ff524b87579e6b0fd6d8e28f`.
+
+The exact downloaded artifacts are retained under `evidence/npm/0.2.55/` with canonical aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`. Blocked-network release-evidence replay passed all `layout`, `index`, `files`, `provenance`, `attestation`, `identity`, and `timestamps` checks; stdout/report bytes matched and UTC/Asia-Seoul output matched. The historical `evidence/npm/0.2.50/` archive remains independently replayable.
+
 ### Included
 
 - `package.json` version bump to `0.2.55`, the offline `verify:action-pin-attestation` command, and the real-bundle `verify:action-pin-attestation-fixture` default gate.
@@ -40,7 +50,7 @@ The provenance artifact ID is `8305522072`, GitHub digest `sha256:d09e9b5d579d6a
 - Action Pin Review OIDC attestation, separate trust-material artifact, Step Summary evidence, and fail-closed enforcement.
 - Offline Vitest fixtures for success, wrong subject/repository/workflow/ref/source SHA, provenance manifest mismatch, bundle tampering, CLI policy, and atomic-write failure.
 - Canonical workflow lock updated for 30 full-SHA remote Action uses across five workflows; lock SHA-256 `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.
-- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the registry-independent v0.2.55 release and pre-promotion npm latest v0.2.50 state.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the published v0.2.55 npm latest state and retained post-publish provenance evidence.
 
 ### Not Included
 
