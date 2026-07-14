@@ -32,7 +32,7 @@ Version `0.2.50` is the GitHub artifact attestation and offline identity verific
 
 Version `0.2.49` was the previous unpublished Registry provenance bundle offline verification candidate. It atomically retained the exact tarball consumed by registry smoke with canonical report/stdout files and a checksum manifest, then verified the bundle without npm, GitHub, or other network access.
 
-Version `0.2.48` is published to npm as the `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`. It keeps Android/iOS runtime behavior and the public API unchanged. It extends the post-publish registry smoke with exact version/dist-tag agreement, real tarball README status, integrity/shasum, required/forbidden package contents, and clean consumer install/typecheck evidence in one stable canonical JSON report.
+Version `0.2.48` was the previous npm `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`. It keeps Android/iOS runtime behavior and the public API unchanged. It extends the post-publish registry smoke with exact version/dist-tag agreement, real tarball README status, integrity/shasum, required/forbidden package contents, and clean consumer install/typecheck evidence in one stable canonical JSON report.
 
 Version `0.2.47` was the previous npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`. It keeps Android and iOS runtime behavior unchanged, keeps AVIF output disabled, and turns the committed PASS replay fixture into an explicit local and CI quality gate. `validateIOSSmokePassPayload()` now enforces the exact capability-selected field order, `platform: 'ios'`, positive safe-integer `*ResultBytes` values, boolean WebP-output/AVIF-input flags, and duplicate-free capability-consistent unsupported format arrays. `validateIOSSmokePassReplayFixture()` applies that semantic contract in addition to the existing fixture schema, provenance, source-line, and SHA-256 checks. `scripts/refresh-ios-smoke-pass-replay.mjs` retains refresh and text-mode check behavior, adds source-log-free `--audit`, and emits stable machine-readable `schemaVersion`, `mode`, `status`, `artifactPath`, `differences`, and `error` fields through `--check --json` and `--audit --json`. Check and audit paths remain read-only and network-free. `pnpm verify` and the iOS Validation workflow now run the standalone audit, while Vitest pins payload-invalid, current, stale, noncanonical, missing, malformed, schema-invalid, flag-conflict, stdout/stderr, and no-write contracts.
 
@@ -70,13 +70,13 @@ pnpm fixtures:ios-pass-replay:audit -- --json
 
 Audit mode validates canonical JSON, fixture schema, provenance fields, the exact source-line SHA-256, and the capability-driven PASS payload contract owned by `scripts/ios-smoke-contract.mjs` and `scripts/ios-smoke-pass-replay-fixture.mjs`. Check additionally compares the artifact with a supplied local log and provenance. Check and audit modes perform no writes; refresh, check, and audit perform no GitHub or other network requests.
 
-Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.48`. The real 51-file registry tarball retained the registry-independent `Status: v0.2.48 release` package README, matched integrity `sha512-NBk5Gb56Wc/va1p3bTQ7PS93ihoTBE0Fdh8ekvhXt/fQQ2UWcH0xBaIIomybHUi1PnrCAuIFiAO4gm5AMvhO6g==` and shasum `dcc1b43534c6a9620d2704f692f335f28ff2f0d4`, contained no guarded stale-status snippets or development-only files, and passed clean consumer installation and public API typechecking. No git tag or GitHub Release was created as part of this npm-only promotion.
+Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.50`, published at `2026-07-14T06:05:27.963Z`. The real 51-file registry tarball retained the registry-independent `Status: v0.2.50 release` package README, matched integrity `sha512-FCIEFSpcbb3pUbk7jVWuQxke0+h77q3f2jAtK2C3GILlvi6X7MvjSLH0BBMqd94qHdeluFclW6Rft+SjpjK/rw==` and shasum `da8779a4fb67e52ef081302eec76aa12706691a2`, contained no guarded stale-status snippets or development-only files, and passed clean consumer installation and public API typechecking. The npm-only promotion used one successful `npm publish --tag latest`; no manual dist-tag change, git tag, or GitHub Release was created.
 
 Run the registry smoke with `--artifact-dir` to atomically preserve the exact validated tarball instead of downloading it again in the workflow:
 
 ```bash
 pnpm smoke:registry -- \
-  --version 0.2.48 \
+  --version 0.2.50 \
   --expect-tag latest \
   --json \
   --artifact-dir registry-validation
@@ -90,7 +90,7 @@ After downloading a Registry Validation artifact, verify it without npm, GitHub,
 pnpm verify:registry-provenance -- \
   --artifact-dir /path/to/registry-validation \
   --expect-package react-native-image-compression-kit \
-  --expect-version 0.2.48 \
+  --expect-version 0.2.50 \
   --expect-tag latest \
   --json
 ```
@@ -114,7 +114,7 @@ pnpm verify:registry-attestation -- \
 
 The attestation verifier calls the official GitHub CLI with `--bundle` and `--custom-trusted-root` while network proxies are forced to a closed local endpoint. It pins the trusted-root bytes to SHA-256 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`, requires GitHub's OIDC issuer and SLSA v1 predicate, rejects self-hosted runners, and then independently validates the canonical verifier JSON. Its fixed report fields are `schemaVersion`, `status`, `subject`, `subjectSha256`, `repository`, `signerWorkflow`, `sourceRef`, `sourceDigest`, `oidcIssuer`, `predicateType`, `verifiedTimestamps`, and `error`; verified timestamps are normalized to UTC ISO strings so report bytes are timezone-independent, and `--report-file` atomically writes exactly the stdout bytes. The existing `registry-provenance-<version>` artifact remains exactly four files. The separate `registry-provenance-attestation-<version>` artifact contains `attestation.jsonl`, `trusted-root.jsonl`, and `attestation-verification.json` so the evidence can be replayed without npm, GitHub, Sigstore, or any other network service.
 
-Successful [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) on implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d` attested manifest SHA-256 `eea6c859cac11a10d4f564957f49606ed9fb9814d37a9e4aabdbb8375285df53` as [attestation 35197903](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35197903). The exact four-file provenance artifact has GitHub digest `sha256:32697da5ffd12d237e2cedbdc94507f26ab58dcb40dec51ac1a45dfccc8f0a8b`; the separate three-file attestation artifact has GitHub digest `sha256:45b2d6cf85c4de2db0f58f7870bf3c2876c632bcc4e3165400e76dacc2a4851d`. Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `a89a481872f6cf543ba7b96ef4ba71d04fb15cd39429dfe3f47c175b496b643c` under both UTC and Asia/Seoul, while the Step Summary recorded successful provenance, online attestation, downloaded-bundle offline attestation, and pinned-root checks.
+Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0` attested manifest SHA-256 `0a152ce1989267ce5c2fa01096a5e0dc44200245e29843857b24c52d0b746773` as [attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998). The exact four-file `registry-provenance-0.2.50` artifact has GitHub digest `sha256:031302873239c74234179041e6b3f7ff8d6fe281351dfb93a3f5e4ed9573ec71`; the separate three-file `registry-provenance-attestation-0.2.50` artifact has GitHub digest `sha256:01a74cc10cb2c89e309d58ddf83f285ada1a3ceb3af70e78b8cd70dc6c627cea`. Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul, while the Step Summary recorded successful provenance, online attestation, downloaded-bundle offline attestation, and pinned-root checks.
 
 The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry, keeps `avif.output=false`, and leaves metadata preserve, target-size, and animated AVIF production semantics disabled.
 
@@ -784,11 +784,11 @@ pnpm smoke:consumer
 
 This command builds the package, creates a local tarball with `pnpm pack`, installs it into a separate temporary React Native consumer project, and typechecks public API imports from the packed package.
 
-For the published v0.2.48 npm release, create the exact-tarball provenance bundle and verify it offline:
+For the published v0.2.50 npm release, create the exact-tarball provenance bundle and verify it offline:
 
 ```bash
-pnpm smoke:registry -- --version 0.2.48 --expect-tag latest --json --artifact-dir registry-validation
-pnpm verify:registry-provenance -- --artifact-dir registry-validation --expect-package react-native-image-compression-kit --expect-version 0.2.48 --expect-tag latest --json
+pnpm smoke:registry -- --version 0.2.50 --expect-tag latest --json --artifact-dir registry-validation
+pnpm verify:registry-provenance -- --artifact-dir registry-validation --expect-package react-native-image-compression-kit --expect-version 0.2.50 --expect-tag latest --json
 ```
 
 The first command reads npm registry metadata, validates the published tarball and clean consumer, then atomically retains the exact validated bytes. The second command performs no network access, does not extract the tarball, and verifies canonical JSON, package/version/tag identity, all manifest digests, archive sizes, package contents, and README status. Neither command publishes to npm.

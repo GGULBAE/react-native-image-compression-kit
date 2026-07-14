@@ -371,7 +371,7 @@ function checkPackageMetadata() {
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
     readmeContents.includes('Version `0.2.50` is the GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.49` was the previous unpublished Registry provenance bundle offline verification candidate.'),
-    readmeContents.includes('Version `0.2.48` is published to npm as the `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
+    readmeContents.includes('Version `0.2.48` was the previous npm `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.47` was the previous npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('`validateIOSSmokePassPayload()` now enforces the exact capability-selected field order'),
     readmeContents.includes('`validateIOSSmokePassReplayFixture()` applies that semantic contract'),
@@ -388,12 +388,12 @@ function checkPackageMetadata() {
     readmeContents.includes('uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps'),
     readmeContents.includes('The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK'),
     readmeContents.includes("The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry"),
-    readmeContents.includes('Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.48`.'),
-    readmeContents.includes('The real 51-file registry tarball retained the registry-independent `Status: v0.2.48 release` package README'),
-    readmeContents.includes('No git tag or GitHub Release was created as part of this npm-only promotion.'),
-    readmeContents.includes('Successful [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) on implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d`'),
-    readmeContents.includes('[attestation 35197903](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35197903)'),
-    readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `a89a481872f6cf543ba7b96ef4ba71d04fb15cd39429dfe3f47c175b496b643c` under both UTC and Asia/Seoul'),
+    readmeContents.includes('Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.50`, published at `2026-07-14T06:05:27.963Z`.'),
+    readmeContents.includes('The real 51-file registry tarball retained the registry-independent `Status: v0.2.50 release` package README'),
+    readmeContents.includes('The npm-only promotion used one successful `npm publish --tag latest`; no manual dist-tag change, git tag, or GitHub Release was created.'),
+    readmeContents.includes('Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`'),
+    readmeContents.includes('[attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998)'),
+    readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul'),
     readmeContents.includes('The package metadata is `0.2.50` for the GitHub artifact attestation and offline identity verification release.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
@@ -897,15 +897,16 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.50',
-    'Status: release-ready GitHub artifact attestation and offline identity verification release. npm `version` and `dist-tags.latest` remain `0.2.48` until the separately gated one-time `0.2.50` promotion; no `v0.2.50` git tag or GitHub Release is planned.',
+    'Status: published to npm as the `0.2.50` latest GitHub artifact attestation and offline identity verification release. npm `version` and `dist-tags.latest` are both `0.2.50`; no `v0.2.50` git tag or GitHub Release was created.',
     '`pnpm verify:registry-attestation -- --manifest registry-validation/bundle-manifest.json --attestation-bundle registry-attestation/attestation.jsonl --trusted-root registry-attestation/trusted-root.jsonl --expect-repository GGULBAE/react-native-image-compression-kit --expect-workflow GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml --expect-ref refs/heads/master --expect-head-sha <workflow-head-sha> --json --report-file registry-attestation/attestation-verification.json`',
     'The ordered verifier result fields are `schemaVersion`, `status`, `subject`, `subjectSha256`, `repository`, `signerWorkflow`, `sourceRef`, `sourceDigest`, `oidcIssuer`, `predicateType`, `verifiedTimestamps`, and `error`.',
     'Official GitHub CLI offline verification requires both `--bundle` and `--custom-trusted-root`',
     'The original `registry-provenance-<version>` artifact remains exactly `registry-provenance.json`, `stdout.json`, `package.tgz`, and `bundle-manifest.json`.',
-    'Implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d` passed GitHub Actions',
-    'Manual [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) passed for `version=0.2.48` and `expected_tag=latest`',
-    '[Attestation 35197903](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35197903) binds `bundle-manifest.json` SHA-256 `eea6c859cac11a10d4f564957f49606ed9fb9814d37a9e4aabdbb8375285df53`',
-    'the separate three-file `registry-provenance-attestation-0.2.48` artifact has GitHub digest `sha256:45b2d6cf85c4de2db0f58f7870bf3c2876c632bcc4e3165400e76dacc2a4851d`',
+    'Release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0` passed GitHub Actions',
+    'npm authentication was confirmed as `ggulbae`, then `npm publish --tag latest` was executed exactly once and published `react-native-image-compression-kit@0.2.50`.',
+    'Manual [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) passed for `version=0.2.50` and `expected_tag=latest`',
+    '[Attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998) binds `bundle-manifest.json` SHA-256 `0a152ce1989267ce5c2fa01096a5e0dc44200245e29843857b24c52d0b746773`',
+    'the separate three-file `registry-provenance-attestation-0.2.50` artifact has GitHub digest `sha256:01a74cc10cb2c89e309d58ddf83f285ada1a3ceb3af70e78b8cd70dc6c627cea`',
     'Local offline replay reproduced `attestation-verification.json` byte-for-byte',
     '## v0.2.49',
     'Status: unpublished Registry provenance bundle offline verification candidate. npm `version` and `dist-tags.latest` remain `0.2.48`; no npm publish, dist-tag change, `v0.2.49` git tag, or GitHub Release is part of this candidate.',
@@ -2217,7 +2218,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.50 release-ready attestation notes and previous release notes are current',
+    label: 'v0.2.50 published attestation notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[

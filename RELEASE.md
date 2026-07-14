@@ -2,7 +2,7 @@
 
 ## v0.2.50
 
-Status: release-ready GitHub artifact attestation and offline identity verification release. npm `version` and `dist-tags.latest` remain `0.2.48` until the separately gated one-time `0.2.50` promotion; no `v0.2.50` git tag or GitHub Release is planned.
+Status: published to npm as the `0.2.50` latest GitHub artifact attestation and offline identity verification release. npm `version` and `dist-tags.latest` are both `0.2.50`; no `v0.2.50` git tag or GitHub Release was created.
 
 This release keeps native behavior, the public API, the registry provenance report schema, and the exact four-file v0.2.49 provenance bundle unchanged. It binds the canonical `bundle-manifest.json` to GitHub's OIDC-issued artifact attestation and adds a deterministic verifier for the attested subject digest and workflow identity without registry or network access.
 
@@ -31,11 +31,12 @@ Official GitHub CLI offline verification requires both `--bundle` and `--custom-
 - Fixed canonical success/failure report schema and atomic report-file replacement.
 - Offline Vitest fixtures for identity, subject, issuer, predicate, runner, timestamp, malformed JSON, multi-subject, trusted-root, GitHub CLI failure, and atomic-write contracts.
 - Registry Validation permissions, official attestation action, online policy check, downloaded trust material, offline verifier gate, separate artifact, and Step Summary identity evidence.
-- README, release notes, Android verification doctor checks, and Vitest expectations aligned to the registry-independent v0.2.50 release and the pre-promotion npm latest v0.2.48 state.
+- README, release notes, Android verification doctor checks, and Vitest expectations aligned to the registry-independent v0.2.50 tarball wording and final npm latest v0.2.50 evidence.
 
 ### Not Included
 
-- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- Additional npm publish attempts, authentication storage, or manual dist-tag changes outside the completed single `latest` promotion.
+- Git tags or GitHub Releases.
 - Changes to the existing registry provenance report or four-file bundle schema.
 - Registry or GitHub access from default `pnpm verify` or default CI.
 - Native/API behavior changes or AVIF output implementation.
@@ -48,21 +49,24 @@ Official GitHub CLI offline verification requires both `--bundle` and `--custom-
 - `pnpm pack --dry-run`
 - `pnpm release:dry-run`
 - Network-free offline success/failure Vitest fixtures.
-- Registry Validation dispatched with `version=0.2.48` and `expected_tag=latest`.
+- Registry Validation dispatched with `version=0.2.50` and `expected_tag=latest`.
 - Downloaded provenance and attestation artifacts verified with network access disabled.
 - Attestation subject SHA-256 equal to the downloaded canonical manifest SHA-256.
 - Canonical verifier stdout and report-file byte equality.
-- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed release-ready commit.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed release-ready and post-publish evidence commits.
 
-### Pre-publish Validation Result
+### Promotion Result
 
-- Implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d` passed GitHub Actions [CI](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762909), [Android Instrumentation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762893), and [iOS Validation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762973).
-- Manual [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) passed for `version=0.2.48` and `expected_tag=latest`; registry validation, manifest attestation, online and downloaded-bundle offline attestation verification, Step Summary generation, and both artifact uploads completed successfully.
-- [Attestation 35197903](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35197903) binds `bundle-manifest.json` SHA-256 `eea6c859cac11a10d4f564957f49606ed9fb9814d37a9e4aabdbb8375285df53` to repository `GGULBAE/react-native-image-compression-kit`, signer workflow `GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml`, ref `refs/heads/master`, source digest `5217c91555ac30bd3b6a2882f49600c386f8271d`, GitHub Actions OIDC, SLSA v1, and Tlog timestamp `2026-07-14T05:20:06.000Z`.
-- The exact four-file `registry-provenance-0.2.48` artifact has GitHub digest `sha256:32697da5ffd12d237e2cedbdc94507f26ab58dcb40dec51ac1a45dfccc8f0a8b`; the separate three-file `registry-provenance-attestation-0.2.48` artifact has GitHub digest `sha256:45b2d6cf85c4de2db0f58f7870bf3c2876c632bcc4e3165400e76dacc2a4851d`.
-- Downloaded provenance SHA-256 values are `eea6c859cac11a10d4f564957f49606ed9fb9814d37a9e4aabdbb8375285df53` for the manifest, `ec118e9c9aae3ecd783e10289fa1e9c52cb4dac73f298b86946d973fa0a2a128` for the tarball, and `cd142b45513e2d27cdfc39b75317df2f447df3f6ac1f99ec59ef9b0e3fa73ba3` for both report and stdout. Attestation artifact SHA-256 values are `2b7919495063cfe7db4b8121ce2e54484408bf8386df334797c65a07ebd2b319` for `attestation.jsonl`, the pinned `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c` for `trusted-root.jsonl`, and `a89a481872f6cf543ba7b96ef4ba71d04fb15cd39429dfe3f47c175b496b643c` for `attestation-verification.json`.
+- Release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0` passed GitHub Actions [CI](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29309102114), [Android Instrumentation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29309102109), and [iOS Validation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29309102117).
+- npm authentication was confirmed as `ggulbae`, then `npm publish --tag latest` was executed exactly once and published `react-native-image-compression-kit@0.2.50`.
+- Registry metadata reports `version=0.2.50`, `dist-tags.latest=0.2.50`, publish time `2026-07-14T06:05:27.963Z`, tarball `https://registry.npmjs.org/react-native-image-compression-kit/-/react-native-image-compression-kit-0.2.50.tgz`, integrity `sha512-FCIEFSpcbb3pUbk7jVWuQxke0+h77q3f2jAtK2C3GILlvi6X7MvjSLH0BBMqd94qHdeluFclW6Rft+SjpjK/rw==`, and shasum `da8779a4fb67e52ef081302eec76aa12706691a2`.
+- `pnpm smoke:registry -- --version 0.2.50 --expect-tag latest --json --artifact-dir registry-validation` matched 51 files, 68,615-byte package size, and 298,905-byte unpacked size; README status, required/forbidden contents, integrity/shasum, and clean consumer install/typecheck passed. The captured stdout, `stdout.json`, and `registry-provenance.json` were byte-identical at SHA-256 `1c6d7e6478fcb910653e8f607fb2bc5babdccc4a0c2e361d2c5a4a5d173d68b3`.
+- Manual [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) passed for `version=0.2.50` and `expected_tag=latest`; registry validation, manifest attestation, online and downloaded-bundle offline attestation verification, Step Summary generation, and both artifact uploads completed successfully.
+- [Attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998) binds `bundle-manifest.json` SHA-256 `0a152ce1989267ce5c2fa01096a5e0dc44200245e29843857b24c52d0b746773` to repository `GGULBAE/react-native-image-compression-kit`, signer workflow `GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml`, ref `refs/heads/master`, source digest `2b198c5f6125de6ad5bae76fc835ff5b935984f0`, GitHub Actions OIDC, SLSA v1, and Tlog timestamp `2026-07-14T06:07:06.000Z`.
+- The exact four-file `registry-provenance-0.2.50` artifact has GitHub digest `sha256:031302873239c74234179041e6b3f7ff8d6fe281351dfb93a3f5e4ed9573ec71`; the separate three-file `registry-provenance-attestation-0.2.50` artifact has GitHub digest `sha256:01a74cc10cb2c89e309d58ddf83f285ada1a3ceb3af70e78b8cd70dc6c627cea`.
+- Downloaded provenance SHA-256 values are `0a152ce1989267ce5c2fa01096a5e0dc44200245e29843857b24c52d0b746773` for the manifest, `e737b19ba66a129abefc717186c6cb559fabb01db863f9ca76b90ece487e5033` for the tarball, and `1c6d7e6478fcb910653e8f607fb2bc5babdccc4a0c2e361d2c5a4a5d173d68b3` for both report and stdout. Attestation artifact SHA-256 values are `59eb3fd15c7392db7c93fdb69963a45778d2de54851bdc7bda951945e201d6a4` for `attestation.jsonl`, the pinned `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c` for `trusted-root.jsonl`, and `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` for `attestation-verification.json`.
 - Local offline replay reproduced `attestation-verification.json` byte-for-byte from the downloaded manifest, attestation bundle, and trusted root. Report-file and stdout matched, UTC and Asia/Seoul runs matched, the attestation subject equaled the manifest digest, and provenance verification reported all six checks as `true` with network proxies forced closed.
-- At this pre-publish checkpoint, npm `version` and `dist-tags.latest` remained `0.2.48`, and `react-native-image-compression-kit@0.2.50` did not exist. No publish, dist-tag change, git tag, GitHub Release, npm login, token, OTP, or authentication file was created during candidate validation.
+- No additional publish attempt, manual dist-tag change, git tag, GitHub Release, npm token, OTP, `.npmrc`, or authentication file was stored or created in the repository.
 
 ## v0.2.49
 
