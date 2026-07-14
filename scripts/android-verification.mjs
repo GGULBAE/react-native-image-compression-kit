@@ -19,6 +19,8 @@ const REQUIRED_FILES = [
   '.dockerignore',
   '.github/workflows/ci.yml',
   '.github/workflows/ios-validation.yml',
+  '.github/actions-lock.json',
+  '.github/dependabot.yml',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputHelper.kt',
@@ -53,8 +55,11 @@ const REQUIRED_FILES = [
   'scripts/release-dry-run.mjs',
   'scripts/release-evidence-core.mjs',
   'scripts/verify-release-evidence.mjs',
+  'scripts/workflow-supply-chain-core.mjs',
+  'scripts/verify-workflow-supply-chain.mjs',
   'test/releaseDryRun.test.mjs',
   'test/releaseEvidence.test.mjs',
+  'test/workflowSupplyChain.test.mjs',
   'evidence/npm/0.2.50/release-evidence-index.json',
   'evidence/npm/0.2.50/provenance/bundle-manifest.json',
   'evidence/npm/0.2.50/provenance/package.tgz',
@@ -108,6 +113,7 @@ function runDoctor() {
     checkConsumerSmokeTestEnvironment(),
     checkRegistrySmokeTestEnvironment(),
     checkReleaseEvidenceArchive(),
+    checkWorkflowSupplyChain(),
     checkReleaseDryRunChecklist(),
     checkReleaseNotes(),
     checkSecurityPolicy(),
@@ -366,7 +372,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.51',
+    packageJson.version === '0.2.52',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -381,7 +387,8 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.51` is the unpublished expiration-independent release evidence archive and offline replay gate candidate.'),
+    readmeContents.includes('Version `0.2.52` is the unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate.'),
+    readmeContents.includes('Version `0.2.51` was the previous unpublished expiration-independent release evidence archive and offline replay gate candidate.'),
     readmeContents.includes('Version `0.2.50` is the current npm `latest` GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.49` was the previous unpublished Registry provenance bundle offline verification candidate.'),
     readmeContents.includes('Version `0.2.48` was the previous npm `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
@@ -407,8 +414,11 @@ function checkPackageMetadata() {
     readmeContents.includes('Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`'),
     readmeContents.includes('[attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998)'),
     readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul'),
-    readmeContents.includes('The repository package metadata is `0.2.51` for the unpublished expiration-independent release evidence archive and offline replay gate candidate. npm `latest` remains `0.2.50`.'),
+    readmeContents.includes('The repository package metadata is `0.2.52` for the unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate. npm `latest` remains `0.2.50`.'),
     readmeContents.includes('pnpm verify:release-evidence -- --version 0.2.50'),
+    readmeContents.includes('pnpm verify:workflow-supply-chain -- --json'),
+    readmeContents.includes('All 23 remote `uses:` declarations across the four GitHub workflow files are pinned to lowercase 40-character commit SHAs.'),
+    readmeContents.includes('The committed lock SHA-256 is `a161b437574884fe7af95f102ef0f5d23ae75851e219f00f0aebc2437ae695bb`.'),
     readmeContents.includes('aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`'),
     readmeContents.includes('The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
@@ -554,10 +564,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README are aligned for the v0.2.51 evidence candidate',
+    label: 'npm package metadata and README are aligned for the v0.2.52 workflow supply-chain candidate',
     detail: checks.every(Boolean)
       ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
-      : 'expected v0.2.51 candidate metadata, npm latest v0.2.50 evidence, or package exclusion guidance is missing/mismatched',
+      : 'expected v0.2.52 candidate metadata, immutable Action guidance, npm latest v0.2.50 evidence, or package exclusions are missing/mismatched',
   };
 }
 
@@ -690,7 +700,7 @@ function checkPackageFiles() {
     'SECURITY.md',
     'LICENSE',
   ];
-  const forbiddenEntries = ['android', 'android/src', 'scripts', 'evidence'];
+  const forbiddenEntries = ['android', 'android/src', '.github', 'scripts', 'evidence'];
   const hasRequiredEntries = requiredEntries.every((entry) => files.includes(entry));
   const excludesDevelopmentEntries = forbiddenEntries.every((entry) => !files.includes(entry));
 
@@ -699,8 +709,8 @@ function checkPackageFiles() {
     label: 'npm package file globs avoid development-only files',
     detail:
       hasRequiredEntries && excludesDevelopmentEntries
-        ? 'publish entries include runtime native source, JS build output, Codegen source, README, SECURITY, and LICENSE without Android tests, fixtures, repo scripts, or release evidence'
-        : 'expected package.json files to include runtime source and docs, without android, android/src, scripts, or evidence',
+        ? 'publish entries include runtime native source, JS build output, Codegen source, README, SECURITY, and LICENSE without workflows, locks, Android tests, fixtures, repo scripts, or release evidence'
+        : 'expected package.json files to include runtime source and docs, without android, android/src, .github, scripts, or evidence',
   };
 }
 
@@ -794,7 +804,7 @@ function checkRegistrySmokeTestEnvironment() {
     [registryWorkflowContents, 'default: "0.2.50"'],
     [registryWorkflowContents, 'run: pnpm install --frozen-lockfile'],
     [registryWorkflowContents, 'GITHUB_STEP_SUMMARY'],
-    [registryWorkflowContents, 'actions/upload-artifact@v6'],
+    [registryWorkflowContents, 'actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6'],
     [registryWorkflowContents, '--artifact-dir registry-validation'],
     [registryWorkflowContents, 'verify:registry-provenance'],
     [registryWorkflowContents, 'manifest.reportSha256'],
@@ -803,7 +813,7 @@ function checkRegistrySmokeTestEnvironment() {
     [registryWorkflowContents, 'verification.status'],
     [registryWorkflowContents, 'id-token: write'],
     [registryWorkflowContents, 'attestations: write'],
-    [registryWorkflowContents, 'actions/attest@v4'],
+    [registryWorkflowContents, 'actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4'],
     [registryWorkflowContents, 'GH_TOKEN: ${{ github.token }}'],
     [registryWorkflowContents, 'gh attestation trusted-root'],
     [registryWorkflowContents, 'verify:registry-attestation'],
@@ -922,6 +932,134 @@ function checkReleaseEvidenceArchive() {
   };
 }
 
+function checkWorkflowSupplyChain() {
+  const packageJson = readJson('package.json');
+  const lock = readJson('.github/actions-lock.json');
+  const lockBytes = readFileSync(path.join(ROOT, '.github/actions-lock.json'));
+  const dependabotContents = readText('.github/dependabot.yml');
+  const coreContents = readText('scripts/workflow-supply-chain-core.mjs');
+  const cliContents = readText('scripts/verify-workflow-supply-chain.mjs');
+  const testContents = readText('test/workflowSupplyChain.test.mjs');
+  const readmeContents = readText('README.md');
+  const releaseContents = readText('RELEASE.md');
+  const securityContents = readText('SECURITY.md');
+  const workflowPaths = [
+    '.github/workflows/android-instrumentation.yml',
+    '.github/workflows/ci.yml',
+    '.github/workflows/ios-validation.yml',
+    '.github/workflows/registry-validation.yml',
+  ];
+  const workflowContents = workflowPaths.map((workflow) => readText(workflow));
+  const joinedWorkflows = workflowContents.join('\n');
+  const actionLines = workflowContents.flatMap((contents) =>
+    contents.split(/\r?\n/).filter((line) => /^\s*uses\s*:/.test(line))
+  );
+  const pinnedLine =
+    /^\s*uses\s*:\s*[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*@[0-9a-f]{40}\s+#\s+v\d+(?:\.\d+){0,2}(?:-[0-9A-Za-z.-]+)?\s*$/;
+  const expectedPins = [
+    ['actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7', 4],
+    ['actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5', 2],
+    ['android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4', 2],
+    ['pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6', 4],
+    ['actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6', 4],
+    ['gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6', 2],
+    ['reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2', 1],
+    ['actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6', 3],
+    ['actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4', 1],
+  ];
+  const expectedSnippets = [
+    [coreContents, 'WORKFLOW_ACTION_LOCK_FIELDS'],
+    [coreContents, 'WORKFLOW_SUPPLY_CHAIN_REPORT_FIELDS'],
+    [coreContents, 'parseWorkflowActionUsages'],
+    [coreContents, 'createWorkflowActionLock'],
+    [coreContents, 'verifyWorkflowSupplyChain'],
+    [coreContents, 'writeWorkflowSupplyChainReportAtomic'],
+    [cliContents, "'--workflow-dir': 'workflowDir'"],
+    [cliContents, "'--lock-file': 'lockFile'"],
+    [cliContents, "'--dependabot-file': 'dependabotFile'"],
+    [cliContents, "'--report-file': 'reportFile'"],
+    [testContents, 'rejects mutable refs and short commit SHAs'],
+    [testContents, 'rejects missing, additional, duplicate, and digest-drift lock entries'],
+    [testContents, 'rejects one Action using inconsistent SHAs across workflows'],
+    [testContents, 'rejects missing and non-release version comments'],
+    [testContents, 'rejects missing or drifted Dependabot github-actions configuration'],
+    [testContents, 'preserves an existing report and removes the temporary file on atomic failure'],
+    [readmeContents, '### Immutable workflow Action supply chain'],
+    [readmeContents, 'pnpm verify:workflow-supply-chain -- --json'],
+    [readmeContents, 'The committed lock SHA-256 is `a161b437574884fe7af95f102ef0f5d23ae75851e219f00f0aebc2437ae695bb`.'],
+    [releaseContents, '## v0.2.52'],
+    [releaseContents, '### Immutable Action Contract'],
+    [securityContents, '## GitHub Actions Supply Chain'],
+    [securityContents, 'pnpm verify:workflow-supply-chain -- --json'],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => !contents.includes(snippet))
+    .map(([, snippet]) => snippet);
+  const pinsOk =
+    actionLines.length === 23 &&
+    actionLines.every((line) => pinnedLine.test(line)) &&
+    expectedPins.every(
+      ([pin, count]) => joinedWorkflows.split(pin).length - 1 === count
+    );
+  const lockOk =
+    lock.schemaVersion === 1 &&
+    lock.status === 'passed' &&
+    lock.error === null &&
+    lock.workflows?.length === 4 &&
+    lock.actions?.length === 9 &&
+    lock.actions?.reduce(
+      (total, action) =>
+        total + action.usages.reduce((sum, usage) => sum + usage.count, 0),
+      0
+    ) === 23 &&
+    createHash('sha256').update(lockBytes).digest('hex') ===
+      'a161b437574884fe7af95f102ef0f5d23ae75851e219f00f0aebc2437ae695bb';
+  const scriptsOk =
+    packageJson.scripts?.['verify:workflow-supply-chain'] ===
+      'node scripts/verify-workflow-supply-chain.mjs' &&
+    packageJson.scripts?.verify?.includes(
+      'pnpm verify:workflow-supply-chain -- --json'
+    );
+  const dependabotOk =
+    dependabotContents ===
+    'version: 2\nupdates:\n  - package-ecosystem: "github-actions"\n    directory: "/"\n    schedule:\n      interval: "weekly"\n';
+  const noNetworkPaths = [coreContents, cliContents].every(
+    (contents) =>
+      !contents.includes('node:child_process') &&
+      !contents.includes('node:http') &&
+      !contents.includes('node:https') &&
+      !contents.includes('fetch(') &&
+      !contents.includes('gh api')
+  );
+  const packageExcludesRepositoryFiles = !(
+    packageJson.files ?? []
+  ).some((entry) => ['.github', 'scripts', 'test', 'evidence'].includes(entry));
+  const ok =
+    pinsOk &&
+    lockOk &&
+    scriptsOk &&
+    dependabotOk &&
+    noNetworkPaths &&
+    packageExcludesRepositoryFiles &&
+    missing.length === 0;
+
+  return {
+    ok,
+    label: 'GitHub workflows use immutable Action pins and a canonical offline lock',
+    detail: ok
+      ? 'four workflows, nine Actions, 23 full-SHA uses, release comments, canonical lock, weekly Dependabot config, offline fixtures, default gate, and npm exclusions are aligned'
+      : `workflow supply-chain contract mismatch: ${[
+          ...missing,
+          ...(pinsOk ? [] : ['full-SHA workflow pins and version comments']),
+          ...(lockOk ? [] : ['canonical Action lock']),
+          ...(scriptsOk ? [] : ['package workflow supply-chain scripts']),
+          ...(dependabotOk ? [] : ['Dependabot github-actions config']),
+          ...(noNetworkPaths ? [] : ['offline-only verifier boundary']),
+          ...(packageExcludesRepositoryFiles ? [] : ['npm package exclusions']),
+        ].join(' | ')}`,
+  };
+}
+
 function checkReleaseDryRunChecklist() {
   const packageJson = readJson('package.json');
   const releaseScriptContents = readText('scripts/release-dry-run.mjs');
@@ -989,6 +1127,13 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.52',
+    'Status: unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.52` git tag, or GitHub Release is part of this candidate.',
+    '### Immutable Action Contract',
+    'The four files under `.github/workflows/` contain 23 remote Action uses for nine unique Actions.',
+    'The committed lock SHA-256 is `a161b437574884fe7af95f102ef0f5d23ae75851e219f00f0aebc2437ae695bb`.',
+    '`pnpm verify:workflow-supply-chain -- --json`',
+    'Weekly Dependabot GitHub Actions configuration.',
     '## v0.2.51',
     'Status: unpublished expiration-independent release evidence archive and offline replay gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.51` git tag, or GitHub Release is part of this candidate.',
     '### Repository-owned Evidence Contract',
@@ -2299,6 +2444,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
+    'The v0.2.52 immutable GitHub Actions pin and workflow supply-chain gate candidate notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.51 expiration-independent release evidence archive and offline replay gate candidate notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.50 GitHub artifact attestation and offline identity verification release notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.49 Registry provenance bundle offline verification candidate notes are in [RELEASE.md](RELEASE.md).',
@@ -2315,18 +2461,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.51' && missing.length === 0;
+  const ok = packageJson.version === '0.2.52' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.51 release evidence candidate and previous release notes are current',
+    label: 'v0.2.52 workflow supply-chain candidate and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.51'
+          ...(packageJson.version === '0.2.52'
             ? []
-            : ['package.json version 0.2.51']),
+            : ['package.json version 0.2.52']),
         ].join(' | ')}`,
   };
 }
@@ -2343,6 +2489,11 @@ function checkSecurityPolicy() {
     [securityContents, '`preinstall`, `install`, `postinstall`, `prepare`'],
     [securityContents, 'Development-only scripts, tests,'],
     [securityContents, 'fixtures, example apps, build directories, credentials, `.npmrc`, `.env*`, keys,'],
+    [securityContents, '## GitHub Actions Supply Chain'],
+    [securityContents, 'Every remote Action under `.github/workflows/` must use a lowercase full'],
+    [securityContents, 'pnpm verify:workflow-supply-chain -- --json'],
+    [securityContents, 'Weekly Dependabot `github-actions` updates are review inputs'],
+    [securityContents, 'repository-only and outside the npm package'],
     [securityContents, 'pnpm release:dry-run'],
     [securityContents, '## Release Evidence Retention'],
     [securityContents, 'pnpm verify:release-evidence -- --version 0.2.50'],
@@ -2386,14 +2537,20 @@ function checkGitHubActionRuntimeVersions() {
   const instrumentationContents = readText('.github/workflows/android-instrumentation.yml');
   const readmeContents = readText('README.md');
   const expectedWorkflowSnippets = [
+    'uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7',
+    'uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5',
+    'uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4',
+    'uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6',
+    'uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6',
+    'uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6',
+  ];
+  const deprecatedWorkflowSnippets = [
     'uses: actions/checkout@v7',
     'uses: actions/setup-java@v5',
     'uses: android-actions/setup-android@v4',
     'uses: pnpm/action-setup@v6',
     'uses: actions/setup-node@v6',
     'uses: gradle/actions/setup-gradle@v6',
-  ];
-  const deprecatedWorkflowSnippets = [
     'uses: actions/checkout@v4',
     'uses: actions/setup-java@v4',
     'uses: android-actions/setup-android@v3',
@@ -2427,10 +2584,10 @@ function checkGitHubActionRuntimeVersions() {
 
   return {
     ok: missing.length === 0 && deprecated.length === 0,
-    label: 'GitHub Actions use Node 24 runtime-compatible action majors',
+    label: 'GitHub Actions use immutable Node 24-compatible Action pins',
     detail:
       missing.length === 0 && deprecated.length === 0
-        ? 'CI and Android instrumentation workflows avoid action majors that target the deprecated Node 20 runtime'
+        ? 'CI and Android instrumentation use full commit SHAs with reviewed Node 24-compatible release comments'
         : `missing or deprecated snippets: ${[...missing, ...deprecated].join(' | ')}`,
   };
 }
@@ -3001,7 +3158,7 @@ function checkIOSHostAppValidation() {
     'fixtures:ios-pass-replay:audit':
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit',
     verify:
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm android:doctor',
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm android:doctor',
   };
   const expectedSnippets = [
     [examplePackageJson, '@react-native-community/cli-platform-ios'],
@@ -3133,7 +3290,7 @@ function checkIOSHostAppValidation() {
     [workflowContents, 'node scripts/ios-validation.mjs summarize-smoke-log ios-smoke-diagnostics/ios-smoke.log'],
     [workflowContents, 'tee ios-smoke-diagnostics/ios-smoke-summary.md'],
     [workflowContents, 'if: failure()'],
-    [workflowContents, 'uses: actions/upload-artifact@v6'],
+    [workflowContents, 'uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6'],
     [workflowContents, 'name: ios-smoke-diagnostics'],
     [workflowContents, 'path: ios-smoke-diagnostics'],
     [validationScriptContents, "from './ios-smoke-contract.mjs'"],
@@ -3538,7 +3695,7 @@ function checkHeicHeifInstrumentationValidation() {
     workflowContents.includes('name: Android Instrumentation'),
     workflowContents.includes('HEIC/HEIF/AVIF emulator validation'),
     workflowContents.includes('Enable KVM group permissions'),
-    workflowContents.includes('reactivecircus/android-emulator-runner@v2'),
+    workflowContents.includes('reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2'),
     workflowContents.includes('api-level: 35'),
     workflowContents.includes('target: google_apis'),
     workflowContents.includes('emulator-boot-timeout: 1200'),

@@ -1,5 +1,74 @@
 # Release Notes
 
+## v0.2.52
+
+Status: unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.52` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, retained v0.2.50 evidence, registry/attestation schemas, and trusted-root policy unchanged. It removes mutable third-party Action refs from every workflow and makes the exact workflow-to-Action mapping an offline default verification gate.
+
+### Goals
+
+- Pin every remote workflow `uses:` target to one lowercase 40-character commit SHA.
+- Retain a reviewed release tag comment beside every immutable pin.
+- Store all workflows, Actions, repositories, versions, SHAs, and exact per-workflow occurrence counts in one canonical lock.
+- Reject mutable refs, short SHAs, missing comments, cross-workflow pin disagreement, and any missing, additional, duplicate, or changed lock record.
+- Keep GitHub Actions dependency updates visible through weekly Dependabot checks without allowing verification to pass until workflow pins and lock bytes agree.
+- Run the verifier from default `pnpm verify` without GitHub, tag resolution, or other network access.
+
+### Immutable Action Contract
+
+The four files under `.github/workflows/` contain 23 remote Action uses for nine unique Actions. Their reviewed release pins are:
+
+- `actions/checkout` `v7` at `9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0`
+- `actions/setup-java` `v5` at `0f481fcb613427c0f801b606911222b5b6f3083a`
+- `android-actions/setup-android` `v4` at `40fd30fb8d7440372e1316f5d1809ec01dcd3699`
+- `pnpm/action-setup` `v6` at `0ebf47130e4866e96fce0953f49152a61190b271`
+- `actions/setup-node` `v6` at `249970729cb0ef3589644e2896645e5dc5ba9c38`
+- `gradle/actions/setup-gradle` `v6` at `3f131e8634966bd73d06cc69884922b02e6faf92`
+- `reactivecircus/android-emulator-runner` `v2` at `a421e43855164a8197daf9d8d40fe71c6996bb0d`
+- `actions/upload-artifact` `v6` at `b7c566a772e6b6bfb58ed0dc250532a479d7789f`
+- `actions/attest` `v4` at `a1948c3f048ba23858d222213b7c278aabede763`
+
+Each workflow declaration uses `owner/repository[/action]@<full-sha> # <release-tag>`. `.github/actions-lock.json` is canonical one-line JSON with ordered `schemaVersion`, `status`, `workflows`, `actions`, and `error` fields. Action fields are `action`, `repository`, `version`, `sha`, and `usages`; usage fields are `workflow` and `count`. The committed lock SHA-256 is `a161b437574884fe7af95f102ef0f5d23ae75851e219f00f0aebc2437ae695bb`.
+
+`pnpm verify:workflow-supply-chain -- --json` scans every committed workflow YAML file, validates every remote use and release comment, builds the expected lock entirely in memory, and requires exact semantic and canonical-byte agreement with `.github/actions-lock.json`. The verifier neither calls GitHub nor resolves or updates refs.
+
+The ordered report fields are `schemaVersion`, `status`, `lockFile`, `workflowCount`, `actionCount`, `usageCount`, `lockSha256`, `checks`, and `error`. Ordered checks are `workflows`, `pins`, `comments`, `consistency`, `lock`, and `dependabot`. `--report-file` uses same-directory temporary creation plus atomic rename and writes bytes identical to stdout.
+
+`.github/dependabot.yml` enables weekly `github-actions` version updates from repository root. Dependabot may propose a new immutable SHA and tag comment, but the PR remains red until the reviewed workflow occurrences and canonical lock are updated together.
+
+### Included
+
+- `package.json` version bump to `0.2.52`, `verify:workflow-supply-chain`, and the new default offline gate in `pnpm verify`.
+- Full commit SHA pins and reviewable release-tag comments for all remote workflow Actions.
+- Canonical workflow Action lock with exact usage counts and SHA-256.
+- Pure workflow parsing/validation separated from the CLI and report writer.
+- Offline Vitest fixtures for success, CLI/report byte parity, mutable refs, short SHAs, missing/additional/duplicate/digest-drift lock entries, cross-workflow inconsistency, release-comment drift, Dependabot drift, and atomic-write failure.
+- Weekly Dependabot GitHub Actions configuration.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the v0.2.52 candidate and npm latest v0.2.50.
+
+### Not Included
+
+- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- Native/API behavior changes or AVIF output implementation.
+- Network-based Action ref resolution or automatic pin updates.
+- Changes to the retained v0.2.50 evidence/index or existing report schemas.
+- Trusted-root update or rotation.
+- Credentials, tokens, OTPs, `.npmrc`, or authentication files.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- `pnpm verify:workflow-supply-chain -- --json --report-file <path>` with all network proxies blocked and byte-identical stdout/report.
+- Mutable ref, short SHA, lock drift, inconsistent SHA, comment drift, Dependabot drift, and atomic-write offline fixtures.
+- Existing `pnpm verify:release-evidence -- --version 0.2.50` regression replay.
+- npm pack inspection proving `.github/`, lock, Dependabot config, repository scripts/tests, and evidence are excluded.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed candidate commit.
+
 ## v0.2.51
 
 Status: unpublished expiration-independent release evidence archive and offline replay gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.51` git tag, or GitHub Release is part of this candidate.

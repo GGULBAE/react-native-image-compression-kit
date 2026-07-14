@@ -42,7 +42,7 @@ function extractKotlinArray(source: string, arrayName: string): string {
 }
 
 describe('Android verification scripts', () => {
-  it('declares the v0.2.51 candidate and current npm metadata', () => {
+  it('declares the v0.2.52 candidate and current npm metadata', () => {
     const readmeSource = readProjectFile('README.md');
     const staleReadmeSnippets = [
       'Status: v0.2.8 candidate',
@@ -194,7 +194,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.51');
+    expect(packageJson.version).toBe('0.2.52');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -223,7 +223,10 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.51` is the unpublished expiration-independent release evidence archive and offline replay gate candidate.'
+      'Version `0.2.52` is the unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.51` was the previous unpublished expiration-independent release evidence archive and offline replay gate candidate.'
     );
     expect(readmeSource).toContain(
       'Version `0.2.50` is the current npm `latest` GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`.'
@@ -292,7 +295,13 @@ describe('Android verification scripts', () => {
       'The npm-only promotion used one successful `npm publish --tag latest`; no manual dist-tag change, git tag, or GitHub Release was created.'
     );
     expect(readmeSource).toContain(
-      'The repository package metadata is `0.2.51` for the unpublished expiration-independent release evidence archive and offline replay gate candidate. npm `latest` remains `0.2.50`.'
+      'The repository package metadata is `0.2.52` for the unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate. npm `latest` remains `0.2.50`.'
+    );
+    expect(readmeSource).toContain(
+      'pnpm verify:workflow-supply-chain -- --json'
+    );
+    expect(readmeSource).toContain(
+      'a161b437574884fe7af95f102ef0f5d23ae75851e219f00f0aebc2437ae695bb'
     );
     expect(readmeSource).toContain(
       'pnpm verify:release-evidence -- --version 0.2.50'
@@ -905,7 +914,9 @@ describe('Android verification scripts', () => {
     expect(registryWorkflowSource).toContain('default: "0.2.50"');
     expect(registryWorkflowSource).toContain('run: pnpm install --frozen-lockfile');
     expect(registryWorkflowSource).toContain('GITHUB_STEP_SUMMARY');
-    expect(registryWorkflowSource).toContain('actions/upload-artifact@v6');
+    expect(registryWorkflowSource).toContain(
+      'actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6'
+    );
     expect(registryWorkflowSource).toContain('--artifact-dir registry-validation');
     expect(registryWorkflowSource).toContain('verify:registry-provenance');
     expect(registryWorkflowSource).toContain('manifest.reportSha256');
@@ -914,7 +925,9 @@ describe('Android verification scripts', () => {
     expect(registryWorkflowSource).toContain('verification.status');
     expect(registryWorkflowSource).toContain('id-token: write');
     expect(registryWorkflowSource).toContain('attestations: write');
-    expect(registryWorkflowSource).toContain('actions/attest@v4');
+    expect(registryWorkflowSource).toContain(
+      'actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4'
+    );
     expect(registryWorkflowSource).toContain('GH_TOKEN: ${{ github.token }}');
     expect(registryWorkflowSource).toContain('gh attestation trusted-root');
     expect(registryWorkflowSource).toContain('verify:registry-attestation');
@@ -1044,7 +1057,7 @@ describe('Android verification scripts', () => {
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit'
     );
     expect(packageJson.scripts.verify).toBe(
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm android:doctor'
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm android:doctor'
     );
     expect(readmeSource).toContain('## iOS Host-App Validation');
     expect(readmeSource).toContain('pnpm example:ios:smoke');
@@ -1179,7 +1192,9 @@ describe('Android verification scripts', () => {
     );
     expect(workflowSource).toContain('tee ios-smoke-diagnostics/ios-smoke-summary.md');
     expect(workflowSource).toContain('if: failure()');
-    expect(workflowSource).toContain('uses: actions/upload-artifact@v6');
+    expect(workflowSource).toContain(
+      'uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6'
+    );
     expect(workflowSource).toContain('name: ios-smoke-diagnostics');
     expect(workflowSource).toContain('path: ios-smoke-diagnostics');
     expect(validationScriptSource).toContain("from './ios-smoke-contract.mjs'");
@@ -1465,11 +1480,22 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.51 evidence candidate and previous release notes', () => {
+  it('documents the v0.2.52 supply-chain candidate and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.51');
+    expect(packageJson.version).toBe('0.2.52');
+    expect(releaseSource).toContain('## v0.2.52');
+    expect(releaseSource).toContain(
+      'Status: unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.52` git tag, or GitHub Release is part of this candidate.'
+    );
+    expect(releaseSource).toContain('### Immutable Action Contract');
+    expect(releaseSource).toContain(
+      '`pnpm verify:workflow-supply-chain -- --json`'
+    );
+    expect(releaseSource).toContain(
+      'a161b437574884fe7af95f102ef0f5d23ae75851e219f00f0aebc2437ae695bb'
+    );
     expect(releaseSource).toContain('## v0.2.51');
     expect(releaseSource).toContain(
       'Status: unpublished expiration-independent release evidence archive and offline replay gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.51` git tag, or GitHub Release is part of this candidate.'
@@ -4773,6 +4799,9 @@ describe('Android verification scripts', () => {
       'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain(
+      'The v0.2.52 immutable GitHub Actions pin and workflow supply-chain gate candidate notes are in [RELEASE.md](RELEASE.md).'
+    );
+    expect(readmeSource).toContain(
       'The v0.2.51 expiration-independent release evidence archive and offline replay gate candidate notes are in [RELEASE.md](RELEASE.md).'
     );
     expect(readmeSource).toContain(
@@ -4843,19 +4872,19 @@ describe('Android verification scripts', () => {
     );
   });
 
-  it('keeps GitHub Actions on Node 24 runtime-compatible action majors', () => {
+  it('keeps GitHub Actions on immutable Node 24-compatible action pins', () => {
     const ciWorkflowSource = readProjectFile('.github/workflows/ci.yml');
     const instrumentationWorkflowSource = readProjectFile(
       '.github/workflows/android-instrumentation.yml'
     );
     const readmeSource = readProjectFile('README.md');
     const expectedActions = [
-      'uses: actions/checkout@v7',
-      'uses: actions/setup-java@v5',
-      'uses: android-actions/setup-android@v4',
-      'uses: pnpm/action-setup@v6',
-      'uses: actions/setup-node@v6',
-      'uses: gradle/actions/setup-gradle@v6',
+      'uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7',
+      'uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5',
+      'uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4',
+      'uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6',
+      'uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6',
+      'uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6',
     ];
     const deprecatedActions = [
       'uses: actions/checkout@v4',
@@ -4877,7 +4906,7 @@ describe('Android verification scripts', () => {
     }
 
     expect(instrumentationWorkflowSource).toContain(
-      'uses: reactivecircus/android-emulator-runner@v2'
+      'uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2'
     );
     expect(readmeSource).toContain('Node 24 runtime-compatible majors');
     expect(readmeSource).toContain('`actions/checkout@v7`');
@@ -4988,7 +5017,9 @@ describe('Android verification scripts', () => {
     expect(workflowSource).toContain('name: Android Instrumentation');
     expect(workflowSource).toContain('HEIC/HEIF/AVIF emulator validation');
     expect(workflowSource).toContain('Enable KVM group permissions');
-    expect(workflowSource).toContain('reactivecircus/android-emulator-runner@v2');
+    expect(workflowSource).toContain(
+      'reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2'
+    );
     expect(workflowSource).toContain('api-level: 35');
     expect(workflowSource).toContain('target: google_apis');
     expect(workflowSource).toContain('emulator-boot-timeout: 1200');

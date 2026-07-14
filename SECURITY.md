@@ -33,6 +33,27 @@ license, podspec, and React Native config. Development-only scripts, tests,
 fixtures, example apps, build directories, credentials, `.npmrc`, `.env*`, keys,
 and debug keystores must stay out of the tarball.
 
+## GitHub Actions Supply Chain
+
+Every remote Action under `.github/workflows/` must use a lowercase full
+40-character commit SHA rather than a mutable tag, branch, or short SHA. Keep the
+reviewed release tag as an inline comment, and keep `.github/actions-lock.json`
+aligned with the exact workflows, Action repositories, versions, SHAs, and usage
+counts.
+
+Run the network-free gate before accepting workflow dependency changes:
+
+```bash
+pnpm verify:workflow-supply-chain -- --json
+```
+
+The verifier reads only committed files and must not call GitHub, resolve tags,
+or update pins. Weekly Dependabot `github-actions` updates are review inputs, not
+authority to bypass the lock: the full SHA, release-tag comment, every affected
+workflow occurrence, and the canonical lock must change together. The lock,
+Dependabot configuration, workflow verification scripts, and tests remain
+repository-only and outside the npm package.
+
 ## Release Evidence Retention
 
 Repository-owned release evidence under `evidence/npm/<version>/` is a security
