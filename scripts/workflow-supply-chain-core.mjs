@@ -225,8 +225,8 @@ export function verifyWorkflowSupplyChain(
 
     const lockBytes = readSecureFileBytes(resolvedLockFile, 'workflow action lock');
     state.lockSha256 = sha256(lockBytes);
-    const lock = parseCanonicalLock(lockBytes);
-    validateLockSchema(lock);
+    const lock = parseCanonicalWorkflowActionLock(lockBytes);
+    validateWorkflowActionLock(lock);
     assert(
       JSON.stringify(lock) === JSON.stringify(expectedLock),
       'Canonical Action lock does not exactly match the workflow files.'
@@ -363,7 +363,7 @@ function buildWorkflowActionLock(workflows, usages) {
   };
 }
 
-function parseCanonicalLock(bytes) {
+export function parseCanonicalWorkflowActionLock(bytes) {
   let lock;
   try {
     lock = JSON.parse(bytes.toString('utf8'));
@@ -378,7 +378,7 @@ function parseCanonicalLock(bytes) {
   return lock;
 }
 
-function validateLockSchema(lock) {
+export function validateWorkflowActionLock(lock) {
   assertExactFields(lock, WORKFLOW_ACTION_LOCK_FIELDS, 'workflow Action lock');
   assert(
     lock.schemaVersion === WORKFLOW_SUPPLY_CHAIN_SCHEMA_VERSION,

@@ -93,7 +93,7 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     const result = verify(ROOT);
 
     expect(Object.keys(lock)).toEqual(WORKFLOW_ACTION_LOCK_FIELDS);
-    expect(lock.workflows).toHaveLength(4);
+    expect(lock.workflows).toHaveLength(5);
     expect(lock.actions).toHaveLength(9);
     for (const action of lock.actions) {
       expect(Object.keys(action)).toEqual(WORKFLOW_ACTION_FIELDS);
@@ -109,11 +109,11 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     expect(Object.keys(result.checks)).toEqual(WORKFLOW_SUPPLY_CHAIN_CHECK_FIELDS);
     expect(result).toMatchObject({
       status: 'passed',
-      workflowCount: 4,
+      workflowCount: 5,
       actionCount: 9,
-      usageCount: 23,
+      usageCount: 28,
       lockSha256:
-        'a161b437574884fe7af95f102ef0f5d23ae75851e219f00f0aebc2437ae695bb',
+        '75bfabd61eb14ad5f26320916ae642c603ca509e942a1c962d97e08c750c6777',
       checks: Object.fromEntries(
         WORKFLOW_SUPPLY_CHAIN_CHECK_FIELDS.map((field) => [field, true])
       ),

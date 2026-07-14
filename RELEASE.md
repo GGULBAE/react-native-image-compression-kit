@@ -1,5 +1,72 @@
 # Release Notes
 
+## v0.2.53
+
+Status: unpublished GitHub Action pin update provenance and manual review gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.53` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, retained v0.2.50 evidence, registry/attestation schemas, and trusted-root policy unchanged. It adds a review-time proof that a proposed immutable Action SHA is still the commit reached by its reviewed GitHub release tag, while keeping every default verification path offline.
+
+### Goals
+
+- Resolve lightweight and annotated Git tags to their final commit through an explicit network execution boundary.
+- Require the reviewed Action, repository, release-tag comment, and proposed SHA to match the candidate canonical lock.
+- Compare with a trusted baseline lock to reject unregistered Actions, repository substitution, and major-version downgrade.
+- Retain canonical tag-reference, optional annotated-tag, baseline lock, candidate lock, and digest-bound report evidence in one artifact.
+- Reproduce the report byte-for-byte from only the downloaded artifact without GitHub, `gh`, HTTP, or tag resolution.
+- Run a manual workflow that writes the same evidence to the GitHub Step Summary and uploaded artifact without changing workflow pins or merging Dependabot updates.
+
+### Action Pin Provenance Contract
+
+The networked `pnpm review:action-pin` command accepts `--action`, `--repository`, `--release-tag`, `--proposed-sha`, `--baseline-lock`, `--candidate-lock`, and `--artifact-dir`. `scripts/action-pin-review-github.mjs` is the only network boundary. It requests the exact Git tag reference from GitHub's Git database API and, when the reference targets a tag object, requests that annotated tag object once. A lightweight reference must target a commit directly; an annotated tag must dereference directly to a commit. Nested tags, trees, blobs, incomplete objects, wrong repository/tag URLs, and final commit mismatch are rejected.
+
+The pure validation core parses both canonical locks with the existing workflow supply-chain schema. The Action must be registered in both, the supplied repository must own the Action path and remain unchanged, the candidate major may not be lower than the baseline major, and candidate `version`/`sha` must exactly match the reviewed tag/SHA. The new Action Pin Review workflow runs the complete workflow/lock gate before this networked review.
+
+The artifact contains exactly:
+
+- `baseline-actions-lock.json`
+- `candidate-actions-lock.json`
+- `tag-reference.json`
+- `annotated-tag.json` only for an annotated tag
+- `action-pin-provenance.json`
+
+The ordered report fields are `schemaVersion`, `status`, `action`, `repository`, `releaseTag`, `proposedSha`, `baselineVersion`, `baselineSha`, `candidateVersion`, `candidateSha`, `tagObjectType`, `tagObjectSha`, `resolvedCommitSha`, `resolution`, `evidence`, `checks`, and `error`. Evidence fields pin both lock filenames/digests and both possible tag-evidence filenames/digests. Ordered checks are `inputs`, `registration`, `repository`, `releaseTag`, `noDowngrade`, `candidateLock`, `tagReference`, `dereference`, and `commit`.
+
+`pnpm verify:action-pin-provenance -- --artifact-dir <path> --json` requires the exact artifact layout and canonical bytes, recalculates every evidence digest, re-runs the pure validator, and requires the reproduced report to equal the stored report byte-for-byte. The committed fixture captures the real annotated `gradle/actions@v6` tag object `90ddb51e90a5fd9ba75f40cf85156b7b41bf76a3` resolving to locked commit `3f131e8634966bd73d06cc69884922b02e6faf92`. Default `pnpm verify` replays only this committed fixture and never executes the GitHub resolver.
+
+The five files under `.github/workflows/` now contain 28 full-SHA remote Action uses for the same nine unique Actions. The Action Pin Review workflow itself uses only existing locked Actions. The updated canonical lock SHA-256 is `75bfabd61eb14ad5f26320916ae642c603ca509e942a1c962d97e08c750c6777`.
+
+### Included
+
+- `package.json` version bump to `0.2.53`, networked `review:action-pin`, offline `verify:action-pin-provenance`, and committed `verify:action-pin-fixture` default gate.
+- Pure provenance validation, canonical field ordering, digest binding, exact artifact layout, and atomic report/artifact writers.
+- Explicit GitHub API execution layer with lightweight and annotated tag normalization.
+- `workflow_dispatch` Action Pin Review workflow with candidate/baseline checkout, offline lock precheck, canonical report/stdout replay comparison, Step Summary, artifact upload, and fail-closed result enforcement.
+- Offline Vitest fixtures for success, report/replay parity, tag mismatch, resolved-commit mismatch, major downgrade, unregistered Action, repository change, annotated-tag dereference failure, artifact tampering, and atomic partial-write cleanup.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the v0.2.53 candidate and npm latest v0.2.50.
+
+### Not Included
+
+- Automatic Action/workflow/lock edits or automatic Dependabot PR merge.
+- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- Trusted-root update or rotation.
+- Native/API behavior changes or AVIF output implementation.
+- Network access from default `pnpm verify`, the validation core, or offline replay CLI.
+- Credentials, tokens, OTPs, `.npmrc`, or authentication files.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- Real lightweight and annotated GitHub tag resolution with byte-identical network report and offline replay.
+- Blocked-proxy `pnpm verify:action-pin-fixture` and standalone artifact `--report-file` byte parity.
+- Tag mismatch, commit mismatch, major downgrade, unregistered Action, repository substitution, annotated dereference failure, tamper, and atomic-write fixtures.
+- npm pack inspection proving `.github/`, Action locks, review artifacts, repository scripts/tests/fixtures, and evidence are excluded.
+- Manual Action Pin Review workflow artifact and GitHub Step Summary verification.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed candidate commit.
+
 ## v0.2.52
 
 Status: unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.52` git tag, or GitHub Release is part of this candidate.

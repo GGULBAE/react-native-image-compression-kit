@@ -1,0 +1,139 @@
+name: Action Pin Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: Locked Action path to review
+        required: true
+        default: actions/checkout
+        type: string
+      repository:
+        description: Source repository that must own the Action
+        required: true
+        default: actions/checkout
+        type: string
+      release_tag:
+        description: Reviewed release tag comment
+        required: true
+        default: v7
+        type: string
+      proposed_sha:
+        description: Proposed full commit SHA already present in the candidate lock
+        required: true
+        default: 9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+        type: string
+      baseline_ref:
+        description: Trusted base ref used to reject repository changes and major downgrades
+        required: true
+        default: master
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  action-pin-review:
+    name: Resolve and review Action pin
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout candidate
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - name: Checkout baseline lock
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ inputs.baseline_ref }}
+          path: action-pin-baseline
+          sparse-checkout: .github/actions-lock.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          version: 11.7.0
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify candidate workflow lock
+        run: pnpm verify:workflow-supply-chain -- --json
+
+      - name: Resolve tag and build canonical provenance artifact
+        id: review
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_ACTION: ${{ inputs.action }}
+          REVIEW_REPOSITORY: ${{ inputs.repository }}
+          REVIEW_RELEASE_TAG: ${{ inputs.release_tag }}
+          REVIEW_PROPOSED_SHA: ${{ inputs.proposed_sha }}
+        shell: bash
+        run: |
+          rm -rf action-pin-review action-pin-review-stdout.json action-pin-review-replay.json
+          pnpm review:action-pin -- \
+            --action "$REVIEW_ACTION" \
+            --repository "$REVIEW_REPOSITORY" \
+            --release-tag "$REVIEW_RELEASE_TAG" \
+            --proposed-sha "$REVIEW_PROPOSED_SHA" \
+            --baseline-lock action-pin-baseline/.github/actions-lock.json \
+            --candidate-lock .github/actions-lock.json \
+            --artifact-dir action-pin-review \
+            --json \
+            | tee action-pin-review-stdout.json
+          cmp action-pin-review/action-pin-provenance.json action-pin-review-stdout.json
+          pnpm verify:action-pin-provenance -- \
+            --artifact-dir action-pin-review \
+            --json \
+            | tee action-pin-review-replay.json
+          cmp action-pin-review/action-pin-provenance.json action-pin-review-replay.json
+          rm action-pin-review-stdout.json action-pin-review-replay.json
+
+      - name: Write Action pin review summary
+        if: always()
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+          const reportPath = 'action-pin-review/action-pin-provenance.json';
+          let markdown = '## Action Pin Review\n\n';
+          if (existsSync(reportPath)) {
+            const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+            markdown += `- Status: **${report.status}**\n`;
+            markdown += `- Action: \`${report.action}\`\n`;
+            markdown += `- Repository: \`${report.repository}\`\n`;
+            markdown += `- Release tag: \`${report.releaseTag}\`\n`;
+            markdown += `- Proposed SHA: \`${report.proposedSha}\`\n`;
+            markdown += `- Baseline: \`${report.baselineVersion}@${report.baselineSha}\`\n`;
+            markdown += `- Candidate: \`${report.candidateVersion}@${report.candidateSha}\`\n`;
+            markdown += `- Resolution: \`${report.resolution}\`\n`;
+            markdown += `- Tag object: \`${report.tagObjectType}@${report.tagObjectSha}\`\n`;
+            markdown += `- Resolved commit: \`${report.resolvedCommitSha}\`\n`;
+            markdown += `- Candidate lock SHA-256: \`${report.evidence.candidateLockSha256}\`\n`;
+            if (report.error) markdown += `- Error: ${report.error}\n`;
+          } else {
+            markdown += '- Status: **failed before a canonical report was created**\n';
+          }
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown, 'utf8');
+          NODE
+
+      - name: Upload Action pin provenance artifact
+        if: always() && hashFiles('action-pin-review/action-pin-provenance.json') != ''
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: action-pin-review-${{ github.run_id }}
+          path: action-pin-review
+          if-no-files-found: error
+
+      - name: Enforce Action pin review result
+        if: steps.review.outcome != 'success'
+        run: exit 1

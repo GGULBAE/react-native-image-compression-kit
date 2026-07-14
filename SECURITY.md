@@ -54,6 +54,29 @@ workflow occurrence, and the canonical lock must change together. The lock,
 Dependabot configuration, workflow verification scripts, and tests remain
 repository-only and outside the npm package.
 
+Before accepting a proposed Action SHA change, run the manual **Action Pin
+Review** workflow against the candidate ref and a trusted baseline ref. Its
+networked resolver must prove that the reviewed Git tag reaches the exact
+candidate commit, including one explicit dereference for an annotated tag. The
+review rejects unregistered Actions, repository substitution, major-version
+downgrade, candidate lock disagreement, malformed Git objects, and final commit
+mismatch. It does not update pins or merge a Dependabot PR.
+
+Download the resulting artifact and replay it without credentials or network
+access:
+
+```bash
+pnpm verify:action-pin-provenance -- \
+  --artifact-dir /path/to/action-pin-review \
+  --json
+```
+
+The artifact must retain canonical baseline/candidate locks, tag-reference
+evidence, optional annotated-tag evidence, and the digest-bound provenance
+report. The offline core and verifier must contain no GitHub request or command
+execution path. Action review artifacts, fixtures, resolver scripts, and reports
+remain repository/CI evidence and must not enter the npm package.
+
 ## Release Evidence Retention
 
 Repository-owned release evidence under `evidence/npm/<version>/` is a security
