@@ -2,9 +2,9 @@
 
 ## v0.2.55
 
-Status: unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.55` git tag, or GitHub Release is part of this candidate.
+Status: release-ready Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` remain `0.2.50` until the separately gated one-time `0.2.55` promotion; no `v0.2.55` git tag or GitHub Release is planned.
 
-This candidate keeps native behavior, the public API, retained v0.2.50 evidence, immutable Action SHAs, and the pinned GitHub trusted-root policy unchanged. It extends the v0.2.54 execution-bound Action Pin provenance artifact with a GitHub-hosted OIDC attestation over its canonical `artifact-manifest.json` and a network-blocked verifier that cross-checks signer identity against the artifact's reproduced execution identity.
+This release keeps native behavior, the public API, retained v0.2.50 evidence, immutable Action SHAs, and the pinned GitHub trusted-root policy unchanged. It extends the v0.2.54 execution-bound Action Pin provenance artifact with a GitHub-hosted OIDC attestation over its canonical `artifact-manifest.json` and a network-blocked verifier that cross-checks signer identity against the artifact's reproduced execution identity.
 
 ### Goals
 
@@ -40,12 +40,12 @@ The provenance artifact ID is `8305522072`, GitHub digest `sha256:d09e9b5d579d6a
 - Action Pin Review OIDC attestation, separate trust-material artifact, Step Summary evidence, and fail-closed enforcement.
 - Offline Vitest fixtures for success, wrong subject/repository/workflow/ref/source SHA, provenance manifest mismatch, bundle tampering, CLI policy, and atomic-write failure.
 - Canonical workflow lock updated for 30 full-SHA remote Action uses across five workflows; lock SHA-256 `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.
-- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the v0.2.55 candidate and npm latest v0.2.50.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the registry-independent v0.2.55 release and pre-promotion npm latest v0.2.50 state.
 
 ### Not Included
 
 - Automatic Action/workflow/lock edits or automatic Dependabot PR merge.
-- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- Manual dist-tag changes beyond the single `npm publish --tag latest`, git tags, or GitHub Releases.
 - Long-term artifact storage, external signing services, or trusted-root rotation.
 - Native/API behavior changes or AVIF output implementation.
 - Network access from default `pnpm verify`, validation cores, or offline replay CLIs.
@@ -60,7 +60,9 @@ The provenance artifact ID is `8305522072`, GitHub digest `sha256:d09e9b5d579d6a
 - `pnpm release:dry-run`
 - Offline wrong-identity, bundle-tamper, canonical report, stdout/report parity, and atomic-write fixtures.
 - Manual Action Pin Review workflow provenance and attestation artifacts, byte-identical offline replay, and Step Summary inspection.
-- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed candidate commit.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed release-ready commit.
+- npm authentication and unpublished-version confirmation immediately before one `npm publish --tag latest` attempt.
+- Post-publish registry smoke, Registry Validation provenance/attestation artifacts, expiration-independent archive replay, and final GitHub Actions.
 
 ## v0.2.54
 

@@ -40,6 +40,16 @@ const V050_CANDIDATE_SNIPPETS = [
   'The v0.2.50 GitHub artifact attestation and offline identity verification candidate notes',
 ];
 
+const V055_CANDIDATE_SNIPPETS = [
+  'Status: v0.2.55 candidate',
+  'v0.2.55%20candidate',
+  'Version `0.2.55` is the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
+  'npm `latest` remains `0.2.50`',
+  'no npm publish, dist-tag change, git tag, or GitHub Release is part of this candidate',
+  'The repository package metadata is `0.2.55` for the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
+  'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes',
+];
+
 describe('release dry-run packed README status guard', () => {
   it.each(V047_CANDIDATE_SNIPPETS)(
     'rejects the v0.2.47 candidate snippet %s',
@@ -110,6 +120,31 @@ describe('release dry-run packed README status guard', () => {
       'Status: v0.2.50 release',
       'Version `0.2.50` is the GitHub artifact attestation and offline identity verification release.',
       'The `0.2.50` package metadata defines the provenance attestation release.',
+    ].join('\n');
+
+    expect(getPackedReadmeStatusViolations(packedReadme)).toEqual([]);
+    expect(() => validatePackedReadmeStatus(packedReadme)).not.toThrow();
+  });
+
+  it.each(V055_CANDIDATE_SNIPPETS)(
+    'rejects the v0.2.55 candidate snippet %s',
+    (candidateSnippet) => {
+      const packedReadme = `# Package\n\n${candidateSnippet}\n`;
+
+      expect(getPackedReadmeStatusViolations(packedReadme)).toContain(
+        candidateSnippet
+      );
+      expect(() => validatePackedReadmeStatus(packedReadme)).toThrow(
+        candidateSnippet
+      );
+    }
+  );
+
+  it('accepts registry-independent v0.2.55 release wording', () => {
+    const packedReadme = [
+      'Status: v0.2.55 release',
+      'Version `0.2.55` is the Action Pin artifact GitHub OIDC attestation and offline signer verification release.',
+      'The `0.2.55` package metadata defines the Action Pin attestation release.',
     ].join('\n');
 
     expect(getPackedReadmeStatusViolations(packedReadme)).toEqual([]);

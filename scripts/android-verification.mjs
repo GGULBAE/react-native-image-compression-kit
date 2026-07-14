@@ -382,6 +382,11 @@ function checkPackageMetadata() {
     'Status: v0.2.52 candidate',
     'v0.2.52%20candidate',
     'The repository package metadata is `0.2.52` for the unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate.',
+    'Status: v0.2.55 candidate',
+    'v0.2.55%20candidate',
+    'Version `0.2.55` is the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
+    'The repository package metadata is `0.2.55` for the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
+    'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes',
   ];
   const expectedKeywords = [
     'react-native',
@@ -414,12 +419,12 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.55` is the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.'),
+    readmeContents.includes('Version `0.2.55` is the Action Pin artifact GitHub OIDC attestation and offline signer verification release.'),
     readmeContents.includes('Version `0.2.54` was the previous unpublished Action pin provenance execution identity and artifact manifest binding candidate.'),
     readmeContents.includes('Version `0.2.53` was the previous unpublished GitHub Action pin update provenance and manual review gate candidate.'),
     readmeContents.includes('Version `0.2.52` was the previous unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate.'),
     readmeContents.includes('Version `0.2.51` was the previous unpublished expiration-independent release evidence archive and offline replay gate candidate.'),
-    readmeContents.includes('Version `0.2.50` is the current npm `latest` GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`.'),
+    readmeContents.includes('Version `0.2.50` was the previous npm `latest` GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.49` was the previous unpublished Registry provenance bundle offline verification candidate.'),
     readmeContents.includes('Version `0.2.48` was the previous npm `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.47` was the previous npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'),
@@ -444,7 +449,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`'),
     readmeContents.includes('[attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998)'),
     readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul'),
-    readmeContents.includes('The repository package metadata is `0.2.55` for the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate. npm `latest` remains `0.2.50`.'),
+    readmeContents.includes('The package metadata is `0.2.55` for the Action Pin artifact GitHub OIDC attestation and offline signer verification release.'),
     readmeContents.includes('pnpm verify:release-evidence -- --version 0.2.50'),
     readmeContents.includes('pnpm verify:workflow-supply-chain -- --json'),
     readmeContents.includes('All 30 remote `uses:` declarations across the five GitHub workflow files are pinned to lowercase 40-character commit SHAs.'),
@@ -597,10 +602,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README are aligned for the v0.2.55 Action Pin artifact attestation candidate',
+    label: 'npm package metadata and README are aligned for the v0.2.55 Action Pin artifact attestation release',
     detail: checks.every(Boolean)
       ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
-      : 'expected v0.2.55 candidate metadata, Action Pin attestation guidance, npm latest v0.2.50 evidence, or package exclusions are missing/mismatched',
+      : 'expected registry-independent v0.2.55 release metadata, Action Pin attestation guidance, historical npm evidence, or package exclusions are missing/mismatched',
   };
 }
 
@@ -835,7 +840,7 @@ function checkRegistrySmokeTestEnvironment() {
     [attestationTestContents, 'pins the shared no-network gh invocation in source'],
     [readmeValidatorContents, 'validateReadmeStatus'],
     [registryWorkflowContents, 'workflow_dispatch:'],
-    [registryWorkflowContents, 'default: "0.2.50"'],
+    [registryWorkflowContents, 'default: "0.2.55"'],
     [registryWorkflowContents, 'run: pnpm install --frozen-lockfile'],
     [registryWorkflowContents, 'GITHUB_STEP_SUMMARY'],
     [registryWorkflowContents, 'actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6'],
@@ -1393,7 +1398,7 @@ function checkReleaseNotes() {
   const packageJson = readJson('package.json');
   const releaseSnippets = [
     '## v0.2.55',
-    'Status: unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.55` git tag, or GitHub Release is part of this candidate.',
+    'Status: release-ready Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` remain `0.2.50` until the separately gated one-time `0.2.55` promotion; no `v0.2.55` git tag or GitHub Release is planned.',
     '### Action Pin Attestation Contract',
     '`pnpm verify:action-pin-attestation -- --artifact-dir <provenance-path> --attestation-bundle <attestation.jsonl> --trusted-root <trusted-root.jsonl> --json --report-file <attestation-verification.json>`',
     'Ordered checks are `provenance`, `manifest`, `subject`, `repository`, `workflow`, `ref`, `sourceDigest`, `workflowDigest`, `invocation`, and `signature`.',
@@ -2733,7 +2738,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
-    'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes are in [RELEASE.md](RELEASE.md).',
+    'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification release notes are in [RELEASE.md](RELEASE.md).',
     'Successful [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736)',
     '[attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280)',
     'The v0.2.54 Action pin provenance execution identity and artifact manifest binding candidate notes are in [RELEASE.md](RELEASE.md).',
@@ -2759,7 +2764,7 @@ function checkReleaseNotes() {
 
   return {
     ok,
-    label: 'v0.2.55 Action Pin artifact attestation candidate and previous release notes are current',
+    label: 'v0.2.55 release-ready Action Pin artifact attestation notes and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[

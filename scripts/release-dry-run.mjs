@@ -136,6 +136,14 @@ const STALE_PACKED_README_SNIPPETS = [
   'included in the candidate pack tarball',
   'Version `0.2.50` is the unpublished GitHub artifact attestation and offline identity verification candidate.',
   'The v0.2.50 GitHub artifact attestation and offline identity verification candidate notes',
+  'Status: v0.2.55 candidate',
+  'v0.2.55%20candidate',
+  'Version `0.2.55` is the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
+  'npm `latest` remains `0.2.50`',
+  'no npm publish, dist-tag change, git tag, or GitHub Release is part of this candidate',
+  'The repository package metadata is `0.2.55` for the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
+  'Version `0.2.55` is the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
+  'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes',
 ];
 
 const STEPS = [
