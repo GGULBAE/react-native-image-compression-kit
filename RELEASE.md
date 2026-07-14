@@ -1,5 +1,73 @@
 # Release Notes
 
+## v0.2.54
+
+Status: unpublished Action pin provenance execution identity and artifact manifest binding candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.54` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, retained v0.2.50 release evidence, Action pins, and trusted-root policy unchanged. It closes the remaining provenance gap between a valid tag-to-commit proof and the GitHub run that produced it by binding the report to source/workflow/run identity and a complete canonical artifact manifest.
+
+### Goals
+
+- Bind every Action Pin Review report to source repository, ref, head SHA, workflow name/path/ref/SHA, run ID, and run attempt.
+- Retain the exact workflow definition and a normalized `workflow_dispatch` event alongside the existing lock and Git tag evidence.
+- Bind the exact candidate workflow Action lock and workflow definition through SHA-256 fields in the report and manifest.
+- Enumerate every evidence file's canonical relative path, byte size, and SHA-256 in `artifact-manifest.json`.
+- Reject path traversal, symlinks, duplicate/missing/additional files, size drift, digest drift, and report/manifest disagreement offline.
+- Show the same execution identity and lock/workflow/manifest digests in the manual workflow Step Summary and uploaded artifact.
+
+### Execution Identity and Artifact Manifest Contract
+
+The networked `pnpm review:action-pin` command keeps the v0.2.53 tag resolver boundary and additionally accepts `--baseline-ref`, `--source-repository`, `--source-ref`, `--source-head-sha`, `--workflow-name`, `--workflow-path`, `--workflow-ref`, `--workflow-sha`, `--workflow-file`, `--run-id`, `--run-attempt`, `--event-name`, and `--github-event`. The CLI reads the exact checked-out workflow bytes and GitHub event payload, normalizes only the review-relevant dispatch fields, and passes immutable data to the network-free validation core.
+
+The schema v2 report adds ordered `sourceRepository`, `sourceRef`, `sourceHeadSha`, `workflowName`, `workflowPath`, `workflowRef`, `workflowSha`, `runId`, and `runAttempt` fields. `workflowRef` must exactly bind the source repository, `.github/workflows/action-pin-review.yml`, and source ref. The normalized event must be `workflow_dispatch` and its repository, ref, workflow path, Action/repository/tag/SHA inputs, and baseline ref must match the report request.
+
+The artifact contains exactly:
+
+- `artifact-manifest.json`
+- `action-pin-provenance.json`
+- `baseline-actions-lock.json`
+- `candidate-actions-lock.json`
+- `github-execution.json`
+- `workflow-dispatch-event.json`
+- `action-pin-review-workflow.yml`
+- `tag-reference.json`
+- `annotated-tag.json` only for an annotated tag
+
+The canonical manifest fields are `schemaVersion`, `status`, `files`, and `error`; every sorted file entry fixes `path`, `size`, and `sha256`. It lists all evidence files but excludes itself and the report to avoid recursive digests. The report binds the manifest SHA-256, while its evidence fields separately bind both locks, canonical execution identity, normalized event, exact workflow definition, tag reference, and optional annotated tag. Offline replay restores source/workflow/run fields from `github-execution.json`, so report-only identity changes cannot reproduce. Ordered checks are `inputs`, `execution`, `event`, `registration`, `repository`, `releaseTag`, `noDowngrade`, `candidateLock`, `workflow`, `tagReference`, `dereference`, `commit`, and `manifest`.
+
+`pnpm verify:action-pin-provenance -- --artifact-dir <path> --json` validates canonical report/manifest bytes, manifest paths before resolving them, the exact top-level file set, regular-file/no-symlink policy, every declared size/digest, normalized event identity, exact workflow and lock hashes, Git tag evidence, and byte-identical report reproduction. The committed synthetic GitHub event fixture and annotated `gradle/actions@v6` artifact exercise this entire path without network access.
+
+### Included
+
+- `package.json` version bump to `0.2.54` with npm `latest` intentionally unchanged at `0.2.50`.
+- Schema v2 Action pin report with fixed GitHub execution and workflow identity fields.
+- Canonical artifact manifest and exact workflow/event evidence retention.
+- Atomic writer extended to write evidence, manifest, and report as one sibling-directory rename.
+- Manual Action Pin Review workflow flags and Step Summary updated with source/workflow/run identity and manifest digest.
+- Offline Vitest coverage for GitHub event normalization, lightweight/annotated resolution, identity mismatch, workflow mismatch, path traversal, missing/additional evidence, size/hash tampering, report parity, and partial-write cleanup.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the v0.2.54 candidate and npm latest v0.2.50.
+
+### Not Included
+
+- Automatic Action/workflow/lock edits or automatic Dependabot PR merge.
+- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- Long-term artifact storage, external signing services, or trusted-root rotation.
+- Native/API behavior changes or AVIF output implementation.
+- Network access from default `pnpm verify`, the validation core, or offline replay CLI.
+- Credentials, tokens, OTPs, `.npmrc`, or authentication files.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- Blocked-proxy `pnpm verify:action-pin-fixture` and standalone `--report-file` byte parity.
+- Offline GitHub event, identity mismatch, traversal, missing/additional file, size/hash tamper, and atomic-write fixtures.
+- Manual Action Pin Review workflow artifact download, manifest replay, and Step Summary identity inspection.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed candidate commit.
+
 ## v0.2.53
 
 Status: unpublished GitHub Action pin update provenance and manual review gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.53` git tag, or GitHub Release is part of this candidate.

@@ -1,0 +1,14 @@
+{
+  "inputs": {
+    "action": "gradle/actions/setup-gradle",
+    "repository": "gradle/actions",
+    "release_tag": "v6",
+    "proposed_sha": "3f131e8634966bd73d06cc69884922b02e6faf92",
+    "baseline_ref": "master"
+  },
+  "ref": "refs/heads/master",
+  "repository": {
+    "full_name": "GGULBAE/react-native-image-compression-kit"
+  },
+  "workflow": ".github/workflows/action-pin-review.yml"
+}

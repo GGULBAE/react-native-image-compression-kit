@@ -16,11 +16,18 @@ import {
   validateWorkflowActionLock,
 } from './workflow-supply-chain-core.mjs';
 
-export const ACTION_PIN_PROVENANCE_SCHEMA_VERSION = 1;
+export const ACTION_PIN_PROVENANCE_SCHEMA_VERSION = 2;
+export const ACTION_PIN_ARTIFACT_MANIFEST_SCHEMA_VERSION = 1;
+export const ACTION_PIN_WORKFLOW_NAME = 'Action Pin Review';
+export const ACTION_PIN_WORKFLOW_PATH = '.github/workflows/action-pin-review.yml';
 export const ACTION_PIN_BASELINE_LOCK_FILE = 'baseline-actions-lock.json';
 export const ACTION_PIN_CANDIDATE_LOCK_FILE = 'candidate-actions-lock.json';
 export const ACTION_PIN_TAG_REFERENCE_FILE = 'tag-reference.json';
 export const ACTION_PIN_ANNOTATED_TAG_FILE = 'annotated-tag.json';
+export const ACTION_PIN_GITHUB_EVENT_FILE = 'workflow-dispatch-event.json';
+export const ACTION_PIN_EXECUTION_FILE = 'github-execution.json';
+export const ACTION_PIN_WORKFLOW_FILE = 'action-pin-review-workflow.yml';
+export const ACTION_PIN_ARTIFACT_MANIFEST_FILE = 'artifact-manifest.json';
 export const ACTION_PIN_PROVENANCE_REPORT_FILE = 'action-pin-provenance.json';
 
 export const ACTION_PIN_PROVENANCE_REPORT_FIELDS = Object.freeze([
@@ -38,16 +45,33 @@ export const ACTION_PIN_PROVENANCE_REPORT_FIELDS = Object.freeze([
   'tagObjectSha',
   'resolvedCommitSha',
   'resolution',
+  'sourceRepository',
+  'sourceRef',
+  'sourceHeadSha',
+  'workflowName',
+  'workflowPath',
+  'workflowRef',
+  'workflowSha',
+  'runId',
+  'runAttempt',
   'evidence',
   'checks',
   'error',
 ]);
 
 export const ACTION_PIN_PROVENANCE_EVIDENCE_FIELDS = Object.freeze([
+  'artifactManifestFile',
+  'artifactManifestSha256',
   'baselineLockFile',
   'baselineLockSha256',
   'candidateLockFile',
   'candidateLockSha256',
+  'executionFile',
+  'executionSha256',
+  'githubEventFile',
+  'githubEventSha256',
+  'workflowFile',
+  'workflowSha256',
   'tagReferenceFile',
   'tagReferenceSha256',
   'annotatedTagFile',
@@ -56,14 +80,59 @@ export const ACTION_PIN_PROVENANCE_EVIDENCE_FIELDS = Object.freeze([
 
 export const ACTION_PIN_PROVENANCE_CHECK_FIELDS = Object.freeze([
   'inputs',
+  'execution',
+  'event',
   'registration',
   'repository',
   'releaseTag',
   'noDowngrade',
   'candidateLock',
+  'workflow',
   'tagReference',
   'dereference',
   'commit',
+  'manifest',
+]);
+
+export const ACTION_PIN_EXECUTION_FIELDS = Object.freeze([
+  'sourceRepository',
+  'sourceRef',
+  'sourceHeadSha',
+  'workflowName',
+  'workflowPath',
+  'workflowRef',
+  'workflowSha',
+  'runId',
+  'runAttempt',
+]);
+
+export const ACTION_PIN_GITHUB_EVENT_FIELDS = Object.freeze([
+  'eventName',
+  'repository',
+  'ref',
+  'workflow',
+  'inputs',
+]);
+
+export const ACTION_PIN_GITHUB_EVENT_INPUT_FIELDS = Object.freeze([
+  'action',
+  'repository',
+  'releaseTag',
+  'proposedSha',
+  'baselineRef',
+]);
+
+export const ACTION_PIN_ARTIFACT_MANIFEST_FIELDS = Object.freeze([
+  'schemaVersion',
+  'status',
+  'files',
+  'error',
+]);
+
+export const ACTION_PIN_ARTIFACT_MANIFEST_ENTRY_FIELDS = Object.freeze([
+  'path',
+  'size',
+  'sha256',
 ]);
 
 export const ACTION_PIN_TAG_REFERENCE_FIELDS = Object.freeze([
@@ -90,12 +159,19 @@ const FULL_COMMIT_SHA = /^[0-9a-f]{40}$/;
 const ACTION_NAME = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*$/;
 const REPOSITORY_NAME = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const RELEASE_TAG = /^v(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){0,2}(?:-[0-9A-Za-z.-]+)?$/;
+const GITHUB_REF = /^refs\/(?:heads|tags)\/[^\u0000-\u001f\u007f]+$/;
+const POSITIVE_DECIMAL = /^[1-9]\d*$/;
+const SHA256 = /^[0-9a-f]{64}$/;
 
 export function sha256(value) {
   return createHash('sha256').update(value).digest('hex');
 }
 
 export function canonicalActionPinJson(value) {
+  return `${JSON.stringify(value)}\n`;
+}
+
+export function canonicalActionPinArtifactManifest(value) {
   return `${JSON.stringify(value)}\n`;
 }
 
@@ -112,6 +188,15 @@ export function createActionPinProvenanceReport({
   tagObjectSha = null,
   resolvedCommitSha = null,
   resolution = null,
+  sourceRepository = null,
+  sourceRef = null,
+  sourceHeadSha = null,
+  workflowName = null,
+  workflowPath = null,
+  workflowRef = null,
+  workflowSha = null,
+  runId = null,
+  runAttempt = null,
   evidence = {},
   checks = {},
   status = 'failed',
@@ -132,11 +217,28 @@ export function createActionPinProvenanceReport({
     tagObjectSha,
     resolvedCommitSha,
     resolution,
+    sourceRepository,
+    sourceRef,
+    sourceHeadSha,
+    workflowName,
+    workflowPath,
+    workflowRef,
+    workflowSha,
+    runId,
+    runAttempt,
     evidence: {
+      artifactManifestFile: ACTION_PIN_ARTIFACT_MANIFEST_FILE,
+      artifactManifestSha256: evidence.artifactManifestSha256 ?? null,
       baselineLockFile: ACTION_PIN_BASELINE_LOCK_FILE,
       baselineLockSha256: evidence.baselineLockSha256 ?? null,
       candidateLockFile: ACTION_PIN_CANDIDATE_LOCK_FILE,
       candidateLockSha256: evidence.candidateLockSha256 ?? null,
+      executionFile: ACTION_PIN_EXECUTION_FILE,
+      executionSha256: evidence.executionSha256 ?? null,
+      githubEventFile: ACTION_PIN_GITHUB_EVENT_FILE,
+      githubEventSha256: evidence.githubEventSha256 ?? null,
+      workflowFile: ACTION_PIN_WORKFLOW_FILE,
+      workflowSha256: evidence.workflowSha256 ?? null,
       tagReferenceFile: ACTION_PIN_TAG_REFERENCE_FILE,
       tagReferenceSha256: evidence.tagReferenceSha256 ?? null,
       annotatedTagFile:
@@ -168,29 +270,205 @@ export function validateActionPinReviewRequest({
   );
 }
 
+export function validateActionPinExecution(execution = {}) {
+  assertExactFields(execution, ACTION_PIN_EXECUTION_FIELDS, 'Action pin execution identity');
+  assert(
+    REPOSITORY_NAME.test(execution.sourceRepository),
+    `Invalid source repository: ${execution.sourceRepository}`
+  );
+  assert(GITHUB_REF.test(execution.sourceRef), `Invalid source ref: ${execution.sourceRef}`);
+  assert(
+    FULL_COMMIT_SHA.test(execution.sourceHeadSha),
+    'Source head SHA must be a lowercase full 40-character commit SHA.'
+  );
+  assert(
+    execution.workflowName === ACTION_PIN_WORKFLOW_NAME,
+    `Workflow name must be exactly ${ACTION_PIN_WORKFLOW_NAME}.`
+  );
+  assert(
+    execution.workflowPath === ACTION_PIN_WORKFLOW_PATH,
+    `Workflow path must be exactly ${ACTION_PIN_WORKFLOW_PATH}.`
+  );
+  assert(
+    execution.workflowRef ===
+      `${execution.sourceRepository}/${execution.workflowPath}@${execution.sourceRef}`,
+    'Workflow ref does not bind the source repository, workflow path, and source ref.'
+  );
+  assert(
+    FULL_COMMIT_SHA.test(execution.workflowSha),
+    'Workflow SHA must be a lowercase full 40-character commit SHA.'
+  );
+  assert(POSITIVE_DECIMAL.test(execution.runId), 'GitHub run ID must be a positive decimal string.');
+  assert(
+    Number.isSafeInteger(execution.runAttempt) && execution.runAttempt > 0,
+    'GitHub run attempt must be a positive safe integer.'
+  );
+}
+
+export function createWorkflowDispatchEventEvidence({
+  eventName,
+  event,
+  execution,
+  action,
+  repository,
+  releaseTag,
+  proposedSha,
+  baselineRef,
+} = {}) {
+  assert(eventName === 'workflow_dispatch', `Unsupported GitHub event: ${eventName}`);
+  assertRecord(event, 'GitHub workflow_dispatch event');
+  assertRecord(event.repository, 'GitHub workflow_dispatch repository');
+  assertRecord(event.inputs, 'GitHub workflow_dispatch inputs');
+  const evidence = {
+    eventName,
+    repository: event.repository.full_name,
+    ref: event.ref,
+    workflow: event.workflow,
+    inputs: {
+      action: event.inputs.action,
+      repository: event.inputs.repository,
+      releaseTag: event.inputs.release_tag,
+      proposedSha: event.inputs.proposed_sha,
+      baselineRef: event.inputs.baseline_ref,
+    },
+  };
+  validateWorkflowDispatchEventEvidence(evidence, {
+    execution,
+    action,
+    repository,
+    releaseTag,
+    proposedSha,
+    baselineRef,
+  });
+  return evidence;
+}
+
+export function createActionPinEvidenceFiles({
+  baselineLockBytes,
+  candidateLockBytes,
+  execution,
+  githubEvent,
+  workflowBytes,
+  tagReference,
+  annotatedTag = null,
+} = {}) {
+  assert(Buffer.isBuffer(baselineLockBytes), 'baseline Action lock bytes are required.');
+  assert(Buffer.isBuffer(candidateLockBytes), 'candidate Action lock bytes are required.');
+  assert(Buffer.isBuffer(workflowBytes), 'Action Pin Review workflow bytes are required.');
+  return {
+    [ACTION_PIN_BASELINE_LOCK_FILE]: baselineLockBytes,
+    [ACTION_PIN_CANDIDATE_LOCK_FILE]: candidateLockBytes,
+    [ACTION_PIN_EXECUTION_FILE]: Buffer.from(canonicalActionPinJson(execution), 'utf8'),
+    [ACTION_PIN_GITHUB_EVENT_FILE]: Buffer.from(canonicalActionPinJson(githubEvent), 'utf8'),
+    [ACTION_PIN_WORKFLOW_FILE]: workflowBytes,
+    [ACTION_PIN_TAG_REFERENCE_FILE]: Buffer.from(canonicalActionPinJson(tagReference), 'utf8'),
+    ...(annotatedTag
+      ? {
+          [ACTION_PIN_ANNOTATED_TAG_FILE]: Buffer.from(
+            canonicalActionPinJson(annotatedTag),
+            'utf8'
+          ),
+        }
+      : {}),
+  };
+}
+
+export function createActionPinArtifactManifest(evidenceFiles) {
+  assertRecord(evidenceFiles, 'Action pin evidence files');
+  const files = Object.entries(evidenceFiles)
+    .sort(([left], [right]) => compareText(left, right))
+    .map(([filePath, bytes]) => {
+      validateManifestPath(filePath);
+      assert(Buffer.isBuffer(bytes), `Evidence file ${filePath} must be bytes.`);
+      return { path: filePath, size: bytes.length, sha256: sha256(bytes) };
+    });
+  assert(files.length > 0, 'Action pin artifact manifest must contain evidence files.');
+  const manifest = {
+    schemaVersion: ACTION_PIN_ARTIFACT_MANIFEST_SCHEMA_VERSION,
+    status: 'passed',
+    files,
+    error: null,
+  };
+  validateActionPinArtifactManifest(manifest);
+  return manifest;
+}
+
+export function validateActionPinArtifactManifest(manifest) {
+  assertExactFields(
+    manifest,
+    ACTION_PIN_ARTIFACT_MANIFEST_FIELDS,
+    'Action pin artifact manifest'
+  );
+  assert(
+    manifest.schemaVersion === ACTION_PIN_ARTIFACT_MANIFEST_SCHEMA_VERSION,
+    `Unsupported Action pin artifact manifest schemaVersion: ${manifest.schemaVersion}`
+  );
+  assert(manifest.status === 'passed', 'Action pin artifact manifest status must be passed.');
+  assert(manifest.error === null, 'Action pin artifact manifest error must be null.');
+  assert(Array.isArray(manifest.files), 'Action pin artifact manifest files must be an array.');
+  assert(manifest.files.length > 0, 'Action pin artifact manifest files must not be empty.');
+  const paths = [];
+  for (const entry of manifest.files) {
+    assertExactFields(
+      entry,
+      ACTION_PIN_ARTIFACT_MANIFEST_ENTRY_FIELDS,
+      'Action pin artifact manifest entry'
+    );
+    validateManifestPath(entry.path);
+    assert(
+      Number.isSafeInteger(entry.size) && entry.size >= 0,
+      `Artifact manifest size for ${entry.path} must be a non-negative safe integer.`
+    );
+    assert(SHA256.test(entry.sha256), `Artifact manifest SHA-256 for ${entry.path} is invalid.`);
+    paths.push(entry.path);
+  }
+  const sorted = [...paths].sort(compareText);
+  assert(
+    JSON.stringify(paths) === JSON.stringify(sorted),
+    'Action pin artifact manifest paths must be sorted.'
+  );
+  assert(new Set(paths).size === paths.length, 'Action pin artifact manifest paths must be unique.');
+}
+
 export function reviewActionPin({
   action,
   repository,
   releaseTag,
   proposedSha,
+  baselineRef,
   baselineLockBytes,
   candidateLockBytes,
+  execution,
+  githubEvent,
+  workflowBytes,
   tagReference,
   annotatedTag = null,
+  artifactManifest,
 } = {}) {
   const state = {
     action: action ?? null,
     repository: repository ?? null,
     releaseTag: releaseTag ?? null,
     proposedSha: proposedSha ?? null,
+    ...executionState(execution),
     checks: {},
     evidence: {
+      artifactManifestSha256: artifactManifest
+        ? sha256(canonicalActionPinArtifactManifest(artifactManifest))
+        : null,
       baselineLockSha256: Buffer.isBuffer(baselineLockBytes)
         ? sha256(baselineLockBytes)
         : null,
       candidateLockSha256: Buffer.isBuffer(candidateLockBytes)
         ? sha256(candidateLockBytes)
         : null,
+      executionSha256: execution
+        ? sha256(canonicalActionPinJson(execution))
+        : null,
+      githubEventSha256: githubEvent
+        ? sha256(canonicalActionPinJson(githubEvent))
+        : null,
+      workflowSha256: Buffer.isBuffer(workflowBytes) ? sha256(workflowBytes) : null,
       tagReferenceSha256: tagReference
         ? sha256(canonicalActionPinJson(tagReference))
         : null,
@@ -202,7 +480,21 @@ export function reviewActionPin({
 
   try {
     validateActionPinReviewRequest({ action, repository, releaseTag, proposedSha });
+    assert(typeof baselineRef === 'string' && baselineRef.length > 0, 'Baseline ref is required.');
     state.checks.inputs = true;
+
+    validateActionPinExecution(execution);
+    state.checks.execution = true;
+
+    validateWorkflowDispatchEventEvidence(githubEvent, {
+      execution,
+      action,
+      repository,
+      releaseTag,
+      proposedSha,
+      baselineRef,
+    });
+    state.checks.event = true;
 
     const baselineLock = parseLock(baselineLockBytes, 'baseline Action lock');
     const candidateLock = parseLock(candidateLockBytes, 'candidate Action lock');
@@ -243,6 +535,13 @@ export function reviewActionPin({
     );
     state.checks.candidateLock = true;
 
+    assert(Buffer.isBuffer(workflowBytes) && workflowBytes.length > 0, 'Workflow definition bytes are required.');
+    assert(
+      candidateLock.workflows.includes(execution.workflowPath),
+      `Candidate lock does not register workflow ${execution.workflowPath}.`
+    );
+    state.checks.workflow = true;
+
     validateTagReference(tagReference, repository, releaseTag);
     state.tagObjectType = tagReference.objectType;
     state.tagObjectSha = tagReference.objectSha;
@@ -253,12 +552,7 @@ export function reviewActionPin({
       state.resolution = 'lightweight';
       state.resolvedCommitSha = tagReference.objectSha;
     } else {
-      validateAnnotatedTag(
-        annotatedTag,
-        repository,
-        releaseTag,
-        tagReference.objectSha
-      );
+      validateAnnotatedTag(annotatedTag, repository, releaseTag, tagReference.objectSha);
       state.resolution = 'annotated';
       state.resolvedCommitSha = annotatedTag.objectSha;
     }
@@ -269,6 +563,24 @@ export function reviewActionPin({
       `Release tag ${releaseTag} resolves to ${state.resolvedCommitSha}, not proposed SHA ${proposedSha}.`
     );
     state.checks.commit = true;
+
+    const evidenceFiles = createActionPinEvidenceFiles({
+      baselineLockBytes,
+      candidateLockBytes,
+      execution,
+      githubEvent,
+      workflowBytes,
+      tagReference,
+      annotatedTag,
+    });
+    const expectedManifest = createActionPinArtifactManifest(evidenceFiles);
+    validateActionPinArtifactManifest(artifactManifest);
+    assert(
+      canonicalActionPinArtifactManifest(artifactManifest) ===
+        canonicalActionPinArtifactManifest(expectedManifest),
+      'Action pin artifact manifest does not match the reviewed evidence files.'
+    );
+    state.checks.manifest = true;
 
     return createActionPinProvenanceReport({
       ...state,
@@ -291,12 +603,28 @@ export function verifyActionPinProvenanceArtifact({ artifactDir } = {}) {
     'Action pin provenance report'
   );
   const storedReport = parseCanonicalReport(reportBytes);
+  const manifestBytes = readSecureFile(
+    path.join(directory, ACTION_PIN_ARTIFACT_MANIFEST_FILE),
+    'Action pin artifact manifest'
+  );
+  const artifactManifest = parseCanonicalManifest(manifestBytes);
+  assert(
+    sha256(manifestBytes) === storedReport.evidence.artifactManifestSha256,
+    'Action pin artifact manifest SHA-256 does not match the provenance report.'
+  );
+
+  const expectedEvidencePaths = expectedEvidenceFilePaths(
+    storedReport.evidence.annotatedTagFile !== null
+  );
+  const manifestPaths = artifactManifest.files.map((entry) => entry.path);
+  assert(
+    JSON.stringify(manifestPaths) === JSON.stringify(expectedEvidencePaths),
+    `Action pin artifact manifest evidence paths must be exactly: ${expectedEvidencePaths.join(', ')}.`
+  );
   const expectedFiles = [
-    ACTION_PIN_BASELINE_LOCK_FILE,
-    ACTION_PIN_CANDIDATE_LOCK_FILE,
+    ACTION_PIN_ARTIFACT_MANIFEST_FILE,
     ACTION_PIN_PROVENANCE_REPORT_FILE,
-    ACTION_PIN_TAG_REFERENCE_FILE,
-    ...(storedReport.evidence.annotatedTagFile ? [ACTION_PIN_ANNOTATED_TAG_FILE] : []),
+    ...manifestPaths,
   ].sort(compareText);
   const actualFiles = readdirSync(directory).sort(compareText);
   assert(
@@ -304,28 +632,49 @@ export function verifyActionPinProvenanceArtifact({ artifactDir } = {}) {
     `Action pin provenance artifact files must be exactly: ${expectedFiles.join(', ')}.`
   );
 
-  const baselineLockBytes = readSecureFile(
-    path.join(directory, ACTION_PIN_BASELINE_LOCK_FILE),
-    'baseline Action lock'
+  const evidence = {};
+  for (const entry of artifactManifest.files) {
+    const bytes = readSecureFile(
+      resolveManifestFile(directory, entry.path),
+      `Action pin evidence ${entry.path}`
+    );
+    assert(
+      bytes.length === entry.size,
+      `Action pin evidence ${entry.path} size does not match the artifact manifest.`
+    );
+    assert(
+      sha256(bytes) === entry.sha256,
+      `Action pin evidence ${entry.path} SHA-256 does not match the artifact manifest.`
+    );
+    evidence[entry.path] = bytes;
+  }
+
+  const baselineLockBytes = evidence[ACTION_PIN_BASELINE_LOCK_FILE];
+  const candidateLockBytes = evidence[ACTION_PIN_CANDIDATE_LOCK_FILE];
+  const execution = parseCanonicalEvidence(
+    evidence[ACTION_PIN_EXECUTION_FILE],
+    ACTION_PIN_EXECUTION_FIELDS,
+    'GitHub execution identity evidence'
   );
-  const candidateLockBytes = readSecureFile(
-    path.join(directory, ACTION_PIN_CANDIDATE_LOCK_FILE),
-    'candidate Action lock'
+  const githubEvent = parseCanonicalEvidence(
+    evidence[ACTION_PIN_GITHUB_EVENT_FILE],
+    ACTION_PIN_GITHUB_EVENT_FIELDS,
+    'workflow-dispatch event evidence'
   );
+  assertExactFields(
+    githubEvent.inputs,
+    ACTION_PIN_GITHUB_EVENT_INPUT_FIELDS,
+    'workflow-dispatch event inputs'
+  );
+  const workflowBytes = evidence[ACTION_PIN_WORKFLOW_FILE];
   const tagReference = parseCanonicalEvidence(
-    readSecureFile(
-      path.join(directory, ACTION_PIN_TAG_REFERENCE_FILE),
-      'tag-reference evidence'
-    ),
+    evidence[ACTION_PIN_TAG_REFERENCE_FILE],
     ACTION_PIN_TAG_REFERENCE_FIELDS,
     'tag-reference evidence'
   );
   const annotatedTag = storedReport.evidence.annotatedTagFile
     ? parseCanonicalEvidence(
-        readSecureFile(
-          path.join(directory, ACTION_PIN_ANNOTATED_TAG_FILE),
-          'annotated-tag evidence'
-        ),
+        evidence[ACTION_PIN_ANNOTATED_TAG_FILE],
         ACTION_PIN_ANNOTATED_TAG_FIELDS,
         'annotated-tag evidence'
       )
@@ -336,10 +685,15 @@ export function verifyActionPinProvenanceArtifact({ artifactDir } = {}) {
     repository: storedReport.repository,
     releaseTag: storedReport.releaseTag,
     proposedSha: storedReport.proposedSha,
+    baselineRef: githubEvent.inputs.baselineRef,
     baselineLockBytes,
     candidateLockBytes,
+    execution,
+    githubEvent,
+    workflowBytes,
     tagReference,
     annotatedTag,
+    artifactManifest,
   });
   assert(
     canonicalActionPinJson(reproduced) === reportBytes.toString('utf8'),
@@ -350,7 +704,17 @@ export function verifyActionPinProvenanceArtifact({ artifactDir } = {}) {
 
 export function writeActionPinProvenanceArtifactAtomic(
   directoryPath,
-  { baselineLockBytes, candidateLockBytes, tagReference, annotatedTag = null, report },
+  {
+    baselineLockBytes,
+    candidateLockBytes,
+    execution,
+    githubEvent,
+    workflowBytes,
+    tagReference,
+    annotatedTag = null,
+    artifactManifest,
+    report,
+  },
   operations = {}
 ) {
   const mkdir = operations.mkdir ?? mkdirSync;
@@ -363,28 +727,38 @@ export function writeActionPinProvenanceArtifactAtomic(
     parent,
     `.${path.basename(destination)}.${process.pid}.${Date.now()}.tmp`
   );
+  const evidenceFiles = createActionPinEvidenceFiles({
+    baselineLockBytes,
+    candidateLockBytes,
+    execution,
+    githubEvent,
+    workflowBytes,
+    tagReference,
+    annotatedTag,
+  });
+  const expectedManifest = createActionPinArtifactManifest(evidenceFiles);
+  assert(
+    canonicalActionPinArtifactManifest(artifactManifest) ===
+      canonicalActionPinArtifactManifest(expectedManifest),
+    'Refusing to write an Action pin artifact with a mismatched manifest.'
+  );
+  assert(
+    report.evidence.artifactManifestSha256 ===
+      sha256(canonicalActionPinArtifactManifest(artifactManifest)),
+    'Refusing to write an Action pin artifact whose report does not bind the manifest.'
+  );
 
   mkdir(parent, { recursive: true });
   mkdir(temporary);
   try {
-    writeFile(path.join(temporary, ACTION_PIN_BASELINE_LOCK_FILE), baselineLockBytes, {
-      flag: 'wx',
-    });
-    writeFile(path.join(temporary, ACTION_PIN_CANDIDATE_LOCK_FILE), candidateLockBytes, {
-      flag: 'wx',
-    });
+    for (const entry of artifactManifest.files) {
+      writeFile(path.join(temporary, entry.path), evidenceFiles[entry.path], { flag: 'wx' });
+    }
     writeFile(
-      path.join(temporary, ACTION_PIN_TAG_REFERENCE_FILE),
-      canonicalActionPinJson(tagReference),
+      path.join(temporary, ACTION_PIN_ARTIFACT_MANIFEST_FILE),
+      canonicalActionPinArtifactManifest(artifactManifest),
       { encoding: 'utf8', flag: 'wx' }
     );
-    if (annotatedTag) {
-      writeFile(
-        path.join(temporary, ACTION_PIN_ANNOTATED_TAG_FILE),
-        canonicalActionPinJson(annotatedTag),
-        { encoding: 'utf8', flag: 'wx' }
-      );
-    }
     writeFile(
       path.join(temporary, ACTION_PIN_PROVENANCE_REPORT_FILE),
       canonicalActionPinJson(report),
@@ -397,11 +771,7 @@ export function writeActionPinProvenanceArtifactAtomic(
   }
 }
 
-export function writeActionPinProvenanceReportAtomic(
-  filePath,
-  report,
-  operations = {}
-) {
+export function writeActionPinProvenanceReportAtomic(filePath, report, operations = {}) {
   const mkdir = operations.mkdir ?? mkdirSync;
   const writeFile = operations.writeFile ?? writeFileSync;
   const rename = operations.rename ?? renameSync;
@@ -426,6 +796,45 @@ export function writeActionPinProvenanceReportAtomic(
   }
 }
 
+function validateWorkflowDispatchEventEvidence(
+  value,
+  { execution, action, repository, releaseTag, proposedSha, baselineRef }
+) {
+  assertExactFields(value, ACTION_PIN_GITHUB_EVENT_FIELDS, 'workflow-dispatch event evidence');
+  assertExactFields(
+    value.inputs,
+    ACTION_PIN_GITHUB_EVENT_INPUT_FIELDS,
+    'workflow-dispatch event inputs'
+  );
+  assert(value.eventName === 'workflow_dispatch', 'GitHub event must be workflow_dispatch.');
+  assert(value.repository === execution.sourceRepository, 'GitHub event repository does not match source repository.');
+  assert(value.ref === execution.sourceRef, 'GitHub event ref does not match source ref.');
+  assert(value.workflow === execution.workflowPath, 'GitHub event workflow does not match workflow path.');
+  assert(value.inputs.action === action, 'GitHub event Action input does not match the review request.');
+  assert(value.inputs.repository === repository, 'GitHub event repository input does not match the reviewed Action repository.');
+  assert(value.inputs.releaseTag === releaseTag, 'GitHub event release tag input does not match the review request.');
+  assert(value.inputs.proposedSha === proposedSha, 'GitHub event proposed SHA input does not match the review request.');
+  assert(value.inputs.baselineRef === baselineRef, 'GitHub event baseline ref input does not match the review request.');
+}
+
+function expectedEvidenceFilePaths(hasAnnotatedTag) {
+  return [
+    ACTION_PIN_BASELINE_LOCK_FILE,
+    ACTION_PIN_CANDIDATE_LOCK_FILE,
+    ACTION_PIN_EXECUTION_FILE,
+    ACTION_PIN_GITHUB_EVENT_FILE,
+    ACTION_PIN_WORKFLOW_FILE,
+    ACTION_PIN_TAG_REFERENCE_FILE,
+    ...(hasAnnotatedTag ? [ACTION_PIN_ANNOTATED_TAG_FILE] : []),
+  ].sort(compareText);
+}
+
+function executionState(execution) {
+  return Object.fromEntries(
+    ACTION_PIN_EXECUTION_FIELDS.map((field) => [field, execution?.[field] ?? null])
+  );
+}
+
 function parseLock(bytes, label) {
   assert(Buffer.isBuffer(bytes), `${label} bytes are required.`);
   try {
@@ -438,19 +847,12 @@ function parseLock(bytes, label) {
 }
 
 function validateTagReference(value, repository, releaseTag) {
-  assertRecord(value, 'tag-reference evidence');
   assertExactFields(value, ACTION_PIN_TAG_REFERENCE_FIELDS, 'tag-reference evidence');
   assert(value.repository === repository, 'Tag reference repository does not match the reviewed repository.');
   assert(value.tag === releaseTag, 'Tag reference release tag does not match the reviewed tag.');
   assert(value.ref === `refs/tags/${releaseTag}`, 'Tag reference name is not exact.');
-  assert(
-    value.url === githubTagReferenceUrl(repository, releaseTag),
-    'Tag reference source URL does not match the reviewed repository and tag.'
-  );
-  assert(
-    value.objectType === 'commit' || value.objectType === 'tag',
-    `Tag reference must target a commit or annotated tag; got ${value.objectType}.`
-  );
+  assert(value.url === githubTagReferenceUrl(repository, releaseTag), 'Tag reference source URL does not match the reviewed repository and tag.');
+  assert(value.objectType === 'commit' || value.objectType === 'tag', `Tag reference must target a commit or annotated tag; got ${value.objectType}.`);
   assert(FULL_COMMIT_SHA.test(value.objectSha), 'Tag reference object SHA is not a full commit SHA.');
   const expectedObjectUrl = githubGitObjectUrl(
     repository,
@@ -461,63 +863,43 @@ function validateTagReference(value, repository, releaseTag) {
 }
 
 function validateAnnotatedTag(value, repository, releaseTag, tagObjectSha) {
-  assertRecord(value, 'annotated-tag evidence');
   assertExactFields(value, ACTION_PIN_ANNOTATED_TAG_FIELDS, 'annotated-tag evidence');
   assert(value.repository === repository, 'Annotated tag repository does not match the reviewed repository.');
   assert(value.tag === releaseTag, 'Annotated tag name does not match the reviewed tag.');
   assert(value.sha === tagObjectSha, 'Annotated tag SHA does not match the tag reference object.');
-  assert(
-    value.url === githubGitObjectUrl(repository, 'tags', tagObjectSha),
-    'Annotated tag source URL is not exact.'
-  );
-  assert(
-    value.objectType === 'commit',
-    `Annotated tag dereference must resolve directly to a commit; got ${value.objectType}.`
-  );
+  assert(value.url === githubGitObjectUrl(repository, 'tags', tagObjectSha), 'Annotated tag source URL is not exact.');
+  assert(value.objectType === 'commit', `Annotated tag dereference must resolve directly to a commit; got ${value.objectType}.`);
   assert(FULL_COMMIT_SHA.test(value.objectSha), 'Annotated tag commit SHA is not a full commit SHA.');
-  assert(
-    value.objectUrl === githubGitObjectUrl(repository, 'commits', value.objectSha),
-    'Annotated tag commit URL is not exact.'
-  );
+  assert(value.objectUrl === githubGitObjectUrl(repository, 'commits', value.objectSha), 'Annotated tag commit URL is not exact.');
 }
 
 function parseCanonicalReport(bytes) {
   const report = parseJson(bytes, 'Action pin provenance report');
-  assertRecord(report, 'Action pin provenance report');
-  assertExactFields(
-    report,
-    ACTION_PIN_PROVENANCE_REPORT_FIELDS,
-    'Action pin provenance report'
-  );
+  assertExactFields(report, ACTION_PIN_PROVENANCE_REPORT_FIELDS, 'Action pin provenance report');
   assert(
     report.schemaVersion === ACTION_PIN_PROVENANCE_SCHEMA_VERSION,
     `Unsupported Action pin provenance schemaVersion: ${report.schemaVersion}`
   );
-  assertExactFields(
-    report.evidence,
-    ACTION_PIN_PROVENANCE_EVIDENCE_FIELDS,
-    'Action pin provenance evidence'
-  );
-  assertExactFields(
-    report.checks,
-    ACTION_PIN_PROVENANCE_CHECK_FIELDS,
-    'Action pin provenance checks'
-  );
-  assert(
-    bytes.equals(Buffer.from(canonicalActionPinJson(report), 'utf8')),
-    'Action pin provenance report is not canonical JSON.'
-  );
+  assertExactFields(report.evidence, ACTION_PIN_PROVENANCE_EVIDENCE_FIELDS, 'Action pin provenance evidence');
+  assertExactFields(report.checks, ACTION_PIN_PROVENANCE_CHECK_FIELDS, 'Action pin provenance checks');
+  assert(bytes.equals(Buffer.from(canonicalActionPinJson(report), 'utf8')), 'Action pin provenance report is not canonical JSON.');
   return report;
+}
+
+function parseCanonicalManifest(bytes) {
+  const manifest = parseJson(bytes, 'Action pin artifact manifest');
+  validateActionPinArtifactManifest(manifest);
+  assert(
+    bytes.equals(Buffer.from(canonicalActionPinArtifactManifest(manifest), 'utf8')),
+    'Action pin artifact manifest is not canonical JSON.'
+  );
+  return manifest;
 }
 
 function parseCanonicalEvidence(bytes, fields, label) {
   const value = parseJson(bytes, label);
-  assertRecord(value, label);
   assertExactFields(value, fields, label);
-  assert(
-    bytes.equals(Buffer.from(canonicalActionPinJson(value), 'utf8')),
-    `${label} is not canonical JSON.`
-  );
+  assert(bytes.equals(Buffer.from(canonicalActionPinJson(value), 'utf8')), `${label} is not canonical JSON.`);
   return value;
 }
 
@@ -550,6 +932,23 @@ function validateDirectory(directoryPath, label) {
   return realpathSync(resolved);
 }
 
+function resolveManifestFile(directory, filePath) {
+  validateManifestPath(filePath);
+  const resolved = path.resolve(directory, filePath);
+  assert(path.dirname(resolved) === directory, `Artifact manifest path escapes the artifact directory: ${filePath}`);
+  return resolved;
+}
+
+function validateManifestPath(filePath) {
+  assert(typeof filePath === 'string' && filePath.length > 0, 'Artifact manifest path must be a non-empty string.');
+  assert(!filePath.includes('\\'), `Artifact manifest path must use POSIX separators: ${filePath}`);
+  assert(!path.posix.isAbsolute(filePath), `Artifact manifest path must be relative: ${filePath}`);
+  assert(path.posix.normalize(filePath) === filePath, `Artifact manifest path is noncanonical or traverses directories: ${filePath}`);
+  assert(!filePath.split('/').includes('..'), `Artifact manifest path traverses directories: ${filePath}`);
+  assert(!filePath.includes('/'), `Artifact manifest evidence paths must be flat filenames: ${filePath}`);
+  assert(filePath !== ACTION_PIN_ARTIFACT_MANIFEST_FILE && filePath !== ACTION_PIN_PROVENANCE_REPORT_FILE, `Artifact manifest may list evidence files only: ${filePath}`);
+}
+
 function readSecureFile(filePath, label) {
   assert(existsSync(filePath), `${label} is missing.`);
   const stats = lstatSync(filePath);
@@ -567,10 +966,7 @@ function assertExactFields(value, fields, label) {
 }
 
 function assertRecord(value, label) {
-  assert(
-    value && typeof value === 'object' && !Array.isArray(value),
-    `${label} must be an object.`
-  );
+  assert(value && typeof value === 'object' && !Array.isArray(value), `${label} must be an object.`);
 }
 
 function compareText(left, right) {

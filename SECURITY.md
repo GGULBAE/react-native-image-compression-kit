@@ -71,11 +71,17 @@ pnpm verify:action-pin-provenance -- \
   --json
 ```
 
-The artifact must retain canonical baseline/candidate locks, tag-reference
-evidence, optional annotated-tag evidence, and the digest-bound provenance
-report. The offline core and verifier must contain no GitHub request or command
-execution path. Action review artifacts, fixtures, resolver scripts, and reports
-remain repository/CI evidence and must not enter the npm package.
+The artifact must retain canonical baseline/candidate locks, canonical
+`github-execution.json`, normalized `workflow_dispatch` event evidence, the exact reviewed workflow definition,
+tag-reference evidence, optional annotated-tag evidence, a canonical
+`artifact-manifest.json`, and the digest-bound provenance report. The report
+must bind source repository/ref/head SHA, workflow name/path/ref/SHA, run ID and
+attempt, candidate lock SHA-256, workflow-definition SHA-256, and manifest
+SHA-256. The manifest must list every evidence path, byte size, and SHA-256 and
+must reject traversal, links, duplicate/missing/additional files, size drift,
+and digest drift before report replay. The offline core and verifier must contain
+no GitHub request or command execution path. Action review artifacts, fixtures,
+resolver scripts, and reports remain repository/CI evidence and must not enter the npm package.
 
 ## Release Evidence Retention
 
