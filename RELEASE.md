@@ -1,5 +1,57 @@
 # Release Notes
 
+## v0.2.51
+
+Status: unpublished expiration-independent release evidence archive and offline replay gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.51` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, and the existing registry provenance, bundle manifest, and attestation report schemas unchanged. It commits the validated v0.2.50 provenance and attestation material so the full trust chain remains replayable after the source GitHub Actions artifacts expire.
+
+### Goals
+
+- Preserve the exact downloaded v0.2.50 provenance four-file bundle and attestation three-file bundle under repository ownership.
+- Add one canonical index that pins run, artifact, attestation, source-identity, expiration, per-file, and aggregate digest evidence.
+- Verify the exact seven-file payload, canonical index, provenance tarball, and GitHub attestation identity with one network-free command.
+- Reject missing, additional, modified, noncanonical, wrong-run, wrong-artifact, wrong-attestation, wrong-commit, wrong-workflow, wrong-root, and wrong-timestamp evidence.
+- Run the committed replay from default `pnpm verify` while keeping the entire evidence archive outside the npm package.
+
+### Repository-owned Evidence Contract
+
+`evidence/npm/0.2.50/` contains canonical `release-evidence-index.json`, `provenance/` with exactly `bundle-manifest.json`, `package.tgz`, `registry-provenance.json`, and `stdout.json`, plus `attestation/` with exactly `attestation.jsonl`, `trusted-root.jsonl`, and `attestation-verification.json`. No downloaded zip wrapper is required for replay.
+
+The ordered index fields are `schemaVersion`, `status`, `package`, `version`, `expectedTag`, `publishedAt`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `registryValidationRun`, `provenanceArtifact`, `attestation`, `attestationArtifact`, `files`, `evidenceSha256`, and `error`. Version policy fixes Registry Validation run `29310375801`, provenance artifact `8301832057`, attestation artifact `8301832253`, attestation `35201998`, source commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`, artifact expiration `2026-10-12T06:06:31Z`, both GitHub archive digests, every retained file size/SHA-256, and aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`.
+
+`pnpm verify:release-evidence -- --version 0.2.50` requires the exact root/subdirectory layout and canonical index, recomputes all seven file records and the aggregate digest, and calls the existing provenance and attestation verifiers. GitHub CLI receives the retained attestation bundle and trusted root with closed proxy endpoints, then the regenerated canonical report must equal the retained `attestation-verification.json` byte-for-byte.
+
+The ordered verifier fields are `schemaVersion`, `status`, `archiveDir`, `package`, `version`, `expectedTag`, `evidenceSha256`, `provenanceReportSha256`, `manifestSha256`, `attestationReportSha256`, `sourceDigest`, `checks`, and `error`. Ordered checks are `layout`, `index`, `files`, `provenance`, `attestation`, `identity`, and `timestamps`. `--archive-root` and `--archive-dir` support isolated fixtures, `--json` emits exactly one canonical object, and `--report-file` atomically writes the same bytes.
+
+### Included
+
+- `package.json` version bump to `0.2.51`, `verify:release-evidence`, and the default offline replay gate in `pnpm verify`.
+- Repository-owned v0.2.50 canonical index and exact seven evidence files.
+- Version-specific immutable metadata policy for run/artifact/attestation IDs, archive digests, source identity, and expiration.
+- Pure archive/index/file validation separated from the GitHub CLI replay boundary.
+- Vitest coverage for successful replay, CLI/report parity, exact layout, byte tampering, trusted-root replacement, identity/metadata drift, unknown versions, and atomic-write failure.
+- README, release notes, security guidance, Android verification doctor checks, and Vitest expectations aligned to the v0.2.51 candidate and npm latest v0.2.50.
+
+### Not Included
+
+- npm publish, npm authentication, dist-tag changes, git tags, or GitHub Releases.
+- Native/API behavior changes or AVIF output implementation.
+- Changes to the registry provenance report, four-file bundle manifest, or attestation verification report schemas.
+- Network-based evidence refresh, automatic artifact download, or trusted-root rotation.
+- Credentials, npm tokens, OTPs, `.npmrc`, or authentication files.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- `pnpm verify:release-evidence -- --version 0.2.50` with all network proxies blocked.
+- npm pack inspection proving `evidence/`, repository scripts, and tests are excluded.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed candidate commit.
+
 ## v0.2.50
 
 Status: published to npm as the `0.2.50` latest GitHub artifact attestation and offline identity verification release. npm `version` and `dist-tags.latest` are both `0.2.50`; no `v0.2.50` git tag or GitHub Release was created.

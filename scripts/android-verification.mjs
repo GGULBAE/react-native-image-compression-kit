@@ -51,7 +51,18 @@ const REQUIRED_FILES = [
   'scripts/generate-avif-fixtures.mjs',
   'scripts/generate-heic-heif-fixtures.mjs',
   'scripts/release-dry-run.mjs',
+  'scripts/release-evidence-core.mjs',
+  'scripts/verify-release-evidence.mjs',
   'test/releaseDryRun.test.mjs',
+  'test/releaseEvidence.test.mjs',
+  'evidence/npm/0.2.50/release-evidence-index.json',
+  'evidence/npm/0.2.50/provenance/bundle-manifest.json',
+  'evidence/npm/0.2.50/provenance/package.tgz',
+  'evidence/npm/0.2.50/provenance/registry-provenance.json',
+  'evidence/npm/0.2.50/provenance/stdout.json',
+  'evidence/npm/0.2.50/attestation/attestation-verification.json',
+  'evidence/npm/0.2.50/attestation/attestation.jsonl',
+  'evidence/npm/0.2.50/attestation/trusted-root.jsonl',
   'test/iosSmokeLifecycle.test.mjs',
   'test/iosSmokeCliTimeout.test.mjs',
   'test/iosSmokeContract.test.mjs',
@@ -96,6 +107,7 @@ function runDoctor() {
     checkPackageFiles(),
     checkConsumerSmokeTestEnvironment(),
     checkRegistrySmokeTestEnvironment(),
+    checkReleaseEvidenceArchive(),
     checkReleaseDryRunChecklist(),
     checkReleaseNotes(),
     checkSecurityPolicy(),
@@ -354,7 +366,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.50',
+    packageJson.version === '0.2.51',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -369,7 +381,8 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.50` is the GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`.'),
+    readmeContents.includes('Version `0.2.51` is the unpublished expiration-independent release evidence archive and offline replay gate candidate.'),
+    readmeContents.includes('Version `0.2.50` is the current npm `latest` GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.49` was the previous unpublished Registry provenance bundle offline verification candidate.'),
     readmeContents.includes('Version `0.2.48` was the previous npm `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`.'),
     readmeContents.includes('Version `0.2.47` was the previous npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`.'),
@@ -394,7 +407,10 @@ function checkPackageMetadata() {
     readmeContents.includes('Successful [Registry Validation run 29310375801](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29310375801) on release-ready commit `2b198c5f6125de6ad5bae76fc835ff5b935984f0`'),
     readmeContents.includes('[attestation 35201998](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35201998)'),
     readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `380574a9b985e7d046953fa1338d47437753097ee531af85990d0257b3addb8e` under both UTC and Asia/Seoul'),
-    readmeContents.includes('The package metadata is `0.2.50` for the GitHub artifact attestation and offline identity verification release.'),
+    readmeContents.includes('The repository package metadata is `0.2.51` for the unpublished expiration-independent release evidence archive and offline replay gate candidate. npm `latest` remains `0.2.50`.'),
+    readmeContents.includes('pnpm verify:release-evidence -- --version 0.2.50'),
+    readmeContents.includes('aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`'),
+    readmeContents.includes('The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.'),
     readmeContents.includes('version `0.2.0` is the published iOS native JPEG MVP release'),
     readmeContents.includes('version `0.2.1` is the published iOS JPEG target-size release'),
     readmeContents.includes('version `0.2.2` is the published iOS PNG output release'),
@@ -538,10 +554,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README are aligned for the v0.2.50 attestation release',
+    label: 'npm package metadata and README are aligned for the v0.2.51 evidence candidate',
     detail: checks.every(Boolean)
       ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
-      : 'expected registry-independent v0.2.50 release metadata or previous v0.2.48 registry guidance is missing/mismatched',
+      : 'expected v0.2.51 candidate metadata, npm latest v0.2.50 evidence, or package exclusion guidance is missing/mismatched',
   };
 }
 
@@ -674,7 +690,7 @@ function checkPackageFiles() {
     'SECURITY.md',
     'LICENSE',
   ];
-  const forbiddenEntries = ['android', 'android/src', 'scripts'];
+  const forbiddenEntries = ['android', 'android/src', 'scripts', 'evidence'];
   const hasRequiredEntries = requiredEntries.every((entry) => files.includes(entry));
   const excludesDevelopmentEntries = forbiddenEntries.every((entry) => !files.includes(entry));
 
@@ -683,8 +699,8 @@ function checkPackageFiles() {
     label: 'npm package file globs avoid development-only files',
     detail:
       hasRequiredEntries && excludesDevelopmentEntries
-        ? 'publish entries include runtime native source, JS build output, Codegen source, README, SECURITY, and LICENSE without Android tests, fixtures, or repo scripts'
-        : 'expected package.json files to include runtime source and docs, without android, android/src, or scripts',
+        ? 'publish entries include runtime native source, JS build output, Codegen source, README, SECURITY, and LICENSE without Android tests, fixtures, repo scripts, or release evidence'
+        : 'expected package.json files to include runtime source and docs, without android, android/src, scripts, or evidence',
   };
 }
 
@@ -775,7 +791,7 @@ function checkRegistrySmokeTestEnvironment() {
     [attestationTestContents, 'pins the no-network gh invocation in source'],
     [readmeValidatorContents, 'validateReadmeStatus'],
     [registryWorkflowContents, 'workflow_dispatch:'],
-    [registryWorkflowContents, 'default: "0.2.48"'],
+    [registryWorkflowContents, 'default: "0.2.50"'],
     [registryWorkflowContents, 'run: pnpm install --frozen-lockfile'],
     [registryWorkflowContents, 'GITHUB_STEP_SUMMARY'],
     [registryWorkflowContents, 'actions/upload-artifact@v6'],
@@ -826,6 +842,83 @@ function checkRegistrySmokeTestEnvironment() {
             ...missing,
             ...(hasScript ? [] : ['package.json registry smoke/provenance/attestation scripts']),
           ].join(' | ')}`,
+  };
+}
+
+function checkReleaseEvidenceArchive() {
+  const packageJson = readJson('package.json');
+  const index = readJson('evidence/npm/0.2.50/release-evidence-index.json');
+  const coreContents = readText('scripts/release-evidence-core.mjs');
+  const cliContents = readText('scripts/verify-release-evidence.mjs');
+  const testContents = readText('test/releaseEvidence.test.mjs');
+  const readmeContents = readText('README.md');
+  const releaseContents = readText('RELEASE.md');
+  const securityContents = readText('SECURITY.md');
+  const expectedSnippets = [
+    [coreContents, 'RELEASE_EVIDENCE_POLICIES'],
+    [coreContents, 'RELEASE_EVIDENCE_FILE_PATHS'],
+    [coreContents, 'verifyReleaseEvidenceArchive'],
+    [coreContents, 'runRegistryAttestationVerification'],
+    [coreContents, '8301832057'],
+    [coreContents, '8301832253'],
+    [coreContents, '35201998'],
+    [coreContents, '2b198c5f6125de6ad5bae76fc835ff5b935984f0'],
+    [cliContents, "'--archive-root': 'archiveRoot'"],
+    [cliContents, "'--archive-dir': 'archiveDir'"],
+    [cliContents, "'--report-file': 'reportFile'"],
+    [cliContents, 'writeReleaseEvidenceVerificationAtomic'],
+    [testContents, 'runs the real GitHub CLI replay with network proxies blocked and writes identical bytes'],
+    [testContents, 'rejects a missing file and any additional file'],
+    [testContents, 'rejects evidence byte tampering and a different trusted root'],
+    [testContents, 'rejects wrong run, artifact, attestation, commit, workflow, and timestamp policy'],
+    [testContents, 'removes a temporary report and preserves the prior report on atomic failure'],
+    [readmeContents, 'pnpm verify:release-evidence -- --version 0.2.50'],
+    [readmeContents, 'aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`'],
+    [readmeContents, 'The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.'],
+    [releaseContents, '## v0.2.51'],
+    [releaseContents, 'Repository-owned Evidence Contract'],
+    [securityContents, '## Release Evidence Retention'],
+    [securityContents, 'Evidence updates must never'],
+    [securityContents, 'include credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, or authentication'],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => !contents.includes(snippet))
+    .map(([, snippet]) => snippet);
+  const scriptOk =
+    packageJson.scripts?.['verify:release-evidence'] ===
+      'node scripts/verify-release-evidence.mjs' &&
+    packageJson.scripts?.verify?.includes(
+      'pnpm verify:release-evidence -- --version 0.2.50'
+    );
+  const indexOk =
+    index.schemaVersion === 1 &&
+    index.status === 'passed' &&
+    index.package === 'react-native-image-compression-kit' &&
+    index.version === '0.2.50' &&
+    index.expectedTag === 'latest' &&
+    index.registryValidationRun?.id === 29310375801 &&
+    index.provenanceArtifact?.id === 8301832057 &&
+    index.attestation?.id === 35201998 &&
+    index.attestationArtifact?.id === 8301832253 &&
+    index.sourceDigest === '2b198c5f6125de6ad5bae76fc835ff5b935984f0' &&
+    index.evidenceSha256 ===
+      '1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149' &&
+    index.files?.length === 7;
+  const packageExcludesEvidence = !(packageJson.files ?? []).includes('evidence');
+  const ok =
+    scriptOk && indexOk && packageExcludesEvidence && missing.length === 0;
+
+  return {
+    ok,
+    label: 'repository-owned v0.2.50 release evidence archive is replayable',
+    detail: ok
+      ? 'exact archive identity, seven retained files, offline verifier, fixture contracts, documentation, default gate, and npm-package exclusion are present'
+      : `release evidence contract mismatch: ${[
+          ...missing,
+          ...(scriptOk ? [] : ['package.json release evidence scripts']),
+          ...(indexOk ? [] : ['canonical v0.2.50 evidence index identity']),
+          ...(packageExcludesEvidence ? [] : ['package.json files includes evidence']),
+        ].join(' | ')}`,
   };
 }
 
@@ -896,6 +989,13 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.51',
+    'Status: unpublished expiration-independent release evidence archive and offline replay gate candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.51` git tag, or GitHub Release is part of this candidate.',
+    '### Repository-owned Evidence Contract',
+    '`evidence/npm/0.2.50/` contains canonical `release-evidence-index.json`',
+    'aggregate evidence SHA-256 `1548695379c92cfb3ab679292ac173dd2148e174371d559ec0512b12e796a149`',
+    '`pnpm verify:release-evidence -- --version 0.2.50`',
+    'npm pack inspection proving `evidence/`, repository scripts, and tests are excluded.',
     '## v0.2.50',
     'Status: published to npm as the `0.2.50` latest GitHub artifact attestation and offline identity verification release. npm `version` and `dist-tags.latest` are both `0.2.50`; no `v0.2.50` git tag or GitHub Release was created.',
     '`pnpm verify:registry-attestation -- --manifest registry-validation/bundle-manifest.json --attestation-bundle registry-attestation/attestation.jsonl --trusted-root registry-attestation/trusted-root.jsonl --expect-repository GGULBAE/react-native-image-compression-kit --expect-workflow GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml --expect-ref refs/heads/master --expect-head-sha <workflow-head-sha> --json --report-file registry-attestation/attestation-verification.json`',
@@ -2199,6 +2299,7 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
+    'The v0.2.51 expiration-independent release evidence archive and offline replay gate candidate notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.50 GitHub artifact attestation and offline identity verification release notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.49 Registry provenance bundle offline verification candidate notes are in [RELEASE.md](RELEASE.md).',
     'Successful [Registry Validation run 29182554246](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29182554246) on commit `d233529ddb3804b9fff05832bc4b327348f0fc51` uploaded the fixed four-file v0.2.48 bundle',
@@ -2214,18 +2315,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.50' && missing.length === 0;
+  const ok = packageJson.version === '0.2.51' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.50 published attestation notes and previous release notes are current',
+    label: 'v0.2.51 release evidence candidate and previous release notes are current',
     detail: ok
       ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.50'
+          ...(packageJson.version === '0.2.51'
             ? []
-            : ['package.json version 0.2.50']),
+            : ['package.json version 0.2.51']),
         ].join(' | ')}`,
   };
 }
@@ -2243,6 +2344,11 @@ function checkSecurityPolicy() {
     [securityContents, 'Development-only scripts, tests,'],
     [securityContents, 'fixtures, example apps, build directories, credentials, `.npmrc`, `.env*`, keys,'],
     [securityContents, 'pnpm release:dry-run'],
+    [securityContents, '## Release Evidence Retention'],
+    [securityContents, 'pnpm verify:release-evidence -- --version 0.2.50'],
+    [securityContents, 'the whole `evidence/` tree must remain excluded from'],
+    [securityContents, 'Evidence updates must never'],
+    [securityContents, 'include credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, or authentication'],
     [securityContents, 'pnpm audit --prod'],
     [securityContents, 'npm pack react-native-image-compression-kit@<version>'],
     [securityContents, '## Dependency Triage'],
@@ -2895,7 +3001,7 @@ function checkIOSHostAppValidation() {
     'fixtures:ios-pass-replay:audit':
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit',
     verify:
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm android:doctor',
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm android:doctor',
   };
   const expectedSnippets = [
     [examplePackageJson, '@react-native-community/cli-platform-ios'],

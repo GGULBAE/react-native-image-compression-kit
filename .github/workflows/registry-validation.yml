@@ -6,7 +6,7 @@ on:
       version:
         description: Exact published npm version to validate
         required: true
-        default: "0.2.48"
+        default: "0.2.50"
         type: string
       expected_tag:
         description: Dist-tag that must resolve to the same version

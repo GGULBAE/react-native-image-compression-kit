@@ -33,6 +33,27 @@ license, podspec, and React Native config. Development-only scripts, tests,
 fixtures, example apps, build directories, credentials, `.npmrc`, `.env*`, keys,
 and debug keystores must stay out of the tarball.
 
+## Release Evidence Retention
+
+Repository-owned release evidence under `evidence/npm/<version>/` is a security
+verification asset, not package runtime content. It may retain an exact registry
+tarball, provenance report, canonical manifest, attestation bundle, trusted root,
+and verification report, but the whole `evidence/` tree must remain excluded from
+the npm package file list.
+
+For retained v0.2.50 evidence, run the complete trust-chain replay without npm,
+GitHub, Sigstore, or other network access:
+
+```bash
+pnpm verify:release-evidence -- --version 0.2.50
+```
+
+The canonical release evidence index and version policy must pin the source run,
+artifact and attestation IDs, GitHub artifact archive digests, source commit,
+artifact expiration, and every retained file digest. Evidence updates must never
+include credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, or authentication
+files.
+
 Before publishing, run:
 
 ```bash
