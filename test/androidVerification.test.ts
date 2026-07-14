@@ -1470,6 +1470,24 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain(
       'Official GitHub CLI offline verification requires both `--bundle` and `--custom-trusted-root`'
     );
+    expect(releaseSource).toContain(
+      'Candidate implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d` passed GitHub Actions'
+    );
+    expect(releaseSource).toContain(
+      'Manual [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) passed for `version=0.2.48` and `expected_tag=latest`'
+    );
+    expect(releaseSource).toContain(
+      '[Attestation 35197903](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35197903) binds `bundle-manifest.json` SHA-256 `eea6c859cac11a10d4f564957f49606ed9fb9814d37a9e4aabdbb8375285df53`'
+    );
+    expect(releaseSource).toContain(
+      'Local offline replay reproduced `attestation-verification.json` byte-for-byte'
+    );
+    expect(readmeSource).toContain(
+      'Successful [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) on candidate implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d`'
+    );
+    expect(readmeSource).toContain(
+      'Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `a89a481872f6cf543ba7b96ef4ba71d04fb15cd39429dfe3f47c175b496b643c` under both UTC and Asia/Seoul'
+    );
     expect(releaseSource).toContain('## v0.2.49');
     expect(releaseSource).toContain(
       'Status: unpublished Registry provenance bundle offline verification candidate. npm `version` and `dist-tags.latest` remain `0.2.48`; no npm publish, dist-tag change, `v0.2.49` git tag, or GitHub Release is part of this candidate.'
