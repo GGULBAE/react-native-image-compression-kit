@@ -125,6 +125,17 @@ const STALE_PACKED_README_SNIPPETS = [
   'Version `0.2.48` is the unpublished registry provenance and manual CI gate candidate.',
   'The v0.2.48 candidate adds a canonical registry provenance report',
   'The v0.2.48 registry provenance and manual CI gate candidate notes',
+  'Status: v0.2.50 candidate',
+  'v0.2.50%20candidate',
+  'Version `0.2.50` is an unpublished GitHub artifact attestation and offline identity verification candidate for `react-native-image-compression-kit`',
+  'npm `latest` remains the published `0.2.48` release',
+  'The candidate attests the canonical `bundle-manifest.json`',
+  'on candidate implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d`',
+  'The v0.2.50 candidate adds GitHub OIDC artifact attestation',
+  'The repository package metadata is `0.2.50` for the unpublished GitHub artifact attestation and offline identity verification candidate',
+  'included in the candidate pack tarball',
+  'Version `0.2.50` is the unpublished GitHub artifact attestation and offline identity verification candidate.',
+  'The v0.2.50 GitHub artifact attestation and offline identity verification candidate notes',
 ];
 
 const STEPS = [

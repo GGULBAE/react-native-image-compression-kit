@@ -26,6 +26,20 @@ const V048_CANDIDATE_SNIPPETS = [
   'The v0.2.48 registry provenance and manual CI gate candidate notes',
 ];
 
+const V050_CANDIDATE_SNIPPETS = [
+  'Status: v0.2.50 candidate',
+  'v0.2.50%20candidate',
+  'Version `0.2.50` is an unpublished GitHub artifact attestation and offline identity verification candidate for `react-native-image-compression-kit`',
+  'npm `latest` remains the published `0.2.48` release',
+  'The candidate attests the canonical `bundle-manifest.json`',
+  'on candidate implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d`',
+  'The v0.2.50 candidate adds GitHub OIDC artifact attestation',
+  'The repository package metadata is `0.2.50` for the unpublished GitHub artifact attestation and offline identity verification candidate',
+  'included in the candidate pack tarball',
+  'Version `0.2.50` is the unpublished GitHub artifact attestation and offline identity verification candidate.',
+  'The v0.2.50 GitHub artifact attestation and offline identity verification candidate notes',
+];
+
 describe('release dry-run packed README status guard', () => {
   it.each(V047_CANDIDATE_SNIPPETS)(
     'rejects the v0.2.47 candidate snippet %s',
@@ -71,6 +85,31 @@ describe('release dry-run packed README status guard', () => {
       'Status: v0.2.48 release',
       'Version `0.2.48` is the registry provenance and manual CI gate release.',
       'The `0.2.48` package metadata defines the registry provenance release.',
+    ].join('\n');
+
+    expect(getPackedReadmeStatusViolations(packedReadme)).toEqual([]);
+    expect(() => validatePackedReadmeStatus(packedReadme)).not.toThrow();
+  });
+
+  it.each(V050_CANDIDATE_SNIPPETS)(
+    'rejects the v0.2.50 candidate snippet %s',
+    (candidateSnippet) => {
+      const packedReadme = `# Package\n\n${candidateSnippet}\n`;
+
+      expect(getPackedReadmeStatusViolations(packedReadme)).toContain(
+        candidateSnippet
+      );
+      expect(() => validatePackedReadmeStatus(packedReadme)).toThrow(
+        candidateSnippet
+      );
+    }
+  );
+
+  it('accepts registry-independent v0.2.50 release wording', () => {
+    const packedReadme = [
+      'Status: v0.2.50 release',
+      'Version `0.2.50` is the GitHub artifact attestation and offline identity verification release.',
+      'The `0.2.50` package metadata defines the provenance attestation release.',
     ].join('\n');
 
     expect(getPackedReadmeStatusViolations(packedReadme)).toEqual([]);

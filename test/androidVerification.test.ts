@@ -222,7 +222,7 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.50` is an unpublished GitHub artifact attestation and offline identity verification candidate for `react-native-image-compression-kit`; npm `latest` remains the published `0.2.48` release.'
+      'Version `0.2.50` is the GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`.'
     );
     expect(readmeSource).toContain(
       'Version `0.2.49` was the previous unpublished Registry provenance bundle offline verification candidate.'
@@ -288,7 +288,7 @@ describe('Android verification scripts', () => {
       'No git tag or GitHub Release was created as part of this npm-only promotion.'
     );
     expect(readmeSource).toContain(
-      'The repository package metadata is `0.2.50` for the unpublished GitHub artifact attestation and offline identity verification candidate, while npm `latest` remains the published `0.2.48` registry provenance and manual CI gate release.'
+      'The package metadata is `0.2.50` for the GitHub artifact attestation and offline identity verification release.'
     );
     expect(readmeSource).toContain(
       'version `0.2.0` is the published iOS native JPEG MVP release'
@@ -1455,14 +1455,14 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.50 attestation candidate and previous release notes', () => {
+  it('documents the v0.2.50 release-ready attestation and previous release notes', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
     expect(packageJson.version).toBe('0.2.50');
     expect(releaseSource).toContain('## v0.2.50');
     expect(releaseSource).toContain(
-      'Status: unpublished GitHub artifact attestation and offline identity verification candidate. npm `version` and `dist-tags.latest` remain `0.2.48`; no npm publish, dist-tag change, `v0.2.50` git tag, or GitHub Release is part of this candidate.'
+      'Status: release-ready GitHub artifact attestation and offline identity verification release. npm `version` and `dist-tags.latest` remain `0.2.48` until the separately gated one-time `0.2.50` promotion; no `v0.2.50` git tag or GitHub Release is planned.'
     );
     expect(releaseSource).toContain(
       '`pnpm verify:registry-attestation -- --manifest registry-validation/bundle-manifest.json --attestation-bundle registry-attestation/attestation.jsonl --trusted-root registry-attestation/trusted-root.jsonl --expect-repository GGULBAE/react-native-image-compression-kit --expect-workflow GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml --expect-ref refs/heads/master --expect-head-sha <workflow-head-sha> --json --report-file registry-attestation/attestation-verification.json`'
@@ -1471,7 +1471,7 @@ describe('Android verification scripts', () => {
       'Official GitHub CLI offline verification requires both `--bundle` and `--custom-trusted-root`'
     );
     expect(releaseSource).toContain(
-      'Candidate implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d` passed GitHub Actions'
+      'Implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d` passed GitHub Actions'
     );
     expect(releaseSource).toContain(
       'Manual [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) passed for `version=0.2.48` and `expected_tag=latest`'
@@ -1483,7 +1483,7 @@ describe('Android verification scripts', () => {
       'Local offline replay reproduced `attestation-verification.json` byte-for-byte'
     );
     expect(readmeSource).toContain(
-      'Successful [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) on candidate implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d`'
+      'Successful [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) on implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d`'
     );
     expect(readmeSource).toContain(
       'Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `a89a481872f6cf543ba7b96ef4ba71d04fb15cd39429dfe3f47c175b496b643c` under both UTC and Asia/Seoul'
@@ -4749,7 +4749,7 @@ describe('Android verification scripts', () => {
       'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain(
-      'The v0.2.50 GitHub artifact attestation and offline identity verification candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.50 GitHub artifact attestation and offline identity verification release notes are in [RELEASE.md](RELEASE.md).'
     );
     expect(readmeSource).toContain(
       'The v0.2.49 Registry provenance bundle offline verification candidate notes are in [RELEASE.md](RELEASE.md).'

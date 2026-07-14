@@ -2,9 +2,9 @@
 
 ## v0.2.50
 
-Status: unpublished GitHub artifact attestation and offline identity verification candidate. npm `version` and `dist-tags.latest` remain `0.2.48`; no npm publish, dist-tag change, `v0.2.50` git tag, or GitHub Release is part of this candidate.
+Status: release-ready GitHub artifact attestation and offline identity verification release. npm `version` and `dist-tags.latest` remain `0.2.48` until the separately gated one-time `0.2.50` promotion; no `v0.2.50` git tag or GitHub Release is planned.
 
-This candidate keeps native behavior, the public API, the registry provenance report schema, and the exact four-file v0.2.49 provenance bundle unchanged. It binds the canonical `bundle-manifest.json` to GitHub's OIDC-issued artifact attestation and adds a deterministic verifier for the attested subject digest and workflow identity without registry or network access.
+This release keeps native behavior, the public API, the registry provenance report schema, and the exact four-file v0.2.49 provenance bundle unchanged. It binds the canonical `bundle-manifest.json` to GitHub's OIDC-issued artifact attestation and adds a deterministic verifier for the attested subject digest and workflow identity without registry or network access.
 
 ### Goals
 
@@ -31,7 +31,7 @@ Official GitHub CLI offline verification requires both `--bundle` and `--custom-
 - Fixed canonical success/failure report schema and atomic report-file replacement.
 - Offline Vitest fixtures for identity, subject, issuer, predicate, runner, timestamp, malformed JSON, multi-subject, trusted-root, GitHub CLI failure, and atomic-write contracts.
 - Registry Validation permissions, official attestation action, online policy check, downloaded trust material, offline verifier gate, separate artifact, and Step Summary identity evidence.
-- README, release notes, Android verification doctor checks, and Vitest expectations aligned to the v0.2.50 candidate and npm latest v0.2.48.
+- README, release notes, Android verification doctor checks, and Vitest expectations aligned to the registry-independent v0.2.50 release and the pre-promotion npm latest v0.2.48 state.
 
 ### Not Included
 
@@ -52,17 +52,17 @@ Official GitHub CLI offline verification requires both `--bundle` and `--custom-
 - Downloaded provenance and attestation artifacts verified with network access disabled.
 - Attestation subject SHA-256 equal to the downloaded canonical manifest SHA-256.
 - Canonical verifier stdout and report-file byte equality.
-- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed candidate commit.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation on the pushed release-ready commit.
 
-### Candidate Validation Result
+### Pre-publish Validation Result
 
-- Candidate implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d` passed GitHub Actions [CI](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762909), [Android Instrumentation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762893), and [iOS Validation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762973).
+- Implementation commit `5217c91555ac30bd3b6a2882f49600c386f8271d` passed GitHub Actions [CI](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762909), [Android Instrumentation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762893), and [iOS Validation](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29307762973).
 - Manual [Registry Validation run 29308232424](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29308232424) passed for `version=0.2.48` and `expected_tag=latest`; registry validation, manifest attestation, online and downloaded-bundle offline attestation verification, Step Summary generation, and both artifact uploads completed successfully.
 - [Attestation 35197903](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35197903) binds `bundle-manifest.json` SHA-256 `eea6c859cac11a10d4f564957f49606ed9fb9814d37a9e4aabdbb8375285df53` to repository `GGULBAE/react-native-image-compression-kit`, signer workflow `GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml`, ref `refs/heads/master`, source digest `5217c91555ac30bd3b6a2882f49600c386f8271d`, GitHub Actions OIDC, SLSA v1, and Tlog timestamp `2026-07-14T05:20:06.000Z`.
 - The exact four-file `registry-provenance-0.2.48` artifact has GitHub digest `sha256:32697da5ffd12d237e2cedbdc94507f26ab58dcb40dec51ac1a45dfccc8f0a8b`; the separate three-file `registry-provenance-attestation-0.2.48` artifact has GitHub digest `sha256:45b2d6cf85c4de2db0f58f7870bf3c2876c632bcc4e3165400e76dacc2a4851d`.
 - Downloaded provenance SHA-256 values are `eea6c859cac11a10d4f564957f49606ed9fb9814d37a9e4aabdbb8375285df53` for the manifest, `ec118e9c9aae3ecd783e10289fa1e9c52cb4dac73f298b86946d973fa0a2a128` for the tarball, and `cd142b45513e2d27cdfc39b75317df2f447df3f6ac1f99ec59ef9b0e3fa73ba3` for both report and stdout. Attestation artifact SHA-256 values are `2b7919495063cfe7db4b8121ce2e54484408bf8386df334797c65a07ebd2b319` for `attestation.jsonl`, the pinned `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c` for `trusted-root.jsonl`, and `a89a481872f6cf543ba7b96ef4ba71d04fb15cd39429dfe3f47c175b496b643c` for `attestation-verification.json`.
 - Local offline replay reproduced `attestation-verification.json` byte-for-byte from the downloaded manifest, attestation bundle, and trusted root. Report-file and stdout matched, UTC and Asia/Seoul runs matched, the attestation subject equaled the manifest digest, and provenance verification reported all six checks as `true` with network proxies forced closed.
-- npm `version` and `dist-tags.latest` remain `0.2.48`, while `react-native-image-compression-kit@0.2.50` remains unpublished. No publish, dist-tag change, git tag, GitHub Release, npm login, token, OTP, or authentication file was created.
+- At this pre-publish checkpoint, npm `version` and `dist-tags.latest` remained `0.2.48`, and `react-native-image-compression-kit@0.2.50` did not exist. No publish, dist-tag change, git tag, GitHub Release, npm login, token, OTP, or authentication file was created during candidate validation.
 
 ## v0.2.49
 
