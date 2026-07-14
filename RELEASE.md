@@ -26,9 +26,15 @@ The ordered Action Pin attestation report fields are `schemaVersion`, `status`, 
 
 The manual Action Pin Review workflow has `id-token: write` and `attestations: write`, runs `actions/attest@v4` only after provenance succeeds, performs an online policy check, downloads the exact bundle and GitHub trusted root, pins trusted-root SHA-256 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`, and runs the offline verifier before success. It uploads `action-pin-review-<run-id>` separately from the three-file `action-pin-attestation-<run-id>` artifact and records attestation ID/URL, subject and signer identity, offline status, and trusted-root digest in the Step Summary.
 
+### Manual Validation Evidence
+
+Manual [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736) passed on source/workflow commit `2db9c690627a155ea1fe3d83ce4e71b13ba9aa7c`. [Attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280) binds `artifact-manifest.json` SHA-256 `d4f85ff96839e5424a3152275f7d1b4047073df9fab1be2bf6d249cd7fd948a8` to repository `GGULBAE/react-native-image-compression-kit`, workflow `.github/workflows/action-pin-review.yml`, ref `refs/heads/master`, that source/workflow SHA, and run `29320049736` attempt `1`.
+
+The provenance artifact ID is `8305522072`, GitHub digest `sha256:d09e9b5d579d6ada53caa6e3d012b6ad7d6665eab9fd8bfbb73c275ee88b2439`, and expiration `2026-10-12T08:59:46Z`. The separate attestation artifact ID is `8305522316`, GitHub digest `sha256:3ffcf711c0c3827636b6a6cfca9f83ee010fcc2f849933d69f4c51b7e0984f76`, and the same expiration. Downloaded evidence fixes attestation report SHA-256 `361a7f8357070c879f620b9db101cef114e82b9b785a5d1511daa0c6ff6c2cd8`, bundle SHA-256 `701fc32bac71bf310f30001b052183f567673ebf867829d53fcb6f8d88ae0e09`, and trusted-root SHA-256 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`. Blocked-network local replay reproduced `attestation-verification.json` byte-for-byte under UTC and Asia/Seoul. The exact downloaded provenance and attestation artifacts are committed as the default offline fixtures.
+
 ### Included
 
-- `package.json` version bump to `0.2.55` and the offline `verify:action-pin-attestation` command.
+- `package.json` version bump to `0.2.55`, the offline `verify:action-pin-attestation` command, and the real-bundle `verify:action-pin-attestation-fixture` default gate.
 - Shared offline GitHub attestation command layer and generalized validation core while preserving the Registry report contract.
 - Action Pin attestation report schema, execution-identity cross-check, canonical JSON, and atomic report writer.
 - Action Pin Review OIDC attestation, separate trust-material artifact, Step Summary evidence, and fail-closed enforcement.

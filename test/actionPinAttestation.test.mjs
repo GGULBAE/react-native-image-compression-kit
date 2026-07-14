@@ -5,6 +5,7 @@ import {
   rmSync,
   writeFileSync,
 } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,11 +36,12 @@ const ROOT = path.resolve(TEST_DIR, '..');
 const ARTIFACT_DIR = path.join(TEST_DIR, 'fixtures', 'action-pin-review');
 const MANIFEST_PATH = path.join(ARTIFACT_DIR, ACTION_PIN_ARTIFACT_MANIFEST_FILE);
 const MANIFEST_BYTES = readFileSync(MANIFEST_PATH);
+const ATTESTATION_FIXTURE_DIR = path.join(TEST_DIR, 'fixtures', 'action-pin-attestation');
 const PROVENANCE = verifyActionPinProvenanceArtifact({ artifactDir: ARTIFACT_DIR });
 const WORKFLOW = `${PROVENANCE.sourceRepository}/${PROVENANCE.workflowPath}`;
-const TRUSTED_ROOT = Buffer.from('Action pin fixture trusted root\n');
+const TRUSTED_ROOT = readFileSync(path.join(ATTESTATION_FIXTURE_DIR, 'trusted-root.jsonl'));
 const TRUSTED_ROOT_SHA256 = sha256(TRUSTED_ROOT);
-const BUNDLE = Buffer.from('Action pin fixture Sigstore bundle\n');
+const BUNDLE = readFileSync(path.join(ATTESTATION_FIXTURE_DIR, 'attestation.jsonl'));
 
 function verificationFixture() {
   const signer = `https://github.com/${WORKFLOW}@${PROVENANCE.sourceRef}`;
@@ -145,6 +147,23 @@ describe('Action pin artifact attestation', () => {
     expect(Object.values(report.checks)).toEqual(Array(10).fill(true));
   });
 
+  it('matches the real workflow attestation report fixture', () => {
+    const stored = readFileSync(
+      path.join(ATTESTATION_FIXTURE_DIR, 'attestation-verification.json'),
+      'utf8'
+    );
+    const report = JSON.parse(stored);
+    expect(report.status).toBe('passed');
+    expect(report.subjectSha256).toBe(PROVENANCE.evidence.artifactManifestSha256);
+    expect(report.sourceHeadSha).toBe(PROVENANCE.sourceHeadSha);
+    expect(report.workflowSha).toBe(PROVENANCE.workflowSha);
+    expect(report.runId).toBe(PROVENANCE.runId);
+    expect(canonicalActionPinAttestationReport(report)).toBe(stored);
+    expect(sha256(TRUSTED_ROOT)).toBe(
+      '65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c'
+    );
+  });
+
   it('rejects wrong subject, repository, workflow, ref, and source SHA fixtures', () => {
     const cases = [
       [
@@ -226,6 +245,27 @@ describe('Action pin artifact attestation', () => {
     });
     expect(tampered.status).toBe('failed');
     expect(tampered.error).toContain('offline bundle signature verification failed');
+  });
+
+  it('cryptographically rejects the real bundle after byte tampering offline', () => {
+    const parent = mkdtempSync(path.join(os.tmpdir(), 'rnick-action-pin-bundle-tamper-'));
+    const tamperedBundle = path.join(parent, 'attestation.jsonl');
+    try {
+      writeFileSync(tamperedBundle, Buffer.concat([BUNDLE, Buffer.from('tampered')]));
+      const result = spawnSync(process.execPath, [
+        path.join(ROOT, 'scripts', 'verify-action-pin-attestation.mjs'),
+        '--artifact-dir', ARTIFACT_DIR,
+        '--attestation-bundle', tamperedBundle,
+        '--trusted-root', path.join(ATTESTATION_FIXTURE_DIR, 'trusted-root.jsonl'),
+        '--json',
+      ], { cwd: ROOT, encoding: 'utf8' });
+      expect(result.status).toBe(1);
+      const report = JSON.parse(result.stdout);
+      expect(report.status).toBe('failed');
+      expect(report.error).toContain('gh attestation verify failed');
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
   });
 
   it('parses the offline CLI contract', () => {

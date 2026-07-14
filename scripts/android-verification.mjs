@@ -59,13 +59,17 @@ const REQUIRED_FILES = [
   'scripts/workflow-supply-chain-core.mjs',
   'scripts/verify-workflow-supply-chain.mjs',
   'scripts/action-pin-provenance-core.mjs',
+  'scripts/action-pin-attestation-core.mjs',
+  'scripts/github-attestation-cli.mjs',
   'scripts/action-pin-review-github.mjs',
   'scripts/review-action-pin.mjs',
   'scripts/verify-action-pin-provenance.mjs',
+  'scripts/verify-action-pin-attestation.mjs',
   'test/releaseDryRun.test.mjs',
   'test/releaseEvidence.test.mjs',
   'test/workflowSupplyChain.test.mjs',
   'test/actionPinProvenance.test.mjs',
+  'test/actionPinAttestation.test.mjs',
   'test/fixtures/action-pin-review/action-pin-provenance.json',
   'test/fixtures/action-pin-review/artifact-manifest.json',
   'test/fixtures/action-pin-review/action-pin-review-workflow.yml',
@@ -75,6 +79,9 @@ const REQUIRED_FILES = [
   'test/fixtures/action-pin-review/baseline-actions-lock.json',
   'test/fixtures/action-pin-review/candidate-actions-lock.json',
   'test/fixtures/action-pin-review/tag-reference.json',
+  'test/fixtures/action-pin-attestation/attestation-verification.json',
+  'test/fixtures/action-pin-attestation/attestation.jsonl',
+  'test/fixtures/action-pin-attestation/trusted-root.jsonl',
   'test/fixtures/github/action-pin-review-workflow-dispatch.json',
   'evidence/npm/0.2.50/release-evidence-index.json',
   'evidence/npm/0.2.50/provenance/bundle-manifest.json',
@@ -1122,6 +1129,12 @@ function checkActionPinProvenance() {
   const fixtureCandidateLock = readText(
     'test/fixtures/action-pin-review/candidate-actions-lock.json'
   );
+  const fixtureAttestation = readJson(
+    'test/fixtures/action-pin-attestation/attestation-verification.json'
+  );
+  const fixtureTrustedRoot = readFileSync(
+    path.join(ROOT, 'test/fixtures/action-pin-attestation/trusted-root.jsonl')
+  );
   const lockContents = readText('.github/actions-lock.json');
   const readmeContents = readText('README.md');
   const releaseContents = readText('RELEASE.md');
@@ -1188,6 +1201,7 @@ function checkActionPinProvenance() {
     [readmeContents, '`sourceRepository`, `sourceRef`, `sourceHeadSha`'],
     [readmeContents, 'pnpm verify:action-pin-fixture'],
     [readmeContents, 'pnpm verify:action-pin-attestation --'],
+    [readmeContents, 'pnpm verify:action-pin-attestation-fixture'],
     [releaseContents, '## v0.2.55'],
     [releaseContents, '### Action Pin Attestation Contract'],
     [releaseContents, '## v0.2.54'],
@@ -1209,9 +1223,12 @@ function checkActionPinProvenance() {
       'node scripts/verify-action-pin-provenance.mjs' &&
     packageJson.scripts?.['verify:action-pin-attestation'] ===
       'node scripts/verify-action-pin-attestation.mjs' &&
+    packageJson.scripts?.['verify:action-pin-attestation-fixture'] ===
+      'pnpm verify:action-pin-attestation -- --artifact-dir test/fixtures/action-pin-review --attestation-bundle test/fixtures/action-pin-attestation/attestation.jsonl --trusted-root test/fixtures/action-pin-attestation/trusted-root.jsonl --json' &&
     packageJson.scripts?.['verify:action-pin-fixture'] ===
       'pnpm verify:action-pin-provenance -- --artifact-dir test/fixtures/action-pin-review --json' &&
-    packageJson.scripts?.verify?.includes('pnpm verify:action-pin-fixture');
+    packageJson.scripts?.verify?.includes('pnpm verify:action-pin-fixture') &&
+    packageJson.scripts?.verify?.includes('pnpm verify:action-pin-attestation-fixture');
   const fixtureOk =
     fixtureReport.schemaVersion === 2 &&
     fixtureReport.status === 'passed' &&
@@ -1224,7 +1241,7 @@ function checkActionPinProvenance() {
       'GGULBAE/react-native-image-compression-kit' &&
     fixtureReport.sourceRef === 'refs/heads/master' &&
     fixtureReport.workflowPath === '.github/workflows/action-pin-review.yml' &&
-    fixtureReport.runId === '30000000000' &&
+    fixtureReport.runId === '29320049736' &&
     fixtureReport.runAttempt === 1 &&
     Object.values(fixtureReport.checks ?? {}).every((value) => value === true) &&
     fixtureReport.evidence?.candidateLockSha256 ===
@@ -1257,6 +1274,22 @@ function checkActionPinProvenance() {
     rawEventFixture.ref === fixtureEvent.ref &&
     fixtureWorkflow === workflowContents &&
     fixtureCandidateLock === lockContents;
+  const fixtureAttestationOk =
+    fixtureAttestation.status === 'passed' &&
+    fixtureAttestation.subject === 'artifact-manifest.json' &&
+    fixtureAttestation.subjectSha256 ===
+      fixtureReport.evidence?.artifactManifestSha256 &&
+    fixtureAttestation.sourceRepository === fixtureReport.sourceRepository &&
+    fixtureAttestation.sourceRef === fixtureReport.sourceRef &&
+    fixtureAttestation.sourceHeadSha === fixtureReport.sourceHeadSha &&
+    fixtureAttestation.workflowSha === fixtureReport.workflowSha &&
+    fixtureAttestation.runId === fixtureReport.runId &&
+    fixtureAttestation.runAttempt === fixtureReport.runAttempt &&
+    Object.values(fixtureAttestation.checks ?? {}).every(
+      (value) => value === true
+    ) &&
+    sha256(fixtureTrustedRoot) ===
+      '65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c';
   const offlineOnly = [coreContents, offlineCliContents, attestationCoreContents].every(
     (contents) =>
       !contents.includes('node:child_process') &&
@@ -1271,6 +1304,7 @@ function checkActionPinProvenance() {
   const ok =
     scriptsOk &&
     fixtureOk &&
+    fixtureAttestationOk &&
     offlineOnly &&
     packageExcludesReviewFiles &&
     missing.length === 0;
@@ -1284,6 +1318,7 @@ function checkActionPinProvenance() {
           ...missing,
           ...(scriptsOk ? [] : ['package Action pin scripts']),
           ...(fixtureOk ? [] : ['committed execution-bound annotated-tag manifest fixture']),
+          ...(fixtureAttestationOk ? [] : ['committed Action Pin attestation fixture']),
           ...(offlineOnly ? [] : ['offline-only core and replay boundary']),
           ...(packageExcludesReviewFiles ? [] : ['npm package exclusions']),
         ].join(' | ')}`,
@@ -1363,6 +1398,10 @@ function checkReleaseNotes() {
     '`pnpm verify:action-pin-attestation -- --artifact-dir <provenance-path> --attestation-bundle <attestation.jsonl> --trusted-root <trusted-root.jsonl> --json --report-file <attestation-verification.json>`',
     'Ordered checks are `provenance`, `manifest`, `subject`, `repository`, `workflow`, `ref`, `sourceDigest`, `workflowDigest`, `invocation`, and `signature`.',
     'lock SHA-256 `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`',
+    'Manual [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736) passed',
+    '[Attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280)',
+    'sha256:3ffcf711c0c3827636b6a6cfca9f83ee010fcc2f849933d69f4c51b7e0984f76',
+    'Blocked-network local replay reproduced `attestation-verification.json` byte-for-byte under UTC and Asia/Seoul.',
     '## v0.2.54',
     'Status: unpublished Action pin provenance execution identity and artifact manifest binding candidate. npm `version` and `dist-tags.latest` remain `0.2.50`; no npm publish, dist-tag change, `v0.2.54` git tag, or GitHub Release is part of this candidate.',
     '### Execution Identity and Artifact Manifest Contract',
@@ -2695,6 +2734,8 @@ function checkReleaseNotes() {
   ];
   const readmeSnippets = [
     'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes are in [RELEASE.md](RELEASE.md).',
+    'Successful [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736)',
+    '[attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280)',
     'The v0.2.54 Action pin provenance execution identity and artifact manifest binding candidate notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.53 GitHub Action pin update provenance and manual review gate candidate notes are in [RELEASE.md](RELEASE.md).',
     'The v0.2.52 immutable GitHub Actions pin and workflow supply-chain gate candidate notes are in [RELEASE.md](RELEASE.md).',
@@ -3415,7 +3456,7 @@ function checkIOSHostAppValidation() {
     'fixtures:ios-pass-replay:audit':
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit',
     verify:
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm android:doctor',
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor',
   };
   const expectedSnippets = [
     [examplePackageJson, '@react-native-community/cli-platform-ios'],

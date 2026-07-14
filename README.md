@@ -215,6 +215,8 @@ pnpm verify:action-pin-attestation -- \
 
 The verifier first replays the complete provenance artifact, then invokes the official GitHub CLI with the downloaded bundle, pinned trusted root, closed network proxies, exact repository, signer workflow, source ref, source commit, GitHub OIDC issuer, SLSA v1 predicate, and hosted-runner policy. Its fixed report binds the manifest SHA-256, source repository/ref/head SHA, workflow SHA, run ID/attempt, signer workflow, verified timestamps, and ordered `provenance`, `manifest`, `subject`, `repository`, `workflow`, `ref`, `sourceDigest`, `workflowDigest`, `invocation`, and `signature` checks. The signed SLSA `invocationId` must equal the provenance run ID/attempt URL. Fixtures reject wrong subject, repository, workflow, ref, source SHA, invocation, provenance-to-manifest disagreement, and bundle tampering without network access.
 
+Successful [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736) on source commit `2db9c690627a155ea1fe3d83ce4e71b13ba9aa7c` attested `artifact-manifest.json` SHA-256 `d4f85ff96839e5424a3152275f7d1b4047073df9fab1be2bf6d249cd7fd948a8` as [attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280). The provenance artifact has ID `8305522072` and GitHub digest `sha256:d09e9b5d579d6ada53caa6e3d012b6ad7d6665eab9fd8bfbb73c275ee88b2439`; the separate attestation artifact has ID `8305522316` and GitHub digest `sha256:3ffcf711c0c3827636b6a6cfca9f83ee010fcc2f849933d69f4c51b7e0984f76`. The downloaded report SHA-256 is `361a7f8357070c879f620b9db101cef114e82b9b785a5d1511daa0c6ff6c2cd8`, bundle SHA-256 is `701fc32bac71bf310f30001b052183f567673ebf867829d53fcb6f8d88ae0e09`, and trusted-root SHA-256 is the pinned `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`. Local blocked-network replay reproduced the workflow report byte-for-byte under both UTC and Asia/Seoul. These exact downloaded provenance and attestation files are the committed default fixture.
+
 The committed annotated-tag fixture for `gradle/actions/setup-gradle@v6` includes a synthetic GitHub `workflow_dispatch` event, exact current workflow definition, and canonical manifest, then exercises complete replay from default `pnpm verify`. Only `scripts/action-pin-review-github.mjs` performs GitHub requests; the validation core, offline verifier, fixture gate, and default verify path contain no network or command-execution route. The manual workflow writes source/workflow/run identity plus lock/workflow/manifest digests to the GitHub Step Summary and uploads the exact artifact, but it never changes a pin, lock, Dependabot PR, npm package, or trusted root.
 
 The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry, keeps `avif.output=false`, and leaves metadata preserve, target-size, and animated AVIF production semantics disabled.
@@ -875,7 +877,7 @@ Run the JavaScript and TypeScript checks:
 pnpm verify
 ```
 
-`pnpm verify` runs type checking, unit tests (including the committed Action Pin provenance and signer-identity fixtures), the TypeScript build, `pnpm fixtures:ios-pass-replay:audit`, the committed `pnpm verify:release-evidence -- --version 0.2.50` replay, `pnpm verify:workflow-supply-chain -- --json`, the committed `pnpm verify:action-pin-fixture`, and the Android verification doctor. All committed replay and supply-chain gates are network-free; only the separately invoked `pnpm review:action-pin` command resolves GitHub tags.
+`pnpm verify` runs type checking, unit tests (including the committed Action Pin provenance and signer-identity fixtures), the TypeScript build, `pnpm fixtures:ios-pass-replay:audit`, the committed `pnpm verify:release-evidence -- --version 0.2.50` replay, `pnpm verify:workflow-supply-chain -- --json`, `pnpm verify:action-pin-fixture`, the real-bundle `pnpm verify:action-pin-attestation-fixture`, and the Android verification doctor. All committed replay and supply-chain gates are network-free; only the separately invoked `pnpm review:action-pin` command resolves GitHub tags.
 
 Run the pack-based consumer smoke test before release-oriented changes:
 
@@ -914,6 +916,7 @@ To replay the committed annotated-tag Action pin provenance fixture without netw
 
 ```bash
 pnpm verify:action-pin-fixture
+pnpm verify:action-pin-attestation-fixture
 ```
 
 Use the manual **Action Pin Review** workflow or `pnpm review:action-pin` only when reviewing a proposed SHA update. Downloaded provenance artifacts can be replayed with `pnpm verify:action-pin-provenance -- --artifact-dir <path> --json`; downloaded provenance plus attestation artifacts can be replayed with `pnpm verify:action-pin-attestation -- --artifact-dir <path> --attestation-bundle <path> --trusted-root <path> --json`.

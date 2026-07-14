@@ -884,6 +884,12 @@ describe('Android verification scripts', () => {
     expect(packageJson.scripts['verify:registry-attestation']).toBe(
       'node scripts/verify-registry-attestation.mjs'
     );
+    expect(packageJson.scripts['verify:action-pin-attestation']).toBe(
+      'node scripts/verify-action-pin-attestation.mjs'
+    );
+    expect(packageJson.scripts['verify:action-pin-attestation-fixture']).toBe(
+      'pnpm verify:action-pin-attestation -- --artifact-dir test/fixtures/action-pin-review --attestation-bundle test/fixtures/action-pin-attestation/attestation.jsonl --trusted-root test/fixtures/action-pin-attestation/trusted-root.jsonl --json'
+    );
     expect(registrySmokeScriptSource).toContain("'--expect-tag': 'expectedTag'");
     expect(registrySmokeScriptSource).toContain("'--report-file': 'reportFile'");
     expect(registrySmokeScriptSource).toContain("'--artifact-dir': 'artifactDir'");
@@ -1079,7 +1085,7 @@ describe('Android verification scripts', () => {
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit'
     );
     expect(packageJson.scripts.verify).toBe(
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm android:doctor'
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.50 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor'
     );
     expect(readmeSource).toContain('## iOS Host-App Validation');
     expect(readmeSource).toContain('pnpm example:ios:smoke');
@@ -1517,6 +1523,18 @@ describe('Android verification scripts', () => {
     );
     expect(releaseSource).toContain(
       '81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c'
+    );
+    expect(releaseSource).toContain(
+      'Manual [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736) passed'
+    );
+    expect(releaseSource).toContain(
+      '[Attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280)'
+    );
+    expect(releaseSource).toContain(
+      'sha256:3ffcf711c0c3827636b6a6cfca9f83ee010fcc2f849933d69f4c51b7e0984f76'
+    );
+    expect(readmeSource).toContain(
+      'Successful [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736)'
     );
     expect(releaseSource).toContain('## v0.2.54');
     expect(releaseSource).toContain(
