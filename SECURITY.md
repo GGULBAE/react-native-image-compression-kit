@@ -153,6 +153,54 @@ committed exact-ZIP fixtures without network access:
 pnpm fixtures:release-evidence-acquisition:check
 ```
 
+Acquire Release Evidence Policy Review artifacts through the separate explicit
+review acquisition boundary. Never infer a latest review run; require the exact
+repository, workflow, source ref, source commit, review run ID, and evidence
+version:
+
+```bash
+pnpm acquire:release-evidence-review -- \
+  --repository <owner/repo> \
+  --workflow .github/workflows/release-evidence-policy-review.yml \
+  --source-ref refs/heads/<branch> \
+  --source-digest <40-character-review-commit-sha> \
+  --run-id <review-workflow-run-id> \
+  --version <reviewed-evidence-version> \
+  --output-dir /path/to/review-acquisition \
+  --release-archive-root evidence/npm \
+  --json \
+  --report-file /path/to/review-acquisition-report.json
+```
+
+At acquisition time both artifacts must be unexpired and must match the
+committed review policy's artifact IDs, version/run-qualified names, exact byte
+sizes, GitHub SHA-256 digests, creation/expiration times, workflow run, source
+SHA, and repository IDs. The completed successful `workflow_dispatch` run must
+also match repository, workflow, ref, source SHA, attempt, actor, and triggering
+actor. After the exact ZIP bytes are retained, expiration-independent replay may
+use them without consulting the current clock.
+
+The network adapter may use the existing authenticated `gh` session, but the
+validation core must have no command or network path. Do not retain credentials,
+tokens, `.npmrc`, login state, or signed artifact/attestation download URLs.
+Canonical metadata may retain only normalized public GitHub identity, artifact
+records, attestation ID, and verified transparency time.
+
+The acquisition must stage canonical metadata, exact `review.zip` and
+`attestation.zip`, and the canonical manifest, then invoke the existing review
+archive importer against that staging directory. Do not expose output until the
+importer fully replays review, attestation, and byte-identical target archive
+evidence. A write, handoff, output rename, or report rename failure must remove
+all newly created output and preserve any report that could not be atomically
+replaced. Existing acquisition destinations must never be replaced.
+
+Default verification must remain offline and use only the exact retained ZIPs
+plus pinned synthetic GitHub response envelopes:
+
+```bash
+pnpm fixtures:release-evidence-review-acquisition:check
+```
+
 Treat an acquisition bundle as observed evidence, not permission to change the
 committed policy or archive set. Prepare a canonical policy candidate and stable
 diff first:

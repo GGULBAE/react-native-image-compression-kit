@@ -1,5 +1,77 @@
 # Release Notes
 
+## v0.2.61
+
+Status: unpublished review artifact acquisition automation and canonical archive handoff candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.61` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, npm state, `evidence/npm`, and `evidence/reviews` unchanged. It adds one authenticated acquisition boundary for the exact v0.2.59 Release Evidence Policy Review artifacts and proves that canonical downloaded inputs reproduce the v0.2.60 importer result before any acquisition bundle is exposed.
+
+### Goals
+
+- Require explicit repository, workflow path, source ref, source commit, run ID, reviewed evidence version, output destination, and release archive root; never select a latest run.
+- Accept only a completed successful `workflow_dispatch` run whose repository IDs, actor, ref, source commit, workflow, attempt, and chronology agree with committed policy.
+- Select exactly the version/run-qualified review and attestation artifacts and validate artifact ID, name, byte size, GitHub SHA-256 digest, creation time, expiration time, run identity, and repository identity.
+- Reject artifacts marked expired or whose expiration is not later than the acquisition time, while keeping already retained archive replay independent of the current clock.
+- Download exact ZIP bytes by immutable artifact ID, parse them with the dependency-free safe ZIP reader, verify canonical review receipt/manifest and attestation report/bundle identity, and retain no signed download URL.
+- Atomically create canonical metadata, the exact two ZIPs, an acquisition manifest, and an optional stdout-identical report only after the existing v0.2.60 importer reproduces the committed archive digest.
+- Keep command execution in a GitHub adapter and all validation/handoff logic in a network-free core covered by retained-ZIP fixtures.
+- Add only the offline fixture freshness and handoff command to default `pnpm verify`.
+
+### Explicit Acquisition Contract
+
+The networked entrypoint is:
+
+```bash
+pnpm acquire:release-evidence-review -- \
+  --repository GGULBAE/react-native-image-compression-kit \
+  --workflow .github/workflows/release-evidence-policy-review.yml \
+  --source-ref refs/heads/master \
+  --source-digest 2782a6e34c70660a6c44a6189c39304317072a22 \
+  --run-id 29390495773 \
+  --version 0.2.55 \
+  --output-dir /tmp/review-acquisition-0.2.55 \
+  --release-archive-root evidence/npm \
+  --json \
+  --report-file /tmp/review-acquisition-0.2.55.json
+```
+
+Only `scripts/release-evidence-review-acquisition-github.mjs` invokes authenticated `gh api` calls. The core has no child-process, HTTP, latest-run selection, or credential path. It requires the exact committed policy for v0.2.55, review run `29390495773`, reviewer `GGULBAE`, source SHA `2782a6e34c70660a6c44a6189c39304317072a22`, review artifact `8333046539`, attestation artifact `8333046693`, and attestation `35388408`.
+
+At acquisition time both GitHub artifacts must report `expired=false` and expiration later than the canonical acquisition timestamp. Review ZIP byte size `285466` and digest `sha256:f1ea6c9c2498e4d773a6cc5f6b49d39d9bfacba8bd40ec76c5364c7d3c21c836`, plus attestation ZIP byte size `15751` and digest `sha256:05ab03d322d15e97cc733e3d0325f6dbb7a468197245ea9c6738241e2477f4d6`, must match both GitHub metadata and downloaded bytes. Artifact creation `2026-07-15T05:04:37Z`, expiration `2026-10-13T05:04:01Z`, run boundaries, repository IDs, and source SHA are validated before staging.
+
+### Canonical Acquisition and Handoff
+
+The acquisition directory contains exactly `review-evidence-metadata.json`, `artifacts/review.zip`, `artifacts/attestation.zip`, and `review-acquisition-manifest.json`. Manifest fields are ordered as `schemaVersion`, `status`, `package`, `version`, `candidateSha256`, `reviewer`, `reviewedAt`, `acquiredAt`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `runId`, `runAttempt`, `reviewArtifact`, `attestationArtifact`, `attestation`, `metadataFile`, `metadataSha256`, `files`, `acquisitionSha256`, and `error`. Each sorted file record has ordered `path`, `size`, and `sha256` fields.
+
+The staged directory is handed to `importReleaseEvidenceReviewArchive()` with the exact canonical metadata and ZIP paths. Success requires complete offline review/attestation replay, byte equality with `evidence/npm/0.2.55`, and aggregate archive SHA-256 `f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd`. Acquisition report fields are ordered as `schemaVersion`, `status`, `outputDir`, `package`, `version`, `candidateSha256`, `reviewer`, `repository`, `runId`, `sourceDigest`, `acquisitionSha256`, `archiveSha256`, `checks`, and `error`; checks are `inputs`, `run`, `artifacts`, `review`, `attestation`, `metadata`, `manifest`, `handoff`, and `atomicWrite`.
+
+Authenticated acquisition at `2026-07-15T06:51:05.525Z` matched both retained ZIPs byte-for-byte, emitted stdout and report bytes identically, produced canonical metadata SHA-256 `6e4074a785ba2b596fdf336d1990eb522d30237927f75c56abfb27a4ba726d4c`, and fixed the three acquisition file records at aggregate SHA-256 `b2cae5664d149cbc2c3a7202dc580b7c8008520d50050ce7e7bbf822e7285c7c`. All nine report checks passed and importer handoff reproduced the committed archive SHA-256.
+
+Output and optional report are prepared in sibling temporary paths. A write, importer, output rename, or report rename failure removes staging and any newly exposed output; a prior report is preserved when report replacement fails, and duplicate output destinations are never replaced. Successful stdout and report bytes are identical canonical one-line JSON.
+
+### Offline Fixture Contract
+
+`pnpm fixtures:release-evidence-review-acquisition:check` uses the exact retained `evidence/reviews/0.2.55/artifacts/review.zip` and `attestation.zip` bytes, synthesizes only the pinned GitHub API envelopes, runs acquisition in a temporary directory, and requires canonical metadata, exact ZIP equality, canonical manifest, and successful importer handoff. It performs no GitHub, npm, Sigstore, or other network access and is included in default `pnpm verify`.
+
+Vitest covers successful canonical output, exact field ordering, run/workflow/ref/SHA/reviewer drift, artifact ID/digest/size/time/expiry drift, downloaded ZIP digest mismatch, attestation bundle/ID mismatch, explicit-selector parsing, absence of latest selection, exact adapter requests, stdout/report byte equality, duplicate destination protection, and write/handoff/output-rename/report-rename rollback.
+
+### Not Included
+
+- npm publish, dist-tag changes, git tags, GitHub Releases, native/API changes, or AVIF output implementation.
+- Automatic review approval, policy promotion, review workflow dispatch, or changes to `evidence/npm` and `evidence/reviews`.
+- GitHub network access in default CI or `pnpm verify`.
+- Authentication persistence, tokens, OTPs, `.npmrc`, signed attestation URLs, or automatic login.
+
+### Validation
+
+- `pnpm verify`, including offline review acquisition fixture freshness and v0.2.60 importer handoff.
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run` through verification, example typecheck, diff, and pack inspection; expected refusal at the packed README stale-candidate guard while v0.2.61 remains unpublished.
+- Authenticated acquisition of run `29390495773` to `/tmp`, canonical stdout/report byte equality, exact ZIP equality, and aggregate archive digest reproduction.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed candidate commit.
+
 ## v0.2.60
 
 Status: unpublished release evidence review archive import and expiration-independent replay gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.60` git tag, or GitHub Release is part of this candidate.

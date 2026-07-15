@@ -1,6 +1,6 @@
 {
   "name": "react-native-image-compression-kit",
-  "version": "0.2.60",
+  "version": "0.2.61",
   "description": "Native-first image compression and transcoding pipeline for React Native.",
   "license": "MIT",
   "repository": {
@@ -62,6 +62,8 @@
     "verify:release-evidence": "node scripts/verify-release-evidence.mjs",
     "import:release-evidence": "node scripts/import-release-evidence.mjs",
     "acquire:release-evidence": "node scripts/acquire-release-evidence.mjs",
+    "acquire:release-evidence-review": "node scripts/acquire-release-evidence-review.mjs",
+    "fixtures:release-evidence-review-acquisition:check": "node scripts/check-release-evidence-review-acquisition-fixture.mjs",
     "prepare:release-evidence-policy": "node scripts/prepare-release-evidence-policy.mjs",
     "promote:release-evidence-policy": "node scripts/promote-release-evidence-policy.mjs",
     "review:release-evidence-policy": "node scripts/review-release-evidence-policy.mjs",
@@ -77,7 +79,7 @@
     "verify:action-pin-attestation": "node scripts/verify-action-pin-attestation.mjs",
     "verify:action-pin-fixture": "pnpm verify:action-pin-provenance -- --artifact-dir test/fixtures/action-pin-review --json",
     "verify:action-pin-attestation-fixture": "pnpm verify:action-pin-attestation -- --artifact-dir test/fixtures/action-pin-review --attestation-bundle test/fixtures/action-pin-attestation/attestation.jsonl --trusted-root test/fixtures/action-pin-attestation/trusted-root.jsonl --json",
-    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm fixtures:release-evidence-acquisition:check && pnpm verify:release-evidence-set -- --json && pnpm verify:release-evidence-review-archive-set -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor",
+    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm fixtures:release-evidence-acquisition:check && pnpm fixtures:release-evidence-review-acquisition:check && pnpm verify:release-evidence-set -- --json && pnpm verify:release-evidence-review-archive-set -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor",
     "android:doctor": "node scripts/android-verification.mjs doctor",
     "android:codegen": "node scripts/android-verification.mjs codegen",
     "android:build": "node scripts/android-verification.mjs build",

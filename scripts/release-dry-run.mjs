@@ -169,6 +169,11 @@ const STALE_PACKED_README_SNIPPETS = [
   'Version `0.2.60` is the unpublished release evidence review archive import and expiration-independent replay gate candidate.',
   'The repository package metadata is `0.2.60` for the unpublished release evidence review archive import and expiration-independent replay gate candidate; npm `latest` remains v0.2.55.',
   'The v0.2.60 release evidence review archive import and expiration-independent replay gate candidate notes',
+  'Status: v0.2.61 candidate',
+  'v0.2.61%20candidate',
+  'Version `0.2.61` is the unpublished review artifact acquisition automation and canonical archive handoff candidate.',
+  'The repository package metadata is `0.2.61` for the unpublished review artifact acquisition automation and canonical archive handoff candidate; npm `latest` remains v0.2.55.',
+  'The v0.2.61 review artifact acquisition automation and canonical archive handoff candidate notes',
 ];
 
 const STEPS = [
