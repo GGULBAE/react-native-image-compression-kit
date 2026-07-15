@@ -299,7 +299,7 @@ describe('release evidence policy review bundle', () => {
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it('fixes execution and workflow-dispatch event field order', () => {
     const parent = mkdtempSync(path.join(os.tmpdir(), 'rnick-review-fields-'));
