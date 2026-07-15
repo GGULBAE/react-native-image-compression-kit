@@ -1,5 +1,71 @@
 # Release Notes
 
+## v0.2.57
+
+Status: unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.57` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, the published v0.2.55 package, the existing importer, and both retained release evidence archives unchanged. It closes the manual acquisition gap before v0.2.56 import by binding an explicit successful Registry Validation run to immutable GitHub artifact ZIP bytes, canonical metadata, the matching GitHub attestation, and a byte-identical importer handoff.
+
+### Goals
+
+- Require an explicit repository, workflow path, source ref, source commit, Registry Validation run ID, package version, and expected npm tag; never infer or select the latest run.
+- Validate a completed successful `workflow_dispatch` run against repository/workflow/ref/head SHA before accepting its artifacts.
+- Select exactly the versioned provenance and attestation artifacts, download each ZIP by immutable artifact ID, and match API ID, byte size, SHA-256 digest, creation time, and expiration against committed policy.
+- Reject expired artifacts, archive traversal, duplicate/missing/additional entries, ZIP byte tampering, and extracted evidence drift.
+- Bind the manifest subject to exactly one GitHub attestation whose bundle equals the downloaded `attestation.jsonl`, then reproduce its canonical attestation ID and Rekor verification time.
+- Atomically emit a canonical acquisition manifest, canonical importer metadata, and the two extracted artifact directories only after the existing offline importer accepts the staged handoff.
+- Keep network/child-process execution outside the validation core and keep default `pnpm verify` completely network-free.
+
+### Explicit Acquisition Contract
+
+`pnpm acquire:release-evidence -- --repository <owner/repo> --workflow <.github/workflows/file.yml> --source-ref <refs/heads/name> --source-digest <40-char-sha> --run-id <id> --version <version> --expected-tag <tag> --output-dir <path> --json --report-file <report.json>` is the only networked acquisition entrypoint. It uses the existing authenticated GitHub CLI session and does not write credentials, tokens, `.npmrc`, or login state.
+
+The run response must identify the explicit repository and workflow, `workflow_dispatch`, completed/success status, exact source ref/head SHA, positive run attempt, and canonical creation/completion timestamps. The run artifact list must contain exactly `registry-provenance-<version>` and `registry-provenance-attestation-<version>`, both bound to the explicit run/head SHA and unexpired.
+
+Each ZIP is downloaded from `repos/<repository>/actions/artifacts/<artifact-id>/zip`. Downloaded byte size and SHA-256 must equal GitHub API metadata and committed policy before the fixed archive entry list is extracted. The provenance report then proves package, requested/resolved version, tag/version agreement, and publication time. The manifest SHA-256 selects the attestation API response; exactly one response must have the same repository ID and deep-equal Sigstore bundle as downloaded evidence. Its URL-derived attestation ID and verified Rekor time must equal committed policy.
+
+### Canonical Handoff Contract
+
+The output directory contains exactly `acquisition-manifest.json`, `release-evidence-metadata.json`, `provenance/`, and `attestation/`. The metadata bytes use the existing import schema and must match the committed release evidence policy exactly.
+
+The ordered acquisition manifest fields are `schemaVersion`, `status`, `package`, `version`, `expectedTag`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `runId`, `runAttempt`, `provenanceArtifact`, `attestationArtifact`, `attestation`, `metadataFile`, `metadataSha256`, `files`, `acquisitionSha256`, and `error`. File records cover canonical metadata plus all seven handoff evidence files with ordered `path`, `size`, and `sha256`; the aggregate acquisition SHA-256 is computed over those canonical records.
+
+The ordered acquisition report fields are `schemaVersion`, `status`, `outputDir`, `package`, `version`, `expectedTag`, `repository`, `runId`, `sourceDigest`, `acquisitionSha256`, `evidenceSha256`, `checks`, and `error`. Ordered checks are `inputs`, `run`, `artifacts`, `provenance`, `attestation`, `metadata`, `manifest`, `handoff`, and `atomicWrite`. `--report-file` uses atomic replacement.
+
+Before the acquisition destination is exposed through one rename, the core invokes the existing offline importer against staged `provenance/`, `attestation/`, and metadata inputs. The importer must reproduce the committed evidence SHA-256. Existing destinations are never replaced, and staged acquisition plus handoff archives are removed after validation, write, import, or rename failure.
+
+### Offline Fixtures and Live Evidence
+
+Exact GitHub artifact ZIPs for v0.2.50 and v0.2.55 are retained below `test/fixtures/release-evidence-acquisition/`. `pnpm fixtures:release-evidence-acquisition` is an explicit networked refresh command; `pnpm fixtures:release-evidence-acquisition:check` is network-free and requires ZIP sizes/digests plus every extracted byte to equal the corresponding repository-owned archive.
+
+An authenticated live acquisition of Registry Validation run `29333540614` reproduced v0.2.55 provenance artifact ZIP digest `sha256:7463b03ff6294b5017d9b3cad05d4c3ea87b542398a5cb70f503cea148dca826` and attestation artifact ZIP digest `sha256:545c63da880d9d91f9ade1cf40ce36a366634c11ff524b87579e6b0fd6d8e28f`. The canonical handoff acquisition SHA-256 was `1545317c2047808f35f253a1387f7a019b2174ca317cbcb6b325b6ac1b797681`, and the existing importer reproduced retained evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78` with every acquisition check passed.
+
+### Included
+
+- `package.json` version bump to `0.2.57`, the networked `acquire:release-evidence` command, and offline fixture refresh/check commands.
+- Network/ZIP command boundary for exact GitHub run, artifact, attestation, and immutable artifact archive requests.
+- Network-free acquisition core with explicit trust inputs, normalized API validation, ZIP digest/expiration enforcement, attestation binding, canonical manifest/report schemas, importer handoff, and atomic output/report writes.
+- Exact v0.2.50/v0.2.55 artifact ZIP fixtures and offline tests for success, byte-identical handoff, run identity disagreement, artifact ID/digest/expiration drift, expired artifacts, archive path/file drift, attestation disagreement, existing destinations, and injected atomic failures.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the v0.2.57 candidate and npm latest v0.2.55 boundary.
+
+### Not Included
+
+- Automatic latest-run selection, Registry Validation workflow dispatch, npm registry access from default verification, or unattended evidence policy updates.
+- npm publish, dist-tag changes, git tags, or GitHub Releases.
+- Native/API behavior changes or AVIF output implementation.
+- Automatic npm/GitHub login, token storage, OTP storage, `.npmrc`, or authentication files.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- Blocked-network v0.2.50/v0.2.55 ZIP fixture checks and complete acquisition-to-import byte equality.
+- Wrong run conclusion/repository/workflow/ref/head SHA, artifact ID/digest/expiration/expired state, ZIP tamper/path/file drift, attestation bundle/ID disagreement, and atomic output/report failure fixtures.
+- Authenticated live v0.2.55 acquisition with all report checks passed and retained archive evidence SHA equality.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed candidate commit.
+
 ## v0.2.56
 
 Status: unpublished release evidence archive import automation and multi-version regression gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.56` git tag, or GitHub Release is part of this candidate.

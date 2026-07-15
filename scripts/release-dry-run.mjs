@@ -149,6 +149,11 @@ const STALE_PACKED_README_SNIPPETS = [
   'Version `0.2.56` is the unpublished release evidence archive import automation and multi-version regression gate candidate.',
   'The repository package metadata is `0.2.56` for the unpublished release evidence archive import automation and multi-version regression gate candidate; npm `latest` remains v0.2.55.',
   'The v0.2.56 release evidence archive import automation and multi-version regression gate candidate notes',
+  'Status: v0.2.57 candidate',
+  'v0.2.57%20candidate',
+  'Version `0.2.57` is the unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate.',
+  'The repository package metadata is `0.2.57` for the unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate; npm `latest` remains v0.2.55.',
+  'The v0.2.57 Registry Validation artifact acquisition and canonical metadata handoff candidate notes',
 ];
 
 const STEPS = [

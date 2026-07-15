@@ -106,6 +106,7 @@ DerivedData/
 *.tar
 *.tar.gz
 *.zip
+!test/fixtures/release-evidence-acquisition/**/*.zip
 *.ipa
 *.apk
 *.aab

@@ -111,6 +111,48 @@ tarball, provenance report, canonical manifest, attestation bundle, trusted root
 and verification report, but the whole `evidence/` tree must remain excluded from
 the npm package file list.
 
+Acquire Registry Validation evidence only from an explicitly reviewed run. Never
+infer or select the latest run; require repository, workflow, source ref, source
+commit, run ID, package version, and expected tag:
+
+```bash
+pnpm acquire:release-evidence -- \
+  --repository <owner/repo> \
+  --workflow .github/workflows/registry-validation.yml \
+  --source-ref refs/heads/<branch> \
+  --source-digest <40-character-commit-sha> \
+  --run-id <registry-validation-run-id> \
+  --version <version> \
+  --expected-tag <tag> \
+  --output-dir /path/to/acquisition \
+  --json
+```
+
+The acquisition CLI may access GitHub through the existing authenticated `gh`
+session, but it must not persist tokens, login state, signed attestation URLs, or
+authentication files. It must validate a completed successful workflow-dispatch
+run against repository/workflow/ref/head SHA, select exactly the two versioned
+artifacts, download each ZIP by artifact ID, and match ZIP byte size/SHA-256 plus
+creation and expiration metadata to committed policy. Expired artifacts, unsafe
+or duplicate archive paths, missing/additional files, and extracted byte drift
+must fail closed.
+
+The manifest subject must select exactly one attestation whose repository ID and
+Sigstore bundle equal the downloaded evidence. Only normalized attestation ID and
+verified Rekor time may enter canonical metadata; temporary signed download URLs
+must not be retained. Network and child-process execution must remain isolated
+from the acquisition validation core.
+
+The acquisition destination must be created only after the staged canonical
+manifest/metadata and exact artifact directories pass the existing offline
+importer. Existing destinations must not be replaced. Validation, write, handoff,
+or rename failure must remove staged acquisition and archive data. Verify the
+committed exact-ZIP fixtures without network access:
+
+```bash
+pnpm fixtures:release-evidence-acquisition:check
+```
+
 To create a new archive from downloaded workflow artifacts, provide the exact
 four-file Registry provenance directory, the exact three-file attestation
 directory, and an explicit canonical GitHub metadata document:
