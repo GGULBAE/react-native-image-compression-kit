@@ -1,6 +1,6 @@
 {
   "name": "react-native-image-compression-kit",
-  "version": "0.2.58",
+  "version": "0.2.59",
   "description": "Native-first image compression and transcoding pipeline for React Native.",
   "license": "MIT",
   "repository": {
@@ -64,6 +64,9 @@
     "acquire:release-evidence": "node scripts/acquire-release-evidence.mjs",
     "prepare:release-evidence-policy": "node scripts/prepare-release-evidence-policy.mjs",
     "promote:release-evidence-policy": "node scripts/promote-release-evidence-policy.mjs",
+    "review:release-evidence-policy": "node scripts/review-release-evidence-policy.mjs",
+    "verify:release-evidence-review": "node scripts/verify-release-evidence-review.mjs",
+    "verify:release-evidence-review-attestation": "node scripts/verify-release-evidence-review-attestation.mjs",
     "verify:release-evidence-set": "node scripts/verify-release-evidence-set.mjs",
     "verify:workflow-supply-chain": "node scripts/verify-workflow-supply-chain.mjs",
     "review:action-pin": "node scripts/review-action-pin.mjs",

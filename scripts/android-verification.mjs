@@ -20,6 +20,7 @@ const REQUIRED_FILES = [
   '.github/workflows/ci.yml',
   '.github/workflows/ios-validation.yml',
   '.github/workflows/action-pin-review.yml',
+  '.github/workflows/release-evidence-policy-review.yml',
   '.github/actions-lock.json',
   '.github/dependabot.yml',
   'src/NativeImageCompressionKit.ts',
@@ -65,6 +66,11 @@ const REQUIRED_FILES = [
   'scripts/release-evidence-policy-core.mjs',
   'scripts/prepare-release-evidence-policy.mjs',
   'scripts/promote-release-evidence-policy.mjs',
+  'scripts/release-evidence-review-core.mjs',
+  'scripts/review-release-evidence-policy.mjs',
+  'scripts/verify-release-evidence-review.mjs',
+  'scripts/release-evidence-review-attestation-core.mjs',
+  'scripts/verify-release-evidence-review-attestation.mjs',
   'scripts/release-evidence-set-core.mjs',
   'scripts/verify-release-evidence-set.mjs',
   'scripts/workflow-supply-chain-core.mjs',
@@ -81,6 +87,7 @@ const REQUIRED_FILES = [
   'test/releaseEvidenceImport.test.mjs',
   'test/releaseEvidenceAcquisition.test.mjs',
   'test/releaseEvidencePolicy.test.mjs',
+  'test/releaseEvidenceReview.test.mjs',
   'test/releaseEvidenceSet.test.mjs',
   'test/workflowSupplyChain.test.mjs',
   'test/actionPinProvenance.test.mjs',
@@ -431,7 +438,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.58',
+    packageJson.version === '0.2.59',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -446,7 +453,8 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.58` is the unpublished release evidence policy candidate and reviewed promotion gate candidate.'),
+    readmeContents.includes('Version `0.2.59` is the unpublished release evidence policy review receipt and manual promotion rehearsal candidate.'),
+    readmeContents.includes('Version `0.2.58` was the previous unpublished release evidence policy candidate and reviewed promotion gate candidate.'),
     readmeContents.includes('Version `0.2.57` was the previous unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate.'),
     readmeContents.includes('Version `0.2.56` was the previous unpublished release evidence archive import automation and multi-version regression gate candidate.'),
     readmeContents.includes('Version `0.2.55` was the previous npm `latest` Action Pin artifact GitHub OIDC attestation and offline signer verification release.'),
@@ -479,7 +487,7 @@ function checkPackageMetadata() {
     readmeContents.includes('Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29`'),
     readmeContents.includes('[attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248)'),
     readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4` under both UTC and Asia/Seoul'),
-    readmeContents.includes('The repository package metadata is `0.2.58` for the unpublished release evidence policy candidate and reviewed promotion gate candidate; npm `latest` remains v0.2.55.'),
+    readmeContents.includes('The repository package metadata is `0.2.59` for the unpublished release evidence policy review receipt and manual promotion rehearsal candidate; npm `latest` remains v0.2.55.'),
     readmeContents.includes('pnpm acquire:release-evidence --'),
     readmeContents.includes('The command never selects the latest run.'),
     readmeContents.includes('pnpm fixtures:release-evidence-acquisition:check'),
@@ -491,8 +499,8 @@ function checkPackageMetadata() {
     readmeContents.includes('pnpm verify:release-evidence-set -- --json'),
     readmeContents.includes('With no selectors the command verifies v0.2.50 and v0.2.55'),
     readmeContents.includes('pnpm verify:workflow-supply-chain -- --json'),
-    readmeContents.includes('All 30 remote `uses:` declarations across the five GitHub workflow files are pinned to lowercase 40-character commit SHAs.'),
-    readmeContents.includes('The committed lock SHA-256 is `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.'),
+    readmeContents.includes('All 36 remote `uses:` declarations across the six GitHub workflow files are pinned to lowercase 40-character commit SHAs.'),
+    readmeContents.includes('The committed lock SHA-256 is `b2a9cb18b067694052844d6346d0eecaf4bdb446c3f14bc7a8c694783cf76747`.'),
     readmeContents.includes('### Manual Action pin provenance review'),
     readmeContents.includes('pnpm verify:action-pin-provenance --'),
     readmeContents.includes('pnpm verify:action-pin-fixture'),
@@ -641,10 +649,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README are aligned for the v0.2.58 reviewed policy promotion candidate',
+    label: 'npm package metadata and README are aligned for the v0.2.59 review receipt candidate',
     detail: checks.every(Boolean)
       ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
-      : 'expected v0.2.58 candidate metadata, reviewed policy promotion guidance, historical npm evidence, or package exclusions are missing/mismatched',
+      : 'expected v0.2.59 candidate metadata, review receipt guidance, historical npm evidence, or package exclusions are missing/mismatched',
   };
 }
 
@@ -968,6 +976,19 @@ function checkReleaseEvidenceArchive() {
     'scripts/promote-release-evidence-policy.mjs'
   );
   const policyTestContents = readText('test/releaseEvidencePolicy.test.mjs');
+  const reviewCoreContents = readText('scripts/release-evidence-review-core.mjs');
+  const reviewCliContents = readText('scripts/review-release-evidence-policy.mjs');
+  const reviewVerifyContents = readText('scripts/verify-release-evidence-review.mjs');
+  const reviewAttestationCoreContents = readText(
+    'scripts/release-evidence-review-attestation-core.mjs'
+  );
+  const reviewAttestationCliContents = readText(
+    'scripts/verify-release-evidence-review-attestation.mjs'
+  );
+  const reviewTestContents = readText('test/releaseEvidenceReview.test.mjs');
+  const reviewWorkflowContents = readText(
+    '.github/workflows/release-evidence-policy-review.yml'
+  );
   const setCoreContents = readText('scripts/release-evidence-set-core.mjs');
   const setCliContents = readText('scripts/verify-release-evidence-set.mjs');
   const setTestContents = readText('test/releaseEvidenceSet.test.mjs');
@@ -1028,6 +1049,29 @@ function checkReleaseEvidenceArchive() {
     [policyTestContents, 'creates one canonical candidate and a stable matching-policy report offline'],
     [policyTestContents, 'rejects committed policy drift before archive mutation'],
     [policyTestContents, 'removes staged archive after an atomic %s failure'],
+    [reviewCoreContents, 'RELEASE_EVIDENCE_REVIEW_RECEIPT_FIELDS'],
+    [reviewCoreContents, 'createReleaseEvidenceReviewBundle'],
+    [reviewCoreContents, 'verifyReleaseEvidenceReviewBundle'],
+    [reviewCoreContents, 'createReleaseEvidenceReviewManifest'],
+    [reviewCoreContents, 'seedDuplicateTarget'],
+    [reviewCliContents, "'--reviewed-candidate-sha256': 'reviewedCandidateSha256'"],
+    [reviewCliContents, "'--github-event': 'githubEvent'"],
+    [reviewVerifyContents, "'--expect-candidate-sha256': 'candidateSha256'"],
+    [reviewAttestationCoreContents, 'validateGitHubAttestationEvidence'],
+    [reviewAttestationCliContents, 'buildOfflineGitHubAttestationVerifyArgs'],
+    [reviewTestContents, 'creates a canonical standalone receipt, manifest, and promoted archive set offline'],
+    [reviewTestContents, 'rejects explicit identity drift during offline verification'],
+    [reviewTestContents, 'leaves no success artifact after %s failure'],
+    [reviewTestContents, 'binds the manifest signature to reviewer, workflow, source, and invocation'],
+    [reviewWorkflowContents, 'workflow_dispatch:'],
+    [reviewWorkflowContents, 'reviewed_candidate_sha256:'],
+    [reviewWorkflowContents, 'pnpm acquire:release-evidence --'],
+    [reviewWorkflowContents, 'pnpm prepare:release-evidence-policy --'],
+    [reviewWorkflowContents, 'pnpm review:release-evidence-policy --'],
+    [reviewWorkflowContents, 'pnpm verify:release-evidence-review --'],
+    [reviewWorkflowContents, 'pnpm verify:release-evidence-review-attestation --'],
+    [reviewWorkflowContents, 'actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4'],
+    [reviewWorkflowContents, 'GITHUB_STEP_SUMMARY'],
     [setCoreContents, 'DEFAULT_RELEASE_EVIDENCE_VERSIONS'],
     [setCoreContents, 'Release evidence regression failed for:'],
     [setCliContents, 'writeReleaseEvidenceSetReportAtomic'],
@@ -1040,6 +1084,10 @@ function checkReleaseEvidenceArchive() {
     [readmeContents, 'pnpm fixtures:release-evidence-acquisition:check'],
     [readmeContents, 'pnpm prepare:release-evidence-policy --'],
     [readmeContents, 'pnpm promote:release-evidence-policy --'],
+    [readmeContents, '### Manual policy review receipt and promotion rehearsal'],
+    [readmeContents, 'pnpm review:release-evidence-policy --'],
+    [readmeContents, 'pnpm verify:release-evidence-review --'],
+    [readmeContents, 'pnpm verify:release-evidence-review-attestation --'],
     [readmeContents, 'pnpm verify:release-evidence-set -- --json'],
     [readmeContents, 'aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`'],
     [readmeContents, 'The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.'],
@@ -1051,6 +1099,9 @@ function checkReleaseEvidenceArchive() {
     [releaseContents, '### Canonical Handoff Contract'],
     [releaseContents, '### Canonical Candidate and Diff'],
     [releaseContents, '### Reviewed Promotion Gate'],
+    [releaseContents, '### Canonical Review Receipt'],
+    [releaseContents, '### Standalone Promotion Rehearsal Bundle'],
+    [releaseContents, '### Manual Workflow and Attestation'],
     [securityContents, '## Release Evidence Retention'],
     [securityContents, 'Evidence updates must never'],
     [securityContents, 'include credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, or authentication'],
@@ -1062,6 +1113,9 @@ function checkReleaseEvidenceArchive() {
     [securityContents, 'pnpm prepare:release-evidence-policy --'],
     [securityContents, 'Policy source changes require a normal reviewed Git commit.'],
     [securityContents, 'pnpm promote:release-evidence-policy --'],
+    [securityContents, 'Release Evidence Policy\nReview'],
+    [securityContents, 'pnpm verify:release-evidence-review --'],
+    [securityContents, 'pnpm verify:release-evidence-review-attestation --'],
     [securityContents, 'Missing\napproval, policy drift, import/set failure, or rename failure must leave the'],
     [securityContents, 'pnpm verify:release-evidence-set -- --json'],
   ];
@@ -1079,6 +1133,12 @@ function checkReleaseEvidenceArchive() {
       'node scripts/prepare-release-evidence-policy.mjs' &&
     packageJson.scripts?.['promote:release-evidence-policy'] ===
       'node scripts/promote-release-evidence-policy.mjs' &&
+    packageJson.scripts?.['review:release-evidence-policy'] ===
+      'node scripts/review-release-evidence-policy.mjs' &&
+    packageJson.scripts?.['verify:release-evidence-review'] ===
+      'node scripts/verify-release-evidence-review.mjs' &&
+    packageJson.scripts?.['verify:release-evidence-review-attestation'] ===
+      'node scripts/verify-release-evidence-review-attestation.mjs' &&
     packageJson.scripts?.['fixtures:release-evidence-acquisition'] ===
       'node scripts/refresh-release-evidence-acquisition-fixtures.mjs' &&
     packageJson.scripts?.['fixtures:release-evidence-acquisition:check'] ===
@@ -1143,9 +1203,9 @@ function checkReleaseEvidenceArchive() {
 
   return {
     ok,
-    label: 'v0.2.50/v0.2.55 evidence supports immutable acquisition, reviewed policy promotion, atomic import, and set replay',
+    label: 'v0.2.50/v0.2.55 evidence supports immutable acquisition, reviewed policy receipt, atomic promotion rehearsal, and set replay',
     detail: ok
-      ? 'exact artifact ZIP identity, explicit acquisition, stable policy diff, digest-bound reviewed promotion, atomic import, complete set replay, fixture contracts, documentation, default gate, and npm-package exclusion are present'
+      ? 'exact artifact ZIP identity, explicit acquisition, stable policy diff, digest-bound GitHub review receipt, atomic temporary promotion, complete standalone set replay, attestation contracts, documentation, default gate, and npm-package exclusion are present'
       : `release evidence contract mismatch: ${[
           ...missing,
           ...(scriptOk ? [] : ['package.json release evidence scripts']),
@@ -1173,6 +1233,7 @@ function checkWorkflowSupplyChain() {
     '.github/workflows/ci.yml',
     '.github/workflows/ios-validation.yml',
     '.github/workflows/registry-validation.yml',
+    '.github/workflows/release-evidence-policy-review.yml',
   ];
   const workflowContents = workflowPaths.map((workflow) => readText(workflow));
   const joinedWorkflows = workflowContents.join('\n');
@@ -1182,15 +1243,15 @@ function checkWorkflowSupplyChain() {
   const pinnedLine =
     /^\s*uses\s*:\s*[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)*@[0-9a-f]{40}\s+#\s+v\d+(?:\.\d+){0,2}(?:-[0-9A-Za-z.-]+)?\s*$/;
   const expectedPins = [
-    ['actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7', 6],
+    ['actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7', 7],
     ['actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5', 2],
     ['android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4', 2],
-    ['pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6', 5],
-    ['actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6', 5],
+    ['pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6', 6],
+    ['actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6', 6],
     ['gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6', 2],
     ['reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2', 1],
-    ['actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6', 5],
-    ['actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4', 2],
+    ['actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6', 7],
+    ['actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4', 3],
   ];
   const expectedSnippets = [
     [coreContents, 'WORKFLOW_ACTION_LOCK_FIELDS'],
@@ -1211,7 +1272,7 @@ function checkWorkflowSupplyChain() {
     [testContents, 'preserves an existing report and removes the temporary file on atomic failure'],
     [readmeContents, '### Immutable workflow Action supply chain'],
     [readmeContents, 'pnpm verify:workflow-supply-chain -- --json'],
-    [readmeContents, 'The committed lock SHA-256 is `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.'],
+    [readmeContents, 'The committed lock SHA-256 is `b2a9cb18b067694052844d6346d0eecaf4bdb446c3f14bc7a8c694783cf76747`.'],
     [releaseContents, '## v0.2.52'],
     [releaseContents, '### Immutable Action Contract'],
     [securityContents, '## GitHub Actions Supply Chain'],
@@ -1221,7 +1282,7 @@ function checkWorkflowSupplyChain() {
     .filter(([contents, snippet]) => !contents.includes(snippet))
     .map(([, snippet]) => snippet);
   const pinsOk =
-    actionLines.length === 30 &&
+    actionLines.length === 36 &&
     actionLines.every((line) => pinnedLine.test(line)) &&
     expectedPins.every(
       ([pin, count]) => joinedWorkflows.split(pin).length - 1 === count
@@ -1230,15 +1291,15 @@ function checkWorkflowSupplyChain() {
     lock.schemaVersion === 1 &&
     lock.status === 'passed' &&
     lock.error === null &&
-    lock.workflows?.length === 5 &&
+    lock.workflows?.length === 6 &&
     lock.actions?.length === 9 &&
     lock.actions?.reduce(
       (total, action) =>
         total + action.usages.reduce((sum, usage) => sum + usage.count, 0),
       0
-    ) === 30 &&
+    ) === 36 &&
     createHash('sha256').update(lockBytes).digest('hex') ===
-      '81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c';
+      'b2a9cb18b067694052844d6346d0eecaf4bdb446c3f14bc7a8c694783cf76747';
   const scriptsOk =
     packageJson.scripts?.['verify:workflow-supply-chain'] ===
       'node scripts/verify-workflow-supply-chain.mjs' &&
@@ -1272,7 +1333,7 @@ function checkWorkflowSupplyChain() {
     ok,
     label: 'GitHub workflows use immutable Action pins and a canonical offline lock',
     detail: ok
-      ? 'five workflows, nine Actions, 30 full-SHA uses, release comments, canonical lock, weekly Dependabot config, offline fixtures, default gate, and npm exclusions are aligned'
+      ? 'six workflows, nine Actions, 36 full-SHA uses, release comments, canonical lock, weekly Dependabot config, offline fixtures, default gate, and npm exclusions are aligned'
       : `workflow supply-chain contract mismatch: ${[
           ...missing,
           ...(pinsOk ? [] : ['full-SHA workflow pins and version comments']),
@@ -1325,7 +1386,6 @@ function checkActionPinProvenance() {
   const fixtureTrustedRoot = readFileSync(
     path.join(ROOT, 'test/fixtures/action-pin-attestation/trusted-root.jsonl')
   );
-  const lockContents = readText('.github/actions-lock.json');
   const readmeContents = readText('README.md');
   const releaseContents = readText('RELEASE.md');
   const securityContents = readText('SECURITY.md');
@@ -1463,7 +1523,8 @@ function checkActionPinProvenance() {
     rawEventFixture.repository?.full_name === fixtureEvent.repository &&
     rawEventFixture.ref === fixtureEvent.ref &&
     fixtureWorkflow === workflowContents &&
-    fixtureCandidateLock === lockContents;
+    sha256(Buffer.from(fixtureCandidateLock, 'utf8')) ===
+      fixtureReport.evidence?.candidateLockSha256;
   const fixtureAttestationOk =
     fixtureAttestation.status === 'passed' &&
     fixtureAttestation.subject === 'artifact-manifest.json' &&
@@ -1582,6 +1643,15 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.59',
+    'Status: unpublished release evidence policy review receipt and manual promotion rehearsal candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.59` git tag, or GitHub Release is part of this candidate.',
+    '### Canonical Review Receipt',
+    '`pnpm review:release-evidence-policy -- --acquisition-dir <path> --candidate-file <candidate.json> --policy-report-file <diff.json> --archive-root evidence/npm --bundle-dir <artifact> --reviewed-candidate-sha256 <sha256> <explicit-review-and-registry-identity> --json --report-file <receipt.json>`',
+    '### Standalone Promotion Rehearsal Bundle',
+    '`pnpm verify:release-evidence-review -- --artifact-dir <artifact> --expect-package <name> --expect-version <version> --expect-candidate-sha256 <sha256> --expect-reviewer <actor> --expect-repository <owner/repo> --expect-workflow <owner/repo/.github/workflows/release-evidence-policy-review.yml> --expect-ref <refs/...> --expect-head-sha <sha> --expect-run-id <id> --expect-run-attempt <n> --json --report-file <report.json>`',
+    '### Manual Workflow and Attestation',
+    '`pnpm verify:release-evidence-review-attestation -- --artifact-dir <artifact> --attestation-bundle <attestation.jsonl> --trusted-root <trusted-root.jsonl> <explicit-review-expectations> --json --report-file <attestation-verification.json>`',
+    'Historical v0.2.55 candidate SHA-256 `aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d` replayed from Registry Validation run `29333540614`.',
     '## v0.2.58',
     'Status: unpublished release evidence policy candidate and reviewed promotion gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.58` git tag, or GitHub Release is part of this candidate.',
     '### Canonical Candidate and Diff',
@@ -2957,8 +3027,13 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
+    'The v0.2.59 release evidence policy review receipt and manual promotion rehearsal candidate notes are in [RELEASE.md](RELEASE.md).',
+    'Version `0.2.59` is the unpublished release evidence policy review receipt and manual promotion rehearsal candidate.',
+    'pnpm review:release-evidence-policy --',
+    'pnpm verify:release-evidence-review --',
+    'pnpm verify:release-evidence-review-attestation --',
     'The v0.2.58 release evidence policy candidate and reviewed promotion gate candidate notes are in [RELEASE.md](RELEASE.md).',
-    'Version `0.2.58` is the unpublished release evidence policy candidate and reviewed promotion gate candidate.',
+    'Version `0.2.58` was the previous unpublished release evidence policy candidate and reviewed promotion gate candidate.',
     'pnpm prepare:release-evidence-policy --',
     'pnpm promote:release-evidence-policy --',
     'canonical candidate SHA-256 `aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d`',
@@ -2994,18 +3069,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.58' && missing.length === 0;
+  const ok = packageJson.version === '0.2.59' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.58 reviewed policy promotion candidate notes and v0.2.55 publication evidence are current',
+    label: 'v0.2.59 review receipt candidate notes and v0.2.55 publication evidence are current',
     detail: ok
-      ? 'RELEASE.md documents canonical policy diff, digest-bound review, staged set promotion, non-goals, validation, and retained v0.2.55 publication evidence'
+      ? 'RELEASE.md documents GitHub-bound review receipt, standalone staged set replay, attestation, non-goals, validation, and retained v0.2.55 publication evidence'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.58'
+          ...(packageJson.version === '0.2.59'
             ? []
-            : ['package.json version 0.2.58']),
+            : ['package.json version 0.2.59']),
         ].join(' | ')}`,
   };
 }

@@ -591,10 +591,12 @@ export function inspectReleaseEvidenceAcquisitionBundle(
     error: null,
   };
 
-  const handoff = temporaryPath(
-    path.join(path.dirname(root), path.basename(root)),
-    'candidate-handoff'
-  );
+  const handoff = dependencies.inspectionArchivePath
+    ? path.resolve(dependencies.inspectionArchivePath(root))
+    : temporaryPath(
+        path.join(path.dirname(root), path.basename(root)),
+        'candidate-handoff'
+      );
   const importArchive =
     dependencies.importArchiveForInspection ?? importReleaseEvidenceArchive;
   try {

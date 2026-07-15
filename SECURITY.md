@@ -198,6 +198,63 @@ approval, policy drift, import/set failure, or rename failure must leave the
 archive set unchanged. Neither preparation nor promotion provides `--apply` or
 uses npm, GitHub, Sigstore, or another network service.
 
+For a durable human-review decision, use the manual `Release Evidence Policy
+Review` workflow with the exact candidate digest. The workflow must require the
+Registry Validation repository/workflow/ref/source SHA/run ID/version/tag and
+must never select a latest run. Treat `github.actor` from the normalized
+`workflow_dispatch` event as the reviewer only when it agrees with the canonical
+execution record, workflow repository/path/ref/SHA, review source commit, run
+ID/attempt, and GitHub run start time.
+
+The workflow may acquire immutable artifacts and create a GitHub attestation,
+but reviewed promotion must execute only below a temporary archive-set copy.
+It must omit the target from copied baselines, invoke the existing digest-bound
+promotion gate to reconstruct that target, verify every committed policy
+version together, repeat the promotion offline, and byte-compare the result.
+It must never edit policy source, `evidence/npm`, npm state, a Git ref, or a
+GitHub Release.
+
+The atomic review artifact must contain the exact acquisition bundle, candidate,
+stable diff, GitHub execution identity, normalized event, exact workflow bytes,
+promotion report, complete set report, review receipt, and full rehearsed
+archive set. Its `artifact-manifest.json` must recursively bind every regular
+file by path, size, and SHA-256. Symlinks, unsafe paths, missing/additional
+files, identity drift, candidate/acquisition mismatch, policy drift, duplicate
+target, replay failure, or final rename failure must leave no success bundle or
+receipt.
+
+Verify a downloaded review artifact and attestation without network access:
+
+```bash
+pnpm verify:release-evidence-review -- \
+  --artifact-dir /path/to/review-artifact \
+  --expect-package react-native-image-compression-kit \
+  --expect-version <version> \
+  --expect-candidate-sha256 <sha256> \
+  --expect-reviewer <github-actor> \
+  --expect-repository <owner/repo> \
+  --expect-workflow <owner/repo/.github/workflows/release-evidence-policy-review.yml> \
+  --expect-ref <refs/heads/name> \
+  --expect-head-sha <review-workflow-commit> \
+  --expect-run-id <run-id> \
+  --expect-run-attempt <attempt> \
+  --json
+
+pnpm verify:release-evidence-review-attestation -- \
+  --artifact-dir /path/to/review-artifact \
+  --attestation-bundle /path/to/attestation.jsonl \
+  --trusted-root /path/to/trusted-root.jsonl \
+  <the-same-explicit-review-expectations> \
+  --json
+```
+
+Only the recursive manifest is attested. Offline verification must require the
+exact subject digest, repository, signer workflow, source ref/digest, workflow
+digest, run invocation, GitHub-hosted runner policy, SLSA predicate, and pinned
+trusted root. Review artifacts, receipts, summaries, and attestations must not
+contain credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, signed download
+URLs, or automatic login state.
+
 To create a new archive from downloaded workflow artifacts, provide the exact
 four-file Registry provenance directory, the exact three-file attestation
 directory, and an explicit canonical GitHub metadata document:
