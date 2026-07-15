@@ -222,8 +222,8 @@ export function canonicalReleaseEvidenceVerification(report) {
   return `${JSON.stringify(report)}\n`;
 }
 
-export function createReleaseEvidenceIndex({ version, files }) {
-  const policy = RELEASE_EVIDENCE_POLICIES[version];
+export function createReleaseEvidenceIndex({ version, files, expectedPolicy }) {
+  const policy = expectedPolicy ?? RELEASE_EVIDENCE_POLICIES[version];
   assert(policy, `No committed release evidence policy exists for version ${version}.`);
   return {
     schemaVersion: RELEASE_EVIDENCE_SCHEMA_VERSION,
@@ -287,13 +287,13 @@ export function createReleaseEvidenceVerification({
 }
 
 export function verifyReleaseEvidenceArchive(
-  { archiveDir, expectedVersion },
+  { archiveDir, expectedVersion, expectedPolicy },
   dependencies = {}
 ) {
   const resolvedArchiveDir = archiveDir ? path.resolve(archiveDir) : null;
-  const policy = expectedVersion
-    ? RELEASE_EVIDENCE_POLICIES[expectedVersion]
-    : null;
+  const policy =
+    expectedPolicy ??
+    (expectedVersion ? RELEASE_EVIDENCE_POLICIES[expectedVersion] : null);
   const state = {
     archiveDir: resolvedArchiveDir,
     packageName: policy?.package ?? null,
@@ -369,6 +369,7 @@ export function verifyReleaseEvidenceArchive(
     const expectedIndex = createReleaseEvidenceIndex({
       version: expectedVersion,
       files,
+      expectedPolicy: policy,
     });
     assertIndexMatches(index, expectedIndex);
     state.evidenceSha256 = expectedIndex.evidenceSha256;

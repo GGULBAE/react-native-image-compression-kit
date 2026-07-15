@@ -42,7 +42,7 @@ function extractKotlinArray(source: string, arrayName: string): string {
 }
 
 describe('Android verification scripts', () => {
-  it('declares the v0.2.57 release evidence acquisition candidate metadata', () => {
+  it('declares the v0.2.58 reviewed release evidence policy promotion candidate metadata', () => {
     const readmeSource = readProjectFile('README.md');
     const staleReadmeSnippets = [
       'Status: v0.2.8 candidate',
@@ -205,7 +205,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.57');
+    expect(packageJson.version).toBe('0.2.58');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -234,7 +234,10 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.57` is the unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate.'
+      'Version `0.2.58` is the unpublished release evidence policy candidate and reviewed promotion gate candidate.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.57` was the previous unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate.'
     );
     expect(readmeSource).toContain(
       'Version `0.2.56` was the previous unpublished release evidence archive import automation and multi-version regression gate candidate.'
@@ -321,13 +324,15 @@ describe('Android verification scripts', () => {
       'Two earlier CLI calls stopped at the pre-write EOTP authentication gate; the npm-only promotion then used one successful `npm publish --tag latest` registry write.'
     );
     expect(readmeSource).toContain(
-      'The repository package metadata is `0.2.57` for the unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate; npm `latest` remains v0.2.55.'
+      'The repository package metadata is `0.2.58` for the unpublished release evidence policy candidate and reviewed promotion gate candidate; npm `latest` remains v0.2.55.'
     );
     expect(readmeSource).toContain('pnpm acquire:release-evidence --');
     expect(readmeSource).toContain('The command never selects the latest run.');
     expect(readmeSource).toContain(
       'pnpm fixtures:release-evidence-acquisition:check'
     );
+    expect(readmeSource).toContain('pnpm prepare:release-evidence-policy --');
+    expect(readmeSource).toContain('pnpm promote:release-evidence-policy --');
     expect(readmeSource).toContain(
       'pnpm verify:workflow-supply-chain -- --json'
     );
@@ -1531,11 +1536,24 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.57 acquisition candidate and retained v0.2.55 evidence', () => {
+  it('documents the v0.2.58 reviewed policy promotion candidate and retained v0.2.55 evidence', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.57');
+    expect(packageJson.version).toBe('0.2.58');
+    expect(releaseSource).toContain('## v0.2.58');
+    expect(releaseSource).toContain(
+      'Status: unpublished release evidence policy candidate and reviewed promotion gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.58` git tag, or GitHub Release is part of this candidate.'
+    );
+    expect(releaseSource).toContain('### Canonical Candidate and Diff');
+    expect(releaseSource).toContain('### Reviewed Promotion Gate');
+    expect(releaseSource).toContain(
+      '`pnpm prepare:release-evidence-policy -- --acquisition-dir <path> --candidate-file <candidate.json> --json --report-file <report.json>`'
+    );
+    expect(releaseSource).toContain('### Live v0.2.55 Replay Evidence');
+    expect(releaseSource).toContain(
+      'aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d'
+    );
     expect(releaseSource).toContain('## v0.2.57');
     expect(releaseSource).toContain(
       'Status: unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.57` git tag, or GitHub Release is part of this candidate.'
@@ -4925,6 +4943,9 @@ describe('Android verification scripts', () => {
       'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain(
+      'The v0.2.58 release evidence policy candidate and reviewed promotion gate candidate notes are in [RELEASE.md](RELEASE.md).'
+    );
+    expect(readmeSource).toContain(
       'The v0.2.57 Registry Validation artifact acquisition and canonical metadata handoff candidate notes are in [RELEASE.md](RELEASE.md).'
     );
     expect(readmeSource).toContain(
@@ -5006,6 +5027,14 @@ describe('Android verification scripts', () => {
     );
     expect(securitySource).toContain(
       'pnpm fixtures:release-evidence-acquisition:check'
+    );
+    expect(securitySource).toContain('pnpm prepare:release-evidence-policy --');
+    expect(securitySource).toContain(
+      'Policy source changes require a normal reviewed Git commit.'
+    );
+    expect(securitySource).toContain('pnpm promote:release-evidence-policy --');
+    expect(securitySource).toContain(
+      'Missing\napproval, policy drift, import/set failure, or rename failure must leave the'
     );
     expect(securitySource).toContain('pnpm import:release-evidence --');
     expect(securitySource).toContain(

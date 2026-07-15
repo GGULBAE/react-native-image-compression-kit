@@ -1,5 +1,70 @@
 # Release Notes
 
+## v0.2.58
+
+Status: unpublished release evidence policy candidate and reviewed promotion gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.58` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, the published v0.2.55 package, immutable acquisition, existing importer, and retained v0.2.50/v0.2.55 archives unchanged. It separates release evidence policy review from archive mutation: preparation produces only a canonical candidate and stable diff, while promotion requires digest-bound human review plus an exact committed policy before the archive set can change.
+
+### Goals
+
+- Derive one canonical release evidence policy candidate from an exact Registry Validation acquisition bundle.
+- Revalidate canonical manifest/metadata, all eight acquisition file records, aggregate acquisition SHA-256, provenance, and attestation without network access.
+- Produce a stable machine-readable `match`, `missing`, or `drift` comparison against the committed immutable version policy.
+- Keep candidate preparation read-only with respect to policy source and release evidence archives; provide no `--apply` path.
+- Require explicit candidate SHA-256, reviewer identity, canonical review timestamp, version, archive root, and `--approve` for promotion.
+- Require the reviewed candidate policy to equal the already code-reviewed committed policy and reject duplicate version archives.
+- Run the existing importer and complete archive-set replay against staging, then expose only a fully verified version through one final rename.
+- Remove all staged data after import, set, or final rename failure and keep default `pnpm verify` network-free.
+
+### Canonical Candidate and Diff
+
+`pnpm prepare:release-evidence-policy -- --acquisition-dir <path> --candidate-file <candidate.json> --json --report-file <report.json>` is the read-only preparation entrypoint. It requires the acquisition root to contain exactly `acquisition-manifest.json`, `release-evidence-metadata.json`, `provenance/`, and `attestation/`; rejects symlinks, additional/missing files, non-canonical JSON, file size/digest drift, aggregate acquisition digest drift, or manifest/metadata identity disagreement; and replays the evidence through the importer using the observed policy only in a temporary directory.
+
+Candidate fields are ordered `schemaVersion`, `status`, `version`, `policy`, `source`, and `error`. The policy preserves the existing immutable policy field order. Source fields are `acquisitionManifest`, `acquisitionManifestSha256`, `acquisitionSha256`, `metadataFile`, and `metadataSha256`.
+
+Preparation report fields are `schemaVersion`, `status`, `acquisitionDir`, `candidateFile`, `version`, `candidateSha256`, `policyStatus`, `changes`, `checks`, and `error`. Each stable leaf change contains `path`, `committed`, and `candidate`. Ordered checks are `layout`, `manifest`, `metadata`, `evidence`, `candidate`, `diff`, and `atomicWrite`. Missing or drifting policies are valid review outputs, not automatic mutations.
+
+### Reviewed Promotion Gate
+
+`pnpm promote:release-evidence-policy -- --acquisition-dir <path> --candidate-file <candidate.json> --version <version> --reviewed-candidate-sha256 <sha256> --reviewer <identity> --reviewed-at <UTC-ISO> --archive-root <path> --approve --json --report-file <report.json>` is the only promotion entrypoint.
+
+Promotion regenerates the candidate from acquisition bytes, requires candidate byte equality and the reviewed SHA-256, validates a whitespace/control-free reviewer identity, requires the canonical review time not to precede Registry Validation completion, requires explicit approval and an exact committed-policy match, and rejects an existing archive version. It imports into a hidden sibling staging directory and invokes the existing complete release evidence set verifier with that staged version substituted. Only after the set passes does one rename expose `<archive-root>/<version>`.
+
+Promotion report fields are `schemaVersion`, `status`, `archiveDir`, `package`, `version`, `candidateSha256`, `reviewer`, `reviewedAt`, `evidenceSha256`, `setVersions`, `checks`, and `error`. Ordered checks are `candidate`, `review`, `policy`, `duplicate`, `import`, `set`, and `atomicWrite`. Preparation cannot edit policy source and promotion has no `--apply` option.
+
+### Live v0.2.55 Replay Evidence
+
+Authenticated Registry Validation acquisition run `29333540614` reproduced acquisition SHA-256 `1545317c2047808f35f253a1387f7a019b2174ca317cbcb6b325b6ac1b797681`. Preparation produced 1,708 canonical candidate bytes at SHA-256 `aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d`, reported `policyStatus=match`, passed all seven preparation checks, and wrote stdout/report bytes identically.
+
+Digest-bound reviewed promotion into a temporary archive set passed all seven promotion checks, replayed v0.2.50 and staged v0.2.55 together, reproduced v0.2.55 evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`, wrote stdout/report bytes identically, and produced an archive byte-for-byte identical to `evidence/npm/0.2.55/`. The repository archive itself was not changed.
+
+### Included
+
+- `package.json` version bump to `0.2.58` and explicit prepare/promote policy commands.
+- Canonical candidate, source binding, stable policy diff, preparation report, promotion report, and atomic report writers.
+- Internal observed-policy replay support in the existing importer/verifier without weakening normal committed-policy CLI behavior.
+- Offline fixture-backed tests for success, stable missing/drift diffs, acquisition tampering, missing/wrong approval inputs, committed policy drift, duplicate versions, byte-identical archive promotion, and candidate/import/set/final-rename/report atomic failures.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the v0.2.58 candidate and npm latest v0.2.55 boundary.
+
+### Not Included
+
+- Automatic policy source edits, unattended candidate approval, automatic Git commits, or automatic latest-run selection.
+- npm publish, dist-tag changes, Registry Validation workflow dispatch, git tags, or GitHub Releases.
+- npm/GitHub authentication changes, token/OTP storage, native/API changes, or AVIF output implementation.
+- npm, GitHub, Sigstore, or other registry/network access from preparation, promotion, or default verification.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- Blocked-network candidate preparation and reviewed promotion fixture suite.
+- Stable missing/drift diff ordering, explicit review field enforcement, committed-policy agreement, duplicate rejection, full archive-set replay, and byte equality with retained v0.2.55 evidence.
+- Candidate/report and archive staging cleanup under injected write/import/set/rename failures.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed candidate commit.
+
 ## v0.2.57
 
 Status: unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.57` git tag, or GitHub Release is part of this candidate.

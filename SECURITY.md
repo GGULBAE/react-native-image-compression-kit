@@ -153,6 +153,51 @@ committed exact-ZIP fixtures without network access:
 pnpm fixtures:release-evidence-acquisition:check
 ```
 
+Treat an acquisition bundle as observed evidence, not permission to change the
+committed policy or archive set. Prepare a canonical policy candidate and stable
+diff first:
+
+```bash
+pnpm prepare:release-evidence-policy -- \
+  --acquisition-dir /path/to/acquisition \
+  --candidate-file /path/to/policy-candidate.json \
+  --json \
+  --report-file /path/to/candidate-report.json
+```
+
+Preparation must revalidate the exact acquisition layout, canonical
+manifest/metadata, every recorded file digest, aggregate acquisition digest,
+manifest/metadata identity, and the complete offline provenance/attestation
+replay. It may write only the explicit candidate/report outputs. `match`,
+`missing`, and `drift` are review results; none may edit policy source or evidence
+archives. Policy source changes require a normal reviewed Git commit.
+
+Promotion requires a separate explicit approval bound to the exact candidate
+bytes:
+
+```bash
+pnpm promote:release-evidence-policy -- \
+  --acquisition-dir /path/to/acquisition \
+  --candidate-file /path/to/policy-candidate.json \
+  --version <version> \
+  --reviewed-candidate-sha256 <candidate-sha256> \
+  --reviewer <reviewer-identity> \
+  --reviewed-at <UTC-ISO-timestamp> \
+  --archive-root /path/to/evidence/npm \
+  --approve \
+  --json
+```
+
+The promotion gate must regenerate and byte-compare the candidate, require the
+reviewed digest, a whitespace/control-free reviewer identity, a canonical review
+time not earlier than Registry Validation completion, and explicit approval;
+require exact agreement with committed
+policy, and reject duplicate versions. The importer and entire committed archive
+set must pass against a hidden staged version before one final rename. Missing
+approval, policy drift, import/set failure, or rename failure must leave the
+archive set unchanged. Neither preparation nor promotion provides `--apply` or
+uses npm, GitHub, Sigstore, or another network service.
+
 To create a new archive from downloaded workflow artifacts, provide the exact
 four-file Registry provenance directory, the exact three-file attestation
 directory, and an explicit canonical GitHub metadata document:

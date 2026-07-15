@@ -66,6 +66,14 @@ const V057_CANDIDATE_SNIPPETS = [
   'The v0.2.57 Registry Validation artifact acquisition and canonical metadata handoff candidate notes',
 ];
 
+const V058_CANDIDATE_SNIPPETS = [
+  'Status: v0.2.58 candidate',
+  'v0.2.58%20candidate',
+  'Version `0.2.58` is the unpublished release evidence policy candidate and reviewed promotion gate candidate.',
+  'The repository package metadata is `0.2.58` for the unpublished release evidence policy candidate and reviewed promotion gate candidate; npm `latest` remains v0.2.55.',
+  'The v0.2.58 release evidence policy candidate and reviewed promotion gate candidate notes',
+];
+
 describe('release dry-run packed README status guard', () => {
   it.each(V047_CANDIDATE_SNIPPETS)(
     'rejects the v0.2.47 candidate snippet %s',
@@ -183,6 +191,20 @@ describe('release dry-run packed README status guard', () => {
 
   it.each(V057_CANDIDATE_SNIPPETS)(
     'rejects the v0.2.57 candidate snippet %s',
+    (candidateSnippet) => {
+      const packedReadme = `# Package\n\n${candidateSnippet}\n`;
+
+      expect(getPackedReadmeStatusViolations(packedReadme)).toContain(
+        candidateSnippet
+      );
+      expect(() => validatePackedReadmeStatus(packedReadme)).toThrow(
+        candidateSnippet
+      );
+    }
+  );
+
+  it.each(V058_CANDIDATE_SNIPPETS)(
+    'rejects the v0.2.58 candidate snippet %s',
     (candidateSnippet) => {
       const packedReadme = `# Package\n\n${candidateSnippet}\n`;
 

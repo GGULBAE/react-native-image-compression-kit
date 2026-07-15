@@ -79,8 +79,11 @@ export function canonicalReleaseEvidenceImportReport(report) {
   return `${JSON.stringify(report)}\n`;
 }
 
-export function createReleaseEvidenceImportMetadata({ version }) {
-  const policy = RELEASE_EVIDENCE_POLICIES[version];
+export function createReleaseEvidenceImportMetadata({
+  version,
+  expectedPolicy,
+}) {
+  const policy = expectedPolicy ?? RELEASE_EVIDENCE_POLICIES[version];
   assert(
     policy,
     `No committed release evidence policy exists for version ${version}.`
@@ -143,6 +146,7 @@ export function importReleaseEvidenceArchive(
     metadataFile,
     archiveDir,
     expectedVersion,
+    expectedPolicy,
   },
   dependencies = {}
 ) {
@@ -186,6 +190,7 @@ export function importReleaseEvidenceArchive(
     );
     const expectedMetadata = createReleaseEvidenceImportMetadata({
       version: expectedVersion,
+      expectedPolicy,
     });
     assert(
       JSON.stringify(metadata) === JSON.stringify(expectedMetadata),
@@ -262,6 +267,7 @@ export function importReleaseEvidenceArchive(
     const verification = verifyArchive({
       archiveDir: temporary,
       expectedVersion,
+      expectedPolicy,
     });
     assert(
       verification?.status === 'passed',
