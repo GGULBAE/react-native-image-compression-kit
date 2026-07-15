@@ -111,14 +111,42 @@ tarball, provenance report, canonical manifest, attestation bundle, trusted root
 and verification report, but the whole `evidence/` tree must remain excluded from
 the npm package file list.
 
-For the current retained v0.2.55 evidence, run the complete trust-chain replay
-without npm, GitHub, Sigstore, or other network access:
+To create a new archive from downloaded workflow artifacts, provide the exact
+four-file Registry provenance directory, the exact three-file attestation
+directory, and an explicit canonical GitHub metadata document:
+
+```bash
+pnpm import:release-evidence -- \
+  --version <version> \
+  --provenance-artifact-dir /path/to/registry-provenance \
+  --attestation-artifact-dir /path/to/registry-provenance-attestation \
+  --metadata-file /path/to/github-metadata.json \
+  --archive-dir evidence/npm/<version> \
+  --json
+```
+
+The metadata must exactly match the committed immutable version policy. The
+importer rejects links, non-regular files, missing/additional files, mismatched
+artifact identity, tampered bytes, and existing destinations. It builds and
+fully verifies a sibling temporary archive before one atomic rename; any
+validation, write, or rename failure removes the temporary archive and leaves
+the destination absent or unchanged.
+
+Run every retained trust-chain replay without npm, GitHub, Sigstore, or other
+network access:
+
+```bash
+pnpm verify:release-evidence-set -- --json
+```
+
+The default ordered set contains v0.2.50 and v0.2.55 and continues through the
+complete set so every failing version is reported. To replay only the current
+retained v0.2.55 evidence, run:
 
 ```bash
 pnpm verify:release-evidence -- --version 0.2.55
 ```
 
-The historical v0.2.50 archive remains replayable by passing `--version 0.2.50`.
 The canonical release evidence index and version policy must pin the source run,
 artifact and attestation IDs, GitHub artifact archive digests, source commit,
 artifact expiration, and every retained file digest. Evidence updates must never

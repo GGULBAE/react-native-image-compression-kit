@@ -42,7 +42,7 @@ function extractKotlinArray(source: string, arrayName: string): string {
 }
 
 describe('Android verification scripts', () => {
-  it('declares the registry-independent v0.2.55 release metadata', () => {
+  it('declares the v0.2.56 release evidence import candidate metadata', () => {
     const readmeSource = readProjectFile('README.md');
     const staleReadmeSnippets = [
       'Status: v0.2.8 candidate',
@@ -205,7 +205,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.55');
+    expect(packageJson.version).toBe('0.2.56');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -234,7 +234,10 @@ describe('Android verification scripts', () => {
     }
 
     expect(readmeSource).toContain(
-      'Version `0.2.55` is the Action Pin artifact GitHub OIDC attestation and offline signer verification release.'
+      'Version `0.2.56` is the unpublished release evidence archive import automation and multi-version regression gate candidate.'
+    );
+    expect(readmeSource).toContain(
+      'Version `0.2.55` was the previous npm `latest` Action Pin artifact GitHub OIDC attestation and offline signer verification release.'
     );
     expect(readmeSource).toContain(
       'Version `0.2.54` was the previous unpublished Action pin provenance execution identity and artifact manifest binding candidate.'
@@ -315,7 +318,7 @@ describe('Android verification scripts', () => {
       'Two earlier CLI calls stopped at the pre-write EOTP authentication gate; the npm-only promotion then used one successful `npm publish --tag latest` registry write.'
     );
     expect(readmeSource).toContain(
-      'The package metadata is `0.2.55` for the Action Pin artifact GitHub OIDC attestation and offline signer verification release.'
+      'The repository package metadata is `0.2.56` for the unpublished release evidence archive import automation and multi-version regression gate candidate; npm `latest` remains v0.2.55.'
     );
     expect(readmeSource).toContain(
       'pnpm verify:workflow-supply-chain -- --json'
@@ -331,6 +334,13 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain(
       'pnpm verify:release-evidence -- --version 0.2.55'
+    );
+    expect(readmeSource).toContain('pnpm import:release-evidence --');
+    expect(readmeSource).toContain(
+      'pnpm verify:release-evidence-set -- --json'
+    );
+    expect(readmeSource).toContain(
+      'With no selectors the command verifies v0.2.50 and v0.2.55'
     );
     expect(readmeSource).toContain(
       'aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`'
@@ -1090,7 +1100,7 @@ describe('Android verification scripts', () => {
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit'
     );
     expect(packageJson.scripts.verify).toBe(
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.55 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor'
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence-set -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor'
     );
     expect(readmeSource).toContain('## iOS Host-App Validation');
     expect(readmeSource).toContain('pnpm example:ios:smoke');
@@ -1513,11 +1523,20 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the published v0.2.55 Action Pin artifact attestation and registry evidence', () => {
+  it('documents the v0.2.56 release evidence import candidate and retained v0.2.55 evidence', () => {
     const releaseSource = readProjectFile('RELEASE.md');
     const readmeSource = readProjectFile('README.md');
 
-    expect(packageJson.version).toBe('0.2.55');
+    expect(packageJson.version).toBe('0.2.56');
+    expect(releaseSource).toContain('## v0.2.56');
+    expect(releaseSource).toContain(
+      'Status: unpublished release evidence archive import automation and multi-version regression gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.56` git tag, or GitHub Release is part of this candidate.'
+    );
+    expect(releaseSource).toContain('### Offline Archive Import Contract');
+    expect(releaseSource).toContain('### Multi-version Regression Contract');
+    expect(releaseSource).toContain(
+      '`pnpm verify:release-evidence-set -- --json --report-file <report.json>`'
+    );
     expect(releaseSource).toContain('## v0.2.55');
     expect(releaseSource).toContain(
       'Status: published to npm as the `0.2.55` latest Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` are both `0.2.55`; no `v0.2.55` git tag or GitHub Release was created.'
@@ -4889,6 +4908,9 @@ describe('Android verification scripts', () => {
       'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain(
+      'The v0.2.56 release evidence archive import automation and multi-version regression gate candidate notes are in [RELEASE.md](RELEASE.md).'
+    );
+    expect(readmeSource).toContain(
       'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification release notes are in [RELEASE.md](RELEASE.md).'
     );
     expect(readmeSource).toContain(
@@ -4955,6 +4977,20 @@ describe('Android verification scripts', () => {
     expect(securitySource).toContain('Alerts #5, #6, and #7');
     expect(securitySource).toContain('concurrent-ruby >= 1.3.7');
     expect(securitySource).toContain('pnpm release:dry-run');
+    expect(securitySource).toContain('## Release Evidence Retention');
+    expect(securitySource).toContain('pnpm import:release-evidence --');
+    expect(securitySource).toContain(
+      'The metadata must exactly match the committed immutable version policy.'
+    );
+    expect(securitySource).toContain(
+      'fully verifies a sibling temporary archive before one atomic rename'
+    );
+    expect(securitySource).toContain(
+      'pnpm verify:release-evidence-set -- --json'
+    );
+    expect(securitySource).toContain(
+      'The default ordered set contains v0.2.50 and v0.2.55'
+    );
     expect(securitySource).toContain('pnpm audit --prod');
     expect(securitySource).toContain(
       'npm pack react-native-image-compression-kit@<version>'

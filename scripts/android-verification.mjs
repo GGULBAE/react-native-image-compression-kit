@@ -56,6 +56,10 @@ const REQUIRED_FILES = [
   'scripts/release-dry-run.mjs',
   'scripts/release-evidence-core.mjs',
   'scripts/verify-release-evidence.mjs',
+  'scripts/release-evidence-import-core.mjs',
+  'scripts/import-release-evidence.mjs',
+  'scripts/release-evidence-set-core.mjs',
+  'scripts/verify-release-evidence-set.mjs',
   'scripts/workflow-supply-chain-core.mjs',
   'scripts/verify-workflow-supply-chain.mjs',
   'scripts/action-pin-provenance-core.mjs',
@@ -67,6 +71,8 @@ const REQUIRED_FILES = [
   'scripts/verify-action-pin-attestation.mjs',
   'test/releaseDryRun.test.mjs',
   'test/releaseEvidence.test.mjs',
+  'test/releaseEvidenceImport.test.mjs',
+  'test/releaseEvidenceSet.test.mjs',
   'test/workflowSupplyChain.test.mjs',
   'test/actionPinProvenance.test.mjs',
   'test/actionPinAttestation.test.mjs',
@@ -412,7 +418,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.55',
+    packageJson.version === '0.2.56',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -427,7 +433,8 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.55` is the Action Pin artifact GitHub OIDC attestation and offline signer verification release.'),
+    readmeContents.includes('Version `0.2.56` is the unpublished release evidence archive import automation and multi-version regression gate candidate.'),
+    readmeContents.includes('Version `0.2.55` was the previous npm `latest` Action Pin artifact GitHub OIDC attestation and offline signer verification release.'),
     readmeContents.includes('Version `0.2.54` was the previous unpublished Action pin provenance execution identity and artifact manifest binding candidate.'),
     readmeContents.includes('Version `0.2.53` was the previous unpublished GitHub Action pin update provenance and manual review gate candidate.'),
     readmeContents.includes('Version `0.2.52` was the previous unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate.'),
@@ -457,8 +464,11 @@ function checkPackageMetadata() {
     readmeContents.includes('Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29`'),
     readmeContents.includes('[attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248)'),
     readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4` under both UTC and Asia/Seoul'),
-    readmeContents.includes('The package metadata is `0.2.55` for the Action Pin artifact GitHub OIDC attestation and offline signer verification release.'),
+    readmeContents.includes('The repository package metadata is `0.2.56` for the unpublished release evidence archive import automation and multi-version regression gate candidate; npm `latest` remains v0.2.55.'),
     readmeContents.includes('pnpm verify:release-evidence -- --version 0.2.55'),
+    readmeContents.includes('pnpm import:release-evidence --'),
+    readmeContents.includes('pnpm verify:release-evidence-set -- --json'),
+    readmeContents.includes('With no selectors the command verifies v0.2.50 and v0.2.55'),
     readmeContents.includes('pnpm verify:workflow-supply-chain -- --json'),
     readmeContents.includes('All 30 remote `uses:` declarations across the five GitHub workflow files are pinned to lowercase 40-character commit SHAs.'),
     readmeContents.includes('The committed lock SHA-256 is `81439816af31b56e592a761eb32a622720adb97f03e8fab6c6ee558c2216f18c`.'),
@@ -610,10 +620,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README are aligned for the v0.2.55 Action Pin artifact attestation release',
+    label: 'npm package metadata and README are aligned for the v0.2.56 release evidence import candidate',
     detail: checks.every(Boolean)
       ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
-      : 'expected registry-independent v0.2.55 release metadata, Action Pin attestation guidance, historical npm evidence, or package exclusions are missing/mismatched',
+      : 'expected v0.2.56 candidate metadata, release evidence import/set guidance, historical npm evidence, or package exclusions are missing/mismatched',
   };
 }
 
@@ -911,6 +921,14 @@ function checkReleaseEvidenceArchive() {
   const coreContents = readText('scripts/release-evidence-core.mjs');
   const cliContents = readText('scripts/verify-release-evidence.mjs');
   const testContents = readText('test/releaseEvidence.test.mjs');
+  const importCoreContents = readText(
+    'scripts/release-evidence-import-core.mjs'
+  );
+  const importCliContents = readText('scripts/import-release-evidence.mjs');
+  const importTestContents = readText('test/releaseEvidenceImport.test.mjs');
+  const setCoreContents = readText('scripts/release-evidence-set-core.mjs');
+  const setCliContents = readText('scripts/verify-release-evidence-set.mjs');
+  const setTestContents = readText('test/releaseEvidenceSet.test.mjs');
   const readmeContents = readText('README.md');
   const releaseContents = readText('RELEASE.md');
   const securityContents = readText('SECURITY.md');
@@ -933,15 +951,36 @@ function checkReleaseEvidenceArchive() {
     [testContents, 'rejects evidence byte tampering and a different trusted root'],
     [testContents, 'rejects wrong run, artifact, attestation, commit, workflow, and timestamp policy'],
     [testContents, 'removes a temporary report and preserves the prior report on atomic failure'],
+    [importCoreContents, 'RELEASE_EVIDENCE_IMPORT_METADATA_FIELDS'],
+    [importCoreContents, 'readExactArtifact'],
+    [importCoreContents, 'verifyReleaseEvidenceArchive'],
+    [importCoreContents, 'operations.rename(temporary, destination)'],
+    [importCliContents, "'--metadata-file': 'metadataFile'"],
+    [importCliContents, "'--archive-dir': 'archiveDir'"],
+    [importTestContents, 'reconstructs the canonical %s archive from downloaded artifacts and metadata'],
+    [importTestContents, 'rejects altered or additional artifact bytes without exposing an archive'],
+    [importTestContents, 'removes the complete temporary archive when the atomic rename fails'],
+    [importTestContents, 'removes the complete temporary archive when a staged write fails'],
+    [setCoreContents, 'DEFAULT_RELEASE_EVIDENCE_VERSIONS'],
+    [setCoreContents, 'Release evidence regression failed for:'],
+    [setCliContents, 'writeReleaseEvidenceSetReportAtomic'],
+    [setTestContents, 'verifies every committed release evidence policy in stable order'],
+    [setTestContents, 'reports the exact failed version while continuing the complete set'],
     [readmeContents, 'pnpm verify:release-evidence -- --version 0.2.55'],
+    [readmeContents, 'pnpm import:release-evidence --'],
+    [readmeContents, 'pnpm verify:release-evidence-set -- --json'],
     [readmeContents, 'aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`'],
     [readmeContents, 'The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.'],
     [releaseContents, '`evidence/npm/0.2.55/`'],
     [releaseContents, 'The historical `evidence/npm/0.2.50/` archive remains independently replayable.'],
+    [releaseContents, '### Offline Archive Import Contract'],
+    [releaseContents, '### Multi-version Regression Contract'],
     [securityContents, '## Release Evidence Retention'],
     [securityContents, 'Evidence updates must never'],
     [securityContents, 'include credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, or authentication'],
     [securityContents, 'pnpm verify:release-evidence -- --version 0.2.55'],
+    [securityContents, 'pnpm import:release-evidence --'],
+    [securityContents, 'pnpm verify:release-evidence-set -- --json'],
   ];
   const missing = expectedSnippets
     .filter(([contents, snippet]) => !contents.includes(snippet))
@@ -949,8 +988,12 @@ function checkReleaseEvidenceArchive() {
   const scriptOk =
     packageJson.scripts?.['verify:release-evidence'] ===
       'node scripts/verify-release-evidence.mjs' &&
+    packageJson.scripts?.['import:release-evidence'] ===
+      'node scripts/import-release-evidence.mjs' &&
+    packageJson.scripts?.['verify:release-evidence-set'] ===
+      'node scripts/verify-release-evidence-set.mjs' &&
     packageJson.scripts?.verify?.includes(
-      'pnpm verify:release-evidence -- --version 0.2.55'
+      'pnpm verify:release-evidence-set -- --json'
     );
   const indexOk =
     index.schemaVersion === 1 &&
@@ -975,9 +1018,9 @@ function checkReleaseEvidenceArchive() {
 
   return {
     ok,
-    label: 'repository-owned v0.2.55 and historical v0.2.50 release evidence archives are replayable',
+    label: 'repository-owned v0.2.50/v0.2.55 evidence supports verified atomic import and set replay',
     detail: ok
-      ? 'exact archive identity, seven retained files, offline verifier, fixture contracts, documentation, default gate, and npm-package exclusion are present'
+      ? 'exact archive identity, atomic import, complete set replay, fixture contracts, documentation, default gate, and npm-package exclusion are present'
       : `release evidence contract mismatch: ${[
           ...missing,
           ...(scriptOk ? [] : ['package.json release evidence scripts']),
@@ -1413,6 +1456,15 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.56',
+    'Status: unpublished release evidence archive import automation and multi-version regression gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.56` git tag, or GitHub Release is part of this candidate.',
+    '### Offline Archive Import Contract',
+    '`pnpm import:release-evidence -- --version <version> --provenance-artifact-dir <registry-provenance-path> --attestation-artifact-dir <registry-provenance-attestation-path> --metadata-file <metadata.json> --archive-dir <destination> --json`',
+    'ordered checks are `metadata`, `provenanceArtifact`, `attestationArtifact`, `index`, `verification`, and `atomicWrite`',
+    '### Multi-version Regression Contract',
+    '`pnpm verify:release-evidence-set -- --json --report-file <report.json>`',
+    'The default ordered set is v0.2.50 and v0.2.55.',
+    'Registry Validation workflow dispatch, artifact download automation, or GitHub metadata discovery.',
     '## v0.2.55',
     'Status: published to npm as the `0.2.55` latest Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` are both `0.2.55`; no `v0.2.55` git tag or GitHub Release was created.',
     '### Action Pin Attestation Contract',
@@ -2762,6 +2814,10 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
+    'The v0.2.56 release evidence archive import automation and multi-version regression gate candidate notes are in [RELEASE.md](RELEASE.md).',
+    'Version `0.2.56` is the unpublished release evidence archive import automation and multi-version regression gate candidate.',
+    'pnpm import:release-evidence --',
+    'pnpm verify:release-evidence-set -- --json',
     'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification release notes are in [RELEASE.md](RELEASE.md).',
     'Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29`',
     'aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`',
@@ -2786,18 +2842,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.55' && missing.length === 0;
+  const ok = packageJson.version === '0.2.56' && missing.length === 0;
 
   return {
     ok,
-    label: 'published v0.2.55 Action Pin artifact attestation and registry evidence notes are current',
+    label: 'v0.2.56 release evidence import candidate notes and v0.2.55 publication evidence are current',
     detail: ok
-      ? 'RELEASE.md documents the release scope, one-time npm promotion result, registry evidence, non-goals, validation checklist, and previous npm publish steps'
+      ? 'RELEASE.md documents atomic archive import, multi-version replay, non-goals, validation, and retained v0.2.55 publication evidence'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.55'
+          ...(packageJson.version === '0.2.56'
             ? []
-            : ['package.json version 0.2.55']),
+            : ['package.json version 0.2.56']),
         ].join(' | ')}`,
   };
 }
@@ -2825,6 +2881,11 @@ function checkSecurityPolicy() {
     [securityContents, 'repository-only and outside the npm package'],
     [securityContents, 'pnpm release:dry-run'],
     [securityContents, '## Release Evidence Retention'],
+    [securityContents, 'pnpm import:release-evidence --'],
+    [securityContents, 'The metadata must exactly match the committed immutable version policy.'],
+    [securityContents, 'fully verifies a sibling temporary archive before one atomic rename'],
+    [securityContents, 'pnpm verify:release-evidence-set -- --json'],
+    [securityContents, 'The default ordered set contains v0.2.50 and v0.2.55'],
     [securityContents, 'pnpm verify:release-evidence -- --version 0.2.55'],
     [securityContents, 'the whole `evidence/` tree must remain excluded from'],
     [securityContents, 'Evidence updates must never'],
@@ -3487,7 +3548,7 @@ function checkIOSHostAppValidation() {
     'fixtures:ios-pass-replay:audit':
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit',
     verify:
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence -- --version 0.2.55 && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor',
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm verify:release-evidence-set -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor',
   };
   const expectedSnippets = [
     [examplePackageJson, '@react-native-community/cli-platform-ios'],

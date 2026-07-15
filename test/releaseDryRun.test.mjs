@@ -50,6 +50,14 @@ const V055_CANDIDATE_SNIPPETS = [
   'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes',
 ];
 
+const V056_CANDIDATE_SNIPPETS = [
+  'Status: v0.2.56 candidate',
+  'v0.2.56%20candidate',
+  'Version `0.2.56` is the unpublished release evidence archive import automation and multi-version regression gate candidate.',
+  'The repository package metadata is `0.2.56` for the unpublished release evidence archive import automation and multi-version regression gate candidate; npm `latest` remains v0.2.55.',
+  'The v0.2.56 release evidence archive import automation and multi-version regression gate candidate notes',
+];
+
 describe('release dry-run packed README status guard', () => {
   it.each(V047_CANDIDATE_SNIPPETS)(
     'rejects the v0.2.47 candidate snippet %s',
@@ -150,4 +158,18 @@ describe('release dry-run packed README status guard', () => {
     expect(getPackedReadmeStatusViolations(packedReadme)).toEqual([]);
     expect(() => validatePackedReadmeStatus(packedReadme)).not.toThrow();
   });
+
+  it.each(V056_CANDIDATE_SNIPPETS)(
+    'rejects the v0.2.56 candidate snippet %s',
+    (candidateSnippet) => {
+      const packedReadme = `# Package\n\n${candidateSnippet}\n`;
+
+      expect(getPackedReadmeStatusViolations(packedReadme)).toContain(
+        candidateSnippet
+      );
+      expect(() => validatePackedReadmeStatus(packedReadme)).toThrow(
+        candidateSnippet
+      );
+    }
+  );
 });

@@ -1,5 +1,61 @@
 # Release Notes
 
+## v0.2.56
+
+Status: unpublished release evidence archive import automation and multi-version regression gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.56` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, the published v0.2.55 package, and both retained release evidence archives unchanged. It replaces manual archive assembly with a network-free importer that validates downloaded Registry Validation provenance and attestation artifacts plus explicit canonical GitHub metadata before one atomic rename, and it makes every committed release evidence version part of the default offline regression gate.
+
+### Goals
+
+- Reconstruct a canonical repository-owned release evidence archive from the exact downloaded four-file provenance artifact, three-file attestation artifact, and explicit GitHub run/artifact metadata.
+- Require metadata to match the committed immutable policy for the selected version before deriving the canonical index.
+- Verify layout, file bytes, provenance, attestation, signer identity, and timestamps in a temporary archive before any destination becomes visible.
+- Preserve an existing destination and remove the complete temporary archive after validation, write, or rename failure.
+- Verify v0.2.50 and v0.2.55 together by default, while continuing through all selected versions so every regression is reported.
+- Keep default `pnpm verify` and all new fixture tests free of npm, GitHub, Sigstore, and other network access.
+
+### Offline Archive Import Contract
+
+`pnpm import:release-evidence -- --version <version> --provenance-artifact-dir <registry-provenance-path> --attestation-artifact-dir <registry-provenance-attestation-path> --metadata-file <metadata.json> --archive-dir <destination> --json` accepts only the exact four Registry provenance files and exact three attestation files. It rejects links, non-regular files, missing files, additional files, non-canonical metadata, unsupported versions, policy disagreement, and an existing destination.
+
+The canonical metadata fields are ordered as `schemaVersion`, `status`, `package`, `version`, `expectedTag`, `publishedAt`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `registryValidationRun`, `provenanceArtifact`, `attestation`, `attestationArtifact`, and `error`. Run, artifact, attestation, source, and expiration values must equal the committed version policy; downloaded artifact bytes are the only source for all seven file size/SHA-256 records and the aggregate evidence SHA-256.
+
+The importer writes all artifact bytes and the derived canonical `release-evidence-index.json` below a sibling temporary directory, runs the complete existing archive verifier there, and performs one rename only after every check passes. The ordered report fields are `schemaVersion`, `status`, `archiveDir`, `package`, `version`, `expectedTag`, `evidenceSha256`, `sourceDigest`, `fileCount`, `checks`, and `error`; ordered checks are `metadata`, `provenanceArtifact`, `attestationArtifact`, `index`, `verification`, and `atomicWrite`.
+
+### Multi-version Regression Contract
+
+`pnpm verify:release-evidence-set -- --json --report-file <report.json>` verifies all committed release evidence policies when no `--version` selector is supplied. The canonical set report fields are ordered as `schemaVersion`, `status`, `archiveRoot`, `versions`, `results`, and `error`. Each result fixes `version`, `status`, `evidenceSha256`, `sourceDigest`, all seven existing archive checks, and `error`.
+
+The default ordered set is v0.2.50 and v0.2.55. Repeated `--version` selectors support an explicit subset, duplicate or unsupported versions fail closed, a failure in one archive does not skip later versions, and `--report-file` is atomically replaced only after a complete canonical report is available. The default `pnpm verify` invokes this set gate without registry or GitHub access.
+
+### Included
+
+- `package.json` version bump to `0.2.56`, the `import:release-evidence` CLI, and the `verify:release-evidence-set` default gate.
+- Shared import core with canonical metadata/report schemas, exact artifact layout validation, committed-policy matching, and verified atomic destination creation.
+- Multi-version set core and CLI with stable ordering, complete failure reporting, repeated selectors, canonical JSON, and atomic report writes.
+- Offline Vitest fixtures for both retained versions, malformed metadata, artifact identity disagreement, tarball tampering, additional files, existing destinations, set regression continuation, and injected atomic-write failures.
+- README, release notes, security guidance, Android doctor checks, and Vitest expectations aligned to the v0.2.56 candidate and npm latest v0.2.55 boundary.
+
+### Not Included
+
+- npm publish, dist-tag changes, git tags, or GitHub Releases.
+- Registry Validation workflow dispatch, artifact download automation, or GitHub metadata discovery.
+- Network access from default `pnpm verify`, the importer, set verifier, or fixture tests.
+- Native/API behavior changes or AVIF output implementation.
+- Credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, or authentication files.
+
+### Validation
+
+- `pnpm verify`
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- Offline import of exact v0.2.50 and v0.2.55 artifact fixtures with canonical index byte equality.
+- Non-canonical/wrong metadata, tampered tarball, additional file, existing destination, and rename/report failure fixtures proving no incomplete archive or report replacement.
+- Default v0.2.50/v0.2.55 set verification and a tampered-first-archive fixture proving later-version continuation.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed candidate commit.
+
 ## v0.2.55
 
 Status: published to npm as the `0.2.55` latest Action Pin artifact GitHub OIDC attestation and offline signer verification release. npm `version` and `dist-tags.latest` are both `0.2.55`; no `v0.2.55` git tag or GitHub Release was created.

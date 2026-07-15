@@ -144,6 +144,11 @@ const STALE_PACKED_README_SNIPPETS = [
   'The repository package metadata is `0.2.55` for the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
   'Version `0.2.55` is the unpublished Action Pin artifact GitHub OIDC attestation and offline signer verification candidate.',
   'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification candidate notes',
+  'Status: v0.2.56 candidate',
+  'v0.2.56%20candidate',
+  'Version `0.2.56` is the unpublished release evidence archive import automation and multi-version regression gate candidate.',
+  'The repository package metadata is `0.2.56` for the unpublished release evidence archive import automation and multi-version regression gate candidate; npm `latest` remains v0.2.55.',
+  'The v0.2.56 release evidence archive import automation and multi-version regression gate candidate notes',
 ];
 
 const STEPS = [
