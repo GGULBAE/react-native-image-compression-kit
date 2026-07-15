@@ -40,6 +40,14 @@ The `Release Evidence Policy Review` workflow has fixed explicit inputs `reposit
 
 `pnpm verify:release-evidence-review-attestation -- --artifact-dir <artifact> --attestation-bundle <attestation.jsonl> --trusted-root <trusted-root.jsonl> <explicit-review-expectations> --json --report-file <attestation-verification.json>` requires the review replay to pass first, then validates the signed subject, repository, signer workflow, source ref/digest, workflow digest, exact run invocation, GitHub-hosted runner policy, SLSA provenance predicate, and verified transparency timestamp.
 
+### Live v0.2.55 Review Receipt Evidence
+
+Manual [Release Evidence Policy Review run 29390495773](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29390495773) passed on v0.2.59 candidate commit `2782a6e34c70660a6c44a6189c39304317072a22`. Reviewer `GGULBAE` dispatched the exact historical Registry Validation run `29333540614` tuple; the receipt bound review time `2026-07-15T05:03:59Z`, candidate SHA-256 `aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d`, acquisition SHA-256 `1545317c2047808f35f253a1387f7a019b2174ca317cbcb6b325b6ac1b797681`, and evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78` to run attempt 1.
+
+The successful Step Summary recorded promotion report SHA-256 `c3b7887499ccd0d0a4599fdf7296d12f697893ede8025799e87b19f2ce43739b`, set report SHA-256 `c28965f087cf84ac8122e7deb09675b1c2744bc6e42c071034ca6c24b11f75a6`, rehearsed versions v0.2.50/v0.2.55, manifest SHA-256 `48cfd454b636cf1911b7d19dae996e7ead2797247d2b974687bb02aeebb439ff`, and successful [attestation 35388408](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35388408) plus offline verification. The manifest signature's transparency timestamp is `2026-07-15T05:04:29.000Z`.
+
+Review artifact `8333046539` has GitHub digest `sha256:f1ea6c9c2498e4d773a6cc5f6b49d39d9bfacba8bd40ec76c5364c7d3c21c836`; attestation artifact `8333046693` has digest `sha256:05ab03d322d15e97cc733e3d0325f6dbb7a468197245ea9c6738241e2477f4d6`. Downloaded with no repository mutation, blocked-network verification reproduced the bundled receipt at SHA-256 `45ddefa85cba6a9fed62cb1c187dd0bab2246b72ba66a803b1282e4eac07efad`, reproduced the workflow attestation report at SHA-256 `af6913ce48934b7d90fd7b9e6f2cb34634357a28932168597a25c28000521f90`, and byte-compared the rehearsed v0.2.55 target with retained `evidence/npm/0.2.55/` successfully.
+
 ### Included
 
 - `package.json` version bump to `0.2.59` and explicit review bundle, offline replay, and review attestation commands.

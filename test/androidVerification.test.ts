@@ -342,6 +342,18 @@ describe('Android verification scripts', () => {
       'pnpm verify:release-evidence-review-attestation --'
     );
     expect(readmeSource).toContain(
+      'Successful [Release Evidence Policy Review run 29390495773]'
+    );
+    expect(readmeSource).toContain(
+      'manifest SHA-256 `48cfd454b636cf1911b7d19dae996e7ead2797247d2b974687bb02aeebb439ff`'
+    );
+    expect(readmeSource).toContain(
+      '[attestation 35388408](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35388408)'
+    );
+    expect(readmeSource).toContain(
+      'receipt SHA-256 `45ddefa85cba6a9fed62cb1c187dd0bab2246b72ba66a803b1282e4eac07efad`'
+    );
+    expect(readmeSource).toContain(
       'pnpm verify:workflow-supply-chain -- --json'
     );
     expect(readmeSource).toContain(
@@ -1563,9 +1575,22 @@ describe('Android verification scripts', () => {
     expect(releaseSource).toContain('### Canonical Review Receipt');
     expect(releaseSource).toContain('### Standalone Promotion Rehearsal Bundle');
     expect(releaseSource).toContain('### Manual Workflow and Attestation');
+    expect(releaseSource).toContain('### Live v0.2.55 Review Receipt Evidence');
     expect(releaseSource).toContain('pnpm verify:release-evidence-review --');
     expect(releaseSource).toContain(
       'aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d'
+    );
+    expect(releaseSource).toContain(
+      'Manual [Release Evidence Policy Review run 29390495773](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29390495773) passed on v0.2.59 candidate commit `2782a6e34c70660a6c44a6189c39304317072a22`.'
+    );
+    expect(releaseSource).toContain(
+      'Review artifact `8333046539` has GitHub digest `sha256:f1ea6c9c2498e4d773a6cc5f6b49d39d9bfacba8bd40ec76c5364c7d3c21c836`'
+    );
+    expect(releaseSource).toContain(
+      'attestation artifact `8333046693` has digest `sha256:05ab03d322d15e97cc733e3d0325f6dbb7a468197245ea9c6738241e2477f4d6`'
+    );
+    expect(releaseSource).toContain(
+      'blocked-network verification reproduced the bundled receipt at SHA-256 `45ddefa85cba6a9fed62cb1c187dd0bab2246b72ba66a803b1282e4eac07efad`'
     );
     expect(releaseSource).toContain('## v0.2.58');
     expect(releaseSource).toContain(
