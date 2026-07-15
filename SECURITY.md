@@ -255,6 +255,54 @@ trusted root. Review artifacts, receipts, summaries, and attestations must not
 contain credentials, npm tokens, OTPs, `.npmrc`, GitHub tokens, signed download
 URLs, or automatic login state.
 
+Preserve an approved review after GitHub artifact expiration by importing the
+exact artifact ZIPs into a repository-owned review archive. The importer is
+network-free and requires canonical metadata, both exact ZIPs, and an explicit
+unused destination:
+
+```bash
+pnpm import:release-evidence-review -- \
+  --version <version> \
+  --metadata-file /path/to/review-metadata.json \
+  --review-artifact-zip /path/to/review-artifact.zip \
+  --attestation-artifact-zip /path/to/review-attestation.zip \
+  --archive-dir evidence/reviews/<version> \
+  --release-archive-root evidence/npm \
+  --json
+```
+
+The metadata must bind the explicit run, source commit, artifact IDs/names,
+byte sizes, SHA-256 digests, creation/expiration times, and attestation identity.
+The importer validates those recorded expiration times but intentionally does
+not reject an already retained archive based on the current clock. Its ZIP
+parser must reject traversal, absolute or ambiguous paths, duplicate entries,
+symlinks, directories, encryption, unsupported compression, and any
+missing/additional entry before extraction.
+
+The archive retains the exact review and attestation ZIP bytes, all extracted
+files, and one canonical `review-evidence-index.json`. Its index binds the
+review receipt, recursive manifest, target evidence, every retained path/size/
+SHA-256, and an aggregate archive SHA-256. Existing destinations are never
+replaced. Staging, validation, archive rename, index write, or report rename
+failure must remove incomplete outputs and must not leave a success archive or
+report.
+
+Replay the retained v0.2.55 review and every supported retained review without
+npm, GitHub, Sigstore, or other network access:
+
+```bash
+pnpm verify:release-evidence-review-archive -- --version 0.2.55 --json
+pnpm verify:release-evidence-review-archive-set -- --json
+```
+
+The single-archive verifier must reproduce receipt, manifest, promotion, set,
+and signer identity checks, prove exact ZIP/extracted-byte agreement, and
+byte-compare the rehearsed v0.2.55 target archive with `evidence/npm/0.2.55/`.
+The multi-review set verifier is part of default `pnpm verify`; retained review
+ZIPs, extracted files, scripts, tests, and reports remain excluded from the npm
+package. They must never contain credentials, npm tokens, OTPs, `.npmrc`,
+GitHub tokens, signed download URLs, or authentication files.
+
 To create a new archive from downloaded workflow artifacts, provide the exact
 four-file Registry provenance directory, the exact three-file attestation
 directory, and an explicit canonical GitHub metadata document:

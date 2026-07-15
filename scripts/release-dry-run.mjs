@@ -164,6 +164,11 @@ const STALE_PACKED_README_SNIPPETS = [
   'Version `0.2.59` is the unpublished release evidence policy review receipt and manual promotion rehearsal candidate.',
   'The repository package metadata is `0.2.59` for the unpublished release evidence policy review receipt and manual promotion rehearsal candidate; npm `latest` remains v0.2.55.',
   'The v0.2.59 release evidence policy review receipt and manual promotion rehearsal candidate notes',
+  'Status: v0.2.60 candidate',
+  'v0.2.60%20candidate',
+  'Version `0.2.60` is the unpublished release evidence review archive import and expiration-independent replay gate candidate.',
+  'The repository package metadata is `0.2.60` for the unpublished release evidence review archive import and expiration-independent replay gate candidate; npm `latest` remains v0.2.55.',
+  'The v0.2.60 release evidence review archive import and expiration-independent replay gate candidate notes',
 ];
 
 const STEPS = [

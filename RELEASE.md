@@ -1,5 +1,66 @@
 # Release Notes
 
+## v0.2.60
+
+Status: unpublished release evidence review archive import and expiration-independent replay gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.60` git tag, or GitHub Release is part of this candidate.
+
+This candidate keeps native behavior, the public API, npm latest, and the immutable `evidence/npm` release archives unchanged. It imports the exact successful v0.2.59 manual review and attestation artifact ZIPs into a repository-owned archive, retains every extracted byte, and makes the receipt, manifest, promotion rehearsal, GitHub signer identity, and byte-identical v0.2.55 target evidence replayable after GitHub artifact expiration.
+
+### Goals
+
+- Accept only canonical metadata, the exact review artifact ZIP, the exact attestation artifact ZIP, and an explicit unused destination.
+- Validate review run identity plus artifact ID, name, size, SHA-256 digest, creation time, and expiration time without depending on the current clock.
+- Reject ZIP traversal, absolute or ambiguous paths, duplicate entries, symlinks, directories, encryption, unsupported compression, missing files, and additional files.
+- Retain both exact ZIPs and their complete extracted review and attestation payloads below `evidence/reviews/0.2.55/`.
+- Revalidate the canonical review receipt, recursive manifest, promotion and complete archive-set reports, review attestation, signer workflow/source/invocation, and transparency evidence without network access.
+- Byte-compare the bundled rehearsed v0.2.55 archive with `evidence/npm/0.2.55/` and reject any retained-byte drift.
+- Expose the archive and optional report only through staging plus rename, reject duplicate destinations, and remove incomplete output after any validation or write failure.
+- Verify every retained review archive through one stable multi-review set command included in default `pnpm verify`.
+
+### Canonical Archive Contract
+
+`pnpm import:release-evidence-review -- --version <version> --metadata-file <metadata.json> --review-artifact-zip <review.zip> --attestation-artifact-zip <attestation.zip> --archive-dir <archive> --release-archive-root evidence/npm --json --report-file <report.json>` is the network-free import entrypoint. Command execution is separate from validation so offline fixtures cover every success and failure contract.
+
+The archive contains `review-evidence-index.json`, exact `artifacts/review.zip` and `artifacts/attestation.zip` bytes, all review artifact files below `review/`, and all attestation artifact files below `attestation/`. The ordered index fields are `schemaVersion`, `status`, `package`, `version`, `candidateSha256`, `reviewer`, `reviewedAt`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `reviewRun`, `reviewArtifact`, `attestationArtifact`, `attestation`, `receiptSha256`, `manifestSha256`, `evidenceSha256`, `files`, `archiveSha256`, and `error`.
+
+Every retained regular file except the index has one ordered `path`, `size`, and `sha256` record. `archiveSha256` is the aggregate digest of those canonical file records; exact ZIP bytes and extracted bytes are both covered. Import stdout and `--report-file` bytes are identical canonical JSON. A pre-existing destination is an error, and archive or report rename failure removes staging and any newly exposed archive.
+
+`pnpm verify:release-evidence-review-archive -- --version 0.2.55 --json --report-file <report.json>` performs the expiration-independent replay. It requires the exact canonical layout and index, proves the ZIP/extracted correspondence, reuses the review and attestation verifiers, compares the stored attestation report to a fresh offline replay, checks receipt/manifest/promotion/set/signing identity, and byte-compares the rehearsed v0.2.55 archive to `evidence/npm/0.2.55/`.
+
+`pnpm verify:release-evidence-review-archive-set -- --json --report-file <report.json>` discovers and verifies the supported retained review versions in stable order. The set verifier is part of default `pnpm verify`; neither it nor the single-archive verifier accesses npm, GitHub, Sigstore, or any other network service.
+
+### Retained v0.2.55 Review Evidence
+
+The repository archive retains review run `29390495773`, attempt 1, source commit `2782a6e34c70660a6c44a6189c39304317072a22`, reviewer `GGULBAE`, and review time `2026-07-15T05:03:59Z`. Review artifact `8333046539` is retained at GitHub digest `sha256:f1ea6c9c2498e4d773a6cc5f6b49d39d9bfacba8bd40ec76c5364c7d3c21c836`; attestation artifact `8333046693` is retained at `sha256:05ab03d322d15e97cc733e3d0325f6dbb7a468197245ea9c6738241e2477f4d6`. Both artifacts record creation time `2026-07-15T05:04:37Z` and expiration time `2026-10-13T05:04:01Z`.
+
+The 39 retained files reproduce candidate SHA-256 `aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d`, receipt SHA-256 `45ddefa85cba6a9fed62cb1c187dd0bab2246b72ba66a803b1282e4eac07efad`, manifest SHA-256 `48cfd454b636cf1911b7d19dae996e7ead2797247d2b974687bb02aeebb439ff`, target evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`, attestation `35388408`, and verified transparency time `2026-07-15T05:04:29.000Z`. Canonical aggregate archive SHA-256 is `f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd`; the canonical index file SHA-256 is `b43a294a9ab7f1a7b99305a6ecc2c363ec0c472857b9579338bfb68e100fe19f`.
+
+### Included
+
+- `package.json` version bump to `0.2.60`, explicit importer and single/multi-archive replay commands, and the multi-archive gate in default verification.
+- A dependency-free ZIP parser, canonical metadata/index/report contracts, exact ZIP and extracted-byte retention, aggregate archive digest, and atomic archive/report writes.
+- Repository-owned v0.2.55 review evidence containing the exact two GitHub artifact ZIPs and all 37 extracted payload files.
+- Offline fixture and retained-evidence tests for success, UTC/Asia-Seoul replay, canonical stdout/report equality, run/artifact/attestation drift, invalid ZIPs, retained-byte tampering, signer drift, target archive mismatch, duplicate destinations, and injected write/rename failures.
+- README, release notes, security guidance, Android doctor, and Vitest expectations aligned to v0.2.60 candidate status and npm latest v0.2.55.
+
+### Not Included
+
+- npm publish, dist-tag changes, git tags, GitHub Releases, native/API changes, or AVIF output implementation.
+- Changes to `evidence/npm`, existing release evidence policy, review workflow behavior, or published packages.
+- Default-verification access to npm, GitHub, Sigstore, or any other network service.
+- GitHub/npm credentials, OTPs, `.npmrc`, tokens, or automatic login state in repository files or retained evidence.
+
+### Validation
+
+- Blocked-network `pnpm verify`, including the retained review archive set gate.
+- Blocked-network single-archive replay under `TZ=UTC` and `TZ=Asia/Seoul` with byte-identical canonical output.
+- `pnpm example:typecheck`
+- `git diff --check`
+- `pnpm pack --dry-run`
+- `pnpm release:dry-run`
+- Exact ZIP/extracted-byte agreement, receipt/manifest/promotion/set/attestation replay, archive aggregate verification, and byte equality with retained `evidence/npm/0.2.55/`.
+- GitHub Actions CI, Android Instrumentation, and iOS Validation green on the pushed candidate commit.
+
 ## v0.2.59
 
 Status: unpublished release evidence policy review receipt and manual promotion rehearsal candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.59` git tag, or GitHub Release is part of this candidate.

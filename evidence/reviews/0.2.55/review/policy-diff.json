@@ -1,0 +1,1 @@
+{"schemaVersion":1,"status":"passed","acquisitionDir":"acquisition","candidateFile":"policy-candidate.json","version":"0.2.55","candidateSha256":"aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d","policyStatus":"match","changes":[],"checks":{"layout":true,"manifest":true,"metadata":true,"evidence":true,"candidate":true,"diff":true,"atomicWrite":true},"error":null}

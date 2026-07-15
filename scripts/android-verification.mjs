@@ -71,6 +71,12 @@ const REQUIRED_FILES = [
   'scripts/verify-release-evidence-review.mjs',
   'scripts/release-evidence-review-attestation-core.mjs',
   'scripts/verify-release-evidence-review-attestation.mjs',
+  'scripts/artifact-zip-core.mjs',
+  'scripts/release-evidence-review-archive-core.mjs',
+  'scripts/import-release-evidence-review-archive.mjs',
+  'scripts/verify-release-evidence-review-archive.mjs',
+  'scripts/release-evidence-review-archive-set-core.mjs',
+  'scripts/verify-release-evidence-review-archive-set.mjs',
   'scripts/release-evidence-set-core.mjs',
   'scripts/verify-release-evidence-set.mjs',
   'scripts/workflow-supply-chain-core.mjs',
@@ -88,6 +94,8 @@ const REQUIRED_FILES = [
   'test/releaseEvidenceAcquisition.test.mjs',
   'test/releaseEvidencePolicy.test.mjs',
   'test/releaseEvidenceReview.test.mjs',
+  'test/releaseEvidenceReviewArchive.test.mjs',
+  'test/releaseEvidenceReviewArchiveSet.test.mjs',
   'test/releaseEvidenceSet.test.mjs',
   'test/workflowSupplyChain.test.mjs',
   'test/actionPinProvenance.test.mjs',
@@ -121,6 +129,15 @@ const REQUIRED_FILES = [
   'evidence/npm/0.2.55/attestation/attestation-verification.json',
   'evidence/npm/0.2.55/attestation/attestation.jsonl',
   'evidence/npm/0.2.55/attestation/trusted-root.jsonl',
+  'evidence/reviews/0.2.55/review-evidence-index.json',
+  'evidence/reviews/0.2.55/artifacts/review.zip',
+  'evidence/reviews/0.2.55/artifacts/attestation.zip',
+  'evidence/reviews/0.2.55/review/review-receipt.json',
+  'evidence/reviews/0.2.55/review/artifact-manifest.json',
+  'evidence/reviews/0.2.55/review/archive-set/0.2.55/release-evidence-index.json',
+  'evidence/reviews/0.2.55/attestation/attestation-verification.json',
+  'evidence/reviews/0.2.55/attestation/attestation.jsonl',
+  'evidence/reviews/0.2.55/attestation/trusted-root.jsonl',
   'test/fixtures/release-evidence-acquisition/0.2.50/provenance.zip',
   'test/fixtures/release-evidence-acquisition/0.2.50/attestation.zip',
   'test/fixtures/release-evidence-acquisition/0.2.55/provenance.zip',
@@ -170,6 +187,7 @@ function runDoctor() {
     checkConsumerSmokeTestEnvironment(),
     checkRegistrySmokeTestEnvironment(),
     checkReleaseEvidenceArchive(),
+    checkReleaseEvidenceReviewArchive(),
     checkWorkflowSupplyChain(),
     checkActionPinProvenance(),
     checkReleaseDryRunChecklist(),
@@ -438,7 +456,7 @@ function checkPackageMetadata() {
   ];
   const checks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.59',
+    packageJson.version === '0.2.60',
     packageJson.license === 'MIT',
     packageJson.repository?.type === 'git',
     packageJson.repository?.url ===
@@ -453,7 +471,8 @@ function checkPackageMetadata() {
     packageJson.exports?.['.']?.default === './lib/index.js',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     expectedKeywords.every((keyword) => packageJson.keywords?.includes(keyword)),
-    readmeContents.includes('Version `0.2.59` is the unpublished release evidence policy review receipt and manual promotion rehearsal candidate.'),
+    readmeContents.includes('Version `0.2.60` is the unpublished release evidence review archive import and expiration-independent replay gate candidate.'),
+    readmeContents.includes('Version `0.2.59` was the previous unpublished release evidence policy review receipt and manual promotion rehearsal candidate.'),
     readmeContents.includes('Version `0.2.58` was the previous unpublished release evidence policy candidate and reviewed promotion gate candidate.'),
     readmeContents.includes('Version `0.2.57` was the previous unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate.'),
     readmeContents.includes('Version `0.2.56` was the previous unpublished release evidence archive import automation and multi-version regression gate candidate.'),
@@ -487,7 +506,11 @@ function checkPackageMetadata() {
     readmeContents.includes('Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29`'),
     readmeContents.includes('[attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248)'),
     readmeContents.includes('Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4` under both UTC and Asia/Seoul'),
-    readmeContents.includes('The repository package metadata is `0.2.59` for the unpublished release evidence policy review receipt and manual promotion rehearsal candidate; npm `latest` remains v0.2.55.'),
+    readmeContents.includes('The repository package metadata is `0.2.60` for the unpublished release evidence review archive import and expiration-independent replay gate candidate; npm `latest` remains v0.2.55.'),
+    readmeContents.includes('pnpm import:release-evidence-review --'),
+    readmeContents.includes('pnpm verify:release-evidence-review-archive --'),
+    readmeContents.includes('pnpm verify:release-evidence-review-archive-set -- --json'),
+    readmeContents.includes('aggregate archive SHA-256 `f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd`'),
     readmeContents.includes('pnpm acquire:release-evidence --'),
     readmeContents.includes('The command never selects the latest run.'),
     readmeContents.includes('pnpm fixtures:release-evidence-acquisition:check'),
@@ -649,10 +672,10 @@ function checkPackageMetadata() {
 
   return {
     ok: checks.every(Boolean),
-    label: 'npm package metadata and README are aligned for the v0.2.59 review receipt candidate',
+    label: 'npm package metadata and README are aligned for the v0.2.60 review archive candidate',
     detail: checks.every(Boolean)
       ? 'name, version, package metadata, npm latest status, registry evidence, and stale candidate exclusions are aligned'
-      : 'expected v0.2.59 candidate metadata, review receipt guidance, historical npm evidence, or package exclusions are missing/mismatched',
+      : 'expected v0.2.60 candidate metadata, retained review archive guidance, historical npm evidence, or package exclusions are missing/mismatched',
   };
 }
 
@@ -1120,6 +1143,11 @@ function checkReleaseEvidenceArchive() {
     [securityContents, 'pnpm prepare:release-evidence-policy --'],
     [securityContents, 'Policy source changes require a normal reviewed Git commit.'],
     [securityContents, 'pnpm promote:release-evidence-policy --'],
+    [securityContents, 'Preserve an approved review after GitHub artifact expiration'],
+    [securityContents, 'pnpm import:release-evidence-review --'],
+    [securityContents, 'pnpm verify:release-evidence-review-archive -- --version 0.2.55 --json'],
+    [securityContents, 'pnpm verify:release-evidence-review-archive-set -- --json'],
+    [securityContents, 'intentionally does\nnot reject an already retained archive based on the current clock'],
     [securityContents, 'Release Evidence Policy\nReview'],
     [securityContents, 'pnpm verify:release-evidence-review --'],
     [securityContents, 'pnpm verify:release-evidence-review-attestation --'],
@@ -1218,6 +1246,140 @@ function checkReleaseEvidenceArchive() {
           ...(scriptOk ? [] : ['package.json release evidence scripts']),
           ...(indexOk ? [] : ['canonical v0.2.55/current and v0.2.50/historical evidence index identity']),
           ...(acquisitionFixturesOk ? [] : ['exact acquisition artifact ZIP fixtures']),
+          ...(packageExcludesEvidence ? [] : ['package.json files includes evidence']),
+        ].join(' | ')}`,
+  };
+}
+
+function checkReleaseEvidenceReviewArchive() {
+  const packageJson = readJson('package.json');
+  const indexPath = 'evidence/reviews/0.2.55/review-evidence-index.json';
+  const indexBytes = readFileSync(path.join(ROOT, indexPath));
+  const index = JSON.parse(indexBytes.toString('utf8'));
+  const zipCoreContents = readText('scripts/artifact-zip-core.mjs');
+  const archiveCoreContents = readText(
+    'scripts/release-evidence-review-archive-core.mjs'
+  );
+  const importCliContents = readText(
+    'scripts/import-release-evidence-review-archive.mjs'
+  );
+  const verifyCliContents = readText(
+    'scripts/verify-release-evidence-review-archive.mjs'
+  );
+  const setCoreContents = readText(
+    'scripts/release-evidence-review-archive-set-core.mjs'
+  );
+  const setCliContents = readText(
+    'scripts/verify-release-evidence-review-archive-set.mjs'
+  );
+  const archiveTestContents = readText(
+    'test/releaseEvidenceReviewArchive.test.mjs'
+  );
+  const setTestContents = readText(
+    'test/releaseEvidenceReviewArchiveSet.test.mjs'
+  );
+  const readmeContents = readText('README.md');
+  const releaseContents = readText('RELEASE.md');
+  const securityContents = readText('SECURITY.md');
+  const expectedSnippets = [
+    [zipCoreContents, 'extractArtifactZip'],
+    [zipCoreContents, 'Artifact ZIP path is unsafe'],
+    [zipCoreContents, 'Artifact ZIP entry must be a regular file, not a directory or symlink'],
+    [archiveCoreContents, 'RELEASE_EVIDENCE_REVIEW_ARCHIVE_INDEX_FIELDS'],
+    [archiveCoreContents, 'RELEASE_EVIDENCE_REVIEW_ARCHIVE_POLICIES'],
+    [archiveCoreContents, 'verifyReleaseEvidenceReviewBundle'],
+    [archiveCoreContents, 'runReleaseEvidenceReviewAttestationVerification'],
+    [archiveCoreContents, 'Imported review archive verification failed'],
+    [importCliContents, "'--review-artifact-zip': 'reviewArtifactZip'"],
+    [importCliContents, "'--attestation-artifact-zip': 'attestationArtifactZip'"],
+    [verifyCliContents, 'writeReleaseEvidenceReviewArchiveVerificationAtomic'],
+    [setCoreContents, 'DEFAULT_RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERSIONS'],
+    [setCliContents, 'writeReleaseEvidenceReviewArchiveSetReportAtomic'],
+    [archiveTestContents, 'imports the exact ZIPs atomically with stdout and report bytes equal'],
+    [archiveTestContents, "it.each(['traversal', 'duplicate', 'symlink', 'missing', 'additional'])"],
+    [archiveTestContents, 'rejects duplicate destination and cleans index, archive, and report failures'],
+    [setTestContents, 'verifies every committed review archive in stable order'],
+    [setTestContents, 'preserves an existing set report on atomic rename failure'],
+    [readmeContents, '### Expiration-independent review evidence archive'],
+    [readmeContents, 'pnpm import:release-evidence-review --'],
+    [readmeContents, 'pnpm verify:release-evidence-review-archive --'],
+    [readmeContents, 'pnpm verify:release-evidence-review-archive-set -- --json'],
+    [readmeContents, 'aggregate archive SHA-256 `f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd`'],
+    [releaseContents, '## v0.2.60'],
+    [releaseContents, '### Canonical Archive Contract'],
+    [releaseContents, '### Retained v0.2.55 Review Evidence'],
+    [securityContents, 'Preserve an approved review after GitHub artifact expiration'],
+    [securityContents, 'pnpm verify:release-evidence-review-archive-set -- --json'],
+  ];
+  const missing = expectedSnippets
+    .filter(([contents, snippet]) => !contents.includes(snippet))
+    .map(([, snippet]) => snippet);
+  const scriptsOk =
+    packageJson.scripts?.['import:release-evidence-review'] ===
+      'node scripts/import-release-evidence-review-archive.mjs' &&
+    packageJson.scripts?.['verify:release-evidence-review-archive'] ===
+      'node scripts/verify-release-evidence-review-archive.mjs' &&
+    packageJson.scripts?.['verify:release-evidence-review-archive-set'] ===
+      'node scripts/verify-release-evidence-review-archive-set.mjs' &&
+    packageJson.scripts?.verify?.includes(
+      'pnpm verify:release-evidence-review-archive-set -- --json'
+    );
+  const indexOk =
+    sha256(indexBytes) ===
+      'b43a294a9ab7f1a7b99305a6ecc2c363ec0c472857b9579338bfb68e100fe19f' &&
+    index.schemaVersion === 1 &&
+    index.status === 'passed' &&
+    index.package === 'react-native-image-compression-kit' &&
+    index.version === '0.2.55' &&
+    index.candidateSha256 ===
+      'aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d' &&
+    index.reviewer === 'GGULBAE' &&
+    index.reviewRun?.id === 29390495773 &&
+    index.reviewArtifact?.id === 8333046539 &&
+    index.attestationArtifact?.id === 8333046693 &&
+    index.attestation?.id === 35388408 &&
+    index.receiptSha256 ===
+      '45ddefa85cba6a9fed62cb1c187dd0bab2246b72ba66a803b1282e4eac07efad' &&
+    index.manifestSha256 ===
+      '48cfd454b636cf1911b7d19dae996e7ead2797247d2b974687bb02aeebb439ff' &&
+    index.evidenceSha256 ===
+      'e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78' &&
+    index.files?.length === 39 &&
+    index.archiveSha256 ===
+      'f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd';
+  const zipFilesOk = [
+    [
+      'evidence/reviews/0.2.55/artifacts/review.zip',
+      285466,
+      'f1ea6c9c2498e4d773a6cc5f6b49d39d9bfacba8bd40ec76c5364c7d3c21c836',
+    ],
+    [
+      'evidence/reviews/0.2.55/artifacts/attestation.zip',
+      15751,
+      '05ab03d322d15e97cc733e3d0325f6dbb7a468197245ea9c6738241e2477f4d6',
+    ],
+  ].every(([file, size, digest]) => {
+    const bytes = readFileSync(path.join(ROOT, file));
+    return bytes.length === size && sha256(bytes) === digest;
+  });
+  const packageExcludesEvidence = !(packageJson.files ?? []).includes('evidence');
+  const ok =
+    scriptsOk &&
+    indexOk &&
+    zipFilesOk &&
+    packageExcludesEvidence &&
+    missing.length === 0;
+
+  return {
+    ok,
+    label: 'v0.2.55 review evidence is retained and replayed expiration-independently',
+    detail: ok
+      ? 'exact ZIPs, canonical index, complete extracted review evidence, atomic importer, offline single/set replay, documentation, default gate, and npm-package exclusion are present'
+      : `review archive contract mismatch: ${[
+          ...missing,
+          ...(scriptsOk ? [] : ['package.json review archive scripts/default gate']),
+          ...(indexOk ? [] : ['canonical review archive index identity']),
+          ...(zipFilesOk ? [] : ['exact retained review artifact ZIPs']),
           ...(packageExcludesEvidence ? [] : ['package.json files includes evidence']),
         ].join(' | ')}`,
   };
@@ -1612,6 +1774,9 @@ function checkReleaseDryRunChecklist() {
     [releaseTestContents, 'accepts registry-independent v0.2.47 release wording'],
     [releaseTestContents, 'rejects the v0.2.48 candidate snippet'],
     [releaseTestContents, 'accepts registry-independent v0.2.48 release wording'],
+    [releaseScriptContents, 'Status: v0.2.60 candidate'],
+    [releaseScriptContents, 'Version `0.2.60` is the unpublished release evidence review archive import and expiration-independent replay gate candidate.'],
+    [releaseTestContents, 'rejects the v0.2.60 candidate snippet'],
     [releaseScriptContents, "args: ['smoke:consumer']"],
     [releaseScriptContents, "args: ['publish', '--dry-run', '--no-git-checks']"],
     [readmeContents, '## Release Dry Run Checklist'],
@@ -1650,6 +1815,14 @@ function checkReleaseNotes() {
   const readmeContents = readText('README.md');
   const packageJson = readJson('package.json');
   const releaseSnippets = [
+    '## v0.2.60',
+    'Status: unpublished release evidence review archive import and expiration-independent replay gate candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.60` git tag, or GitHub Release is part of this candidate.',
+    '### Canonical Archive Contract',
+    '`pnpm import:release-evidence-review -- --version <version> --metadata-file <metadata.json> --review-artifact-zip <review.zip> --attestation-artifact-zip <attestation.zip> --archive-dir <archive> --release-archive-root evidence/npm --json --report-file <report.json>`',
+    'The ordered index fields are `schemaVersion`, `status`, `package`, `version`, `candidateSha256`, `reviewer`, `reviewedAt`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `reviewRun`, `reviewArtifact`, `attestationArtifact`, `attestation`, `receiptSha256`, `manifestSha256`, `evidenceSha256`, `files`, `archiveSha256`, and `error`.',
+    '`pnpm verify:release-evidence-review-archive-set -- --json --report-file <report.json>`',
+    '### Retained v0.2.55 Review Evidence',
+    'Canonical aggregate archive SHA-256 is `f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd`',
     '## v0.2.59',
     'Status: unpublished release evidence policy review receipt and manual promotion rehearsal candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.59` git tag, or GitHub Release is part of this candidate.',
     '### Canonical Review Receipt',
@@ -3038,6 +3211,12 @@ function checkReleaseNotes() {
     'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md',
   ];
   const readmeSnippets = [
+    'The v0.2.60 release evidence review archive import and expiration-independent replay gate candidate notes are in [RELEASE.md](RELEASE.md).',
+    'Version `0.2.60` is the unpublished release evidence review archive import and expiration-independent replay gate candidate.',
+    '### Expiration-independent review evidence archive',
+    'pnpm import:release-evidence-review --',
+    'pnpm verify:release-evidence-review-archive --',
+    'pnpm verify:release-evidence-review-archive-set -- --json',
     'The v0.2.59 release evidence policy review receipt and manual promotion rehearsal candidate notes are in [RELEASE.md](RELEASE.md).',
     'Version `0.2.59` is the unpublished release evidence policy review receipt and manual promotion rehearsal candidate.',
     'pnpm review:release-evidence-policy --',
@@ -3080,18 +3259,18 @@ function checkReleaseNotes() {
       .filter((snippet) => !readmeContents.includes(snippet))
       .map((snippet) => `README.md ${snippet}`),
   ];
-  const ok = packageJson.version === '0.2.59' && missing.length === 0;
+  const ok = packageJson.version === '0.2.60' && missing.length === 0;
 
   return {
     ok,
-    label: 'v0.2.59 review receipt candidate notes and v0.2.55 publication evidence are current',
+    label: 'v0.2.60 review archive candidate notes and v0.2.55 publication evidence are current',
     detail: ok
-      ? 'RELEASE.md documents GitHub-bound review receipt, standalone staged set replay, attestation, non-goals, validation, and retained v0.2.55 publication evidence'
+      ? 'RELEASE.md documents exact review ZIP retention, expiration-independent replay, canonical index, atomic import, non-goals, validation, and retained v0.2.55 publication evidence'
       : `missing release notes snippets or version mismatch: ${[
           ...missing,
-          ...(packageJson.version === '0.2.59'
+          ...(packageJson.version === '0.2.60'
             ? []
-            : ['package.json version 0.2.59']),
+            : ['package.json version 0.2.60']),
         ].join(' | ')}`,
   };
 }
@@ -3795,7 +3974,7 @@ function checkIOSHostAppValidation() {
     'fixtures:ios-pass-replay:audit':
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit',
     verify:
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm fixtures:release-evidence-acquisition:check && pnpm verify:release-evidence-set -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor',
+      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm fixtures:release-evidence-acquisition:check && pnpm verify:release-evidence-set -- --json && pnpm verify:release-evidence-review-archive-set -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor',
   };
   const expectedSnippets = [
     [examplePackageJson, '@react-native-community/cli-platform-ios'],
