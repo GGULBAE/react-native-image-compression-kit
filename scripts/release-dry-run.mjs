@@ -5,6 +5,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readReleaseStatusManifest } from './docs-semantic-core.mjs';
 import {
   getReadmeStatusViolations,
   validateReadmeStatus,
@@ -15,6 +16,7 @@ const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
 const PACKAGE_VERSION = JSON.parse(
   readFileSync(path.join(ROOT, 'package.json'), 'utf8')
 ).version;
+const RELEASE_STATUS_MANIFEST = readReleaseStatusManifest(ROOT);
 
 const STEPS = [
   {
@@ -90,26 +92,29 @@ function checkPackedReadmeStatus() {
 
 export function getPackedReadmeStatusViolations(
   readmeContents,
-  { version = PACKAGE_VERSION } = {}
+  { version = PACKAGE_VERSION, manifest = RELEASE_STATUS_MANIFEST } = {}
 ) {
   return getReadmeStatusViolations(readmeContents, {
     version,
+    manifest,
     requireStatusBlock: true,
   });
 }
 
 export function validatePackedReadmeStatus(
   readmeContents,
-  { version = PACKAGE_VERSION } = {}
+  { version = PACKAGE_VERSION, manifest = RELEASE_STATUS_MANIFEST } = {}
 ) {
   try {
     validateReadmeStatus(readmeContents, {
       version,
+      manifest,
       requireStatusBlock: true,
     });
   } catch (error) {
     const violations = getPackedReadmeStatusViolations(readmeContents, {
       version,
+      manifest,
     });
     throw new Error(
       `Packed README current status blocks release: ${violations.join(' | ')}`,

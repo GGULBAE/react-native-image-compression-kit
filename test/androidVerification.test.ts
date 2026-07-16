@@ -16,6 +16,7 @@ function readRepositoryDocs(): string {
     'README.md',
     'RELEASE.md',
     'SECURITY.md',
+    'docs/release-status.json',
     'docs/release-evidence/README.md',
     'docs/release-evidence/registry-provenance.md',
     'docs/release-evidence/policy-review.md',
@@ -61,9 +62,10 @@ function extractKotlinArray(source: string, arrayName: string): string {
 }
 
 describe('Android verification scripts', () => {
-  it('declares the v0.2.62 documentation candidate metadata', () => {
+  it('declares documentation candidate metadata from package and manifest sources', () => {
     const readmeSource = readRepositoryDocs();
     const currentReadmeSource = readProjectFile('README.md');
+    const releaseStatus = JSON.parse(readProjectFile('docs/release-status.json'));
     const staleReadmeSnippets = [
       'Status: v0.2.8 candidate',
       'v0.2.8%20candidate',
@@ -225,7 +227,12 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.62');
+    expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/u);
+    expect(releaseStatus).toMatchObject({
+      schemaVersion: 1,
+      releaseState: 'candidate',
+    });
+    expect(releaseStatus).not.toHaveProperty('packageVersion');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -1086,13 +1093,13 @@ describe('Android verification scripts', () => {
       'Packed README current status check completed.'
     );
     expect(releaseTestSource).toContain(
-      'rejects only the current v0.2.62 candidate block'
+      'rejects only the current candidate block'
     );
     expect(releaseTestSource).toContain(
-      'ignores historical candidate prose outside a release current-status block'
+      'allows a manifest-aligned release and ignores historical candidate prose'
     );
     expect(releaseTestSource).toContain(
-      'rejects a current-status version that differs from package metadata'
+      'rejects package and manifest mismatches before evaluating publishability'
     );
     expect(releaseScriptSource).toContain("args: ['smoke:consumer']");
     expect(releaseScriptSource).toContain(
@@ -1585,11 +1592,11 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.62 documentation candidate and retained v0.2.55 evidence', () => {
+  it('documents the current documentation candidate and retained release evidence', () => {
     const releaseSource = readRepositoryDocs();
     const readmeSource = readRepositoryDocs();
 
-    expect(packageJson.version).toBe('0.2.62');
+    expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/u);
     expect(releaseSource).toContain('## v0.2.61');
     expect(releaseSource).toContain(
       'Status: unpublished review artifact acquisition automation and canonical archive handoff candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.61` git tag, or GitHub Release is part of this candidate.'

@@ -8,12 +8,26 @@ import path from 'node:path';
 
 export const STATUS_START = '<!-- package-status:start -->';
 export const STATUS_END = '<!-- package-status:end -->';
-export const EXPECTED_NPM_LATEST = '0.2.55';
+export const RELEASE_STATUS_START = '<!-- release-status:start -->';
+export const RELEASE_STATUS_END = '<!-- release-status:end -->';
+export const RELEASE_STATUS_MANIFEST_PATH = 'docs/release-status.json';
+export const RELEASE_STATE_MATRIX = Object.freeze({
+  candidate: Object.freeze({ publishable: false }),
+  release: Object.freeze({ publishable: true }),
+});
+
+const STATUS_FIELDS = [
+  ['packageVersion', 'Package version'],
+  ['npmLatest', 'npm latest'],
+  ['releaseState', 'Release state'],
+  ['registryCheckedAt', 'Registry checked at'],
+];
 
 export const REQUIRED_DOCUMENTATION_FILES = [
   'README.md',
   'RELEASE.md',
   'SECURITY.md',
+  RELEASE_STATUS_MANIFEST_PATH,
   'docs/release-evidence/README.md',
   'docs/release-evidence/registry-provenance.md',
   'docs/release-evidence/policy-review.md',
@@ -55,6 +69,7 @@ const README_LINKS = [
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/review-archive.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/acquisition.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/supply-chain/action-pins.md',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-status.json',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/RELEASE.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/releases/0.2-history.md',
   'SECURITY.md',
@@ -68,38 +83,220 @@ const FORBIDDEN_PACKAGE_PREFIXES = [
   'tests',
 ];
 
-export function extractCurrentStatusBlock(readmeContents) {
-  const starts = findAll(readmeContents, STATUS_START);
-  const ends = findAll(readmeContents, STATUS_END);
+export function extractStatusBlock(
+  contents,
+  {
+    documentName = 'README',
+    startMarker = STATUS_START,
+    endMarker = STATUS_END,
+    markerName = 'package-status',
+  } = {}
+) {
+  const starts = findAll(contents, startMarker);
+  const ends = findAll(contents, endMarker);
 
   if (starts.length !== 1 || ends.length !== 1 || ends[0] < starts[0]) {
     throw new Error(
-      'README must contain exactly one ordered package-status marker block'
+      `${documentName}: expected exactly one ordered ${markerName} marker block; ` +
+        `received start=${starts.length}, end=${ends.length}`
     );
   }
 
-  return readmeContents.slice(starts[0] + STATUS_START.length, ends[0]).trim();
+  return contents.slice(starts[0] + startMarker.length, ends[0]).trim();
+}
+
+export function extractCurrentStatusBlock(readmeContents) {
+  return extractStatusBlock(readmeContents);
+}
+
+export function parseStatusDocument(
+  contents,
+  {
+    documentName = 'README',
+    startMarker = STATUS_START,
+    endMarker = STATUS_END,
+    markerName = 'package-status',
+  } = {}
+) {
+  const block = extractStatusBlock(contents, {
+    documentName,
+    startMarker,
+    endMarker,
+    markerName,
+  });
+  const status = Object.fromEntries(
+    STATUS_FIELDS.map(([key, label]) => [
+      key,
+      readStatusField(block, label, documentName),
+    ])
+  );
+
+  if (!isSemver(status.packageVersion)) {
+    throw new Error(
+      `${documentName}: Package version expected semantic version, received "${status.packageVersion}"`
+    );
+  }
+
+  if (!isSemver(status.npmLatest)) {
+    throw new Error(
+      `${documentName}: npm latest expected semantic version, received "${status.npmLatest}"`
+    );
+  }
+
+  if (!isReleaseState(status.releaseState)) {
+    throw new Error(
+      `${documentName}: Release state expected "candidate" or "release", received "${status.releaseState}"`
+    );
+  }
+
+  if (!isIsoDate(status.registryCheckedAt)) {
+    throw new Error(
+      `${documentName}: Registry checked at expected YYYY-MM-DD, received "${status.registryCheckedAt}"`
+    );
+  }
+
+  return { ...status, block };
 }
 
 export function parseCurrentStatus(readmeContents) {
-  const block = extractCurrentStatusBlock(readmeContents);
-  const packageVersion = readStatusField(block, 'Package version');
-  const npmLatest = readStatusField(block, 'npm latest');
-  const releaseState = readStatusField(block, 'Release state');
+  return parseStatusDocument(readmeContents);
+}
 
-  if (!/^\d+\.\d+\.\d+$/.test(packageVersion)) {
-    throw new Error(`README package status has invalid version: ${packageVersion}`);
+export function parseReleaseStatus(releaseContents) {
+  return parseStatusDocument(releaseContents, {
+    documentName: 'RELEASE',
+    startMarker: RELEASE_STATUS_START,
+    endMarker: RELEASE_STATUS_END,
+    markerName: 'release-status',
+  });
+}
+
+export function validateReleaseStatusManifest(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(
+      `${RELEASE_STATUS_MANIFEST_PATH}: expected JSON object, received ${describeValue(value)}`
+    );
   }
 
-  if (!/^\d+\.\d+\.\d+$/.test(npmLatest)) {
-    throw new Error(`README package status has invalid npm latest: ${npmLatest}`);
+  const expectedKeys = [
+    'schemaVersion',
+    'npmLatest',
+    'releaseState',
+    'registryCheckedAt',
+  ];
+  const actualKeys = Object.keys(value);
+  const missingKeys = expectedKeys.filter((key) => !actualKeys.includes(key));
+  const extraKeys = actualKeys.filter((key) => !expectedKeys.includes(key));
+
+  if (missingKeys.length > 0 || extraKeys.length > 0) {
+    throw new Error(
+      `${RELEASE_STATUS_MANIFEST_PATH}: fields expected [${expectedKeys.join(', ')}], ` +
+        `received [${actualKeys.join(', ')}]` +
+        `${missingKeys.length > 0 ? `; missing [${missingKeys.join(', ')}]` : ''}` +
+        `${extraKeys.length > 0 ? `; unexpected [${extraKeys.join(', ')}]` : ''}`
+    );
   }
 
-  if (!['candidate', 'release'].includes(releaseState)) {
-    throw new Error(`README package status has invalid release state: ${releaseState}`);
+  if (value.schemaVersion !== 1) {
+    throw new Error(
+      `${RELEASE_STATUS_MANIFEST_PATH}: schemaVersion expected 1, received ${describeValue(value.schemaVersion)}`
+    );
+  }
+  if (!isSemver(value.npmLatest)) {
+    throw new Error(
+      `${RELEASE_STATUS_MANIFEST_PATH}: npmLatest expected semantic version, received ${describeValue(value.npmLatest)}`
+    );
+  }
+  if (!isReleaseState(value.releaseState)) {
+    throw new Error(
+      `${RELEASE_STATUS_MANIFEST_PATH}: releaseState expected "candidate" or "release", received ${describeValue(value.releaseState)}`
+    );
+  }
+  if (!isIsoDate(value.registryCheckedAt)) {
+    throw new Error(
+      `${RELEASE_STATUS_MANIFEST_PATH}: registryCheckedAt expected YYYY-MM-DD, received ${describeValue(value.registryCheckedAt)}`
+    );
   }
 
-  return { packageVersion, npmLatest, releaseState, block };
+  return {
+    schemaVersion: value.schemaVersion,
+    npmLatest: value.npmLatest,
+    releaseState: value.releaseState,
+    registryCheckedAt: value.registryCheckedAt,
+  };
+}
+
+export function readReleaseStatusManifest(root) {
+  const manifestPath = path.join(root, RELEASE_STATUS_MANIFEST_PATH);
+  if (!existsSync(manifestPath)) {
+    throw new Error(`${RELEASE_STATUS_MANIFEST_PATH}: missing release status manifest`);
+  }
+
+  let value;
+  try {
+    value = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  } catch (error) {
+    throw new Error(
+      `${RELEASE_STATUS_MANIFEST_PATH}: invalid JSON: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+  return validateReleaseStatusManifest(value);
+}
+
+export function inspectStatusContract({ packageVersion, manifest, documents }) {
+  const errors = [];
+  let normalizedManifest = null;
+
+  if (!isSemver(packageVersion)) {
+    errors.push(
+      `package.json: version expected semantic version, received ${describeValue(packageVersion)}`
+    );
+  }
+
+  try {
+    normalizedManifest = validateReleaseStatusManifest(manifest);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
+  }
+
+  const parsedDocuments = {};
+  for (const document of documents) {
+    try {
+      const status = parseStatusDocument(document.contents, document);
+      parsedDocuments[document.documentName] = status;
+      if (isSemver(packageVersion) && status.packageVersion !== packageVersion) {
+        errors.push(
+          `${document.documentName}: Package version expected "${packageVersion}" from package.json, ` +
+            `received "${status.packageVersion}"`
+        );
+      }
+      if (normalizedManifest) {
+        for (const [statusKey, fieldLabel, manifestKey] of [
+          ['npmLatest', 'npm latest', 'npmLatest'],
+          ['releaseState', 'Release state', 'releaseState'],
+          ['registryCheckedAt', 'Registry checked at', 'registryCheckedAt'],
+        ]) {
+          if (status[statusKey] !== normalizedManifest[manifestKey]) {
+            errors.push(
+              `${document.documentName}: ${fieldLabel} expected "${normalizedManifest[manifestKey]}" ` +
+                `from ${RELEASE_STATUS_MANIFEST_PATH}, received "${status[statusKey]}"`
+            );
+          }
+        }
+      }
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  return {
+    ok: errors.length === 0,
+    errors,
+    packageVersion,
+    manifest: normalizedManifest,
+    documents: parsedDocuments,
+    status: parsedDocuments.README ?? null,
+  };
 }
 
 export function inspectDocumentation(root) {
@@ -117,29 +314,48 @@ export function inspectDocumentation(root) {
 
   const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
   const readmePath = path.join(root, 'README.md');
-  let status = null;
+  const releasePath = path.join(root, 'RELEASE.md');
+  const readme = existsSync(readmePath) ? readFileSync(readmePath, 'utf8') : null;
+  const release = existsSync(releasePath)
+    ? readFileSync(releasePath, 'utf8')
+    : null;
+  let manifest = null;
 
-  if (existsSync(readmePath)) {
-    const readme = readFileSync(readmePath, 'utf8');
-    try {
-      status = parseCurrentStatus(readme);
-    } catch (error) {
-      errors.push(error instanceof Error ? error.message : String(error));
-    }
+  try {
+    manifest = readReleaseStatusManifest(root);
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
+  }
 
-    if (status) {
-      if (status.packageVersion !== packageJson.version) {
-        errors.push(
-          `README package version ${status.packageVersion} does not match package.json ${packageJson.version}`
-        );
-      }
-      if (status.npmLatest !== EXPECTED_NPM_LATEST) {
-        errors.push(
-          `README npm latest ${status.npmLatest} does not match ${EXPECTED_NPM_LATEST}`
-        );
-      }
-    }
+  const statusReport = inspectStatusContract({
+    packageVersion: packageJson.version,
+    manifest: manifest ?? {},
+    documents: [
+      ...(readme === null
+        ? []
+        : [{ documentName: 'README', contents: readme }]),
+      ...(release === null
+        ? []
+        : [
+            {
+              documentName: 'RELEASE',
+              contents: release,
+              startMarker: RELEASE_STATUS_START,
+              endMarker: RELEASE_STATUS_END,
+              markerName: 'release-status',
+            },
+          ]),
+    ],
+  });
+  errors.push(
+    ...statusReport.errors.filter(
+      (error) => manifest !== null || !error.startsWith(`${RELEASE_STATUS_MANIFEST_PATH}:`)
+    )
+  );
+  const status = statusReport.status;
+  const releaseStatus = statusReport.documents.RELEASE ?? null;
 
+  if (readme !== null) {
     const headings = new Set(parseHeadings(readme).map(({ text }) => text));
     for (const heading of README_HEADINGS) {
       if (!headings.has(heading)) {
@@ -188,9 +404,7 @@ export function inspectDocumentation(root) {
   const markdownFiles = collectMarkdownFiles(root);
   errors.push(...collectMarkdownLinkViolations(root, markdownFiles));
 
-  const releasePath = path.join(root, 'RELEASE.md');
-  if (existsSync(releasePath)) {
-    const release = readFileSync(releasePath, 'utf8');
+  if (release !== null) {
     const releaseHeadings = new Set(
       parseHeadings(release).map(({ text }) => text)
     );
@@ -221,7 +435,14 @@ export function inspectDocumentation(root) {
     }
   }
 
-  return { ok: errors.length === 0, errors, status, markdownFiles };
+  return {
+    ok: errors.length === 0,
+    errors,
+    status,
+    releaseStatus,
+    manifest: statusReport.manifest,
+    markdownFiles,
+  };
 }
 
 export function validateDocumentation(root) {
@@ -340,15 +561,37 @@ function walkMarkdown(directory, root, files) {
   }
 }
 
-function readStatusField(block, field) {
+function readStatusField(block, field, documentName) {
   const escaped = field.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const matches = [
     ...block.matchAll(new RegExp('^- ' + escaped + ': `([^`]+)`$', 'gm')),
   ];
   if (matches.length !== 1) {
-    throw new Error(`README package status must contain exactly one ${field} field`);
+    throw new Error(
+      `${documentName}: expected exactly one ${field} field, received ${matches.length}`
+    );
   }
   return matches[0][1];
+}
+
+function isSemver(value) {
+  return typeof value === 'string' && /^\d+\.\d+\.\d+$/.test(value);
+}
+
+function isReleaseState(value) {
+  return typeof value === 'string' && Object.hasOwn(RELEASE_STATE_MATRIX, value);
+}
+
+function isIsoDate(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+}
+
+function describeValue(value) {
+  return typeof value === 'string' ? `"${value}"` : JSON.stringify(value);
 }
 
 function normalizeHeadingText(value) {

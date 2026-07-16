@@ -1,12 +1,10 @@
 <h1 align="center">React Native Image Compression Kit</h1>
 
-<!-- package-status:start -->
 <p align="center">
   Native-first image compression, resize, and format conversion for React Native.
 </p>
 
 <p align="center">
-  <img alt="Status: v0.2.62 candidate" src="https://img.shields.io/badge/Status-v0.2.62%20candidate-orange" />
   <img alt="Platforms: Android and iOS" src="https://img.shields.io/badge/Platforms-Android%20%7C%20iOS-green" />
   <img alt="TypeScript: API available" src="https://img.shields.io/badge/TypeScript-API%20available-3178c6" />
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow" />
@@ -16,17 +14,17 @@ Compress supported local images to JPEG, PNG, or WebP, with optional resize,
 quality, target-size, and metadata controls. Use the runtime capability API to
 handle platform codec differences before compression.
 
+<!-- package-status:start -->
 ## Current status
 
 - Package version: `0.2.62`
 - npm latest: `0.2.55`
 - Release state: `candidate`
-- Native/API behavior: unchanged from the published `0.2.55` runtime surface
-
-This candidate reorganizes package and repository documentation and replaces
-prose-coupled documentation checks with semantic status, structure, and link
-validation. It does not publish a package or change image processing behavior.
+- Registry checked at: `2026-07-16`
 <!-- package-status:end -->
+
+The documentation status work does not publish a package or change native API
+or image-processing behavior.
 
 ## Installation
 
@@ -225,9 +223,9 @@ pnpm pack --dry-run
 
 `pnpm verify` runs TypeScript checks, Vitest, the build, offline fixture and
 release-evidence replay gates, workflow pin checks, and the Android repository
-doctor. `pnpm docs:check` is network-free and validates the current-status block,
-required documentation structure, local links/anchors, and npm package
-exclusions.
+doctor. `pnpm docs:check` is network-free and validates the repository status
+manifest, aligned README/RELEASE blocks, required documentation structure,
+local links/anchors, and npm package exclusions.
 
 For release-oriented changes, also run:
 
@@ -236,8 +234,9 @@ pnpm smoke:consumer
 pnpm release:dry-run
 ```
 
-The release dry run never publishes. While this README declares the current
-package as a candidate, it intentionally stops at the packed README status gate.
+The release dry run never publishes. Its shared state matrix blocks a
+`candidate` and permits `release` only after the manifest and document mirrors
+are aligned.
 
 ## Repository documentation
 
@@ -250,6 +249,7 @@ tarball:
 - [Review archive](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/review-archive.md)
 - [Evidence acquisition](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/acquisition.md)
 - [GitHub Action pins](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/supply-chain/action-pins.md)
+- [Release status manifest](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-status.json)
 - [Current and recent release work](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/RELEASE.md)
 - [Complete 0.2 release history](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/releases/0.2-history.md)
 

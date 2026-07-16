@@ -1,34 +1,45 @@
 # Release Notes
 
-This file keeps the current candidate and the most recent release-evidence work.
+This file keeps the current release work and the most recent release evidence.
 Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-history.md).
 
 ## v0.2.62
 
+<!-- release-status:start -->
 - Package version: `0.2.62`
 - npm latest: `0.2.55`
 - Release state: `candidate`
+- Registry checked at: `2026-07-16`
+<!-- release-status:end -->
+
 - Scope: documentation information architecture and semantic status gates
 
-This candidate separates the npm user README from repository-only release
+This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
 required headings/links/commands, file existence, internal Markdown links and
 anchors, README size, and npm package exclusions.
 
 The packed README stale validator reads only the marked current-status block.
-Historical candidate text outside that block is ignored; the current
-`0.2.62`/`candidate` fields intentionally stop `pnpm release:dry-run` before a
-publish dry run. Android doctor consumes the shared semantic result instead of
-matching release procedure sentences.
+Historical candidate text outside that block is ignored. The shared state
+matrix blocks `candidate` and permits `release`; Android doctor consumes the
+same semantic result instead of matching release procedure sentences.
+
+The repository-only [release status manifest](docs/release-status.json) is the
+authority for npm latest, release state, and the registry check date. Package
+version remains authoritative in `package.json`; the README and this release
+block are validated mirrors.
 
 ### Included
 
-- `package.json` version `0.2.62` and aligned README/RELEASE/SECURITY/Vitest.
+- `package.json` as the package-version authority, with aligned
+  README/RELEASE/SECURITY/Vitest coverage.
 - npm-focused README with current support, installation, API examples,
   limitations, verification, and repository documentation links.
 - Repository-only release-evidence, Action pin, and historical documentation.
+- Repository-only structured release-status manifest and shared publishability
+  matrix.
 - `pnpm docs:check` in default verification.
-- Current-status marker parsing and current-version candidate refusal.
+- Aligned README/RELEASE marker parsing and current candidate refusal.
 
 ### Not included
 
@@ -49,9 +60,8 @@ pnpm pack --dry-run
 ```
 
 Package inspection must show no `docs/`, `evidence/`, `scripts/`, or `test/`
-entries. `pnpm release:dry-run` is expected to stop at the packed README status
-gate until the current status is changed from `candidate` through a reviewed
-release update.
+entries. `pnpm release:dry-run` stops for `candidate` and continues for a
+manifest-aligned `release` after a reviewed status update.
 
 ## Recent release-evidence work
 
@@ -67,8 +77,8 @@ release update.
   Validation artifact acquisition.
 - [v0.2.56](docs/releases/0.2-history.md#v0256) added release-evidence archive
   import and multi-version replay.
-- [v0.2.55](docs/releases/0.2-history.md#v0255) is npm `latest` and retained the
-  Action Pin attestation/release evidence baseline.
+- [v0.2.55](docs/releases/0.2-history.md#v0255) established the retained Action
+  Pin attestation/release evidence baseline.
 
 ## History index
 

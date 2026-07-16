@@ -1,5 +1,7 @@
 import {
+  inspectStatusContract,
   parseCurrentStatus,
+  RELEASE_STATE_MATRIX,
   STATUS_END,
   STATUS_START,
 } from './docs-semantic-core.mjs';
@@ -16,7 +18,7 @@ const LEGACY_CANDIDATE_PATTERNS = [
 
 export function getReadmeStatusViolations(
   readmeContents,
-  { version, requireStatusBlock = false, forbiddenSnippets = [] } = {}
+  { version, manifest, requireStatusBlock = false, forbiddenSnippets = [] } = {}
 ) {
   const hasStatusMarker =
     readmeContents.includes(STATUS_START) || readmeContents.includes(STATUS_END);
@@ -32,10 +34,22 @@ export function getReadmeStatusViolations(
 
   let status;
 
-  try {
-    status = parseCurrentStatus(readmeContents);
-  } catch (error) {
-    return [error instanceof Error ? error.message : String(error)];
+  if (manifest) {
+    const report = inspectStatusContract({
+      packageVersion: version,
+      manifest,
+      documents: [{ documentName: 'README', contents: readmeContents }],
+    });
+    if (!report.ok) {
+      return report.errors;
+    }
+    status = report.status;
+  } else {
+    try {
+      status = parseCurrentStatus(readmeContents);
+    } catch (error) {
+      return [error instanceof Error ? error.message : String(error)];
+    }
   }
 
   if (version && status.packageVersion !== version) {
@@ -44,7 +58,7 @@ export function getReadmeStatusViolations(
     ];
   }
 
-  if (status.releaseState === 'candidate') {
+  if (!RELEASE_STATE_MATRIX[status.releaseState].publishable) {
     return [
       `current status declares package version ${status.packageVersion} as candidate`,
     ];

@@ -32,6 +32,18 @@ networked.
 - [Complete release history](../releases/0.2-history.md) — version-by-version
   goals, runs, artifact IDs, digests, results, and non-goals.
 
+## Release status contract
+
+The repository-only [release status manifest](../release-status.json) is the
+authority for `npmLatest`, `releaseState`, and `registryCheckedAt`. Package
+version is intentionally absent and remains authoritative in `package.json`.
+
+README and RELEASE contain marked mirror blocks so npm users and repository
+operators can see the same status. `candidate` is non-publishable; `release` is
+publishable. A reviewed transition must update the manifest and both mirrors
+together. `pnpm docs:check` rejects missing markers, invalid fields, or any
+expected/actual mismatch without querying the registry.
+
 ## Default offline gates
 
 ```bash

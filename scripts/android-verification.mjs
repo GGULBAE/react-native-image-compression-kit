@@ -291,7 +291,6 @@ function checkDocumentationSemantics() {
   const report = inspectDocumentation(ROOT);
   const packageChecks = [
     packageJson.name === 'react-native-image-compression-kit',
-    packageJson.version === '0.2.62',
     packageJson.license === 'MIT',
     packageJson.repository?.url ===
       'git+https://github.com/GGULBAE/react-native-image-compression-kit.git',
@@ -306,7 +305,7 @@ function checkDocumentationSemantics() {
     ok,
     label: 'package metadata and documentation semantics are aligned',
     detail: ok
-      ? `package ${report.status.packageVersion} ${report.status.releaseState}, npm latest ${report.status.npmLatest}, required headings/links/commands/files, local anchors, README limits, and npm exclusions passed`
+      ? `package ${report.status.packageVersion} ${report.status.releaseState}, npm latest ${report.status.npmLatest} checked ${report.status.registryCheckedAt}, manifest-aligned README/RELEASE, required headings/links/commands/files, local anchors, README limits, and npm exclusions passed`
       : `semantic documentation mismatch: ${[
           ...report.errors,
           ...(packageChecks.every(Boolean) ? [] : ['package metadata contract']),
