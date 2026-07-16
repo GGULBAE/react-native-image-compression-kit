@@ -1,8 +1,5 @@
 package com.imagecompressionkit
 
-import android.graphics.Bitmap
-import android.graphics.Matrix
-import androidx.exifinterface.media.ExifInterface
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -10,7 +7,6 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 import java.io.File
-import kotlin.math.roundToInt
 
 class ImageCompressionKitModule(
   private val reactContext: ReactApplicationContext,
@@ -21,6 +17,7 @@ class ImageCompressionKitModule(
     reactContext.contentResolver
   )
   private val imageDecoder = AndroidImageDecoder(imageSourceResolver)
+  private val bitmapTransformer = AndroidBitmapTransformer()
 
   override fun getName(): String = NAME
 
@@ -29,23 +26,22 @@ class ImageCompressionKitModule(
       val request = try {
         AndroidCompressionRequestParser.parse(options)
       } catch (error: AndroidCompressionRequestException) {
-        reject(
-          promise,
-          error.code,
-          error.message ?: "Android MVP compression failed.",
-          error
-        )
+        reject(promise, error.code, error.message ?: "Android MVP compression failed.", error)
         return
       }
       val inputSource = request.source
-      val resize = request.resize
-      val outputFormat = request.outputFormat
-      val quality = request.quality
-      val maxBytes = request.maxBytes
-      val metadataPolicy = request.metadataPolicy
-
-      val decodeResult = try {
-        imageDecoder.decode(inputSource)
+      val decodedInput = try {
+        when (val decodeResult = imageDecoder.decode(inputSource)) {
+          is AndroidImageDecodeResult.Success -> decodeResult
+          is AndroidImageDecodeResult.UnsupportedFormat -> {
+            reject(promise, ERR_UNSUPPORTED_FORMAT, decodeResult.message)
+            return
+          }
+          AndroidImageDecodeResult.DecodeFailed -> {
+            reject(promise, ERR_DECODE_FAILED, "Android MVP could not decode the source image.")
+            return
+          }
+        }
       } catch (error: AndroidImageSourceAccessException) {
         reject(
           promise,
@@ -55,106 +51,75 @@ class ImageCompressionKitModule(
         )
         return
       }
-      val decodedInput = when (decodeResult) {
-        is AndroidImageDecodeResult.Success -> decodeResult
-        is AndroidImageDecodeResult.UnsupportedFormat -> {
-          reject(
-            promise,
-            ERR_UNSUPPORTED_FORMAT,
-            decodeResult.message
-          )
-          return
-        }
-        AndroidImageDecodeResult.DecodeFailed -> {
-          reject(
-            promise,
-            ERR_DECODE_FAILED,
-            "Android MVP could not decode the source image."
-          )
-          return
-        }
-      }
       val inputInfo = decodedInput.inputInfo
-      val originalByteSize = inputInfo.originalByteSize
-      val inputFormat = inputInfo.format
-      val bitmap = decodedInput.bitmap
-      val orientedBitmap = applyExifOrientation(bitmap, inputInfo.exifOrientation)
-      val processedBitmap = resizeBitmap(orientedBitmap, resize)
-      val outputDimensions = ImageDimensions(
-        width = processedBitmap.width,
-        height = processedBitmap.height
+      val transformation = bitmapTransformer.transform(
+        decodedInput.bitmap,
+        inputInfo.exifOrientation,
+        request.resize
       )
-      val outputFile = ImageCompressionOutput.createOutputFile(
-        reactContext.cacheDir,
-        outputFormat
-      )
-      val didEncode: Boolean
+      val compressionResult = transformation.use { ownedTransformation ->
+        val transformed = ownedTransformation.result
+        val outputFile = ImageCompressionOutput.createOutputFile(
+          reactContext.cacheDir,
+          request.outputFormat
+        )
+        val didEncode = try {
+          val copiedExifMetadata = if (
+            inputInfo.format.supportsJpegExifMetadata &&
+            request.outputFormat.supportsJpegExifMetadata
+          ) {
+            createCopiedExifMetadata(
+              request.metadataPolicy,
+              inputSource,
+              transformed.dimensions
+            )
+          } else {
+            null
+          }
 
-      try {
-        val copiedExifMetadata = if (
-          inputFormat.supportsJpegExifMetadata &&
-          outputFormat.supportsJpegExifMetadata
-        ) {
-          createCopiedExifMetadata(
-            metadataPolicy,
-            inputSource,
-            outputDimensions
+          ImageCompressionOutput.encodeBitmap(
+            transformed.bitmap,
+            outputFile,
+            request.outputFormat,
+            request.quality,
+            request.maxBytes,
+            copiedExifMetadata
           )
-        } else {
-          null
+        } catch (error: MetadataCopyException) {
+          reject(
+            promise,
+            ERR_ENCODE_FAILED,
+            error.message ?: "Android MVP could not copy JPEG metadata.",
+            error
+          )
+          return
+        } catch (error: Exception) {
+          reject(
+            promise,
+            ERR_ENCODE_FAILED,
+            error.message ?: "Android MVP could not encode the selected output format.",
+            error
+          )
+          return
         }
 
-        didEncode = ImageCompressionOutput.encodeBitmap(
-          processedBitmap,
-          outputFile,
-          outputFormat,
-          quality,
-          maxBytes,
-          copiedExifMetadata
-        )
-      } catch (error: MetadataCopyException) {
-        reject(
-          promise,
-          ERR_ENCODE_FAILED,
-          error.message ?: "Android MVP could not copy JPEG metadata.",
-          error
-        )
-        return
-      } catch (error: Exception) {
-        reject(
-          promise,
-          ERR_ENCODE_FAILED,
-          error.message ?: "Android MVP could not encode the selected output format.",
-          error
-        )
-        return
-      } finally {
-        if (processedBitmap !== orientedBitmap) {
-          processedBitmap.recycle()
+        if (!didEncode) {
+          reject(
+            promise,
+            ERR_ENCODE_FAILED,
+            "Android MVP could not encode the selected output format."
+          )
+          return
         }
-        if (orientedBitmap !== bitmap) {
-          orientedBitmap.recycle()
-        }
-        bitmap.recycle()
-      }
 
-      if (!didEncode) {
-        reject(
-          promise,
-          ERR_ENCODE_FAILED,
-          "Android MVP could not encode the selected output format."
-        )
-        return
-      }
-
-      promise.resolve(
         createCompressionResult(
-          originalByteSize,
+          inputInfo.originalByteSize,
           outputFile,
-          outputDimensions,
-          outputFormat
+          transformed.dimensions,
+          request.outputFormat
         )
-      )
+      }
+      promise.resolve(compressionResult)
     } catch (error: Exception) {
       reject(
         promise,
@@ -215,7 +180,7 @@ class ImageCompressionKitModule(
   private fun createCopiedExifMetadata(
     metadataPolicy: MetadataPolicy,
     inputSource: AndroidCompressionSource,
-    dimensions: ImageDimensions
+    dimensions: AndroidBitmapDimensions
   ): CopiedExifMetadata? {
     val exifTags = when (metadataPolicy) {
       MetadataPolicy.PRESERVE -> JpegExifMetadata.PRESERVED_EXIF_TAGS
@@ -240,152 +205,10 @@ class ImageCompressionKitModule(
     }
   }
 
-  private fun applyExifOrientation(bitmap: Bitmap, orientation: Int): Bitmap {
-    val matrix = createExifOrientationMatrix(orientation) ?: return bitmap
-
-    return Bitmap.createBitmap(
-      bitmap,
-      0,
-      0,
-      bitmap.width,
-      bitmap.height,
-      matrix,
-      true
-    )
-  }
-
-  private fun createExifOrientationMatrix(orientation: Int): Matrix? {
-    val matrix = Matrix()
-
-    when (orientation) {
-      ExifInterface.ORIENTATION_FLIP_HORIZONTAL ->
-        matrix.setScale(-1f, 1f)
-      ExifInterface.ORIENTATION_ROTATE_180 ->
-        matrix.setRotate(180f)
-      ExifInterface.ORIENTATION_FLIP_VERTICAL -> {
-        matrix.setRotate(180f)
-        matrix.postScale(-1f, 1f)
-      }
-      ExifInterface.ORIENTATION_TRANSPOSE -> {
-        matrix.setRotate(90f)
-        matrix.postScale(-1f, 1f)
-      }
-      ExifInterface.ORIENTATION_ROTATE_90 ->
-        matrix.setRotate(90f)
-      ExifInterface.ORIENTATION_TRANSVERSE -> {
-        matrix.setRotate(-90f)
-        matrix.postScale(-1f, 1f)
-      }
-      ExifInterface.ORIENTATION_ROTATE_270 ->
-        matrix.setRotate(-90f)
-      else -> return null
-    }
-
-    return matrix
-  }
-
-  private fun resizeBitmap(bitmap: Bitmap, resize: ResizeOptions?): Bitmap {
-    if (resize == null) {
-      return bitmap
-    }
-
-    return when (resize.mode) {
-      ResizeMode.CONTAIN -> resizeContain(bitmap, resize)
-      ResizeMode.COVER -> resizeCover(bitmap, resize)
-      ResizeMode.STRETCH -> resizeStretch(bitmap, resize)
-    }
-  }
-
-  private fun resizeContain(bitmap: Bitmap, resize: ResizeOptions): Bitmap {
-    val scale = minOf(
-      resize.maxWidth?.let { it.toDouble() / bitmap.width.toDouble() } ?: 1.0,
-      resize.maxHeight?.let { it.toDouble() / bitmap.height.toDouble() } ?: 1.0,
-      1.0
-    )
-
-    return createScaledBitmapIfNeeded(
-      bitmap,
-      scaledDimension(bitmap.width, scale),
-      scaledDimension(bitmap.height, scale)
-    )
-  }
-
-  private fun resizeCover(bitmap: Bitmap, resize: ResizeOptions): Bitmap {
-    val maxWidth = resize.maxWidth
-    val maxHeight = resize.maxHeight
-
-    if (maxWidth == null || maxHeight == null) {
-      return resizeContain(bitmap, resize)
-    }
-
-    val targetWidth = maxWidth.coerceAtMost(bitmap.width)
-    val targetHeight = maxHeight.coerceAtMost(bitmap.height)
-    val scale = minOf(
-      maxOf(
-        targetWidth.toDouble() / bitmap.width.toDouble(),
-        targetHeight.toDouble() / bitmap.height.toDouble()
-      ),
-      1.0
-    )
-    val scaled = createScaledBitmapIfNeeded(
-      bitmap,
-      scaledDimension(bitmap.width, scale),
-      scaledDimension(bitmap.height, scale)
-    )
-    val cropped = centerCropBitmap(
-      scaled,
-      targetWidth.coerceAtMost(scaled.width),
-      targetHeight.coerceAtMost(scaled.height)
-    )
-
-    if (cropped !== scaled && scaled !== bitmap) {
-      scaled.recycle()
-    }
-
-    return cropped
-  }
-
-  private fun resizeStretch(bitmap: Bitmap, resize: ResizeOptions): Bitmap {
-    val targetWidth = resize.maxWidth?.coerceAtMost(bitmap.width) ?: bitmap.width
-    val targetHeight = resize.maxHeight?.coerceAtMost(bitmap.height) ?: bitmap.height
-
-    return createScaledBitmapIfNeeded(bitmap, targetWidth, targetHeight)
-  }
-
-  private fun createScaledBitmapIfNeeded(
-    bitmap: Bitmap,
-    targetWidth: Int,
-    targetHeight: Int
-  ): Bitmap {
-    if (bitmap.width == targetWidth && bitmap.height == targetHeight) {
-      return bitmap
-    }
-
-    return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
-  }
-
-  private fun centerCropBitmap(
-    bitmap: Bitmap,
-    targetWidth: Int,
-    targetHeight: Int
-  ): Bitmap {
-    if (bitmap.width == targetWidth && bitmap.height == targetHeight) {
-      return bitmap
-    }
-
-    val x = ((bitmap.width - targetWidth) / 2).coerceAtLeast(0)
-    val y = ((bitmap.height - targetHeight) / 2).coerceAtLeast(0)
-
-    return Bitmap.createBitmap(bitmap, x, y, targetWidth, targetHeight)
-  }
-
-  private fun scaledDimension(value: Int, scale: Double): Int =
-    (value.toDouble() * scale).roundToInt().coerceAtLeast(1)
-
   private fun createCompressionResult(
     originalByteSize: Long,
     outputFile: File,
-    dimensions: ImageDimensions,
+    dimensions: AndroidBitmapDimensions,
     outputFormat: OutputFormat
   ): WritableMap {
     val outputResult = ImageCompressionOutput.createResultMetadata(
@@ -417,11 +240,6 @@ class ImageCompressionKitModule(
   ) {
     promise.reject(code, message, throwable)
   }
-
-  private data class ImageDimensions(
-    val width: Int,
-    val height: Int
-  )
 
   private class MetadataCopyException(
     message: String,

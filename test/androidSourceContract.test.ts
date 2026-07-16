@@ -103,6 +103,9 @@ describe('Android source contract', () => {
     const decoderSource = readText(
       'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt'
     );
+    const transformerSource = readText(
+      'android/src/main/java/com/imagecompressionkit/AndroidBitmapTransformer.kt'
+    );
 
     expect(moduleSource).toMatch(
       /class ImageCompressionKitModule\([\s\S]*\)\s*:\s*NativeImageCompressionKitSpec\(reactContext\)/
@@ -116,14 +119,15 @@ describe('Android source contract', () => {
       'AndroidCompressionRequestParser.parse(options)'
     );
     expect(moduleSource).toContain('imageDecoder.decode(inputSource)');
-    expect(moduleSource.split(/\r?\n/).length).toBeLessThanOrEqual(650);
+    expect(moduleSource).toContain('bitmapTransformer.transform(');
+    expect(moduleSource.split(/\r?\n/).length).toBeLessThanOrEqual(300);
     expect(
       functionLineCount(
         moduleSource,
         'override fun compressImage',
         'override fun getImageCompressionCapabilities'
       )
-    ).toBeLessThanOrEqual(220);
+    ).toBeLessThanOrEqual(120);
     expect(moduleSource).not.toMatch(
       /options\.(?:hasKey|isNull|getMap|getString|getDouble)\(/
     );
@@ -133,6 +137,9 @@ describe('Android source contract', () => {
     expect(moduleSource).not.toContain('BitmapFactory');
     expect(moduleSource).not.toMatch(
       /(?:import android\.graphics\.ImageDecoder|\bImageDecoder\.(?:decodeBitmap|createSource)\()/
+    );
+    expect(moduleSource).not.toMatch(
+      /(?:Bitmap\.(?:createBitmap|createScaledBitmap)|\bMatrix\(|ExifInterface\.|\.recycle\()/
     );
     expect(requestSource).toContain(
       'internal data class AndroidCompressionRequest('
@@ -152,6 +159,18 @@ describe('Android source contract', () => {
     expect(decoderSource).toContain('internal class AndroidImageDecoder(');
     expect(decoderSource).toContain(
       'internal sealed class AndroidImageDecodeResult'
+    );
+    expect(transformerSource).toContain(
+      'internal data class AndroidBitmapTransformationResult('
+    );
+    expect(transformerSource).toContain(
+      'internal data class AndroidBitmapDimensions('
+    );
+    expect(transformerSource).toContain(
+      'internal class AndroidBitmapTransformer('
+    );
+    expect(transformerSource).toContain(
+      'internal class AndroidBitmapOwnership('
     );
   });
 
@@ -184,6 +203,16 @@ describe('Android source contract', () => {
 
   it('delegates Android behavior to Kotlin unit and instrumentation suites', () => {
     const authorities = [
+      {
+        file: 'android/src/test/java/com/imagecompressionkit/AndroidBitmapTransformerTest.kt',
+        minimum: 5,
+        required: [
+          'appliesAllEightExifOrientations',
+          'keepsIdentityAndNoUpscaleRequestsAsSameBitmap',
+          'centerCropUsesTheCenteredSourceRegion',
+          'recyclesOriginalRotatedScaledAndCroppedBitmapsExactlyOnce',
+        ],
+      },
       {
         file: 'android/src/test/java/com/imagecompressionkit/AndroidImageSourceResolverTest.kt',
         minimum: 4,

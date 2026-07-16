@@ -37,6 +37,7 @@ const REQUIRED_FILES = [
   '.github/dependabot.yml',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
+  'android/src/main/java/com/imagecompressionkit/AndroidBitmapTransformer.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidImageSourceResolver.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidCompressionRequest.kt',
@@ -48,6 +49,7 @@ const REQUIRED_FILES = [
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt',
   'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputHelperTest.kt',
+  'android/src/test/java/com/imagecompressionkit/AndroidBitmapTransformerTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidImageDecoderTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidImageSourceResolverTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidCompressionRequestParserTest.kt',
@@ -414,6 +416,9 @@ function checkAndroidGradleConfig() {
 }
 
 function checkAndroidRuntimeAuthorities() {
+  const transformerContents = readText(
+    'android/src/main/java/com/imagecompressionkit/AndroidBitmapTransformer.kt'
+  );
   const decoderContents = readText(
     'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt'
   );
@@ -431,6 +436,16 @@ function checkAndroidRuntimeAuthorities() {
   );
   const packageJson = readJson('package.json');
   const testAuthorities = [
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/AndroidBitmapTransformerTest.kt',
+      minimum: 5,
+      required: [
+        'appliesAllEightExifOrientations',
+        'keepsIdentityAndNoUpscaleRequestsAsSameBitmap',
+        'centerCropUsesTheCenteredSourceRegion',
+        'recyclesOriginalRotatedScaledAndCroppedBitmapsExactlyOnce',
+      ],
+    },
     {
       file: 'android/src/test/java/com/imagecompressionkit/AndroidImageSourceResolverTest.kt',
       minimum: 4,
@@ -519,6 +534,17 @@ function checkAndroidRuntimeAuthorities() {
         .map((name) => `${authority.file}: missing test ${name}`),
     ];
   });
+  const compressStart = moduleContents.indexOf('override fun compressImage');
+  const capabilitiesStart = moduleContents.indexOf(
+    'override fun getImageCompressionCapabilities',
+    compressStart
+  );
+  const compressLineCount =
+    compressStart >= 0 && capabilitiesStart > compressStart
+      ? moduleContents
+          .slice(compressStart, capabilitiesStart)
+          .split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
   const structureChecks = [
     {
       ok: requestContents.includes(
@@ -557,8 +583,28 @@ function checkAndroidRuntimeAuthorities() {
       name: 'module image decoder delegation',
     },
     {
-      ok: moduleContents.split(/\r?\n/u).length <= 650,
+      ok:
+        transformerContents.includes(
+          'internal data class AndroidBitmapTransformationResult('
+        ) &&
+        transformerContents.includes(
+          'internal data class AndroidBitmapDimensions('
+        ) &&
+        transformerContents.includes('internal class AndroidBitmapTransformer(') &&
+        transformerContents.includes('internal class AndroidBitmapOwnership('),
+      name: 'typed Android bitmap transform and ownership boundary',
+    },
+    {
+      ok: moduleContents.includes('bitmapTransformer.transform('),
+      name: 'module bitmap transformer delegation',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 300,
       name: 'module source size boundary',
+    },
+    {
+      ok: compressLineCount <= 120,
+      name: 'compressImage orchestration size boundary',
     },
     {
       ok:
@@ -570,6 +616,12 @@ function checkAndroidRuntimeAuthorities() {
           moduleContents
         ),
       name: 'source access and decode APIs isolated from module',
+    },
+    {
+      ok: !/(?:Bitmap\.(?:createBitmap|createScaledBitmap)|\bMatrix\(|ExifInterface\.|\.recycle\()/u.test(
+        moduleContents
+      ),
+      name: 'bitmap transforms isolated from module',
     },
     {
       ok: !/options\.(?:hasKey|isNull|getMap|getString|getDouble)\(/u.test(

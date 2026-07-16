@@ -14,7 +14,7 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 
 - Scope: documentation information architecture, semantic status gates,
   repository verification contract decomposition, Android request parsing, and
-  source/decode boundary extraction
+  source/decode/bitmap-transform boundary extraction
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -43,8 +43,10 @@ immutable typed request boundary. Output selection, metadata, target-size,
 resize, and source URI validation retain their existing error codes and
 messages. File/content source access and platform decode now flow through a
 ContentResolver-injected source resolver and typed decoder result. Decode
-order, EXIF orientation, transform, metadata copy, and encode behavior are
-unchanged.
+order and EXIF orientation remain unchanged. Orientation and resize now flow
+through a typed bitmap transformer whose ownership scope releases original,
+rotated, scaled, and cropped bitmaps exactly once. Metadata copy and encode
+behavior are unchanged.
 
 ### Included
 
@@ -67,6 +69,9 @@ unchanged.
 - Typed Android source/decode boundaries with Kotlin characterization coverage
   for file/content access, stream closure, format hints, bounds, EXIF
   orientation, and HEIF/AVIF platform gates.
+- Typed Android bitmap transformation and ownership boundaries with
+  table-driven coverage for all eight EXIF orientations, contain/cover/stretch,
+  no-upscale identity, center crop, and exactly-once recycling.
 
 ### Not included
 
