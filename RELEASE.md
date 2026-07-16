@@ -14,7 +14,7 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 
 - Scope: documentation information architecture, semantic status gates,
   repository verification contract decomposition, Android request parsing, and
-  source/decode/bitmap-transform boundary extraction
+  source/decode/bitmap-transform boundary extraction, plus iOS request parsing
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -48,6 +48,14 @@ through a typed bitmap transformer whose ownership scope releases original,
 rotated, scaled, and cropped bitmaps exactly once. Metadata copy and encode
 behavior are unchanged.
 
+The iOS bridge now delegates option parsing and static validation to an
+immutable, Foundation-only request boundary. Source URI, output selection,
+quality, target size, metadata, and resize defaults/errors are covered by a
+table-driven native executable. Runtime WebP availability is still determined
+by the bridge and queried only for WebP output, preserving validation order.
+Source access, ImageIO decode/render, metadata copy, and encoding behavior are
+unchanged.
+
 ### Included
 
 - `package.json` as the package-version authority, with aligned
@@ -72,19 +80,25 @@ behavior are unchanged.
 - Typed Android bitmap transformation and ownership boundaries with
   table-driven coverage for all eight EXIF orientations, contain/cover/stretch,
   no-upscale identity, center crop, and exactly-once recycling.
+- Typed iOS compression request parsing with Foundation-only native coverage
+  for defaults, required fields, output availability, quality/maxBytes,
+  metadata, resize modes/dimensions, and stable error contracts.
 
 ### Not included
 
 - npm publish, dist-tag changes, git tags, or GitHub Releases.
 - Registry/review policy, digest, `evidence/npm`, or `evidence/reviews` changes.
-- Workflow behavior changes, acquisition bundle verification, native/API
-  changes, or AVIF output changes.
+- Workflow structure changes, acquisition bundle verification, native
+  compression behavior/public API changes, or AVIF output changes.
 
 ### Validation
 
 ```bash
 pnpm verify
 pnpm example:typecheck
+pnpm example:ios:request-parser-test
+pnpm example:ios:build
+pnpm example:ios:smoke
 pnpm fixtures:release-evidence-review-acquisition:check
 pnpm docs:check
 git diff --check

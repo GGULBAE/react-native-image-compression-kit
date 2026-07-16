@@ -12,6 +12,7 @@ Pod::Spec.new do |s|
   s.source = { :git => "https://github.com/GGULBAE/react-native-image-compression-kit.git", :tag => "#{s.version}" }
   s.platforms = { :ios => "13.4" }
   s.source_files = "ios/**/*.{h,m,mm}"
+  s.private_header_files = "ios/RCTImageCompressionRequest.h"
 
   if respond_to?(:install_modules_dependencies, true)
     install_modules_dependencies(s)

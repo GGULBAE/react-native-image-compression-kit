@@ -36,6 +36,8 @@ const REQUIRED_FILES = [
   '.github/actions-lock.json',
   '.github/dependabot.yml',
   'src/NativeImageCompressionKit.ts',
+  'ios/RCTImageCompressionRequest.h',
+  'ios/RCTImageCompressionRequest.mm',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/AndroidBitmapTransformer.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt',
@@ -177,6 +179,7 @@ const REQUIRED_FILES = [
   'test/iosSmokeContract.test.mjs',
   'test/iosSmokePassReplayFixture.test.mjs',
   'test/iosSmokeSummaryCli.test.mjs',
+  'test/ios-native/RCTImageCompressionRequestTests.mm',
   'test/fixtures/ios-smoke-pass-ci-replay.json',
   'vitest.config.ts',
   'example/Gemfile',
@@ -215,6 +218,7 @@ function runDoctor() {
     checkPackageFiles(),
     checkAndroidGradleConfig(),
     checkAndroidRuntimeAuthorities(),
+    checkIOSRuntimeAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -679,6 +683,122 @@ function extractKotlinTestNames(contents) {
   return [...contents.matchAll(/@Test[\s\S]*?\bfun\s+(\w+)\s*\(/gu)].map(
     (match) => match[1]
   );
+}
+
+function checkIOSRuntimeAuthorities() {
+  const requestHeader = readText('ios/RCTImageCompressionRequest.h');
+  const requestParser = readText('ios/RCTImageCompressionRequest.mm');
+  const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionRequestTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestParsesDefaultsIntoImmutableRequest',
+    'TestParsesMetadataAndResizeMatrix',
+    'TestRejectsMissingAndMalformedRequiredOptions',
+    'TestRejectsInvalidQualityAndMaxBytes',
+    'TestRejectsUnsupportedOutputAndStaticCombinations',
+    'TestRejectsInvalidMetadataAndResizeMatrix',
+  ];
+  const methodStart = moduleContents.indexOf(
+    '- (void)compressImageWithDictionary:'
+  );
+  const methodEnd = moduleContents.indexOf(
+    '- (void)getImageCompressionCapabilities:',
+    methodStart
+  );
+  const methodLineCount =
+    methodStart >= 0 && methodEnd > methodStart
+      ? moduleContents.slice(methodStart, methodEnd).split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
+  const structureChecks = [
+    {
+      ok: requestHeader.includes(
+        '@interface RCTImageCompressionRequest : NSObject'
+      ),
+      name: 'immutable request model',
+    },
+    {
+      ok: requestHeader.includes(
+        '@interface RCTImageCompressionRequestParser : NSObject'
+      ),
+      name: 'request parser boundary',
+    },
+    {
+      ok:
+        requestHeader.includes(
+          '@property (nonatomic, copy, readonly) NSString *sourceURI;'
+        ) &&
+        requestHeader.includes(
+          '@property (nonatomic, readonly) RCTImageCompressionKitResizeOptions resizeOptions;'
+        ),
+      name: 'readonly request fields',
+    },
+    {
+      ok: /\[\s*RCTImageCompressionRequestParser\s+parseOptions:options/u.test(
+        moduleContents
+      ),
+      name: 'bridge parser delegation',
+    },
+    {
+      ok: !/\boptions\[@/u.test(moduleContents),
+      name: 'raw option access isolated from bridge',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 1_100,
+      name: 'iOS bridge source size boundary',
+    },
+    {
+      ok: methodLineCount <= 190,
+      name: 'iOS compression orchestration size boundary',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|ImageIO|React)/u.test(requestParser) &&
+        !/\b(?:RCTPromise|UIImage|CGImage)\b/u.test(requestParser) &&
+        !requestParser.includes('[NSData dataWithContentsOf') &&
+        !requestParser.includes('writeToFile:'),
+      name: 'Foundation-only parser dependencies',
+    },
+    {
+      ok:
+        nativeTestNames.length === 6 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)),
+      name: 'table-driven native request test authority',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:request-parser-test'] ===
+        'node scripts/ios-validation.mjs request-parser-test',
+      name: 'iOS request parser native-test command',
+    },
+    {
+      ok:
+        validationRunner.includes("if (mode === 'request-parser-test')") &&
+        /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'native tests integrated into iOS smoke',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name)
+    .filter(Boolean);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS request parser boundary and native-test authority are present',
+    detail:
+      violations.length === 0
+        ? 'immutable Foundation-only request parsing is isolated, bridge size limits hold, and the smoke runner executes six native test groups'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
 }
 
 function checkAvifFixtures() {

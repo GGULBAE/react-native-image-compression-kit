@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from 'node:child_process';
-import { appendFileSync, readFileSync, rmSync } from 'node:fs';
+import { appendFileSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import http from 'node:http';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import {
@@ -21,8 +22,25 @@ const IOS_DIR = path.join(EXAMPLE_DIR, 'ios');
 const DERIVED_DATA_DIR = path.join(IOS_DIR, 'build');
 const REACT_NATIVE_CLI = path.join(EXAMPLE_DIR, 'node_modules', 'react-native', 'cli.js');
 const WORKSPACE = path.join(IOS_DIR, 'ImageCompressionKitExample.xcworkspace');
+const PODS_PROJECT_FILE = path.join(
+  IOS_DIR,
+  'Pods',
+  'Pods.xcodeproj',
+  'project.pbxproj'
+);
 const SCHEME = 'ImageCompressionKitExample';
 const BUNDLE_ID = 'com.imagecompressionkit.example';
+const REQUEST_PARSER_SOURCE = path.join(
+  ROOT,
+  'ios',
+  'RCTImageCompressionRequest.mm'
+);
+const REQUEST_PARSER_TEST_SOURCE = path.join(
+  ROOT,
+  'test',
+  'ios-native',
+  'RCTImageCompressionRequestTests.mm'
+);
 const IOS_VALIDATION_CONFIG = createIOSValidationConfig(process.env);
 const METRO_PORT = IOS_VALIDATION_CONFIG.metroPort;
 const METRO_READY_TIMEOUT_MS = IOS_VALIDATION_CONFIG.metroReadyTimeoutMs;
@@ -56,6 +74,11 @@ async function main() {
     return;
   }
 
+  if (mode === 'request-parser-test') {
+    runRequestParserTests();
+    return;
+  }
+
   if (mode === 'build') {
     checkIOSBuildEnvironment();
     ensurePodsInstalled();
@@ -67,6 +90,7 @@ async function main() {
 
   if (mode === 'smoke') {
     checkIOSBuildEnvironment();
+    runRequestParserTests();
     ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
@@ -113,6 +137,42 @@ function summarizeSmokeLog() {
 
 function ensurePackageJSBuild() {
   mustRun('pnpm', ['build']);
+}
+
+function runRequestParserTests() {
+  mustRun('xcrun', ['--sdk', 'macosx', '--show-sdk-path'], {
+    failureHint: 'Install Xcode Command Line Tools with the macOS SDK.',
+  });
+
+  const buildDirectory = mkdtempSync(
+    path.join(tmpdir(), 'rnick-ios-request-parser-')
+  );
+  const executable = path.join(
+    buildDirectory,
+    'RCTImageCompressionRequestTests'
+  );
+
+  try {
+    mustRun('xcrun', [
+      '--sdk',
+      'macosx',
+      'clang++',
+      '-std=c++17',
+      '-fobjc-arc',
+      '-fblocks',
+      '-I',
+      path.join(ROOT, 'ios'),
+      REQUEST_PARSER_SOURCE,
+      REQUEST_PARSER_TEST_SOURCE,
+      '-framework',
+      'Foundation',
+      '-o',
+      executable,
+    ]);
+    mustRun(executable, []);
+  } finally {
+    rmSync(buildDirectory, { recursive: true, force: true });
+  }
 }
 
 function checkIOSBuildEnvironment() {
@@ -226,7 +286,13 @@ function bundlerEnv() {
 }
 
 function ensurePodsInstalled() {
-  if (!pathExists(WORKSPACE)) {
+  const podSourcesAreCurrent =
+    pathExists(PODS_PROJECT_FILE) &&
+    readFileSync(PODS_PROJECT_FILE, 'utf8').includes(
+      'RCTImageCompressionRequest.mm'
+    );
+
+  if (!pathExists(WORKSPACE) || !podSourcesAreCurrent) {
     runPodInstall();
   }
 }

@@ -41,6 +41,7 @@
     "example:ios": "pnpm --filter image-compression-kit-example ios",
     "example:ios:pods": "node scripts/ios-validation.mjs pods",
     "example:ios:build": "node scripts/ios-validation.mjs build",
+    "example:ios:request-parser-test": "node scripts/ios-validation.mjs request-parser-test",
     "example:ios:smoke": "node scripts/ios-validation.mjs smoke",
     "example:start": "pnpm --filter image-compression-kit-example start",
     "example:typecheck": "pnpm --filter image-compression-kit-example typecheck",
