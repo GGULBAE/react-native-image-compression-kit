@@ -23,8 +23,8 @@ handle platform codec differences before compression.
 - Registry checked at: `2026-07-16`
 <!-- package-status:end -->
 
-The documentation status work does not publish a package or change native API
-or image-processing behavior.
+The documentation and repository-verification refactor does not publish a
+package or change native API or image-processing behavior.
 
 ## Installation
 
@@ -250,6 +250,7 @@ tarball:
 - [Evidence acquisition](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/acquisition.md)
 - [GitHub Action pins](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/supply-chain/action-pins.md)
 - [Release status manifest](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-status.json)
+- [Repository verification architecture](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/verification-architecture.md)
 - [Current and recent release work](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/RELEASE.md)
 - [Complete 0.2 release history](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/releases/0.2-history.md)
 

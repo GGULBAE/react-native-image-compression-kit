@@ -28,6 +28,7 @@ export const REQUIRED_DOCUMENTATION_FILES = [
   'RELEASE.md',
   'SECURITY.md',
   RELEASE_STATUS_MANIFEST_PATH,
+  'docs/verification-architecture.md',
   'docs/release-evidence/README.md',
   'docs/release-evidence/registry-provenance.md',
   'docs/release-evidence/policy-review.md',
@@ -70,6 +71,7 @@ const README_LINKS = [
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/acquisition.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/supply-chain/action-pins.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-status.json',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/verification-architecture.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/RELEASE.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/releases/0.2-history.md',
   'SECURITY.md',
@@ -388,6 +390,42 @@ export function inspectDocumentation(root) {
 
   if (packageJson.name !== 'react-native-image-compression-kit') {
     errors.push(`unexpected package name: ${packageJson.name}`);
+  }
+
+  const verificationArchitecturePath = path.join(
+    root,
+    'docs/verification-architecture.md'
+  );
+  if (existsSync(verificationArchitecturePath)) {
+    const verificationArchitecture = readFileSync(
+      verificationArchitecturePath,
+      'utf8'
+    );
+    const verificationHeadings = new Set(
+      parseHeadings(verificationArchitecture).map(({ text }) => text)
+    );
+    for (const heading of [
+      'Authority matrix',
+      'Source contract policy',
+      'Validation commands',
+      'Change routing',
+      'Non-goals',
+    ]) {
+      if (!verificationHeadings.has(heading)) {
+        errors.push(`verification architecture missing heading: ${heading}`);
+      }
+    }
+    for (const command of [
+      'pnpm verify',
+      'pnpm example:typecheck',
+      'pnpm docs:check',
+      'git diff --check',
+      'pnpm pack --dry-run',
+    ]) {
+      if (!verificationArchitecture.includes(command)) {
+        errors.push(`verification architecture missing command: ${command}`);
+      }
+    }
   }
 
   for (const entry of packageJson.files ?? []) {

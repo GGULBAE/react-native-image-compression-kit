@@ -12,7 +12,8 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 - Registry checked at: `2026-07-16`
 <!-- release-status:end -->
 
-- Scope: documentation information architecture and semantic status gates
+- Scope: documentation information architecture, semantic status gates, and
+  repository verification contract decomposition
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -29,6 +30,13 @@ authority for npm latest, release state, and the registry check date. Package
 version remains authoritative in `package.json`; the README and this release
 block are validated mirrors.
 
+Repository verification is split by contract instead of one Android-named
+umbrella test. Package shape, documentation, Android wiring, iOS wiring, and
+workflow supply chain each have an explicit authority. Native behavior remains
+owned by Kotlin unit/instrumentation tests and the iOS host-app smoke gates;
+doctor checks their structure and presence without copying implementation
+sentences.
+
 ### Included
 
 - `package.json` as the package-version authority, with aligned
@@ -40,6 +48,11 @@ block are validated mirrors.
   matrix.
 - `pnpm docs:check` in default verification.
 - Aligned README/RELEASE marker parsing and current candidate refusal.
+- Domain contract suites for package, Android, iOS, documentation, and workflow
+  verification, with a repository-only
+  [authority matrix](docs/verification-architecture.md).
+- Android doctor checks based on module wiring, commands, structured fixture
+  metadata, and executable native-test authorities.
 
 ### Not included
 

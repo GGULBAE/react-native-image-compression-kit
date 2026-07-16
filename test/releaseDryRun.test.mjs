@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { RELEASE_STATUS_MANIFEST_PATH } from '../scripts/docs-semantic-core.mjs';
 import {
   getPackedReadmeStatusViolations,
+  RELEASE_DRY_RUN_STEPS,
   validatePackedReadmeStatus,
 } from '../scripts/release-dry-run.mjs';
 
@@ -39,6 +40,31 @@ function readmeWithStatus({
 }
 
 describe('release dry-run packed README current-status guard', () => {
+  it('runs the semantic release-readiness pipeline without a publish step', () => {
+    expect(
+      RELEASE_DRY_RUN_STEPS.map(({ name, command, args, run }) => ({
+        name,
+        invocation: run ? 'internal' : [command, ...(args ?? [])].join(' '),
+      }))
+    ).toEqual([
+      { name: 'Verify package', invocation: 'pnpm verify' },
+      { name: 'Typecheck example app', invocation: 'pnpm example:typecheck' },
+      { name: 'Check diff whitespace', invocation: 'git diff --check' },
+      { name: 'Inspect package tarball', invocation: 'pnpm pack --dry-run' },
+      { name: 'Check packed README current status', invocation: 'internal' },
+      { name: 'Run packed consumer smoke test', invocation: 'pnpm smoke:consumer' },
+      {
+        name: 'Run publish dry run',
+        invocation: 'pnpm publish --dry-run --no-git-checks',
+      },
+    ]);
+    expect(
+      RELEASE_DRY_RUN_STEPS.some(
+        ({ command, args }) => command === 'pnpm' && args?.[0] === 'publish' && !args.includes('--dry-run')
+      )
+    ).toBe(false);
+  });
+
   it('rejects only the current candidate block', () => {
     const packedReadme = readmeWithStatus({
       after: 'Historical note: a previous package was a candidate.',

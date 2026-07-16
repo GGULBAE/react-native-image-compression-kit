@@ -18,7 +18,7 @@ const PACKAGE_VERSION = JSON.parse(
 ).version;
 const RELEASE_STATUS_MANIFEST = readReleaseStatusManifest(ROOT);
 
-const STEPS = [
+export const RELEASE_DRY_RUN_STEPS = [
   {
     name: 'Verify package',
     command: 'pnpm',
@@ -58,7 +58,7 @@ const STEPS = [
 function main() {
   console.log('Release dry run only validates publish readiness. It does not publish to npm.');
 
-  for (const step of STEPS) {
+  for (const step of RELEASE_DRY_RUN_STEPS) {
     console.log(`\n> ${step.name}`);
     if (step.run) {
       step.run();

@@ -103,6 +103,7 @@ describe('documentation semantic gate', () => {
     expect(report.markdownFiles).toContain(
       'docs/release-evidence/registry-provenance.md'
     );
+    expect(report.markdownFiles).toContain('docs/verification-architecture.md');
   });
 
   it('parses only marked README and RELEASE status blocks', () => {

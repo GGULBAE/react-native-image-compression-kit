@@ -24,6 +24,7 @@ const REQUIRED_FILES = [
   'docs/release-evidence/acquisition.md',
   'docs/supply-chain/action-pins.md',
   'docs/releases/0.2-history.md',
+  'docs/verification-architecture.md',
   'scripts/docs-semantic-core.mjs',
   'scripts/verify-docs.mjs',
   'Dockerfile',
@@ -105,6 +106,10 @@ const REQUIRED_FILES = [
   'scripts/verify-action-pin-attestation.mjs',
   'test/releaseDryRun.test.mjs',
   'test/docsSemantic.test.mjs',
+  'test/packageContract.test.ts',
+  'test/androidSourceContract.test.ts',
+  'test/iosSourceContract.test.ts',
+  'test/verificationArchitecture.test.ts',
   'test/releaseEvidence.test.mjs',
   'test/releaseEvidenceImport.test.mjs',
   'test/releaseEvidenceAcquisition.test.mjs',
@@ -201,7 +206,7 @@ function runDoctor() {
     checkSpecFile(),
     checkPackageFiles(),
     checkAndroidGradleConfig(),
-    checkAndroidNativeModule(),
+    checkAndroidRuntimeAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -402,347 +407,132 @@ function checkAndroidGradleConfig() {
   };
 }
 
-function checkAndroidNativeModule() {
-  const avifHelperContents = readText(
-    'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputHelper.kt'
-  );
-  const avifPrototypeContents = readText(
-    'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputPrototype.kt'
-  );
+function checkAndroidRuntimeAuthorities() {
   const moduleContents = readText(
     'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
   );
-  const metadataContents = readText(
-    'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt'
-  );
-  const outputContents = readText(
-    'android/src/main/java/com/imagecompressionkit/ImageCompressionOutput.kt'
-  );
-  const avifHelperTestContents = readText(
-    'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputHelperTest.kt'
-  );
-  const avifPrototypeTestContents = readText(
-    'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputPrototypeTest.kt'
-  );
-  const metadataTestContents = readText(
-    'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt'
-  );
-  const outputTestContents = readText(
-    'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt'
-  );
-  const moduleTestContents = readText(
-    'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt'
+  const packageContents = readText(
+    'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt'
   );
   const packageJson = readJson('package.json');
-  const contents = [
-    avifHelperContents,
-    avifPrototypeContents,
-    moduleContents,
-    metadataContents,
-    outputContents,
-    avifHelperTestContents,
-    avifPrototypeTestContents,
-    metadataTestContents,
-    outputTestContents,
-    moduleTestContents,
-  ].join('\n');
-  const expectedSnippets = [
-    'NativeImageCompressionKitSpec',
-    'AndroidAvifOutputHelper',
-    'AndroidAvifOutputHelperInput',
-    'AndroidAvifOutputHelperOutput',
-    'AndroidAvifOutputHelperSample',
-    'AndroidAvifOutputHelperFileValidation',
-    'AndroidAvifOutputHelperDependencies',
-    'AndroidAvifOutputHelperResult',
-    'PRODUCTION_HELPER_ROUTE',
-    'HELPER_DISABLED_FROM_COMPRESS_IMAGE',
-    'INJECTABLE_VALIDATION_SEAM',
-    'createInput',
-    'createDefaultDependencies',
-    'runEncodeDecodeBack',
-    'dependencies.encodeBitmap',
-    'dependencies.muxEncodedSamples',
-    'dependencies.validateFile',
-    'decodeBackValid=$decodeBackValid',
-    'decodedWidth=${decodedWidth?.toString() ?: "null"}',
-    'AndroidAvifOutputPrototype',
-    'AndroidAvifOutputPrototypeReport',
-    'AndroidAvifEncodeDecodeSmokeResult',
-    'AndroidAvifSmokeBlocker',
-    'AndroidAvifOutputProductionScaffold',
-    'PRODUCTION_WIRING_SCAFFOLD_ROUTE',
-    'PRODUCTION_WIRING_NOT_IMPLEMENTED_MESSAGE',
-    'METADATA_PRESERVE_HELPER_ENTRY_BLOCKER',
-    'OUTPUT_MAX_BYTES_HELPER_ENTRY_BLOCKER',
-    'ANIMATED_AVIF_HELPER_ENTRY_BLOCKER',
-    'reusableHelperRoute',
-    'willEnterEncodeDecodeBackHelper',
-    'notImplementedMessage',
-    'boundaryBlockers',
-    'blockerCode',
-    'outputCanBeEnabled',
-    'productionDecision',
-    'BLOCKER_CODE_SDK_UNAVAILABLE',
-    'BLOCKER_CODE_NO_IMAGE_AVIF_ENCODER',
-    'BLOCKER_CODE_CODEC_FAILURE',
-    'BLOCKER_CODE_INVALID_SIGNATURE',
-    'BLOCKER_CODE_DECODE_BACK_FAILURE',
-    'NO_IMAGE_AVIF_ENCODER_BLOCKER',
-    'INVALID_SIGNATURE_BLOCKER',
-    'DECODE_BACK_FAILURE_BLOCKER',
-    'CODEC_FAILURE_BLOCKER_PREFIX',
-    'PRODUCTION_DECISION_KEEP_DISABLED',
-    'PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED',
-    'MediaCodecList(MediaCodecList.REGULAR_CODECS)',
-    'findEncoderForFormat',
-    'MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible',
-    'MediaCodec image/avif encoder probe',
-    'MediaCodec image/avif encode/decode-back smoke',
-    'AV1_VIDEO_MIME_TYPE = "video/av01"',
-    'SMOKE_ROUTE',
-    'PRODUCTION_GATE_MESSAGE',
-    'looksLikeAvifFile',
-    'classifySmokeValidationBlocker',
-    'codecFailureBlocker',
-    'createProductionWiringScaffold',
-    'runEncodeDecodeBackSmoke',
-    'MediaCodec.createByCodecName',
-    'MediaCodec.CONFIGURE_FLAG_ENCODE',
-    'getInputImage',
-    'queueInputBuffer',
-    'dequeueOutputBuffer',
-    'MediaMuxer.OutputFormat.MUXER_OUTPUT_HEIF',
-    'ImageDecoder.decodeBitmap',
-    'rnick-avif-output-smoke',
-    'ftyp avif/avis signature',
-    'Decode the result with ImageDecoder and assert dimensions match the processed bitmap.',
-    'imageAvifMediaFormatUsesStillImageMimeAndFlexibleYuvInput',
-    'inspectRouteFindsInjectedImageEncoderButKeepsProductionGateClosed',
-    'inspectRouteBelowApi34DoesNotProbeEncoderAndReportsSdkBlocker',
-    'avifSignatureRecognizesFtypAvifOrAvisBrandOnly',
-    'smokeBelowApi34ReportsSdkBlockerWithoutAttempting',
-    'smokeOnApi34WithoutImageEncoderReportsBlockerWithoutAttempting',
-    'smokeValidationClassifiesInvalidSignatureAndDecodeBackFailures',
-    'codecFailureBlockerKeepsStableProductionDecisionMessage',
-    'helperInputPreservesRouteReportAndProductionHelperBoundary',
-    'helperBelowApi34ReportsSdkBlockerWithoutAttemptingCodec',
-    'helperWithoutImageEncoderReportsStableNoEncoderBlocker',
-    'helperUsesInjectedEncoderMuxerAndValidatorForInvalidSignatureBlocker',
-    'helperUsesInjectedMuxedDecodeBackSuccessForPassedSmokeContract',
-    'helperUsesInjectedDirectDecodeBackSuccessAndSkipsMuxer',
-    'helperUsesInjectedValidatorForDecodeBackFailureBlocker',
-    'helperUsesInjectedEncoderFailureForCodecFailureResult',
-    'helperClassifiesValidationAndCodecFailuresWithProductionDecisionBlockers',
-    'assertValidationResultDetailsOrder',
-    'assertBlockedResultDetailsOrder',
-    'assertSmokeBlockedDetailsOrder',
-    'validationProvenanceDetail',
-    '"Direct validation"',
-    '"Muxed validation"',
-    'outputFiles.getValue("direct")',
-    'outputFiles.getValue("muxed")',
-    'assertEquals(muxedFile.absolutePath, result.outputFilePath)',
-    'assertFalse(result.outputFilePath == directFile.absolutePath)',
-    'assertFalse(outputFiles.containsKey("muxed"))',
-    'assertEquals(muxedFile.length(), result.byteSize)',
-    'productionWiringScaffoldBlocksHelperEntryBeforeAvifOutputCanBeEnabled',
-    'compressImageRejectsAvifOutputBeforeSourceAccessAndProductionHelperEntry',
-    'Android AVIF output production wiring scaffold blocks entry into the extracted encode/decode-back helper while capability output=false.',
-    'BitmapFactory.decodeStream',
-    'ImageDecoder.decodeBitmap',
-    'createImageDecoderSource(inputSource)',
-    'decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE',
-    'openInputStream(inputSource.uri)',
-    'OpenableColumns.SIZE',
-    'InputFormat.fromMimeType(bounds?.mimeType) ?: inputFormatHint',
-    'readInputFormatHint(inputSource)',
-    'readUnsupportedInputMimeTypeHint(inputSource)',
-    'queryContentMimeType(inputSource.uri)',
-    'usesAvifDecodePath',
-    'InputFormat.fromFileExtension(fileExtension)',
-    'Build.VERSION.SDK_INT >= Build.VERSION_CODES.P',
-    'Build.VERSION.SDK_INT >= Build.VERSION_CODES.O',
-    'Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE',
-    'decodeHeicHeifBitmapWithImageDecoder',
-    'decodeAvifBitmapWithImageDecoder',
-    'decodeBitmapFactory(inputSource)',
-    'mimeType = "image/jpeg"',
-    'mimeType = "image/png"',
-    'mimeType = "image/webp"',
-    'mimeType = "image/heic"',
-    'mimeType = "image/heif"',
-    'mimeType = "image/avif"',
-    'mimeType = "image/gif"',
-    'readExifOrientation(inputSource)',
-    'applyExifOrientation(bitmap, exifOrientation)',
-    'ExifInterface.TAG_ORIENTATION',
-    'Matrix',
-    'resizeBitmap(orientedBitmap, resize)',
-    'readMaxBytes(output)',
-    'encodeBitmapToTargetSize',
-    'supportsTargetSizeCompression", true',
-    'ImageCompressionOutput.createOutputFile',
-    'ImageCompressionOutput.createResultMetadata',
-    'ImageCompressionOutput.maxBytesValidationError',
-    'OutputFormat.fromValue',
-    'PNG_FORMAT',
-    'WEBP_FORMAT',
-    'Bitmap.CompressFormat.PNG',
-    'Bitmap.CompressFormat.WEBP_LOSSY',
-    'Bitmap.CompressFormat.WEBP',
-    'pngFormatNotes',
-    'webpFormatNotes',
-    'gifFormatNotes',
-    'heicHeifFormatNotes',
-    'avifFormatNotes',
-    'SUPPORTED_INPUT_FORMATS',
-    'HEIC_FORMAT',
-    'HEIF_FORMAT',
-    'AVIF_FORMAT',
-    'output = outputFormat != null',
-    'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the extracted Android AVIF output encode/decode-back helper produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated.',
-    'readMetadataPolicy(options)',
-    'MetadataPolicy.PRESERVE',
-    'createCopiedExifMetadata',
-    'JpegExifMetadata.read',
-    'JpegExifMetadata.write',
-    'SAFE_EXIF_TAGS',
-    'PRESERVED_EXIF_TAGS',
-    'ExifInterface.TAG_GPS_LATITUDE',
-    'ExifInterface.TAG_CAMERA_OWNER_NAME',
-    'ExifInterface.TAG_MAKER_NOTE',
-    'Metadata safe copies privacy-filtered JPEG source EXIF attributes.',
-    'PNG, WebP, GIF, HEIC, HEIF, and AVIF sources are decoded without copying EXIF metadata.',
-    'heicHeifFormatNotes("HEIC")',
-    'heicHeifFormatNotes("HEIF")',
-    '$formatLabel input is supported on Android 8.0+ when device HEIF decode codecs are present.',
-    'Android API 28+ uses ImageDecoder for $formatLabel input.',
-    'Android API 26-27 attempts a guarded BitmapFactory HEIF decode fallback.',
-    '$formatLabel inputs are decoded without copying EXIF metadata.',
-    '$formatLabel output is not implemented.',
-    'AVIF input is supported on Android 14+ for baseline still images.',
-    'Android API 34+ uses ImageDecoder for AVIF input.',
-    'AVIF inputs are decoded without copying EXIF metadata.',
-    'AVIF output is not implemented.',
-    "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED.",
-    'Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.',
-    "metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested.",
-    'UNSUPPORTED_OUTPUT_FORMAT_MESSAGE',
-    'Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the extracted Android AVIF output encode/decode-back helper produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated.',
-    'Android MVP decodes GIF file:// and content:// sources as a static first frame.',
-    'Animated GIF preservation is not implemented.',
-    'GIF output is not implemented.',
-    'outputExif.setAttribute(',
-    'ExifInterface.TAG_ORIENTATION',
-    'pushString(METADATA_POLICY_SAFE)',
-    'pushString(METADATA_POLICY_STRIP)',
-    'pushString(METADATA_POLICY_PRESERVE)',
-    'Bitmap.createScaledBitmap',
-    'ResizeMode.COVER',
-    'Bitmap.CompressFormat.JPEG',
-    'safeMetadataCopiesAllowlistedExifAndFiltersSensitiveTags',
-    'preserveMetadataCopiesSensitiveExifButNormalizesOutputGeometry',
-    'nullMetadataLeavesOutputExifUntouchedForStripPolicy',
-    'outputFormatsCreateMatchingResultFormatAndFileExtensions',
-    'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile',
-    'capabilitiesExposeJpegPngWebpGifHeicHeifAvifInputsAndJpegPngWebpOutputsOnly',
-    'assertHeicHeifCapabilityNotes',
-    'assertAvifCapabilityNotes',
-    'pngRejectsMaxBytesButWebpAndJpegAllowIt',
-    'outputFormatsMapToAndroidCompressFormatsAndQualityRules',
-    'ImageCompressionOutput.encodeBitmap',
-    'BitmapFactory.decodeByteArray',
-    'GraphicsMode.Mode.NATIVE',
-    'compressImageCreatesJpegPngAndWebpOutputsWithExpectedResultMetadata',
-    'compressImageRejectsPngMaxBytesAtModuleBoundary',
-    'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif',
-    'compressImageReadsContentUriJpegLikeFileUriAndReportsMetadata',
-    'compressImageRejectsUnreadableContentUriAtModuleBoundary',
-    'compressImageRejectsAvifFileBeforeAndroidU',
-    'compressImageRejectsAvifContentMimeBeforeAndroidU',
-    'compressImageTreatsHeicAndHeifSourcesAsDecodeCandidatesOnSupportedSdk',
-    'compressImageTreatsAvifSourcesAsDecodeCandidatesOnSupportedSdk',
-    'compressImageRejectsHeicAndHeifBeforeAndroidO',
-    'compressImageSeparatesSupportedFormatDecodeFailures',
-    'compressImageAcceptsGifFileAndContentSourcesAsStaticFrameWithAllImplementedOutputs',
-    'compressImageResizesGifSourceAcrossModes',
-    'compressImageHonorsJpegAndWebpMaxBytesForGifSource',
-    'compressImageIgnoresMetadataPoliciesForGifSource',
-    'compressImageAcceptsPngAndWebpFileAndContentSourcesWithAllImplementedOutputs',
-    'compressImageResizesPngAndWebpSourcesAcrossModes',
-    'compressImageHonorsJpegAndWebpMaxBytesForPngAndWebpSources',
-    'compressImageIgnoresMetadataPoliciesForPngAndWebpSources',
-    'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata',
-    'compressImageFallsBackWhenMaxBytesIsTooSmallAndReportsConsistentMetadata',
-    'module.compressImage(',
-    'RecordingPromise',
-    'JavaOnlyMap.of',
-    'org.robolectric.Shadows.shadowOf',
-    'registerInputStreamSupplier',
-    'ByteArrayInputStream',
-    'sourceUri = contentUri.toString()',
-    'assertResultMetadataMatchesBytes',
-    'UnsupportedSourceCase',
-    'TestMimeTypeContentProvider',
-    'ShadowContentResolver.registerProviderInternal',
-    'createSampleGifFile',
-    'SAMPLE_GIF_BASE64',
-    'Base64.getMimeDecoder().decode',
-    'assertTopLeftPixelNear',
-    'createEncodedImageFile',
-    'SourceFormatCase',
-    'assertNoCopiedExifMetadata',
-    'metadataPolicies = listOf("preserve", "safe", "strip")',
-    'ImageCompressionKitModule.ERR_FILE_ACCESS',
-    'ExifInterface.ORIENTATION_ROTATE_90',
-    'resizeOptions(',
-    'mode = "contain"',
-    'mode = "cover"',
-    'mode = "stretch"',
-    'metadata = "safe"',
-    'assertNormalizedOutputExif',
-    'ExifInterface.ORIENTATION_NORMAL',
-    'ExifInterface.TAG_PIXEL_X_DIMENSION',
-    'createPatternJpegFile',
-    'calculateAchievableTargetBytes',
-    'assertResultMetadataMatchesFile',
-    'OutputFormat.JPEG',
-    'OutputFormat.WEBP',
-    '"maxBytes"',
-    'assertPngSignature',
-    'assertWebpSignature',
-    'assertGifSignature',
-    '"RIFF"',
-    '"WEBP"',
-    'RobolectricTestRunner',
-    'ERR_UNSUPPORTED_FORMAT',
-    'ImageCompressionKitModule.ERR_DECODE_FAILED',
-    'Android MVP could not decode the source image.',
-    'Android AVIF input requires Android 14+ platform decoder support.',
+  const testAuthorities = [
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
+      minimum: 20,
+      required: [
+        'compressImageCreatesJpegPngAndWebpOutputsWithExpectedResultMetadata',
+        'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif',
+        'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata',
+      ],
+    },
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
+      minimum: 5,
+      required: [
+        'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile',
+        'capabilitiesExposeJpegPngWebpGifHeicHeifAvifInputsAndJpegPngWebpOutputsOnly',
+      ],
+    },
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt',
+      minimum: 3,
+      required: [
+        'safeMetadataCopiesAllowlistedExifAndFiltersSensitiveTags',
+        'preserveMetadataCopiesSensitiveExifButNormalizesOutputGeometry',
+      ],
+    },
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputHelperTest.kt',
+      minimum: 9,
+      required: [
+        'helperUsesInjectedMuxedDecodeBackSuccessForPassedSmokeContract',
+        'helperUsesInjectedValidatorForDecodeBackFailureBlocker',
+      ],
+    },
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputPrototypeTest.kt',
+      minimum: 9,
+      required: [
+        'avifSignatureRecognizesFtypAvifOrAvisBrandOnly',
+        'productionWiringScaffoldBlocksHelperEntryBeforeAvifOutputCanBeEnabled',
+      ],
+    },
+    {
+      file: 'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
+      minimum: 3,
+      required: [
+        'compressesCommittedHeicHeifAndAvifSamplesToJpegPngAndWebp',
+        'attemptsAndroidAvifOutputEncodeDecodeBackSmoke',
+      ],
+    },
   ];
-  const missing = expectedSnippets.filter((snippet) => !contents.includes(snippet));
-  const hasUnitTestScript =
-    packageJson.scripts?.['example:android-unit-test'] ===
-    'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build';
+  const authorityViolations = testAuthorities.flatMap((authority) => {
+    const names = extractKotlinTestNames(readText(authority.file));
+    return [
+      ...(names.length < authority.minimum
+        ? [`${authority.file}: expected at least ${authority.minimum} tests, found ${names.length}`]
+        : []),
+      ...authority.required
+        .filter((name) => !names.includes(name))
+        .map((name) => `${authority.file}: missing test ${name}`),
+    ];
+  });
+  const structureChecks = [
+    {
+      ok: /class ImageCompressionKitModule\([\s\S]*\)\s*:\s*NativeImageCompressionKitSpec\(reactContext\)/u.test(
+        moduleContents
+      ),
+      name: 'generated module inheritance',
+    },
+    {
+      ok: moduleContents.includes('override fun getName(): String = NAME'),
+      name: 'module name override',
+    },
+    {
+      ok: /const val NAME\s*=\s*"ImageCompressionKit"/u.test(moduleContents),
+      name: 'stable module name',
+    },
+    {
+      ok: packageContents.includes(
+        'class ImageCompressionKitPackage : BaseReactPackage()'
+      ),
+      name: 'React package registration',
+    },
+    {
+      ok: packageContents.includes('ImageCompressionKitModule(reactContext)'),
+      name: 'module construction',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:android-unit-test'] ===
+        'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build',
+      name: 'Android unit-test command',
+    },
+  ];
+  const structureViolations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+  const violations = [...structureViolations, ...authorityViolations];
 
   return {
-    ok: missing.length === 0 && hasUnitTestScript,
-    label: 'Android Kotlin module matches generated spec, Android image MVP path, and AVIF output smoke prototype',
+    ok: violations.length === 0,
+    label: 'Android module wiring and executable test authorities are present',
     detail:
-      missing.length === 0 && hasUnitTestScript
-        ? 'module extends generated spec and contains JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF decode paths, SDK-gated unsupported input boundaries, JPEG orient/metadata, resize, target-size, JPEG/PNG/WebP output encode path, AVIF output route and encode/decode-back smoke checks, and module-level file/content URI tests'
-        : `missing snippets: ${[
-            ...missing,
-            ...(hasUnitTestScript ? [] : ['package.json example:android-unit-test script']),
-          ].join(' | ')}`,
+      violations.length === 0
+        ? 'generated module registration is aligned and Kotlin unit/instrumentation authorities cover runtime behavior'
+        : `contract violations: ${violations.join(' | ')}`,
   };
+}
+
+function extractKotlinTestNames(contents) {
+  return [...contents.matchAll(/@Test[\s\S]*?\bfun\s+(\w+)\s*\(/gu)].map(
+    (match) => match[1]
+  );
 }
 
 function checkAvifFixtures() {
   const manifest = readJson('android/src/test/assets/avif/manifest.json');
   const packageJson = readJson('package.json');
-  const scriptContents = readText('scripts/generate-avif-fixtures.mjs');
   const source = manifest.source;
   const sourcePath = source?.path;
   const sourceBytes = sourcePath ? readBinary(sourcePath) : null;
@@ -778,25 +568,20 @@ function checkAvifFixtures() {
     packageJson.scripts?.['fixtures:avif'] === 'node scripts/generate-avif-fixtures.mjs',
     packageJson.scripts?.['fixtures:avif:check'] ===
       'node scripts/generate-avif-fixtures.mjs --check',
-    scriptContents.includes('heif-enc'),
-    scriptContents.includes('--avif'),
-    scriptContents.includes('validateCommittedFixture'),
-    scriptContents.includes('AVIF fixture manifest OK'),
   ];
 
   return {
     ok: checks.every(Boolean),
     label: 'AVIF fixture manifest and committed sample are consistent',
     detail: checks.every(Boolean)
-      ? 'source PNG metadata, committed AVIF hash, package scripts, and generator checks are consistent'
-      : 'expected AVIF source metadata, fixture metadata, package scripts, or generator snippets are missing/mismatched',
+      ? 'source PNG metadata, committed AVIF hash, and package commands are consistent'
+      : 'expected AVIF source metadata, fixture metadata, or package commands are missing/mismatched',
   };
 }
 
 function checkHeicHeifFixtures() {
   const manifest = readJson('android/src/test/assets/heic-heif/manifest.json');
   const packageJson = readJson('package.json');
-  const scriptContents = readText('scripts/generate-heic-heif-fixtures.mjs');
   const source = manifest.source;
   const sourcePath = source?.path;
   const sourceBytes = sourcePath ? readBinary(sourcePath) : null;
@@ -850,11 +635,6 @@ function checkHeicHeifFixtures() {
       'node scripts/generate-heic-heif-fixtures.mjs',
     packageJson.scripts?.['fixtures:heic-heif:check'] ===
       'node scripts/generate-heic-heif-fixtures.mjs --check',
-    scriptContents.includes('heif-enc'),
-    scriptContents.includes('CHECK_ONLY'),
-    scriptContents.includes('readPngDimensions'),
-    scriptContents.includes('validateCommittedFixture'),
-    scriptContents.includes('byteSize must be recorded for committed binary fixtures'),
   ];
 
   return {
@@ -862,8 +642,8 @@ function checkHeicHeifFixtures() {
     label: 'HEIC/HEIF fixture manifest and committed samples are consistent',
     detail:
       checks.every(Boolean)
-        ? 'source PNG metadata, committed fixture hashes, package scripts, and generator checks are consistent'
-        : 'expected source PNG metadata, committed fixture metadata, package scripts, or generator snippets are missing/mismatched',
+        ? 'source PNG metadata, committed fixture hashes, and package commands are consistent'
+        : 'expected source PNG metadata, committed fixture metadata, or package commands are missing/mismatched',
   };
 }
 
