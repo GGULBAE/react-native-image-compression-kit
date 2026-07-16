@@ -97,6 +97,12 @@ describe('Android source contract', () => {
     const requestSource = readText(
       'android/src/main/java/com/imagecompressionkit/AndroidCompressionRequest.kt'
     );
+    const sourceResolverSource = readText(
+      'android/src/main/java/com/imagecompressionkit/AndroidImageSourceResolver.kt'
+    );
+    const decoderSource = readText(
+      'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt'
+    );
 
     expect(moduleSource).toMatch(
       /class ImageCompressionKitModule\([\s\S]*\)\s*:\s*NativeImageCompressionKitSpec\(reactContext\)/
@@ -109,7 +115,8 @@ describe('Android source contract', () => {
     expect(moduleSource).toContain(
       'AndroidCompressionRequestParser.parse(options)'
     );
-    expect(moduleSource.split(/\r?\n/).length).toBeLessThanOrEqual(1_000);
+    expect(moduleSource).toContain('imageDecoder.decode(inputSource)');
+    expect(moduleSource.split(/\r?\n/).length).toBeLessThanOrEqual(650);
     expect(
       functionLineCount(
         moduleSource,
@@ -120,11 +127,31 @@ describe('Android source contract', () => {
     expect(moduleSource).not.toMatch(
       /options\.(?:hasKey|isNull|getMap|getString|getDouble)\(/
     );
+    expect(moduleSource).not.toMatch(
+      /contentResolver\.(?:query|getType|openInputStream|openAssetFileDescriptor)\(/
+    );
+    expect(moduleSource).not.toContain('BitmapFactory');
+    expect(moduleSource).not.toMatch(
+      /(?:import android\.graphics\.ImageDecoder|\bImageDecoder\.(?:decodeBitmap|createSource)\()/
+    );
     expect(requestSource).toContain(
       'internal data class AndroidCompressionRequest('
     );
     expect(requestSource).toContain(
       'internal object AndroidCompressionRequestParser'
+    );
+    expect(sourceResolverSource).toContain(
+      'internal class AndroidImageSourceResolver('
+    );
+    expect(sourceResolverSource).toContain(
+      'private val contentResolver: ContentResolver'
+    );
+    expect(decoderSource).toContain(
+      'internal data class AndroidImageInputInfo('
+    );
+    expect(decoderSource).toContain('internal class AndroidImageDecoder(');
+    expect(decoderSource).toContain(
+      'internal sealed class AndroidImageDecodeResult'
     );
   });
 
@@ -157,6 +184,24 @@ describe('Android source contract', () => {
 
   it('delegates Android behavior to Kotlin unit and instrumentation suites', () => {
     const authorities = [
+      {
+        file: 'android/src/test/java/com/imagecompressionkit/AndroidImageSourceResolverTest.kt',
+        minimum: 4,
+        required: [
+          'readsFileSizeExtensionAndStream',
+          'readsContentMimeExtensionAndCountedSizeWithClosedStreams',
+          'preservesStableErrorsForUnreadableFileAndContentSources',
+        ],
+      },
+      {
+        file: 'android/src/test/java/com/imagecompressionkit/AndroidImageDecoderTest.kt',
+        minimum: 4,
+        required: [
+          'decodesJpegIntoImmutableInputInfoInStableSourceOrder',
+          'rejectsUnavailablePlatformFormatsBeforeOpeningDecodeStreams',
+          'treatsSupportedHeifAndAvifInputsAsDecodeCandidates',
+        ],
+      },
       {
         file: 'android/src/test/java/com/imagecompressionkit/AndroidCompressionRequestParserTest.kt',
         minimum: 5,

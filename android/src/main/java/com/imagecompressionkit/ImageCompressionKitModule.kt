@@ -1,13 +1,7 @@
 package com.imagecompressionkit
 
-import android.annotation.TargetApi
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
 import android.graphics.Matrix
-import android.net.Uri
-import android.os.Build
-import android.provider.OpenableColumns
 import androidx.exifinterface.media.ExifInterface
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
@@ -16,8 +10,6 @@ import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableArray
 import com.facebook.react.bridge.WritableMap
 import java.io.File
-import java.io.FileInputStream
-import java.io.InputStream
 import kotlin.math.roundToInt
 
 class ImageCompressionKitModule(
@@ -25,6 +17,11 @@ class ImageCompressionKitModule(
   private val writableMapFactory: () -> WritableMap = { Arguments.createMap() },
   private val writableArrayFactory: () -> WritableArray = { Arguments.createArray() }
 ) : NativeImageCompressionKitSpec(reactContext) {
+  private val imageSourceResolver = AndroidImageSourceResolver(
+    reactContext.contentResolver
+  )
+  private val imageDecoder = AndroidImageDecoder(imageSourceResolver)
+
   override fun getName(): String = NAME
 
   override fun compressImage(options: ReadableMap, promise: Promise) {
@@ -47,9 +44,9 @@ class ImageCompressionKitModule(
       val maxBytes = request.maxBytes
       val metadataPolicy = request.metadataPolicy
 
-      val originalByteSize = try {
-        readOriginalByteSize(inputSource)
-      } catch (error: SourceAccessException) {
+      val decodeResult = try {
+        imageDecoder.decode(inputSource)
+      } catch (error: AndroidImageSourceAccessException) {
         reject(
           promise,
           ERR_FILE_ACCESS,
@@ -58,78 +55,30 @@ class ImageCompressionKitModule(
         )
         return
       }
-      val unsupportedInputMimeTypeHint = readUnsupportedInputMimeTypeHint(inputSource)
-
-      if (unsupportedInputMimeTypeHint != null) {
-        reject(
-          promise,
-          ERR_UNSUPPORTED_FORMAT,
-          unsupportedInputFormatMessage(unsupportedInputMimeTypeHint)
-        )
-        return
-      }
-      val inputFormatHint = readInputFormatHint(inputSource)
-
-      val bounds = try {
-        decodeBounds(inputSource)
-      } catch (error: SourceAccessException) {
-        reject(
-          promise,
-          ERR_FILE_ACCESS,
-          error.message ?: "Android MVP could not read the source image URI.",
-          error
-        )
-        return
-      }
-
-      val inputFormat = InputFormat.fromMimeType(bounds?.mimeType) ?: inputFormatHint
-      if (inputFormat == null) {
-        val errorCode = if (bounds == null) {
-          ERR_DECODE_FAILED
-        } else {
-          ERR_UNSUPPORTED_FORMAT
+      val decodedInput = when (decodeResult) {
+        is AndroidImageDecodeResult.Success -> decodeResult
+        is AndroidImageDecodeResult.UnsupportedFormat -> {
+          reject(
+            promise,
+            ERR_UNSUPPORTED_FORMAT,
+            decodeResult.message
+          )
+          return
         }
-        val errorMessage = if (bounds == null) {
-          "Android MVP could not decode the source image."
-        } else {
-          DEFAULT_UNSUPPORTED_INPUT_FORMAT_MESSAGE
+        AndroidImageDecodeResult.DecodeFailed -> {
+          reject(
+            promise,
+            ERR_DECODE_FAILED,
+            "Android MVP could not decode the source image."
+          )
+          return
         }
-
-        reject(
-          promise,
-          errorCode,
-          errorMessage
-        )
-        return
       }
-
-      val bitmap = try {
-        decodeBitmap(inputSource, inputFormat)
-      } catch (error: SourceAccessException) {
-        reject(
-          promise,
-          ERR_FILE_ACCESS,
-          error.message ?: "Android MVP could not read the source image URI.",
-          error
-        )
-        return
-      }
-
-      if (bitmap == null) {
-        reject(
-          promise,
-          ERR_DECODE_FAILED,
-          "Android MVP could not decode the source image."
-        )
-        return
-      }
-
-      val exifOrientation = if (inputFormat.supportsJpegExifMetadata) {
-        readExifOrientation(inputSource)
-      } else {
-        ExifInterface.ORIENTATION_NORMAL
-      }
-      val orientedBitmap = applyExifOrientation(bitmap, exifOrientation)
+      val inputInfo = decodedInput.inputInfo
+      val originalByteSize = inputInfo.originalByteSize
+      val inputFormat = inputInfo.format
+      val bitmap = decodedInput.bitmap
+      val orientedBitmap = applyExifOrientation(bitmap, inputInfo.exifOrientation)
       val processedBitmap = resizeBitmap(orientedBitmap, resize)
       val outputDimensions = ImageDimensions(
         width = processedBitmap.width,
@@ -263,247 +212,6 @@ class ImageCompressionKitModule(
       }
     }
 
-  private fun readOriginalByteSize(inputSource: AndroidCompressionSource): Long =
-    when (inputSource) {
-      is AndroidCompressionSource.FileSource -> {
-        val inputFile = inputSource.file
-
-        if (!inputFile.exists() || !inputFile.isFile || !inputFile.canRead()) {
-          throw SourceAccessException("Android MVP could not read the source file.")
-        }
-
-        inputFile.length()
-      }
-      is AndroidCompressionSource.ContentSource ->
-        queryContentByteSize(inputSource.uri)
-          ?: queryContentAssetLength(inputSource.uri)
-          ?: countBytes(inputSource)
-    }
-
-  private fun queryContentByteSize(uri: Uri): Long? =
-    try {
-      reactContext.contentResolver.query(
-        uri,
-        arrayOf(OpenableColumns.SIZE),
-        null,
-        null,
-        null
-      )?.use { cursor ->
-        val sizeColumnIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
-
-        if (
-          sizeColumnIndex >= 0 &&
-          cursor.moveToFirst() &&
-          !cursor.isNull(sizeColumnIndex)
-        ) {
-          val size = cursor.getLong(sizeColumnIndex)
-          if (size >= 0L) {
-            size
-          } else {
-            null
-          }
-        } else {
-          null
-        }
-      }
-    } catch (_: Exception) {
-      null
-    }
-
-  private fun queryContentAssetLength(uri: Uri): Long? =
-    try {
-      reactContext.contentResolver.openAssetFileDescriptor(uri, "r")?.use { descriptor ->
-        if (descriptor.length >= 0L) {
-          descriptor.length
-        } else {
-          null
-        }
-      }
-    } catch (_: Exception) {
-      null
-    }
-
-  private fun countBytes(inputSource: AndroidCompressionSource): Long =
-    openInputStream(inputSource).use { inputStream ->
-      val buffer = ByteArray(STREAM_BUFFER_SIZE)
-      var totalBytes = 0L
-      var bytesRead = inputStream.read(buffer)
-
-      while (bytesRead != -1) {
-        totalBytes += bytesRead.toLong()
-        bytesRead = inputStream.read(buffer)
-      }
-
-      totalBytes
-    }
-
-  private fun decodeBounds(inputSource: AndroidCompressionSource): ImageBounds? {
-    val options = BitmapFactory.Options().apply {
-      inJustDecodeBounds = true
-    }
-
-    openInputStream(inputSource).buffered().use { inputStream ->
-      BitmapFactory.decodeStream(inputStream, null, options)
-    }
-
-    if (options.outWidth <= 0 || options.outHeight <= 0) {
-      return null
-    }
-
-    return ImageBounds(
-      width = options.outWidth,
-      height = options.outHeight,
-      mimeType = options.outMimeType
-    )
-  }
-
-  private fun decodeBitmap(
-    inputSource: AndroidCompressionSource,
-    inputFormat: InputFormat
-  ): Bitmap? =
-    when {
-      inputFormat.usesAvifDecodePath -> decodeAvifBitmap(inputSource)
-      inputFormat.usesHeifDecodePath -> decodeHeicHeifBitmap(inputSource)
-      else -> decodeBitmapFactory(inputSource)
-    }
-
-  private fun decodeBitmapFactory(inputSource: AndroidCompressionSource): Bitmap? =
-    openInputStream(inputSource).buffered().use { inputStream ->
-      BitmapFactory.decodeStream(inputStream)
-    }
-
-  private fun decodeHeicHeifBitmap(inputSource: AndroidCompressionSource): Bitmap? =
-    when {
-      Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ->
-        decodeHeicHeifBitmapWithImageDecoder(inputSource)
-      Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ->
-        decodeBitmapFactory(inputSource)
-      else -> null
-    }
-
-  @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-  private fun decodeAvifBitmap(inputSource: AndroidCompressionSource): Bitmap? =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-      decodeAvifBitmapWithImageDecoder(inputSource)
-    } else {
-      null
-    }
-
-  @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-  private fun decodeAvifBitmapWithImageDecoder(inputSource: AndroidCompressionSource): Bitmap? =
-    try {
-      ImageDecoder.decodeBitmap(createImageDecoderSource(inputSource)) { decoder, _, _ ->
-        decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-      }
-    } catch (_: Exception) {
-      null
-    }
-
-  @TargetApi(Build.VERSION_CODES.P)
-  private fun decodeHeicHeifBitmapWithImageDecoder(inputSource: AndroidCompressionSource): Bitmap? =
-    try {
-      ImageDecoder.decodeBitmap(createImageDecoderSource(inputSource)) { decoder, _, _ ->
-        decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-      }
-    } catch (_: Exception) {
-      null
-    }
-
-  @TargetApi(Build.VERSION_CODES.P)
-  private fun createImageDecoderSource(inputSource: AndroidCompressionSource): ImageDecoder.Source =
-    when (inputSource) {
-      is AndroidCompressionSource.FileSource -> ImageDecoder.createSource(inputSource.file)
-      is AndroidCompressionSource.ContentSource ->
-        ImageDecoder.createSource(reactContext.contentResolver, inputSource.uri)
-    }
-
-  private fun readUnsupportedInputMimeTypeHint(inputSource: AndroidCompressionSource): String? {
-    val contentMimeType = when (inputSource) {
-      is AndroidCompressionSource.FileSource -> null
-      is AndroidCompressionSource.ContentSource -> queryContentMimeType(inputSource.uri)
-    }
-
-    InputFormat.fromMimeType(contentMimeType)?.let { inputFormat ->
-      if (!canDecodeInputFormat(inputFormat)) {
-        return inputFormat.mimeType
-      }
-      return null
-    }
-
-    val fileExtension = when (inputSource) {
-      is AndroidCompressionSource.FileSource -> inputSource.file.extension
-      is AndroidCompressionSource.ContentSource ->
-        inputSource.uri.lastPathSegment?.substringAfterLast('.', "")
-    }
-
-    val extensionInputFormat = InputFormat.fromFileExtension(fileExtension)
-
-    return if (extensionInputFormat != null && !canDecodeInputFormat(extensionInputFormat)) {
-      extensionInputFormat.mimeType
-    } else {
-      null
-    }
-  }
-
-  private fun readInputFormatHint(inputSource: AndroidCompressionSource): InputFormat? {
-    val contentMimeType = when (inputSource) {
-      is AndroidCompressionSource.FileSource -> null
-      is AndroidCompressionSource.ContentSource -> queryContentMimeType(inputSource.uri)
-    }
-
-    InputFormat.fromMimeType(contentMimeType)?.let { inputFormat ->
-      return inputFormat
-    }
-
-    val fileExtension = when (inputSource) {
-      is AndroidCompressionSource.FileSource -> inputSource.file.extension
-      is AndroidCompressionSource.ContentSource ->
-        inputSource.uri.lastPathSegment?.substringAfterLast('.', "")
-    }
-
-    return InputFormat.fromFileExtension(fileExtension)
-  }
-
-  private fun canDecodeInputFormat(inputFormat: InputFormat): Boolean =
-    when {
-      inputFormat.usesAvifDecodePath ->
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-      inputFormat.usesHeifDecodePath ->
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-      else -> true
-    }
-
-  private fun unsupportedInputFormatMessage(mimeTypeHint: String): String {
-    val inputFormat = InputFormat.fromMimeType(mimeTypeHint)
-
-    return when {
-      inputFormat?.usesHeifDecodePath == true ->
-        "Android HEIC/HEIF input requires Android 8.0+ platform decoder support."
-      inputFormat?.usesAvifDecodePath == true ->
-        "Android AVIF input requires Android 14+ platform decoder support."
-      else -> DEFAULT_UNSUPPORTED_INPUT_FORMAT_MESSAGE
-    }
-  }
-
-  private fun queryContentMimeType(uri: Uri): String? =
-    try {
-      reactContext.contentResolver.getType(uri)
-    } catch (_: Exception) {
-      null
-    }
-
-  private fun readExifOrientation(inputSource: AndroidCompressionSource): Int =
-    try {
-      openInputStream(inputSource).buffered().use { inputStream ->
-        ExifInterface(inputStream).getAttributeInt(
-          ExifInterface.TAG_ORIENTATION,
-          ExifInterface.ORIENTATION_NORMAL
-        )
-      }
-    } catch (_: Exception) {
-      ExifInterface.ORIENTATION_NORMAL
-    }
-
   private fun createCopiedExifMetadata(
     metadataPolicy: MetadataPolicy,
     inputSource: AndroidCompressionSource,
@@ -516,7 +224,7 @@ class ImageCompressionKitModule(
     }
 
     try {
-      openInputStream(inputSource).buffered().use { inputStream ->
+      imageSourceResolver.openInputStream(inputSource).buffered().use { inputStream ->
         return JpegExifMetadata.read(
           inputStream = inputStream,
           exifTags = exifTags,
@@ -674,25 +382,6 @@ class ImageCompressionKitModule(
   private fun scaledDimension(value: Int, scale: Double): Int =
     (value.toDouble() * scale).roundToInt().coerceAtLeast(1)
 
-  private fun openInputStream(inputSource: AndroidCompressionSource): InputStream =
-    try {
-      when (inputSource) {
-        is AndroidCompressionSource.FileSource -> FileInputStream(inputSource.file)
-        is AndroidCompressionSource.ContentSource ->
-          reactContext.contentResolver.openInputStream(inputSource.uri)
-            ?: throw SourceAccessException(
-              "Android MVP could not open the source content URI."
-            )
-      }
-    } catch (error: SourceAccessException) {
-      throw error
-    } catch (error: Exception) {
-      throw SourceAccessException(
-        "Android MVP could not read the source image URI.",
-        error
-      )
-    }
-
   private fun createCompressionResult(
     originalByteSize: Long,
     outputFile: File,
@@ -729,93 +418,10 @@ class ImageCompressionKitModule(
     promise.reject(code, message, throwable)
   }
 
-  private data class ImageBounds(
-    val width: Int,
-    val height: Int,
-    val mimeType: String?
-  )
-
   private data class ImageDimensions(
     val width: Int,
     val height: Int
   )
-
-  private enum class InputFormat(
-    val mimeType: String,
-    val mimeTypeAliases: Set<String>,
-    val fileExtensions: Set<String>,
-    val supportsJpegExifMetadata: Boolean,
-    val usesHeifDecodePath: Boolean = false,
-    val usesAvifDecodePath: Boolean = false
-  ) {
-    JPEG(
-      mimeType = "image/jpeg",
-      mimeTypeAliases = emptySet(),
-      fileExtensions = setOf("jpg", "jpeg"),
-      supportsJpegExifMetadata = true
-    ),
-    PNG(
-      mimeType = "image/png",
-      mimeTypeAliases = emptySet(),
-      fileExtensions = setOf("png"),
-      supportsJpegExifMetadata = false
-    ),
-    WEBP(
-      mimeType = "image/webp",
-      mimeTypeAliases = emptySet(),
-      fileExtensions = setOf("webp"),
-      supportsJpegExifMetadata = false
-    ),
-    GIF(
-      mimeType = "image/gif",
-      mimeTypeAliases = emptySet(),
-      fileExtensions = setOf("gif"),
-      supportsJpegExifMetadata = false
-    ),
-    HEIC(
-      mimeType = "image/heic",
-      mimeTypeAliases = setOf("image/heic-sequence"),
-      fileExtensions = setOf("heic"),
-      supportsJpegExifMetadata = false,
-      usesHeifDecodePath = true
-    ),
-    HEIF(
-      mimeType = "image/heif",
-      mimeTypeAliases = setOf("image/heif-sequence"),
-      fileExtensions = setOf("heif"),
-      supportsJpegExifMetadata = false,
-      usesHeifDecodePath = true
-    ),
-    AVIF(
-      mimeType = "image/avif",
-      mimeTypeAliases = emptySet(),
-      fileExtensions = setOf("avif"),
-      supportsJpegExifMetadata = false,
-      usesAvifDecodePath = true
-    );
-
-    companion object {
-      fun fromMimeType(mimeType: String?): InputFormat? {
-        val normalizedMimeType = mimeType?.trim()?.lowercase() ?: return null
-
-        return values().firstOrNull {
-          it.mimeType == normalizedMimeType || normalizedMimeType in it.mimeTypeAliases
-        }
-      }
-
-      fun fromFileExtension(fileExtension: String?): InputFormat? {
-        val normalizedFileExtension = fileExtension?.trim()?.trimStart('.')?.lowercase()
-          ?: return null
-
-        return values().firstOrNull { normalizedFileExtension in it.fileExtensions }
-      }
-    }
-  }
-
-  private class SourceAccessException(
-    message: String,
-    cause: Throwable? = null
-  ) : Exception(message, cause)
 
   private class MetadataCopyException(
     message: String,
@@ -832,9 +438,5 @@ class ImageCompressionKitModule(
     const val ERR_DECODE_FAILED = "ERR_DECODE_FAILED"
     const val ERR_ENCODE_FAILED = "ERR_ENCODE_FAILED"
     const val ERR_NATIVE_OPERATION_FAILED = ANDROID_ERR_NATIVE_OPERATION_FAILED
-
-    private const val STREAM_BUFFER_SIZE = 8 * 1024
-    private const val DEFAULT_UNSUPPORTED_INPUT_FORMAT_MESSAGE =
-      "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input only."
   }
 }

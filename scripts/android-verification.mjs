@@ -37,6 +37,8 @@ const REQUIRED_FILES = [
   '.github/dependabot.yml',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
+  'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt',
+  'android/src/main/java/com/imagecompressionkit/AndroidImageSourceResolver.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidCompressionRequest.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputHelper.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputPrototype.kt',
@@ -46,6 +48,8 @@ const REQUIRED_FILES = [
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt',
   'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputHelperTest.kt',
+  'android/src/test/java/com/imagecompressionkit/AndroidImageDecoderTest.kt',
+  'android/src/test/java/com/imagecompressionkit/AndroidImageSourceResolverTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidCompressionRequestParserTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputPrototypeTest.kt',
   'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt',
@@ -410,6 +414,12 @@ function checkAndroidGradleConfig() {
 }
 
 function checkAndroidRuntimeAuthorities() {
+  const decoderContents = readText(
+    'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt'
+  );
+  const sourceResolverContents = readText(
+    'android/src/main/java/com/imagecompressionkit/AndroidImageSourceResolver.kt'
+  );
   const requestContents = readText(
     'android/src/main/java/com/imagecompressionkit/AndroidCompressionRequest.kt'
   );
@@ -421,6 +431,24 @@ function checkAndroidRuntimeAuthorities() {
   );
   const packageJson = readJson('package.json');
   const testAuthorities = [
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/AndroidImageSourceResolverTest.kt',
+      minimum: 4,
+      required: [
+        'readsFileSizeExtensionAndStream',
+        'readsContentMimeExtensionAndCountedSizeWithClosedStreams',
+        'preservesStableErrorsForUnreadableFileAndContentSources',
+      ],
+    },
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/AndroidImageDecoderTest.kt',
+      minimum: 4,
+      required: [
+        'decodesJpegIntoImmutableInputInfoInStableSourceOrder',
+        'rejectsUnavailablePlatformFormatsBeforeOpeningDecodeStreams',
+        'treatsSupportedHeifAndAvifInputsAsDecodeCandidates',
+      ],
+    },
     {
       file: 'android/src/test/java/com/imagecompressionkit/AndroidCompressionRequestParserTest.kt',
       minimum: 5,
@@ -511,8 +539,37 @@ function checkAndroidRuntimeAuthorities() {
       name: 'module request parser delegation',
     },
     {
-      ok: moduleContents.split(/\r?\n/u).length <= 1000,
+      ok: sourceResolverContents.includes(
+        'internal class AndroidImageSourceResolver('
+      ) && sourceResolverContents.includes(
+        'private val contentResolver: ContentResolver'
+      ),
+      name: 'ContentResolver-injected Android image source boundary',
+    },
+    {
+      ok: decoderContents.includes(
+        'internal data class AndroidImageInputInfo('
+      ) && decoderContents.includes('internal class AndroidImageDecoder('),
+      name: 'typed Android image decoder boundary',
+    },
+    {
+      ok: moduleContents.includes('imageDecoder.decode(inputSource)'),
+      name: 'module image decoder delegation',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 650,
       name: 'module source size boundary',
+    },
+    {
+      ok:
+        !/contentResolver\.(?:query|getType|openInputStream|openAssetFileDescriptor)\(/u.test(
+          moduleContents
+        ) &&
+        !moduleContents.includes('BitmapFactory') &&
+        !/(?:import android\.graphics\.ImageDecoder|\bImageDecoder\.(?:decodeBitmap|createSource)\()/u.test(
+          moduleContents
+        ),
+      name: 'source access and decode APIs isolated from module',
     },
     {
       ok: !/options\.(?:hasKey|isNull|getMap|getString|getDouble)\(/u.test(

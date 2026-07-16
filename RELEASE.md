@@ -13,8 +13,8 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 <!-- release-status:end -->
 
 - Scope: documentation information architecture, semantic status gates,
-  repository verification contract decomposition, and Android request parsing
-  boundary extraction
+  repository verification contract decomposition, Android request parsing, and
+  source/decode boundary extraction
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -41,7 +41,10 @@ sentences.
 The Android bridge now delegates `ReadableMap` parsing and validation to an
 immutable typed request boundary. Output selection, metadata, target-size,
 resize, and source URI validation retain their existing error codes and
-messages; decode, transform, metadata copy, and encode behavior are unchanged.
+messages. File/content source access and platform decode now flow through a
+ContentResolver-injected source resolver and typed decoder result. Decode
+order, EXIF orientation, transform, metadata copy, and encode behavior are
+unchanged.
 
 ### Included
 
@@ -61,6 +64,9 @@ messages; decode, transform, metadata copy, and encode behavior are unchanged.
   metadata, and executable native-test authorities.
 - Typed Android compression request parsing with table-driven Kotlin coverage
   for defaults, boundaries, invalid values, and malformed bridge types.
+- Typed Android source/decode boundaries with Kotlin characterization coverage
+  for file/content access, stream closure, format hints, bounds, EXIF
+  orientation, and HEIF/AVIF platform gates.
 
 ### Not included
 
