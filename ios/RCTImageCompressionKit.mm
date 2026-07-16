@@ -1,4 +1,5 @@
 #import "RCTImageCompressionKit.h"
+#import "RCTImageCompressionInput.h"
 #import "RCTImageCompressionRequest.h"
 
 #import <ImageIO/ImageIO.h>
@@ -6,12 +7,7 @@
 
 #include <math.h>
 #include <memory>
-#include <string.h>
 
-static NSString *const RCTImageCompressionKitUnsupportedSourceCode = @"ERR_UNSUPPORTED_SOURCE";
-static NSString *const RCTImageCompressionKitUnsupportedFormatCode = @"ERR_UNSUPPORTED_FORMAT";
-static NSString *const RCTImageCompressionKitFileAccessCode = @"ERR_FILE_ACCESS";
-static NSString *const RCTImageCompressionKitDecodeFailedCode = @"ERR_DECODE_FAILED";
 static NSString *const RCTImageCompressionKitEncodeFailedCode = @"ERR_ENCODE_FAILED";
 static NSString *const RCTImageCompressionKitNativeOperationFailedCode = @"ERR_NATIVE_OPERATION_FAILED";
 
@@ -217,163 +213,29 @@ static void RCTImageCompressionKitRunImageWork(dispatch_block_t block)
   dispatch_sync(dispatch_get_main_queue(), block);
 }
 
-static NSURL *RCTImageCompressionKitSourceURL(NSString *uri)
-{
-  NSURL *sourceURL = [NSURL URLWithString:uri];
-  NSString *scheme = [[sourceURL scheme] lowercaseString];
-
-  if ([scheme isEqualToString:@"file"] || [scheme isEqualToString:@"content"]) {
-    return sourceURL;
-  }
-
-  return nil;
-}
-
-static NSData *RCTImageCompressionKitReadSourceData(NSURL *sourceURL, NSError **error)
-{
-  BOOL hasSecurityScope = [sourceURL startAccessingSecurityScopedResource];
-  NSData *sourceData = [NSData dataWithContentsOfURL:sourceURL options:NSDataReadingMappedIfSafe error:error];
-
-  if (hasSecurityScope) {
-    [sourceURL stopAccessingSecurityScopedResource];
-  }
-
-  return sourceData;
-}
-
-static NSString *RCTImageCompressionKitImageType(NSData *sourceData)
-{
-  CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)sourceData, nil);
-  if (imageSource == nil) {
-    return nil;
-  }
-
-  NSString *imageType = nil;
-  if (CGImageSourceGetCount(imageSource) > 0) {
-    imageType = [(__bridge NSString *)CGImageSourceGetType(imageSource) copy];
-  }
-
-  CFRelease(imageSource);
-  return imageType;
-}
-
-static BOOL RCTImageCompressionKitIsJpegType(NSString *imageType)
-{
-  return
-    [imageType isEqualToString:@"public.jpeg"] ||
-    [imageType isEqualToString:@"public.jpg"] ||
-    [imageType isEqualToString:@"image/jpeg"];
-}
-
-static BOOL RCTImageCompressionKitIsGifType(NSString *imageType)
-{
-  return [imageType isEqualToString:@"com.compuserve.gif"] || [imageType isEqualToString:@"public.gif"];
-}
-
-static BOOL RCTImageCompressionKitIsWebPType(NSString *imageType)
-{
-  return [imageType isEqualToString:@"org.webmproject.webp"] || [imageType isEqualToString:@"public.webp"];
-}
-
-static BOOL RCTImageCompressionKitIsHeicType(NSString *imageType)
-{
-  return
-    [imageType isEqualToString:@"public.heic"] ||
-    [imageType isEqualToString:@"public.heics"] ||
-    [imageType isEqualToString:@"org.iso.heic"] ||
-    [imageType isEqualToString:@"org.iso.heics"];
-}
-
-static BOOL RCTImageCompressionKitIsHeifType(NSString *imageType)
-{
-  return
-    [imageType isEqualToString:@"public.heif"] ||
-    [imageType isEqualToString:@"public.heifs"] ||
-    [imageType isEqualToString:@"org.iso.heif"] ||
-    [imageType isEqualToString:@"org.iso.heifs"];
-}
-
-static BOOL RCTImageCompressionKitIsHeicHeifType(NSString *imageType)
-{
-  return RCTImageCompressionKitIsHeicType(imageType) || RCTImageCompressionKitIsHeifType(imageType);
-}
-
-static NSArray<NSString *> *RCTImageCompressionKitAvifTypeIdentifiers(void)
-{
-  return @[@"public.avif", @"public.avifs", @"org.aomedia.avif", @"org.aomedia.avifs"];
-}
-
-static BOOL RCTImageCompressionKitIsAvifType(NSString *imageType)
-{
-  return [RCTImageCompressionKitAvifTypeIdentifiers() containsObject:imageType];
-}
-
-static NSString *RCTImageCompressionKitAvailableImageSourceTypeIdentifier(NSArray<NSString *> *candidateTypes)
-{
-  NSArray<NSString *> *supportedTypes = CFBridgingRelease(CGImageSourceCopyTypeIdentifiers());
-
-  for (NSString *candidateType in candidateTypes) {
-    if ([supportedTypes containsObject:candidateType]) {
-      return candidateType;
-    }
-  }
-
-  return nil;
-}
-
 static BOOL RCTImageCompressionKitCanDecodeAVIF(void)
 {
-  return RCTImageCompressionKitAvailableImageSourceTypeIdentifier(RCTImageCompressionKitAvifTypeIdentifiers()) != nil;
-}
-
-static BOOL RCTImageCompressionKitLooksLikeAVIFData(NSData *sourceData)
-{
-  if (sourceData.length < 12) {
-    return NO;
-  }
-
-  const unsigned char *bytes = (const unsigned char *)sourceData.bytes;
-  if (memcmp(bytes + 4, "ftyp", 4) != 0) {
-    return NO;
-  }
-
-  NSUInteger searchLength = MIN(sourceData.length, (NSUInteger)64);
-  for (NSUInteger offset = 8; offset + 4 <= searchLength; offset += 4) {
-    if (memcmp(bytes + offset, "avif", 4) == 0 || memcmp(bytes + offset, "avis", 4) == 0) {
+  NSArray<NSString *> *supportedTypes = CFBridgingRelease(
+    CGImageSourceCopyTypeIdentifiers()
+  );
+  for (NSString *imageType in RCTImageCompressionAVIFTypeIdentifiers()) {
+    if ([supportedTypes containsObject:imageType]) {
       return YES;
     }
   }
-
   return NO;
 }
 
-static BOOL RCTImageCompressionKitShouldDecodeFirstFrame(NSString *imageType)
+static UIImage *RCTImageCompressionKitDecodeImage(RCTImageCompressionInputInspection *input)
 {
-  return
-    RCTImageCompressionKitIsGifType(imageType) ||
-    RCTImageCompressionKitIsWebPType(imageType) ||
-    RCTImageCompressionKitIsHeicHeifType(imageType) ||
-    RCTImageCompressionKitIsAvifType(imageType);
-}
-
-static BOOL RCTImageCompressionKitIsSupportedInputType(NSString *imageType)
-{
-  return
-    RCTImageCompressionKitIsJpegType(imageType) ||
-    [imageType isEqualToString:@"public.png"] ||
-    RCTImageCompressionKitIsGifType(imageType) ||
-    RCTImageCompressionKitIsWebPType(imageType) ||
-    RCTImageCompressionKitIsHeicHeifType(imageType) ||
-    (RCTImageCompressionKitIsAvifType(imageType) && RCTImageCompressionKitCanDecodeAVIF());
-}
-
-static UIImage *RCTImageCompressionKitDecodeImage(NSData *sourceData, NSString *imageType)
-{
-  if (!RCTImageCompressionKitShouldDecodeFirstFrame(imageType)) {
-    return [UIImage imageWithData:sourceData];
+  if (!input.shouldDecodeFirstFrame) {
+    return [UIImage imageWithData:input.source.data];
   }
 
-  CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)sourceData, nil);
+  CGImageSourceRef imageSource = CGImageSourceCreateWithData(
+    (__bridge CFDataRef)input.source.data,
+    nil
+  );
   if (imageSource == nil) {
     return nil;
   }
@@ -841,75 +703,24 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
 
     NSString *outputFormat = request.outputFormat;
 
-    NSURL *sourceURL = RCTImageCompressionKitSourceURL(request.sourceURI);
-    if (sourceURL == nil) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitUnsupportedSourceCode,
-        @"iOS MVP supports file:// and content:// image URIs only.",
-        nil
-      );
+    RCTImageCompressionInputError *inputError = nil;
+    RCTImageCompressionInputInspection *input = [[RCTImageCompressionInputLoader defaultLoader]
+      loadSourceURI:request.sourceURI
+      avifInputAvailability:^BOOL{
+        return RCTImageCompressionKitCanDecodeAVIF();
+      }
+      error:&inputError
+    ];
+    if (input == nil) {
+      RCTImageCompressionKitReject(reject, inputError.code, inputError.message, inputError.underlyingError);
       return;
     }
     RCTImageCompressionKitSmokeLog(@"source-url-ready");
-
-    NSError *sourceError = nil;
-    NSData *sourceData = RCTImageCompressionKitReadSourceData(sourceURL, &sourceError);
-    if (sourceData == nil || sourceData.length == 0) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitFileAccessCode,
-        @"iOS MVP could not read the source image URI.",
-        sourceError
-      );
-      return;
-    }
     RCTImageCompressionKitSmokeLog(@"source-read");
-
-    BOOL sourceLooksLikeAVIF = RCTImageCompressionKitLooksLikeAVIFData(sourceData);
-    BOOL canDecodeAVIF = RCTImageCompressionKitCanDecodeAVIF();
-    if (sourceLooksLikeAVIF && !canDecodeAVIF) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitUnsupportedFormatCode,
-        @"iOS AVIF input requires runtime ImageIO AVIF source support.",
-        nil
-      );
-      return;
-    }
-
-    NSString *imageType = RCTImageCompressionKitImageType(sourceData);
-    if (imageType == nil) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitDecodeFailedCode,
-        @"iOS MVP could not inspect the source image.",
-        nil
-      );
-      return;
-    }
-    RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"image-type-%@", imageType]);
-    if (!RCTImageCompressionKitIsSupportedInputType(imageType)) {
-      if (RCTImageCompressionKitIsAvifType(imageType) || sourceLooksLikeAVIF) {
-        RCTImageCompressionKitReject(
-          reject,
-          RCTImageCompressionKitUnsupportedFormatCode,
-          @"iOS AVIF input requires runtime ImageIO AVIF source support.",
-          nil
-        );
-        return;
-      }
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitUnsupportedFormatCode,
-        @"iOS MVP supports JPEG, PNG, GIF, WebP, HEIC, HEIF, and runtime-available AVIF input only. GIF, WebP, HEIC, HEIF, and AVIF input are decoded as static images through ImageIO.",
-        nil
-      );
-      return;
-    }
+    RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"image-type-%@", input.imageType]);
 
     BOOL metadataPreserveRequested = [request.metadataPolicy isEqualToString:RCTImageCompressionKitPreserveMetadataPolicy];
-    BOOL canPreserveJpegMetadata = metadataPreserveRequested && request.outputIsJpeg && RCTImageCompressionKitIsJpegType(imageType);
+    BOOL canPreserveJpegMetadata = metadataPreserveRequested && request.outputIsJpeg && input.jpeg;
     if (metadataPreserveRequested && !canPreserveJpegMetadata) {
       RCTImageCompressionKitReject(
         reject,
@@ -921,7 +732,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     }
 
     NSDictionary *jpegSourceProperties = canPreserveJpegMetadata
-      ? RCTImageCompressionKitSourceImageProperties(sourceData)
+      ? RCTImageCompressionKitSourceImageProperties(input.source.data)
       : nil;
 
     __block UIImage *sourceImage = nil;
@@ -929,7 +740,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     __block NSData *outputData = nil;
     RCTImageCompressionKitSmokeLog(@"image-work-start");
     RCTImageCompressionKitRunImageWork(^{
-      sourceImage = RCTImageCompressionKitDecodeImage(sourceData, imageType);
+      sourceImage = RCTImageCompressionKitDecodeImage(input);
       if (sourceImage == nil || sourceImage.size.width <= 0 || sourceImage.size.height <= 0) {
         return;
       }
@@ -995,7 +806,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     }
     RCTImageCompressionKitSmokeLog(@"output-written");
 
-    resolve(RCTImageCompressionKitResult(outputPath, outputFormat, processedImage, outputData, sourceData));
+    resolve(RCTImageCompressionKitResult(outputPath, outputFormat, processedImage, outputData, input.source.data));
     RCTImageCompressionKitSmokeLog(@"compress-resolved");
   } @catch (NSException *exception) {
     RCTImageCompressionKitReject(

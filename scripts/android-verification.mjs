@@ -36,8 +36,11 @@ const REQUIRED_FILES = [
   '.github/actions-lock.json',
   '.github/dependabot.yml',
   'src/NativeImageCompressionKit.ts',
+  'ios/RCTImageCompressionInput.h',
+  'ios/RCTImageCompressionInputInspector.mm',
   'ios/RCTImageCompressionRequest.h',
   'ios/RCTImageCompressionRequest.mm',
+  'ios/RCTImageCompressionSourceResolver.mm',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/AndroidBitmapTransformer.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt',
@@ -180,6 +183,7 @@ const REQUIRED_FILES = [
   'test/iosSmokePassReplayFixture.test.mjs',
   'test/iosSmokeSummaryCli.test.mjs',
   'test/ios-native/RCTImageCompressionRequestTests.mm',
+  'test/ios-native/RCTImageCompressionInputTests.mm',
   'test/fixtures/ios-smoke-pass-ci-replay.json',
   'vitest.config.ts',
   'example/Gemfile',
@@ -219,6 +223,7 @@ function runDoctor() {
     checkAndroidGradleConfig(),
     checkAndroidRuntimeAuthorities(),
     checkIOSRuntimeAuthorities(),
+    checkIOSInputAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -797,6 +802,134 @@ function checkIOSRuntimeAuthorities() {
     detail:
       violations.length === 0
         ? 'immutable Foundation-only request parsing is isolated, bridge size limits hold, and the smoke runner executes six native test groups'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
+}
+
+function checkIOSInputAuthorities() {
+  const inputHeader = readText('ios/RCTImageCompressionInput.h');
+  const sourceResolver = readText(
+    'ios/RCTImageCompressionSourceResolver.mm'
+  );
+  const inputInspector = readText(
+    'ios/RCTImageCompressionInputInspector.mm'
+  );
+  const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionInputTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestResolvesFileAndContentSourcesWithImmutableBytes',
+    'TestRejectsUnsupportedSourceSchemesWithoutLoading',
+    'TestClosesSecurityScopeForUnreadableAndEmptySources',
+    'TestClosesSecurityScopeWhenLoaderThrows',
+    'TestDefaultResolverReadsFileData',
+    'TestClassifiesSupportedTypeIdentifierMatrix',
+    'TestRejectsUnavailableAndSignatureOnlyAVIF',
+    'TestRejectsUnknownAndUninspectableFormats',
+    'TestPreservesSignatureClassificationOrder',
+    'TestDefaultImageIOLoaderInspectsPNG',
+    'TestInputLoaderComposesResolverAndInspector',
+  ];
+  const methodStart = moduleContents.indexOf(
+    '- (void)compressImageWithDictionary:'
+  );
+  const methodEnd = moduleContents.indexOf(
+    '- (void)getImageCompressionCapabilities:',
+    methodStart
+  );
+  const methodLineCount =
+    methodStart >= 0 && methodEnd > methodStart
+      ? moduleContents.slice(methodStart, methodEnd).split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
+  const boundaryIdentifiers = [
+    '@interface RCTImageCompressionSource : NSObject',
+    '@interface RCTImageCompressionSourceResolver : NSObject',
+    '@interface RCTImageCompressionInputInspection : NSObject',
+    '@interface RCTImageCompressionInputInspector : NSObject',
+    '@interface RCTImageCompressionInputLoader : NSObject',
+  ];
+  const directInputAPIs =
+    /(?:startAccessingSecurityScopedResource|dataWithContentsOfURL|RCTImageCompressionKit(?:SourceURL|ReadSourceData|ImageType|LooksLikeAVIFData|IsSupportedInputType|IsJpegType))/u;
+  const structureChecks = [
+    {
+      ok: boundaryIdentifiers.every((identifier) =>
+        inputHeader.includes(identifier)
+      ),
+      name: 'immutable source and input boundary models',
+    },
+    {
+      ok:
+        /\[\s*RCTImageCompressionInputLoader\s+defaultLoader\]/u.test(
+          moduleContents
+        ) &&
+        /loadSourceURI:request\.sourceURI[\s\S]*?avifInputAvailability:\^BOOL\{[\s\S]*?RCTImageCompressionKitCanDecodeAVIF\(\)/u.test(
+          moduleContents
+        ),
+      name: 'bridge input loader delegation',
+    },
+    {
+      ok: !directInputAPIs.test(moduleContents),
+      name: 'source acquisition and inspection APIs isolated from bridge',
+    },
+    {
+      ok:
+        !/#import <(?:ImageIO|UIKit|React)/u.test(sourceResolver) &&
+        !/\b(?:RCTPromise|UIImage|CGImage)\b/u.test(sourceResolver),
+      name: 'Foundation-only source resolver dependencies',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|React)/u.test(inputInspector) &&
+        !/(?:startAccessingSecurityScopedResource|dataWithContentsOfURL|writeToFile:)/u.test(
+          inputInspector
+        ),
+      name: 'ImageIO inspector excludes source and render dependencies',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 850,
+      name: 'iOS bridge source size boundary after input extraction',
+    },
+    {
+      ok: methodLineCount <= 140,
+      name: 'iOS compression orchestration size after input extraction',
+    },
+    {
+      ok:
+        nativeTestNames.length === 11 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)),
+      name: 'table-driven native input test authority',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:input-test'] ===
+        'node scripts/ios-validation.mjs input-test',
+      name: 'iOS input native-test command',
+    },
+    {
+      ok:
+        validationRunner.includes("if (mode === 'input-test')") &&
+        /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'input tests integrated into iOS smoke',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS source resolver, input inspector, and native tests are present',
+    detail:
+      violations.length === 0
+        ? 'source lifecycle and ImageIO format inspection are isolated, bridge limits hold, and eleven native groups cover resolver/inspector behavior'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }

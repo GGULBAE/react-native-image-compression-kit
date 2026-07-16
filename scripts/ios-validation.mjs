@@ -41,6 +41,16 @@ const REQUEST_PARSER_TEST_SOURCE = path.join(
   'ios-native',
   'RCTImageCompressionRequestTests.mm'
 );
+const INPUT_SOURCES = [
+  path.join(ROOT, 'ios', 'RCTImageCompressionSourceResolver.mm'),
+  path.join(ROOT, 'ios', 'RCTImageCompressionInputInspector.mm'),
+];
+const INPUT_TEST_SOURCE = path.join(
+  ROOT,
+  'test',
+  'ios-native',
+  'RCTImageCompressionInputTests.mm'
+);
 const IOS_VALIDATION_CONFIG = createIOSValidationConfig(process.env);
 const METRO_PORT = IOS_VALIDATION_CONFIG.metroPort;
 const METRO_READY_TIMEOUT_MS = IOS_VALIDATION_CONFIG.metroReadyTimeoutMs;
@@ -79,6 +89,11 @@ async function main() {
     return;
   }
 
+  if (mode === 'input-test') {
+    runInputTests();
+    return;
+  }
+
   if (mode === 'build') {
     checkIOSBuildEnvironment();
     ensurePodsInstalled();
@@ -91,6 +106,7 @@ async function main() {
   if (mode === 'smoke') {
     checkIOSBuildEnvironment();
     runRequestParserTests();
+    runInputTests();
     ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
@@ -140,17 +156,30 @@ function ensurePackageJSBuild() {
 }
 
 function runRequestParserTests() {
+  runNativeTests(
+    'RCTImageCompressionRequestTests',
+    [REQUEST_PARSER_SOURCE, REQUEST_PARSER_TEST_SOURCE],
+    ['Foundation']
+  );
+}
+
+function runInputTests() {
+  runNativeTests(
+    'RCTImageCompressionInputTests',
+    [...INPUT_SOURCES, INPUT_TEST_SOURCE],
+    ['Foundation', 'ImageIO']
+  );
+}
+
+function runNativeTests(executableName, sourceFiles, frameworks) {
   mustRun('xcrun', ['--sdk', 'macosx', '--show-sdk-path'], {
     failureHint: 'Install Xcode Command Line Tools with the macOS SDK.',
   });
 
   const buildDirectory = mkdtempSync(
-    path.join(tmpdir(), 'rnick-ios-request-parser-')
+    path.join(tmpdir(), 'rnick-ios-native-tests-')
   );
-  const executable = path.join(
-    buildDirectory,
-    'RCTImageCompressionRequestTests'
-  );
+  const executable = path.join(buildDirectory, executableName);
 
   try {
     mustRun('xcrun', [
@@ -162,10 +191,8 @@ function runRequestParserTests() {
       '-fblocks',
       '-I',
       path.join(ROOT, 'ios'),
-      REQUEST_PARSER_SOURCE,
-      REQUEST_PARSER_TEST_SOURCE,
-      '-framework',
-      'Foundation',
+      ...sourceFiles,
+      ...frameworks.flatMap((framework) => ['-framework', framework]),
       '-o',
       executable,
     ]);
@@ -286,10 +313,17 @@ function bundlerEnv() {
 }
 
 function ensurePodsInstalled() {
+  const requiredPodSources = [
+    'RCTImageCompressionRequest.mm',
+    'RCTImageCompressionSourceResolver.mm',
+    'RCTImageCompressionInputInspector.mm',
+  ];
+  const podProjectContents = pathExists(PODS_PROJECT_FILE)
+    ? readFileSync(PODS_PROJECT_FILE, 'utf8')
+    : '';
   const podSourcesAreCurrent =
-    pathExists(PODS_PROJECT_FILE) &&
-    readFileSync(PODS_PROJECT_FILE, 'utf8').includes(
-      'RCTImageCompressionRequest.mm'
+    requiredPodSources.every((sourceFile) =>
+      podProjectContents.includes(sourceFile)
     );
 
   if (!pathExists(WORKSPACE) || !podSourcesAreCurrent) {

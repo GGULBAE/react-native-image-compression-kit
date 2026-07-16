@@ -126,6 +126,7 @@ describe('npm package contract', () => {
       'example:android-instrumentation':
         'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:connectedDebugAndroidTest pnpm android:build',
       'example:ios:smoke': 'node scripts/ios-validation.mjs smoke',
+      'example:ios:input-test': 'node scripts/ios-validation.mjs input-test',
       'example:ios:request-parser-test':
         'node scripts/ios-validation.mjs request-parser-test',
       'example:typecheck': 'pnpm --filter image-compression-kit-example typecheck',

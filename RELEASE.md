@@ -14,7 +14,8 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 
 - Scope: documentation information architecture, semantic status gates,
   repository verification contract decomposition, Android request parsing, and
-  source/decode/bitmap-transform boundary extraction, plus iOS request parsing
+  source/decode/bitmap-transform boundary extraction, plus iOS request and
+  source/inspection boundaries
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -53,7 +54,10 @@ immutable, Foundation-only request boundary. Source URI, output selection,
 quality, target size, metadata, and resize defaults/errors are covered by a
 table-driven native executable. Runtime WebP availability is still determined
 by the bridge and queried only for WebP output, preserving validation order.
-Source access, ImageIO decode/render, metadata copy, and encoding behavior are
+Source URI acquisition now flows through a Foundation-only resolver with
+injected data/security-scope hooks, and ImageIO type/signature classification
+flows through an immutable input inspector with bridge-provided AVIF runtime
+availability. UIImage decode/render, metadata copy, and encoding behavior are
 unchanged.
 
 ### Included
@@ -83,6 +87,9 @@ unchanged.
 - Typed iOS compression request parsing with Foundation-only native coverage
   for defaults, required fields, output availability, quality/maxBytes,
   metadata, resize modes/dimensions, and stable error contracts.
+- Typed iOS source acquisition and format inspection with native coverage for
+  file/content URIs, immutable bytes, security-scope closure, ImageIO type
+  aliases, AVIF signatures/runtime availability, and stable errors.
 
 ### Not included
 
@@ -96,6 +103,7 @@ unchanged.
 ```bash
 pnpm verify
 pnpm example:typecheck
+pnpm example:ios:input-test
 pnpm example:ios:request-parser-test
 pnpm example:ios:build
 pnpm example:ios:smoke

@@ -13,8 +13,9 @@ from the npm package.
 | GitHub Actions pins and workflow supply chain | `test/workflowSupplyChain.test.mjs` and `scripts/workflow-supply-chain-core.mjs` | `pnpm verify:workflow-supply-chain -- --json` |
 | Android registration, typed request/source/decode/transform boundaries, build wiring, fixtures, and native-test presence | `test/androidSourceContract.test.ts` | `pnpm test` and `pnpm android:doctor` |
 | Android compression behavior | Kotlin unit and instrumentation tests under `android/src/test` and `android/src/androidTest` | `pnpm example:android-unit-test` and `pnpm example:android-instrumentation` |
-| iOS bridge, immutable request parser, pod, workflow, and native-test/smoke-runner wiring | `test/iosSourceContract.test.ts` | `pnpm test` and `pnpm android:doctor` |
+| iOS bridge, immutable request/source/inspection boundaries, pod, workflow, and native-test/smoke-runner wiring | `test/iosSourceContract.test.ts` | `pnpm test` and `pnpm android:doctor` |
 | iOS request validation behavior | Foundation-only table-driven native tests under `test/ios-native` | `pnpm example:ios:request-parser-test` and `pnpm example:ios:smoke` |
+| iOS source acquisition and format inspection behavior | Foundation/ImageIO table-driven native tests under `test/ios-native` | `pnpm example:ios:input-test` and `pnpm example:ios:smoke` |
 | iOS compression behavior | Host-app smoke contracts, replay fixtures, and the iOS validation workflow | `pnpm fixtures:ios-pass-replay:audit` and `pnpm example:ios:smoke` |
 | Registry and release evidence | Evidence-specific tests and semantic verifiers | `pnpm verify:release-evidence-set -- --json` and related evidence gates |
 
@@ -44,8 +45,8 @@ pnpm pack --dry-run
 ```
 
 Platform workflows additionally run Android unit and instrumentation tests and
-the iOS Foundation-only request parser tests plus host-app smoke test in their
-supported environments.
+the iOS request/input native tests plus host-app smoke test in their supported
+environments.
 
 ## Change routing
 
