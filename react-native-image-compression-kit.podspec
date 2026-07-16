@@ -13,7 +13,9 @@ Pod::Spec.new do |s|
   s.platforms = { :ios => "13.4" }
   s.source_files = "ios/**/*.{h,m,mm}"
   s.private_header_files = [
+    "ios/RCTImageCompressionImageDecoder.h",
     "ios/RCTImageCompressionInput.h",
+    "ios/RCTImageCompressionIOSCapabilities.h",
     "ios/RCTImageCompressionRequest.h",
   ]
 

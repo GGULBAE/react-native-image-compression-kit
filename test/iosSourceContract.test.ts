@@ -37,7 +37,9 @@ describe('iOS source contract', () => {
     expect(podspec).toContain('s.version = package["version"]');
     expect(podspec).toContain('s.platforms = { :ios => "13.4" }');
     expect(podspec).toContain('s.source_files = "ios/**/*.{h,m,mm}"');
+    expect(podspec).toContain('"ios/RCTImageCompressionImageDecoder.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionInput.h"');
+    expect(podspec).toContain('"ios/RCTImageCompressionIOSCapabilities.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionRequest.h"');
     expect(podspec).toContain('install_modules_dependencies(s)');
     expect(podspec).toContain('s.dependency "React-Core"');
@@ -180,6 +182,93 @@ describe('iOS source contract', () => {
     expect(runner).toContain("if (mode === 'input-test')");
     expect(runner).toMatch(
       /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);/
+    );
+  });
+
+  it('isolates image decoding and main-thread ownership behind native tables', () => {
+    const header = readProjectFile('ios/RCTImageCompressionImageDecoder.h');
+    const decoder = readProjectFile('ios/RCTImageCompressionImageDecoder.mm');
+    const uiKitDecoder = readProjectFile(
+      'ios/RCTImageCompressionUIKitImageDecoder.mm'
+    );
+    const capabilities = readProjectFile(
+      'ios/RCTImageCompressionIOSCapabilities.mm'
+    );
+    const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const nativeTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionImageDecoderTests.mm'
+    );
+    const runner = readProjectFile('scripts/ios-validation.mjs');
+    const decoderTestNames = [
+      ...nativeTests.matchAll(/static void (Test\w+)\(void\)/g),
+    ].map((match) => match[1]);
+    const methodStart = implementation.indexOf(
+      '- (void)compressImageWithDictionary:'
+    );
+    const methodEnd = implementation.indexOf(
+      '- (void)getImageCompressionCapabilities:',
+      methodStart
+    );
+    const methodLines = implementation
+      .slice(methodStart, methodEnd)
+      .split(/\r?\n/).length;
+
+    for (const identifier of [
+      '@interface RCTImageCompressionImageDecodeError : NSObject',
+      '@interface RCTImageCompressionDecodedImage : NSObject',
+      '@interface RCTImageCompressionImageDecoder : NSObject',
+      'RCTImageCompressionOrdinaryImageDecoder',
+      'RCTImageCompressionFirstFrameImageDecoder',
+      'RCTImageCompressionDecodedImageValidator',
+      'RCTImageCompressionImageDecodeExecutor',
+    ]) {
+      expect(header).toContain(identifier);
+    }
+    expect(decoder).not.toMatch(/#import <(?:UIKit|ImageIO|React)/);
+    expect(decoder).toContain('input.shouldDecodeFirstFrame');
+    expect(decoder).toContain('RCTImageCompressionKitDecodeFailedCode');
+    expect(decoder).toContain(
+      '@"iOS MVP could not decode the source image."'
+    );
+    expect(uiKitDecoder).toContain('[UIImage imageWithData:data]');
+    expect(uiKitDecoder).toContain('CGImageSourceCreateImageAtIndex');
+    expect(uiKitDecoder).toContain('[NSThread isMainThread]');
+    expect(uiKitDecoder).toContain('dispatch_sync(dispatch_get_main_queue()');
+    expect(`${decoder}\n${uiKitDecoder}`).not.toMatch(
+      /(?:RCTImageCompressionKit(?:Render|Encode|SourceImageProperties)|UIGraphicsImageRenderer|CGImageDestination|maxBytes|metadataPolicy|writeToFile:)/
+    );
+    expect(implementation).toMatch(
+      /\[\s*\[RCTImageCompressionImageDecoder\s+defaultDecoder\]\s+decodeInput:input\s+error:&decodeError\s*\]/
+    );
+    expect(implementation).toContain(
+      'RCTImageCompressionIOSFormatCapabilities('
+    );
+    expect(capabilities).toContain(
+      'NSArray<NSDictionary *> *RCTImageCompressionIOSFormatCapabilities('
+    );
+    expect(capabilities).toContain('RCTImageCompressionKitGifFormat');
+    expect(implementation).not.toMatch(
+      /(?:\[UIImage\s+imageWithData:|CGImageSourceCreateImageAtIndex|RCTImageCompressionKitDecodeImage)/
+    );
+    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(720);
+    expect(methodLines).toBeLessThanOrEqual(115);
+    expect(decoderTestNames).toEqual(
+      expect.arrayContaining([
+        'TestRoutesStaticAndFirstFrameFormats',
+        'TestRejectsMissingAndInvalidDecodedImages',
+        'TestRejectsWhenExecutorDoesNotRunOperation',
+        'TestRunsDecodeAndValidationInsideExecutor',
+        'TestRetainsDecodedImageAndCopiesErrors',
+        'TestClearsExistingErrorOnSuccess',
+      ])
+    );
+    expect(decoderTestNames).toHaveLength(6);
+    expect(packageJson.scripts['example:ios:decoder-test']).toBe(
+      'node scripts/ios-validation.mjs decoder-test'
+    );
+    expect(runner).toContain("if (mode === 'decoder-test')");
+    expect(runner).toMatch(
+      /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);/
     );
   });
 

@@ -216,6 +216,7 @@ Important limitations:
 ```bash
 pnpm verify
 pnpm example:typecheck
+pnpm example:ios:decoder-test
 pnpm docs:check
 git diff --check
 pnpm pack --dry-run

@@ -15,7 +15,7 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 - Scope: documentation information architecture, semantic status gates,
   repository verification contract decomposition, Android request parsing, and
   source/decode/bitmap-transform boundary extraction, plus iOS request and
-  source/inspection boundaries
+  source/inspection and image-decoder ownership boundaries
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -57,8 +57,11 @@ by the bridge and queried only for WebP output, preserving validation order.
 Source URI acquisition now flows through a Foundation-only resolver with
 injected data/security-scope hooks, and ImageIO type/signature classification
 flows through an immutable input inspector with bridge-provided AVIF runtime
-availability. UIImage decode/render, metadata copy, and encoding behavior are
-unchanged.
+availability. UIImage decode and ImageIO first-frame selection now flow through
+an immutable decoder result/error boundary with injected decode, validation,
+and main-thread executor hooks. Capability projection moved unchanged to a
+private helper so the bridge stays focused on orchestration. Resize/render,
+metadata copy, and encoding behavior are unchanged.
 
 ### Included
 
@@ -90,6 +93,9 @@ unchanged.
 - Typed iOS source acquisition and format inspection with native coverage for
   file/content URIs, immutable bytes, security-scope closure, ImageIO type
   aliases, AVIF signatures/runtime availability, and stable errors.
+- Typed iOS image-decoder ownership with native coverage for JPEG/PNG ordinary
+  decode, GIF/WebP/HEIC/HEIF/AVIF first-frame routing, synchronous executor
+  ownership, immutable results/errors, and stable decode failures.
 
 ### Not included
 
@@ -103,6 +109,7 @@ unchanged.
 ```bash
 pnpm verify
 pnpm example:typecheck
+pnpm example:ios:decoder-test
 pnpm example:ios:input-test
 pnpm example:ios:request-parser-test
 pnpm example:ios:build

@@ -51,6 +51,17 @@ const INPUT_TEST_SOURCE = path.join(
   'ios-native',
   'RCTImageCompressionInputTests.mm'
 );
+const IMAGE_DECODER_CORE_SOURCE = path.join(
+  ROOT,
+  'ios',
+  'RCTImageCompressionImageDecoder.mm'
+);
+const IMAGE_DECODER_TEST_SOURCE = path.join(
+  ROOT,
+  'test',
+  'ios-native',
+  'RCTImageCompressionImageDecoderTests.mm'
+);
 const IOS_VALIDATION_CONFIG = createIOSValidationConfig(process.env);
 const METRO_PORT = IOS_VALIDATION_CONFIG.metroPort;
 const METRO_READY_TIMEOUT_MS = IOS_VALIDATION_CONFIG.metroReadyTimeoutMs;
@@ -94,6 +105,11 @@ async function main() {
     return;
   }
 
+  if (mode === 'decoder-test') {
+    runImageDecoderTests();
+    return;
+  }
+
   if (mode === 'build') {
     checkIOSBuildEnvironment();
     ensurePodsInstalled();
@@ -107,6 +123,7 @@ async function main() {
     checkIOSBuildEnvironment();
     runRequestParserTests();
     runInputTests();
+    runImageDecoderTests();
     ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
@@ -167,6 +184,18 @@ function runInputTests() {
   runNativeTests(
     'RCTImageCompressionInputTests',
     [...INPUT_SOURCES, INPUT_TEST_SOURCE],
+    ['Foundation', 'ImageIO']
+  );
+}
+
+function runImageDecoderTests() {
+  runNativeTests(
+    'RCTImageCompressionImageDecoderTests',
+    [
+      ...INPUT_SOURCES,
+      IMAGE_DECODER_CORE_SOURCE,
+      IMAGE_DECODER_TEST_SOURCE,
+    ],
     ['Foundation', 'ImageIO']
   );
 }
@@ -317,6 +346,9 @@ function ensurePodsInstalled() {
     'RCTImageCompressionRequest.mm',
     'RCTImageCompressionSourceResolver.mm',
     'RCTImageCompressionInputInspector.mm',
+    'RCTImageCompressionImageDecoder.mm',
+    'RCTImageCompressionUIKitImageDecoder.mm',
+    'RCTImageCompressionIOSCapabilities.mm',
   ];
   const podProjectContents = pathExists(PODS_PROJECT_FILE)
     ? readFileSync(PODS_PROJECT_FILE, 'utf8')

@@ -36,11 +36,16 @@ const REQUIRED_FILES = [
   '.github/actions-lock.json',
   '.github/dependabot.yml',
   'src/NativeImageCompressionKit.ts',
+  'ios/RCTImageCompressionImageDecoder.h',
+  'ios/RCTImageCompressionImageDecoder.mm',
   'ios/RCTImageCompressionInput.h',
   'ios/RCTImageCompressionInputInspector.mm',
+  'ios/RCTImageCompressionIOSCapabilities.h',
+  'ios/RCTImageCompressionIOSCapabilities.mm',
   'ios/RCTImageCompressionRequest.h',
   'ios/RCTImageCompressionRequest.mm',
   'ios/RCTImageCompressionSourceResolver.mm',
+  'ios/RCTImageCompressionUIKitImageDecoder.mm',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/AndroidBitmapTransformer.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt',
@@ -184,6 +189,7 @@ const REQUIRED_FILES = [
   'test/iosSmokeSummaryCli.test.mjs',
   'test/ios-native/RCTImageCompressionRequestTests.mm',
   'test/ios-native/RCTImageCompressionInputTests.mm',
+  'test/ios-native/RCTImageCompressionImageDecoderTests.mm',
   'test/fixtures/ios-smoke-pass-ci-replay.json',
   'vitest.config.ts',
   'example/Gemfile',
@@ -224,6 +230,7 @@ function runDoctor() {
     checkAndroidRuntimeAuthorities(),
     checkIOSRuntimeAuthorities(),
     checkIOSInputAuthorities(),
+    checkIOSImageDecoderAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -930,6 +937,148 @@ function checkIOSInputAuthorities() {
     detail:
       violations.length === 0
         ? 'source lifecycle and ImageIO format inspection are isolated, bridge limits hold, and eleven native groups cover resolver/inspector behavior'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
+}
+
+function checkIOSImageDecoderAuthorities() {
+  const decoderHeader = readText('ios/RCTImageCompressionImageDecoder.h');
+  const decoderCore = readText('ios/RCTImageCompressionImageDecoder.mm');
+  const uiKitDecoder = readText(
+    'ios/RCTImageCompressionUIKitImageDecoder.mm'
+  );
+  const capabilities = readText(
+    'ios/RCTImageCompressionIOSCapabilities.mm'
+  );
+  const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionImageDecoderTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestRoutesStaticAndFirstFrameFormats',
+    'TestRejectsMissingAndInvalidDecodedImages',
+    'TestRejectsWhenExecutorDoesNotRunOperation',
+    'TestRunsDecodeAndValidationInsideExecutor',
+    'TestRetainsDecodedImageAndCopiesErrors',
+    'TestClearsExistingErrorOnSuccess',
+  ];
+  const methodStart = moduleContents.indexOf(
+    '- (void)compressImageWithDictionary:'
+  );
+  const methodEnd = moduleContents.indexOf(
+    '- (void)getImageCompressionCapabilities:',
+    methodStart
+  );
+  const methodLineCount =
+    methodStart >= 0 && methodEnd > methodStart
+      ? moduleContents.slice(methodStart, methodEnd).split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
+  const boundaryIdentifiers = [
+    '@interface RCTImageCompressionImageDecodeError : NSObject',
+    '@interface RCTImageCompressionDecodedImage : NSObject',
+    '@interface RCTImageCompressionImageDecoder : NSObject',
+    'RCTImageCompressionOrdinaryImageDecoder',
+    'RCTImageCompressionFirstFrameImageDecoder',
+    'RCTImageCompressionDecodedImageValidator',
+    'RCTImageCompressionImageDecodeExecutor',
+  ];
+  const forbiddenDecoderDependencies =
+    /(?:RCTImageCompressionKit(?:Render|Encode|SourceImageProperties)|UIGraphicsImageRenderer|CGImageDestination|maxBytes|metadataPolicy|writeToFile:)/u;
+  const directDecodeAPIs =
+    /(?:\[UIImage\s+imageWithData:|CGImageSourceCreateImageAtIndex|RCTImageCompressionKitDecodeImage)/u;
+  const structureChecks = [
+    {
+      ok: boundaryIdentifiers.every((identifier) =>
+        decoderHeader.includes(identifier)
+      ),
+      name: 'immutable decoded image and error boundary models',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|ImageIO|React)/u.test(decoderCore) &&
+        decoderCore.includes('input.shouldDecodeFirstFrame') &&
+        decoderCore.includes('RCTImageCompressionKitDecodeFailedCode') &&
+        decoderCore.includes(
+          '@"iOS MVP could not decode the source image."'
+        ),
+      name: 'Foundation-only injected decoder orchestration',
+    },
+    {
+      ok:
+        uiKitDecoder.includes('[UIImage imageWithData:data]') &&
+        uiKitDecoder.includes('CGImageSourceCreateImageAtIndex') &&
+        uiKitDecoder.includes('[NSThread isMainThread]') &&
+        uiKitDecoder.includes('dispatch_sync(dispatch_get_main_queue()'),
+      name: 'UIKit ImageIO defaults and main-thread executor',
+    },
+    {
+      ok: !forbiddenDecoderDependencies.test(
+        `${decoderCore}\n${uiKitDecoder}`
+      ),
+      name: 'decoder excludes render metadata and encoder ownership',
+    },
+    {
+      ok:
+        /\[\s*\[RCTImageCompressionImageDecoder\s+defaultDecoder\]\s+decodeInput:input\s+error:&decodeError\s*\]/u.test(
+          moduleContents
+        ) && !directDecodeAPIs.test(moduleContents),
+      name: 'bridge decoder delegation without direct decode APIs',
+    },
+    {
+      ok:
+        moduleContents.includes(
+          'RCTImageCompressionIOSFormatCapabilities('
+        ) &&
+        capabilities.includes(
+          'NSArray<NSDictionary *> *RCTImageCompressionIOSFormatCapabilities('
+        ) &&
+        capabilities.includes('RCTImageCompressionKitGifFormat'),
+      name: 'unchanged iOS capability projection boundary',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 720,
+      name: 'iOS bridge source size boundary after decoder extraction',
+    },
+    {
+      ok: methodLineCount <= 115,
+      name: 'iOS compression orchestration size after decoder extraction',
+    },
+    {
+      ok:
+        nativeTestNames.length === 6 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)),
+      name: 'table-driven native image decoder test authority',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:decoder-test'] ===
+        'node scripts/ios-validation.mjs decoder-test',
+      name: 'iOS image decoder native-test command',
+    },
+    {
+      ok:
+        validationRunner.includes("if (mode === 'decoder-test')") &&
+        /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'image decoder tests integrated into iOS smoke',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS image decoder boundary and native tests are present',
+    detail:
+      violations.length === 0
+        ? 'decode routing, main-thread execution, immutable errors/results, bridge limits, and six native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }

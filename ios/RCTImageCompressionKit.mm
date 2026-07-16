@@ -1,5 +1,7 @@
 #import "RCTImageCompressionKit.h"
+#import "RCTImageCompressionImageDecoder.h"
 #import "RCTImageCompressionInput.h"
+#import "RCTImageCompressionIOSCapabilities.h"
 #import "RCTImageCompressionRequest.h"
 
 #import <ImageIO/ImageIO.h>
@@ -10,170 +12,6 @@
 
 static NSString *const RCTImageCompressionKitEncodeFailedCode = @"ERR_ENCODE_FAILED";
 static NSString *const RCTImageCompressionKitNativeOperationFailedCode = @"ERR_NATIVE_OPERATION_FAILED";
-
-static NSArray<NSString *> *RCTImageCompressionKitFormats(void)
-{
-  return @[
-    RCTImageCompressionKitJpegFormat,
-    RCTImageCompressionKitPngFormat,
-    RCTImageCompressionKitWebPFormat,
-    RCTImageCompressionKitHeicFormat,
-    RCTImageCompressionKitHeifFormat,
-    RCTImageCompressionKitAvifFormat,
-    RCTImageCompressionKitGifFormat
-  ];
-}
-
-static BOOL RCTImageCompressionKitCanEncodeWebP(void);
-static BOOL RCTImageCompressionKitCanDecodeAVIF(void);
-
-static NSDictionary *RCTImageCompressionKitFormatCapability(
-  NSString *format,
-  BOOL input,
-  BOOL output,
-  BOOL supportsAlpha,
-  BOOL supportsAnimation,
-  NSArray<NSString *> *notes
-) {
-  return @{
-    @"format" : format,
-    @"input" : @(input),
-    @"output" : @(output),
-    @"supportsAlpha" : @(supportsAlpha),
-    @"supportsAnimation" : @(supportsAnimation),
-    @"notes" : notes
-  };
-}
-
-static NSDictionary *RCTImageCompressionKitIOSFormatCapability(NSString *format)
-{
-  if ([format isEqualToString:RCTImageCompressionKitJpegFormat]) {
-    return RCTImageCompressionKitFormatCapability(
-      format,
-      YES,
-      YES,
-      NO,
-      NO,
-      @[
-        @"iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.",
-        @"JPEG output supports quality-based compression and optional resize.",
-        @"Target-size compression supports maxBytes by adjusting JPEG quality.",
-        @"Metadata preserve copies source JPEG metadata and normalizes output orientation/dimensions for JPEG input to JPEG output.",
-        @"Metadata safe and strip re-encode without copying source metadata.",
-        @"Non-JPEG input or non-JPEG output rejects metadata preserve with ERR_NOT_IMPLEMENTED."
-      ]
-    );
-  }
-
-  if ([format isEqualToString:RCTImageCompressionKitPngFormat]) {
-    return RCTImageCompressionKitFormatCapability(
-      format,
-      YES,
-      YES,
-      YES,
-      NO,
-      @[
-        @"iOS MVP supports PNG input and PNG output through UIKit/ImageIO.",
-        @"PNG output preserves alpha where the processed image contains transparency.",
-        @"PNG output ignores quality and does not support target-size maxBytes."
-      ]
-    );
-  }
-
-  if ([format isEqualToString:RCTImageCompressionKitGifFormat]) {
-    return RCTImageCompressionKitFormatCapability(
-      format,
-      YES,
-      NO,
-      YES,
-      NO,
-      @[
-        @"iOS MVP decodes GIF input as a static first frame through ImageIO.",
-        @"GIF input can be re-encoded to JPEG or PNG output without copying source metadata.",
-        @"Animated GIF preservation and GIF output are not implemented."
-      ]
-    );
-  }
-
-  if ([format isEqualToString:RCTImageCompressionKitWebPFormat]) {
-    BOOL canEncodeWebP = RCTImageCompressionKitCanEncodeWebP();
-    return RCTImageCompressionKitFormatCapability(
-      format,
-      YES,
-      canEncodeWebP,
-      YES,
-      NO,
-      @[
-        @"iOS MVP decodes WebP input as a static first frame through ImageIO.",
-        canEncodeWebP
-          ? @"WebP input can be re-encoded to JPEG, PNG, or WebP output without copying source metadata."
-          : @"WebP input can be re-encoded to JPEG or PNG output without copying source metadata.",
-        canEncodeWebP
-          ? @"WebP output uses ImageIO CGImageDestination when the runtime advertises a WebP destination type."
-          : @"This runtime does not advertise ImageIO WebP destination encoding support.",
-        @"Runtime-available WebP output supports target-size maxBytes by adjusting WebP quality.",
-        @"Animated WebP preservation is not implemented."
-      ]
-    );
-  }
-
-  if ([format isEqualToString:RCTImageCompressionKitHeicFormat] || [format isEqualToString:RCTImageCompressionKitHeifFormat]) {
-    BOOL canEncodeWebP = RCTImageCompressionKitCanEncodeWebP();
-    NSString *formatLabel = [format uppercaseString];
-    return RCTImageCompressionKitFormatCapability(
-      format,
-      YES,
-      NO,
-      YES,
-      NO,
-      @[
-        [NSString stringWithFormat:@"iOS MVP decodes %@ input as a static image through ImageIO.", formatLabel],
-        [NSString stringWithFormat:@"%@ input can be re-encoded to JPEG or PNG output without copying source metadata.", formatLabel],
-        canEncodeWebP
-          ? [NSString stringWithFormat:@"%@ input can also be re-encoded to runtime-available WebP output.", formatLabel]
-          : @"WebP output still requires runtime ImageIO WebP destination support.",
-        [NSString stringWithFormat:@"%@ output is not implemented.", formatLabel]
-      ]
-    );
-  }
-
-  if ([format isEqualToString:RCTImageCompressionKitAvifFormat]) {
-    BOOL canDecodeAVIF = RCTImageCompressionKitCanDecodeAVIF();
-    BOOL canEncodeWebP = RCTImageCompressionKitCanEncodeWebP();
-    return RCTImageCompressionKitFormatCapability(
-      format,
-      canDecodeAVIF,
-      NO,
-      canDecodeAVIF,
-      NO,
-      @[
-        canDecodeAVIF
-          ? @"This runtime advertises ImageIO AVIF source support, so iOS MVP decodes AVIF input as a static image through ImageIO."
-          : @"This runtime does not advertise ImageIO AVIF source support, so AVIF input rejects with ERR_UNSUPPORTED_FORMAT.",
-        canDecodeAVIF
-          ? @"AVIF input can be re-encoded to JPEG or PNG output without copying source metadata."
-          : @"Call getImageCompressionCapabilities() before accepting AVIF input on iOS.",
-        canDecodeAVIF && canEncodeWebP
-          ? @"AVIF input can also be re-encoded to runtime-available WebP output."
-          : @"WebP output still requires runtime ImageIO WebP destination support.",
-        @"Animated AVIF preservation is not implemented.",
-        @"AVIF output is not implemented.",
-        @"AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED.",
-        @"Future iOS AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.",
-        @"metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
-      ]
-    );
-  }
-
-  return RCTImageCompressionKitFormatCapability(
-    format,
-    NO,
-    NO,
-    NO,
-    NO,
-    @[@"iOS MVP supports JPEG, PNG, static GIF, static WebP, static HEIC, static HEIF, and runtime-available static AVIF input with JPEG, PNG, or runtime ImageIO-backed WebP output only."]
-  );
-}
 
 static void RCTImageCompressionKitReject(
   RCTPromiseRejectBlock reject,
@@ -224,36 +62,6 @@ static BOOL RCTImageCompressionKitCanDecodeAVIF(void)
     }
   }
   return NO;
-}
-
-static UIImage *RCTImageCompressionKitDecodeImage(RCTImageCompressionInputInspection *input)
-{
-  if (!input.shouldDecodeFirstFrame) {
-    return [UIImage imageWithData:input.source.data];
-  }
-
-  CGImageSourceRef imageSource = CGImageSourceCreateWithData(
-    (__bridge CFDataRef)input.source.data,
-    nil
-  );
-  if (imageSource == nil) {
-    return nil;
-  }
-
-  if (CGImageSourceGetCount(imageSource) == 0) {
-    CFRelease(imageSource);
-    return nil;
-  }
-
-  CGImageRef firstFrame = CGImageSourceCreateImageAtIndex(imageSource, 0, nil);
-  CFRelease(imageSource);
-  if (firstFrame == nil) {
-    return nil;
-  }
-
-  UIImage *image = [UIImage imageWithCGImage:firstFrame scale:1.0 orientation:UIImageOrientationUp];
-  CGImageRelease(firstFrame);
-  return image;
 }
 
 static CGFloat RCTImageCompressionKitDimension(CGFloat value)
@@ -701,8 +509,6 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     }
     RCTImageCompressionKitSmokeLog(@"options-validated");
 
-    NSString *outputFormat = request.outputFormat;
-
     RCTImageCompressionInputError *inputError = nil;
     RCTImageCompressionInputInspection *input = [[RCTImageCompressionInputLoader defaultLoader]
       loadSourceURI:request.sourceURI
@@ -730,102 +536,78 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       );
       return;
     }
-
     NSDictionary *jpegSourceProperties = canPreserveJpegMetadata
       ? RCTImageCompressionKitSourceImageProperties(input.source.data)
       : nil;
-
-    __block UIImage *sourceImage = nil;
+    RCTImageCompressionKitSmokeLog(@"image-work-start");
+    RCTImageCompressionImageDecodeError *decodeError = nil;
+    RCTImageCompressionDecodedImage *decodedImage = [[RCTImageCompressionImageDecoder defaultDecoder]
+      decodeInput:input
+      error:&decodeError
+    ];
+    if (decodedImage == nil) {
+      RCTImageCompressionKitSmokeLog(@"image-work-finished");
+      RCTImageCompressionKitReject(reject, decodeError.code, decodeError.message, decodeError.underlyingError);
+      return;
+    }
+    UIImage *sourceImage = decodedImage.image;
     __block UIImage *processedImage = nil;
     __block NSData *outputData = nil;
-    RCTImageCompressionKitSmokeLog(@"image-work-start");
     RCTImageCompressionKitRunImageWork(^{
-      sourceImage = RCTImageCompressionKitDecodeImage(input);
-      if (sourceImage == nil || sourceImage.size.width <= 0 || sourceImage.size.height <= 0) {
-        return;
-      }
-
       processedImage = RCTImageCompressionKitRenderImage(sourceImage, request.resizeOptions, request.outputIsJpeg);
       if (request.outputIsPng) {
         outputData = RCTImageCompressionKitEncodePng(processedImage);
       } else if (request.outputIsWebP) {
         outputData = request.hasMaxBytes
-          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, outputFormat, request.quality, request.maxBytes, nil)
+          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, request.outputFormat, request.quality, request.maxBytes, nil)
           : RCTImageCompressionKitEncodeWebP(processedImage, request.quality);
       } else {
         outputData = request.hasMaxBytes
-          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, outputFormat, request.quality, request.maxBytes, jpegSourceProperties)
+          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, request.outputFormat, request.quality, request.maxBytes, jpegSourceProperties)
           : RCTImageCompressionKitEncodeJpeg(processedImage, request.quality, jpegSourceProperties);
       }
     });
     RCTImageCompressionKitSmokeLog(@"image-work-finished");
 
-    if (sourceImage == nil || sourceImage.size.width <= 0 || sourceImage.size.height <= 0) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitDecodeFailedCode,
-        @"iOS MVP could not decode the source image.",
-        nil
-      );
-      return;
-    }
-
     if (processedImage == nil || outputData == nil || outputData.length == 0) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitEncodeFailedCode,
-        [NSString stringWithFormat:@"iOS MVP could not encode %@ output.", [outputFormat uppercaseString]],
-        nil
-      );
+      NSString *message = [NSString stringWithFormat:@"iOS MVP could not encode %@ output.", request.outputFormat.uppercaseString];
+      RCTImageCompressionKitReject(reject, RCTImageCompressionKitEncodeFailedCode, message, nil);
       return;
     }
-    RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"%@-encoded", outputFormat]);
+    RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"%@-encoded", request.outputFormat]);
 
     NSError *outputPathError = nil;
-    NSString *outputPath = RCTImageCompressionKitOutputPath(outputFormat, &outputPathError);
+    NSString *outputPath = RCTImageCompressionKitOutputPath(request.outputFormat, &outputPathError);
     if (outputPath == nil) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitEncodeFailedCode,
-        @"iOS MVP could not create an output cache file.",
-        outputPathError
-      );
+      RCTImageCompressionKitReject(reject, RCTImageCompressionKitEncodeFailedCode,
+        @"iOS MVP could not create an output cache file.", outputPathError);
       return;
     }
     RCTImageCompressionKitSmokeLog(@"output-path-ready");
 
     NSError *writeError = nil;
     if (![outputData writeToFile:outputPath options:NSDataWritingAtomic error:&writeError]) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitEncodeFailedCode,
-        [NSString stringWithFormat:@"iOS MVP could not write %@ output.", [outputFormat uppercaseString]],
-        writeError
-      );
+      NSString *message = [NSString stringWithFormat:@"iOS MVP could not write %@ output.", request.outputFormat.uppercaseString];
+      RCTImageCompressionKitReject(reject, RCTImageCompressionKitEncodeFailedCode, message, writeError);
       return;
     }
     RCTImageCompressionKitSmokeLog(@"output-written");
 
-    resolve(RCTImageCompressionKitResult(outputPath, outputFormat, processedImage, outputData, input.source.data));
+    resolve(RCTImageCompressionKitResult(outputPath, request.outputFormat, processedImage, outputData, input.source.data));
     RCTImageCompressionKitSmokeLog(@"compress-resolved");
   } @catch (NSException *exception) {
-    RCTImageCompressionKitReject(
-      reject,
-      RCTImageCompressionKitNativeOperationFailedCode,
-      @"iOS MVP compression failed.",
-      nil
-    );
+    RCTImageCompressionKitReject(reject, RCTImageCompressionKitNativeOperationFailedCode,
+      @"iOS MVP compression failed.", nil);
   }
 }
 
 - (void)getImageCompressionCapabilities:(RCTPromiseResolveBlock)resolve
                                  reject:(RCTPromiseRejectBlock)reject
 {
-  NSMutableArray<NSDictionary *> *formats = [NSMutableArray array];
-
-  for (NSString *format in RCTImageCompressionKitFormats()) {
-    [formats addObject:RCTImageCompressionKitIOSFormatCapability(format)];
-  }
+  NSArray<NSDictionary *> *formats = RCTImageCompressionIOSFormatCapabilities(
+    RCTImageCompressionKitCanEncodeWebP(),
+    RCTImageCompressionKitCanDecodeAVIF()
+  );
 
   resolve(@{
     @"platform" : @"ios",
