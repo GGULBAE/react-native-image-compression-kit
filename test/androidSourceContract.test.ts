@@ -21,6 +21,18 @@ function kotlinTestNames(filePath: string): string[] {
   );
 }
 
+function functionLineCount(
+  source: string,
+  signature: string,
+  nextSignature: string
+): number {
+  const start = source.indexOf(signature);
+  const end = source.indexOf(nextSignature, start);
+  expect(start, signature).toBeGreaterThanOrEqual(0);
+  expect(end, nextSignature).toBeGreaterThan(start);
+  return source.slice(start, end).split(/\r?\n/).length;
+}
+
 function sha256(bytes: Buffer): string {
   return createHash('sha256').update(bytes).digest('hex');
 }
@@ -82,6 +94,9 @@ describe('Android source contract', () => {
     const packageSource = readText(
       'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt'
     );
+    const requestSource = readText(
+      'android/src/main/java/com/imagecompressionkit/AndroidCompressionRequest.kt'
+    );
 
     expect(moduleSource).toMatch(
       /class ImageCompressionKitModule\([\s\S]*\)\s*:\s*NativeImageCompressionKitSpec\(reactContext\)/
@@ -91,6 +106,26 @@ describe('Android source contract', () => {
     expect(packageSource).toContain('class ImageCompressionKitPackage : BaseReactPackage()');
     expect(packageSource).toContain('ImageCompressionKitModule(reactContext)');
     expect(packageSource).toContain('ImageCompressionKitModule.NAME');
+    expect(moduleSource).toContain(
+      'AndroidCompressionRequestParser.parse(options)'
+    );
+    expect(moduleSource.split(/\r?\n/).length).toBeLessThanOrEqual(1_000);
+    expect(
+      functionLineCount(
+        moduleSource,
+        'override fun compressImage',
+        'override fun getImageCompressionCapabilities'
+      )
+    ).toBeLessThanOrEqual(220);
+    expect(moduleSource).not.toMatch(
+      /options\.(?:hasKey|isNull|getMap|getString|getDouble)\(/
+    );
+    expect(requestSource).toContain(
+      'internal data class AndroidCompressionRequest('
+    );
+    expect(requestSource).toContain(
+      'internal object AndroidCompressionRequestParser'
+    );
   });
 
   it('keeps Gradle, Codegen, and executable Android commands aligned', () => {
@@ -122,6 +157,15 @@ describe('Android source contract', () => {
 
   it('delegates Android behavior to Kotlin unit and instrumentation suites', () => {
     const authorities = [
+      {
+        file: 'android/src/test/java/com/imagecompressionkit/AndroidCompressionRequestParserTest.kt',
+        minimum: 5,
+        required: [
+          'parsesDefaultsIntoImmutableTypedRequest',
+          'rejectsInvalidValuesWithStableErrorContracts',
+          'mapsMalformedReadableMapTypesToStableNativeFailure',
+        ],
+      },
       {
         file: 'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
         minimum: 20,

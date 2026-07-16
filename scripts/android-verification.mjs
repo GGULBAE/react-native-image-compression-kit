@@ -37,6 +37,7 @@ const REQUIRED_FILES = [
   '.github/dependabot.yml',
   'src/NativeImageCompressionKit.ts',
   'android/build.gradle',
+  'android/src/main/java/com/imagecompressionkit/AndroidCompressionRequest.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputHelper.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidAvifOutputPrototype.kt',
   'android/src/main/java/com/imagecompressionkit/JpegExifMetadata.kt',
@@ -45,6 +46,7 @@ const REQUIRED_FILES = [
   'android/src/main/java/com/imagecompressionkit/ImageCompressionKitPackage.kt',
   'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputHelperTest.kt',
+  'android/src/test/java/com/imagecompressionkit/AndroidCompressionRequestParserTest.kt',
   'android/src/test/java/com/imagecompressionkit/AndroidAvifOutputPrototypeTest.kt',
   'android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt',
   'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
@@ -408,6 +410,9 @@ function checkAndroidGradleConfig() {
 }
 
 function checkAndroidRuntimeAuthorities() {
+  const requestContents = readText(
+    'android/src/main/java/com/imagecompressionkit/AndroidCompressionRequest.kt'
+  );
   const moduleContents = readText(
     'android/src/main/java/com/imagecompressionkit/ImageCompressionKitModule.kt'
   );
@@ -416,6 +421,15 @@ function checkAndroidRuntimeAuthorities() {
   );
   const packageJson = readJson('package.json');
   const testAuthorities = [
+    {
+      file: 'android/src/test/java/com/imagecompressionkit/AndroidCompressionRequestParserTest.kt',
+      minimum: 5,
+      required: [
+        'parsesDefaultsIntoImmutableTypedRequest',
+        'rejectsInvalidValuesWithStableErrorContracts',
+        'mapsMalformedReadableMapTypesToStableNativeFailure',
+      ],
+    },
     {
       file: 'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
       minimum: 20,
@@ -478,6 +492,34 @@ function checkAndroidRuntimeAuthorities() {
     ];
   });
   const structureChecks = [
+    {
+      ok: requestContents.includes(
+        'internal data class AndroidCompressionRequest('
+      ),
+      name: 'typed Android compression request',
+    },
+    {
+      ok: requestContents.includes(
+        'internal object AndroidCompressionRequestParser'
+      ),
+      name: 'Android request parser boundary',
+    },
+    {
+      ok: moduleContents.includes(
+        'AndroidCompressionRequestParser.parse(options)'
+      ),
+      name: 'module request parser delegation',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 1000,
+      name: 'module source size boundary',
+    },
+    {
+      ok: !/options\.(?:hasKey|isNull|getMap|getString|getDouble)\(/u.test(
+        moduleContents
+      ),
+      name: 'ReadableMap access isolated to request parser',
+    },
     {
       ok: /class ImageCompressionKitModule\([\s\S]*\)\s*:\s*NativeImageCompressionKitSpec\(reactContext\)/u.test(
         moduleContents

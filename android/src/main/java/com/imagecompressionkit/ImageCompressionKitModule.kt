@@ -29,129 +29,23 @@ class ImageCompressionKitModule(
 
   override fun compressImage(options: ReadableMap, promise: Promise) {
     try {
-      val source = readMap(options, "source")
-      val output = readMap(options, "output")
-
-      if (source == null || output == null) {
+      val request = try {
+        AndroidCompressionRequestParser.parse(options)
+      } catch (error: AndroidCompressionRequestException) {
         reject(
           promise,
-          ERR_INVALID_OPTIONS,
-          "Compression options must include source and output objects."
-        )
-        return
-      }
-
-      val resize = try {
-        readResizeOptions(readMap(options, "resize"))
-      } catch (error: InvalidOptionsException) {
-        reject(
-          promise,
-          ERR_INVALID_OPTIONS,
-          error.message ?: "Compression resize options are invalid.",
+          error.code,
+          error.message ?: "Android MVP compression failed.",
           error
         )
         return
       }
-
-      val outputFormatValue = try {
-        readOutputFormatValue(output)
-      } catch (error: InvalidOptionsException) {
-        reject(
-          promise,
-          ERR_INVALID_OPTIONS,
-          error.message ?: "Compression output.format is invalid.",
-          error
-        )
-        return
-      }
-      val outputFormat = ImageCompressionOutput.fromValue(outputFormatValue)
-
-      if (
-        outputFormat == null &&
-        !ImageCompressionOutput.isAvifOutputFormat(outputFormatValue)
-      ) {
-        reject(
-          promise,
-          ERR_NOT_IMPLEMENTED,
-          ImageCompressionOutput.UNSUPPORTED_OUTPUT_FORMAT_MESSAGE
-        )
-        return
-      }
-
-      val metadataPolicy = try {
-        readMetadataPolicy(options)
-      } catch (error: InvalidOptionsException) {
-        reject(
-          promise,
-          ERR_INVALID_OPTIONS,
-          error.message ?: "Compression metadata policy is invalid.",
-          error
-        )
-        return
-      }
-
-      val maxBytes = try {
-        readMaxBytes(output)
-      } catch (error: InvalidOptionsException) {
-        reject(
-          promise,
-          ERR_INVALID_OPTIONS,
-          error.message ?: "Compression output.maxBytes is invalid.",
-          error
-        )
-        return
-      }
-
-      if (outputFormat == null) {
-        val avifScaffold = AndroidAvifOutputPrototype.createProductionWiringScaffold(
-          metadataPolicy = metadataPolicy.value,
-          maxBytesRequested = maxBytes != null
-        )
-        reject(
-          promise,
-          ERR_NOT_IMPLEMENTED,
-          avifScaffold.notImplementedMessage
-        )
-        return
-      }
-
-      val maxBytesValidationError = ImageCompressionOutput.maxBytesValidationError(
-        outputFormat,
-        maxBytes
-      )
-      if (maxBytesValidationError != null) {
-        reject(
-          promise,
-          ERR_INVALID_OPTIONS,
-          maxBytesValidationError
-        )
-        return
-      }
-
-      val quality = readQuality(output)
-      val uri = if (hasValue(source, "uri")) {
-        source.getString("uri")
-      } else {
-        null
-      }
-      if (uri.isNullOrBlank()) {
-        reject(
-          promise,
-          ERR_INVALID_OPTIONS,
-          "Compression source.uri must be a non-empty string."
-        )
-        return
-      }
-
-      val inputSource = inputSourceFromUri(uri)
-      if (inputSource == null) {
-        reject(
-          promise,
-          ERR_UNSUPPORTED_SOURCE,
-          "Android MVP supports file:// and content:// image URIs only."
-        )
-        return
-      }
+      val inputSource = request.source
+      val resize = request.resize
+      val outputFormat = request.outputFormat
+      val quality = request.quality
+      val maxBytes = request.maxBytes
+      val metadataPolicy = request.metadataPolicy
 
       val originalByteSize = try {
         readOriginalByteSize(inputSource)
@@ -369,161 +263,9 @@ class ImageCompressionKitModule(
       }
     }
 
-  private fun hasValue(map: ReadableMap, key: String): Boolean =
-    map.hasKey(key) && !map.isNull(key)
-
-  private fun readMap(map: ReadableMap, key: String): ReadableMap? =
-    if (hasValue(map, key)) {
-      map.getMap(key)
-    } else {
-      null
-    }
-
-  private fun readQuality(output: ReadableMap): Int =
-    if (hasValue(output, "quality")) {
-      output.getDouble("quality").toInt().coerceIn(MIN_QUALITY, MAX_QUALITY)
-    } else {
-      DEFAULT_QUALITY
-    }
-
-  private fun readOutputFormatValue(output: ReadableMap): String? {
-    val value = if (hasValue(output, "format")) {
-      try {
-        output.getString("format")
-      } catch (error: Exception) {
-        throw InvalidOptionsException(
-          "Compression output.format must be one of: jpeg, png, webp, heic, heif, avif.",
-          error
-        )
-      }
-    } else {
-      throw InvalidOptionsException(
-        "Compression output.format must be one of: jpeg, png, webp, heic, heif, avif."
-      )
-    }
-
-    return value
-  }
-
-  private fun readMetadataPolicy(options: ReadableMap): MetadataPolicy {
-    val value = if (hasValue(options, "metadata")) {
-      try {
-        options.getString("metadata")
-      } catch (error: Exception) {
-        throw InvalidOptionsException(
-          "Compression metadata must be one of: preserve, safe, strip.",
-          error
-        )
-      }
-    } else {
-      METADATA_POLICY_SAFE
-    }
-
-    return when (value) {
-      METADATA_POLICY_SAFE -> MetadataPolicy.SAFE
-      METADATA_POLICY_STRIP -> MetadataPolicy.STRIP
-      METADATA_POLICY_PRESERVE -> MetadataPolicy.PRESERVE
-      else -> throw InvalidOptionsException(
-        "Compression metadata must be one of: preserve, safe, strip."
-      )
-    }
-  }
-
-  private fun readMaxBytes(output: ReadableMap): Long? {
-    if (!hasValue(output, "maxBytes")) {
-      return null
-    }
-
-    val value = try {
-      output.getDouble("maxBytes")
-    } catch (error: Exception) {
-      throw InvalidOptionsException("Compression output.maxBytes must be a positive integer.", error)
-    }
-
-    if (
-      value.isNaN() ||
-      value.isInfinite() ||
-      value <= 0.0 ||
-      value > MAX_SAFE_INTEGER ||
-      value.toLong().toDouble() != value
-    ) {
-      throw InvalidOptionsException("Compression output.maxBytes must be a positive integer.")
-    }
-
-    return value.toLong()
-  }
-
-  private fun readResizeOptions(resize: ReadableMap?): ResizeOptions? {
-    if (resize == null) {
-      return null
-    }
-
-    val maxWidth = readOptionalPositiveInteger(resize, "maxWidth")
-    val maxHeight = readOptionalPositiveInteger(resize, "maxHeight")
-
-    if (maxWidth == null && maxHeight == null) {
-      throw InvalidOptionsException(
-        "Compression resize must include maxWidth, maxHeight, or both."
-      )
-    }
-
-    val modeValue = if (hasValue(resize, "mode")) {
-      resize.getString("mode")
-    } else {
-      RESIZE_MODE_CONTAIN
-    }
-
-    val mode = when (modeValue) {
-      RESIZE_MODE_CONTAIN -> ResizeMode.CONTAIN
-      RESIZE_MODE_COVER -> ResizeMode.COVER
-      RESIZE_MODE_STRETCH -> ResizeMode.STRETCH
-      else -> throw InvalidOptionsException(
-        "Compression resize.mode must be one of: contain, cover, stretch."
-      )
-    }
-
-    return ResizeOptions(maxWidth = maxWidth, maxHeight = maxHeight, mode = mode)
-  }
-
-  private fun readOptionalPositiveInteger(map: ReadableMap, key: String): Int? {
-    if (!hasValue(map, key)) {
-      return null
-    }
-
-    val value = try {
-      map.getDouble(key)
-    } catch (error: Exception) {
-      throw InvalidOptionsException("Compression resize.$key must be a positive integer.", error)
-    }
-
-    if (
-      value.isNaN() ||
-      value.isInfinite() ||
-      value <= 0.0 ||
-      value.toInt().toDouble() != value
-    ) {
-      throw InvalidOptionsException("Compression resize.$key must be a positive integer.")
-    }
-
-    return value.toInt()
-  }
-
-  private fun inputSourceFromUri(uri: String): ImageInputSource? {
-    val parsed = Uri.parse(uri)
-
-    return when (parsed.scheme?.lowercase()) {
-      "file" -> {
-        val path = parsed.path ?: return null
-        ImageInputSource.FileSource(parsed, File(path))
-      }
-      "content" -> ImageInputSource.ContentSource(parsed)
-      else -> null
-    }
-  }
-
-  private fun readOriginalByteSize(inputSource: ImageInputSource): Long =
+  private fun readOriginalByteSize(inputSource: AndroidCompressionSource): Long =
     when (inputSource) {
-      is ImageInputSource.FileSource -> {
+      is AndroidCompressionSource.FileSource -> {
         val inputFile = inputSource.file
 
         if (!inputFile.exists() || !inputFile.isFile || !inputFile.canRead()) {
@@ -532,7 +274,7 @@ class ImageCompressionKitModule(
 
         inputFile.length()
       }
-      is ImageInputSource.ContentSource ->
+      is AndroidCompressionSource.ContentSource ->
         queryContentByteSize(inputSource.uri)
           ?: queryContentAssetLength(inputSource.uri)
           ?: countBytes(inputSource)
@@ -581,7 +323,7 @@ class ImageCompressionKitModule(
       null
     }
 
-  private fun countBytes(inputSource: ImageInputSource): Long =
+  private fun countBytes(inputSource: AndroidCompressionSource): Long =
     openInputStream(inputSource).use { inputStream ->
       val buffer = ByteArray(STREAM_BUFFER_SIZE)
       var totalBytes = 0L
@@ -595,7 +337,7 @@ class ImageCompressionKitModule(
       totalBytes
     }
 
-  private fun decodeBounds(inputSource: ImageInputSource): ImageBounds? {
+  private fun decodeBounds(inputSource: AndroidCompressionSource): ImageBounds? {
     val options = BitmapFactory.Options().apply {
       inJustDecodeBounds = true
     }
@@ -616,7 +358,7 @@ class ImageCompressionKitModule(
   }
 
   private fun decodeBitmap(
-    inputSource: ImageInputSource,
+    inputSource: AndroidCompressionSource,
     inputFormat: InputFormat
   ): Bitmap? =
     when {
@@ -625,12 +367,12 @@ class ImageCompressionKitModule(
       else -> decodeBitmapFactory(inputSource)
     }
 
-  private fun decodeBitmapFactory(inputSource: ImageInputSource): Bitmap? =
+  private fun decodeBitmapFactory(inputSource: AndroidCompressionSource): Bitmap? =
     openInputStream(inputSource).buffered().use { inputStream ->
       BitmapFactory.decodeStream(inputStream)
     }
 
-  private fun decodeHeicHeifBitmap(inputSource: ImageInputSource): Bitmap? =
+  private fun decodeHeicHeifBitmap(inputSource: AndroidCompressionSource): Bitmap? =
     when {
       Build.VERSION.SDK_INT >= Build.VERSION_CODES.P ->
         decodeHeicHeifBitmapWithImageDecoder(inputSource)
@@ -640,7 +382,7 @@ class ImageCompressionKitModule(
     }
 
   @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-  private fun decodeAvifBitmap(inputSource: ImageInputSource): Bitmap? =
+  private fun decodeAvifBitmap(inputSource: AndroidCompressionSource): Bitmap? =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
       decodeAvifBitmapWithImageDecoder(inputSource)
     } else {
@@ -648,7 +390,7 @@ class ImageCompressionKitModule(
     }
 
   @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-  private fun decodeAvifBitmapWithImageDecoder(inputSource: ImageInputSource): Bitmap? =
+  private fun decodeAvifBitmapWithImageDecoder(inputSource: AndroidCompressionSource): Bitmap? =
     try {
       ImageDecoder.decodeBitmap(createImageDecoderSource(inputSource)) { decoder, _, _ ->
         decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
@@ -658,7 +400,7 @@ class ImageCompressionKitModule(
     }
 
   @TargetApi(Build.VERSION_CODES.P)
-  private fun decodeHeicHeifBitmapWithImageDecoder(inputSource: ImageInputSource): Bitmap? =
+  private fun decodeHeicHeifBitmapWithImageDecoder(inputSource: AndroidCompressionSource): Bitmap? =
     try {
       ImageDecoder.decodeBitmap(createImageDecoderSource(inputSource)) { decoder, _, _ ->
         decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
@@ -668,17 +410,17 @@ class ImageCompressionKitModule(
     }
 
   @TargetApi(Build.VERSION_CODES.P)
-  private fun createImageDecoderSource(inputSource: ImageInputSource): ImageDecoder.Source =
+  private fun createImageDecoderSource(inputSource: AndroidCompressionSource): ImageDecoder.Source =
     when (inputSource) {
-      is ImageInputSource.FileSource -> ImageDecoder.createSource(inputSource.file)
-      is ImageInputSource.ContentSource ->
+      is AndroidCompressionSource.FileSource -> ImageDecoder.createSource(inputSource.file)
+      is AndroidCompressionSource.ContentSource ->
         ImageDecoder.createSource(reactContext.contentResolver, inputSource.uri)
     }
 
-  private fun readUnsupportedInputMimeTypeHint(inputSource: ImageInputSource): String? {
+  private fun readUnsupportedInputMimeTypeHint(inputSource: AndroidCompressionSource): String? {
     val contentMimeType = when (inputSource) {
-      is ImageInputSource.FileSource -> null
-      is ImageInputSource.ContentSource -> queryContentMimeType(inputSource.uri)
+      is AndroidCompressionSource.FileSource -> null
+      is AndroidCompressionSource.ContentSource -> queryContentMimeType(inputSource.uri)
     }
 
     InputFormat.fromMimeType(contentMimeType)?.let { inputFormat ->
@@ -689,8 +431,8 @@ class ImageCompressionKitModule(
     }
 
     val fileExtension = when (inputSource) {
-      is ImageInputSource.FileSource -> inputSource.file.extension
-      is ImageInputSource.ContentSource ->
+      is AndroidCompressionSource.FileSource -> inputSource.file.extension
+      is AndroidCompressionSource.ContentSource ->
         inputSource.uri.lastPathSegment?.substringAfterLast('.', "")
     }
 
@@ -703,10 +445,10 @@ class ImageCompressionKitModule(
     }
   }
 
-  private fun readInputFormatHint(inputSource: ImageInputSource): InputFormat? {
+  private fun readInputFormatHint(inputSource: AndroidCompressionSource): InputFormat? {
     val contentMimeType = when (inputSource) {
-      is ImageInputSource.FileSource -> null
-      is ImageInputSource.ContentSource -> queryContentMimeType(inputSource.uri)
+      is AndroidCompressionSource.FileSource -> null
+      is AndroidCompressionSource.ContentSource -> queryContentMimeType(inputSource.uri)
     }
 
     InputFormat.fromMimeType(contentMimeType)?.let { inputFormat ->
@@ -714,8 +456,8 @@ class ImageCompressionKitModule(
     }
 
     val fileExtension = when (inputSource) {
-      is ImageInputSource.FileSource -> inputSource.file.extension
-      is ImageInputSource.ContentSource ->
+      is AndroidCompressionSource.FileSource -> inputSource.file.extension
+      is AndroidCompressionSource.ContentSource ->
         inputSource.uri.lastPathSegment?.substringAfterLast('.', "")
     }
 
@@ -750,7 +492,7 @@ class ImageCompressionKitModule(
       null
     }
 
-  private fun readExifOrientation(inputSource: ImageInputSource): Int =
+  private fun readExifOrientation(inputSource: AndroidCompressionSource): Int =
     try {
       openInputStream(inputSource).buffered().use { inputStream ->
         ExifInterface(inputStream).getAttributeInt(
@@ -764,7 +506,7 @@ class ImageCompressionKitModule(
 
   private fun createCopiedExifMetadata(
     metadataPolicy: MetadataPolicy,
-    inputSource: ImageInputSource,
+    inputSource: AndroidCompressionSource,
     dimensions: ImageDimensions
   ): CopiedExifMetadata? {
     val exifTags = when (metadataPolicy) {
@@ -932,11 +674,11 @@ class ImageCompressionKitModule(
   private fun scaledDimension(value: Int, scale: Double): Int =
     (value.toDouble() * scale).roundToInt().coerceAtLeast(1)
 
-  private fun openInputStream(inputSource: ImageInputSource): InputStream =
+  private fun openInputStream(inputSource: AndroidCompressionSource): InputStream =
     try {
       when (inputSource) {
-        is ImageInputSource.FileSource -> FileInputStream(inputSource.file)
-        is ImageInputSource.ContentSource ->
+        is AndroidCompressionSource.FileSource -> FileInputStream(inputSource.file)
+        is AndroidCompressionSource.ContentSource ->
           reactContext.contentResolver.openInputStream(inputSource.uri)
             ?: throw SourceAccessException(
               "Android MVP could not open the source content URI."
@@ -997,24 +739,6 @@ class ImageCompressionKitModule(
     val width: Int,
     val height: Int
   )
-
-  private data class ResizeOptions(
-    val maxWidth: Int?,
-    val maxHeight: Int?,
-    val mode: ResizeMode
-  )
-
-  private enum class ResizeMode {
-    CONTAIN,
-    COVER,
-    STRETCH
-  }
-
-  private enum class MetadataPolicy(val value: String) {
-    PRESERVE("preserve"),
-    SAFE("safe"),
-    STRIP("strip")
-  }
 
   private enum class InputFormat(
     val mimeType: String,
@@ -1088,25 +812,7 @@ class ImageCompressionKitModule(
     }
   }
 
-  private sealed class ImageInputSource {
-    abstract val uri: Uri
-
-    data class FileSource(
-      override val uri: Uri,
-      val file: File
-    ) : ImageInputSource()
-
-    data class ContentSource(
-      override val uri: Uri
-    ) : ImageInputSource()
-  }
-
   private class SourceAccessException(
-    message: String,
-    cause: Throwable? = null
-  ) : Exception(message, cause)
-
-  private class InvalidOptionsException(
     message: String,
     cause: Throwable? = null
   ) : Exception(message, cause)
@@ -1118,26 +824,16 @@ class ImageCompressionKitModule(
 
   companion object {
     const val NAME = "ImageCompressionKit"
-    const val ERR_INVALID_OPTIONS = "ERR_INVALID_OPTIONS"
-    const val ERR_UNSUPPORTED_SOURCE = "ERR_UNSUPPORTED_SOURCE"
+    const val ERR_INVALID_OPTIONS = ANDROID_ERR_INVALID_OPTIONS
+    const val ERR_UNSUPPORTED_SOURCE = ANDROID_ERR_UNSUPPORTED_SOURCE
     const val ERR_UNSUPPORTED_FORMAT = "ERR_UNSUPPORTED_FORMAT"
-    const val ERR_NOT_IMPLEMENTED = "ERR_NOT_IMPLEMENTED"
+    const val ERR_NOT_IMPLEMENTED = ANDROID_ERR_NOT_IMPLEMENTED
     const val ERR_FILE_ACCESS = "ERR_FILE_ACCESS"
     const val ERR_DECODE_FAILED = "ERR_DECODE_FAILED"
     const val ERR_ENCODE_FAILED = "ERR_ENCODE_FAILED"
-    const val ERR_NATIVE_OPERATION_FAILED = "ERR_NATIVE_OPERATION_FAILED"
+    const val ERR_NATIVE_OPERATION_FAILED = ANDROID_ERR_NATIVE_OPERATION_FAILED
 
-    private const val DEFAULT_QUALITY = 80
-    private const val MIN_QUALITY = 0
-    private const val MAX_QUALITY = 100
-    private const val MAX_SAFE_INTEGER = 9007199254740991.0
     private const val STREAM_BUFFER_SIZE = 8 * 1024
-    private const val RESIZE_MODE_CONTAIN = "contain"
-    private const val RESIZE_MODE_COVER = "cover"
-    private const val RESIZE_MODE_STRETCH = "stretch"
-    private const val METADATA_POLICY_PRESERVE = "preserve"
-    private const val METADATA_POLICY_SAFE = "safe"
-    private const val METADATA_POLICY_STRIP = "strip"
     private const val DEFAULT_UNSUPPORTED_INPUT_FORMAT_MESSAGE =
       "Android MVP supports JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input only."
   }

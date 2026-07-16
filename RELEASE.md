@@ -12,8 +12,9 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 - Registry checked at: `2026-07-16`
 <!-- release-status:end -->
 
-- Scope: documentation information architecture, semantic status gates, and
-  repository verification contract decomposition
+- Scope: documentation information architecture, semantic status gates,
+  repository verification contract decomposition, and Android request parsing
+  boundary extraction
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -37,6 +38,11 @@ owned by Kotlin unit/instrumentation tests and the iOS host-app smoke gates;
 doctor checks their structure and presence without copying implementation
 sentences.
 
+The Android bridge now delegates `ReadableMap` parsing and validation to an
+immutable typed request boundary. Output selection, metadata, target-size,
+resize, and source URI validation retain their existing error codes and
+messages; decode, transform, metadata copy, and encode behavior are unchanged.
+
 ### Included
 
 - `package.json` as the package-version authority, with aligned
@@ -53,6 +59,8 @@ sentences.
   [authority matrix](docs/verification-architecture.md).
 - Android doctor checks based on module wiring, commands, structured fixture
   metadata, and executable native-test authorities.
+- Typed Android compression request parsing with table-driven Kotlin coverage
+  for defaults, boundaries, invalid values, and malformed bridge types.
 
 ### Not included
 
