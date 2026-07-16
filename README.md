@@ -1,1222 +1,262 @@
 <h1 align="center">React Native Image Compression Kit</h1>
 
+<!-- package-status:start -->
 <p align="center">
-  Compress any supported image. Return it in the format you choose.
+  Native-first image compression, resize, and format conversion for React Native.
 </p>
 
 <p align="center">
-  A React Native image compression MVP with Android broad-format support, iOS JPEG metadata preserve, iOS JPEG/PNG/GIF/WebP/HEIC/HEIF input, runtime-gated iOS AVIF input and WebP output support, and TypeScript exports.
-</p>
-
-<p align="center">
-  <img alt="Status: v0.2.61 candidate" src="https://img.shields.io/badge/Status-v0.2.61%20candidate-orange" />
-  <img alt="Platforms: Android MVP | iOS JPEG metadata preserve" src="https://img.shields.io/badge/Platforms-Android%20MVP%20%7C%20iOS%20JPEG%20metadata%20preserve-green" />
-  <img alt="React Native: Codegen ready" src="https://img.shields.io/badge/React%20Native-Codegen%20ready-61dafb" />
+  <img alt="Status: v0.2.62 candidate" src="https://img.shields.io/badge/Status-v0.2.62%20candidate-orange" />
+  <img alt="Platforms: Android and iOS" src="https://img.shields.io/badge/Platforms-Android%20%7C%20iOS-green" />
   <img alt="TypeScript: API available" src="https://img.shields.io/badge/TypeScript-API%20available-3178c6" />
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow" />
 </p>
 
-React Native Image Compression Kit is a native image compression and transcoding pipeline that loads any supported image format, compresses it, and returns it in a supported format selected by the developer.
-
-## Overview
-
-React Native image compression workflows are often split across format-specific or feature-specific modules. Compression, resizing, HEIC conversion, WebP handling, metadata policy, and platform capability checks can become separate decisions instead of one predictable pipeline.
-
-This project is designed to make compression the center of the API. It will combine detect, decode, auto-orient, resize, transcode, and encode steps behind one consistent React Native interface.
-
-Format conversion is treated as part of the compression result. Developers choose the supported output format they want, and the native pipeline handles the work needed to produce it.
-
-## Status
-
-Version `0.2.61` is the unpublished review artifact acquisition automation and canonical archive handoff candidate. It keeps npm `latest` at v0.2.55, keeps native behavior and the public API unchanged, acquires the exact v0.2.59 review and attestation ZIPs only from an explicitly selected successful `workflow_dispatch` run, validates their live GitHub identity and expiration state, and hands staged bytes to the v0.2.60 importer before atomically exposing canonical acquisition evidence.
-
-Version `0.2.60` was the previous unpublished release evidence review archive import and expiration-independent replay gate candidate. It retains the exact v0.2.59 review and attestation artifact ZIPs plus every extracted byte under `evidence/reviews/0.2.55/`, and makes their receipt, manifest, promotion rehearsal, GitHub signer identity, and byte-identical v0.2.55 target archive part of the default network-free regression gate.
-
-Version `0.2.59` was the previous unpublished release evidence policy review receipt and manual promotion rehearsal candidate. It binds the exact reviewed candidate digest and GitHub dispatch actor to immutable workflow execution identity, rehearses promotion only in a temporary complete archive set, and atomically emits a self-contained review bundle whose acquisition, candidate, diff, receipt, promotion, set, workflow, event, and archive bytes replay without network access. The committed policy and `evidence/npm` tree are never changed by the workflow.
-
-Version `0.2.58` was the previous unpublished release evidence policy candidate and reviewed promotion gate candidate. It derives one canonical policy candidate and stable committed-policy diff from a verified acquisition bundle without changing policy or archives, and permits archive promotion only when the exact candidate SHA-256, reviewer, review timestamp, explicit approval, and already code-reviewed committed policy all agree.
-
-Version `0.2.57` was the previous unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate. It requires an explicit repository/workflow/ref/source commit/run ID/version/tag trust tuple, downloads the two artifact ZIPs by immutable artifact ID, verifies their GitHub SHA-256 digests and expiration metadata, binds the matching GitHub attestation, and atomically emits canonical inputs that the existing offline importer consumes byte-for-byte.
-
-Version `0.2.56` was the previous unpublished release evidence archive import automation and multi-version regression gate candidate. It imports downloaded Registry Validation provenance/attestation artifacts plus explicit canonical GitHub metadata through a network-free CLI, verifies the complete temporary archive before one atomic rename, and makes both retained v0.2.50 and v0.2.55 archives part of the default offline regression gate.
-
-Version `0.2.55` was the previous npm `latest` Action Pin artifact GitHub OIDC attestation and offline signer verification release. It keeps native behavior and the public API unchanged while attesting each successful Action Pin Review `artifact-manifest.json`, retaining the Sigstore bundle and pinned GitHub trusted root separately, and cross-checking the signed repository/workflow/ref/source commit with the execution identity reproduced from the provenance artifact.
-
-Version `0.2.54` was the previous unpublished Action pin provenance execution identity and artifact manifest binding candidate. It bound every manual Action Pin Review report to its source repository/ref/head SHA, workflow identity, run ID/attempt, exact workflow definition, canonical Action lock, normalized dispatch event, and a complete evidence manifest that replays offline.
-
-Version `0.2.53` was the previous unpublished GitHub Action pin update provenance and manual review gate candidate. It resolved reviewed lightweight or annotated Action tags, compared trusted baseline and candidate locks, and retained an offline-replayable tag-to-commit report.
-
-Version `0.2.52` was the previous unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate. It pinned every remote workflow Action to a full commit SHA and added the network-free canonical workflow lock gate.
-
-Version `0.2.51` was the previous unpublished expiration-independent release evidence archive and offline replay gate candidate. It moved the validated v0.2.50 provenance and attestation evidence under repository ownership and added the complete network-free replay gate.
-
-Version `0.2.50` was the previous npm `latest` GitHub artifact attestation and offline identity verification release for `react-native-image-compression-kit`. It keeps native behavior, the public API, the registry report schema, and the existing four-file provenance bundle unchanged. The release attests the canonical `bundle-manifest.json` with GitHub Actions OIDC, preserves the attestation bundle and pinned trusted root separately, and verifies subject digest, repository, workflow, ref, source commit, issuer, predicate, hosted runner, and verified timestamps without network access.
-
-Version `0.2.49` was the previous unpublished Registry provenance bundle offline verification candidate. It atomically retained the exact tarball consumed by registry smoke with canonical report/stdout files and a checksum manifest, then verified the bundle without npm, GitHub, or other network access.
-
-Version `0.2.48` was the previous npm `latest` registry provenance and manual CI gate release for `react-native-image-compression-kit`. It keeps Android/iOS runtime behavior and the public API unchanged. It extends the post-publish registry smoke with exact version/dist-tag agreement, real tarball README status, integrity/shasum, required/forbidden package contents, and clean consumer install/typecheck evidence in one stable canonical JSON report.
-
-Version `0.2.47` was the previous npm `latest` iOS PASS replay automation gate release for `react-native-image-compression-kit`. It keeps Android and iOS runtime behavior unchanged, keeps AVIF output disabled, and turns the committed PASS replay fixture into an explicit local and CI quality gate. `validateIOSSmokePassPayload()` now enforces the exact capability-selected field order, `platform: 'ios'`, positive safe-integer `*ResultBytes` values, boolean WebP-output/AVIF-input flags, and duplicate-free capability-consistent unsupported format arrays. `validateIOSSmokePassReplayFixture()` applies that semantic contract in addition to the existing fixture schema, provenance, source-line, and SHA-256 checks. `scripts/refresh-ios-smoke-pass-replay.mjs` retains refresh and text-mode check behavior, adds source-log-free `--audit`, and emits stable machine-readable `schemaVersion`, `mode`, `status`, `artifactPath`, `differences`, and `error` fields through `--check --json` and `--audit --json`. Check and audit paths remain read-only and network-free. `pnpm verify` and the iOS Validation workflow now run the standalone audit, while Vitest pins payload-invalid, current, stale, noncanonical, missing, malformed, schema-invalid, flag-conflict, stdout/stderr, and no-write contracts.
-
-The committed replay artifact keeps workflow `iOS Validation`, [run 28928015548](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28928015548), head SHA `c6981c3b6b06e5e6e34f42147a94e4299a0f82b2`, and source-line SHA-256 `c20c9e72f2b9f3159d7db56c7c811a3ecb81555a9d9e90350d2e155e6f832dc6`. When it becomes stale, download or export a newer successful iOS Validation job log separately, then run the offline refresh command below. The CLI performs no GitHub or other network requests.
-
-```bash
-pnpm fixtures:ios-pass-replay -- \
-  --log-file /path/to/ios-validation.log \
-  --workflow-name "iOS Validation" \
-  --run-id 28928015548 \
-  --run-url https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28928015548 \
-  --head-sha c6981c3b6b06e5e6e34f42147a94e4299a0f82b2
-```
-
-The command extracts exactly one complete PASS source line, derives its job, step, and timestamp, recalculates SHA-256 over the exact UTF-8 line without a trailing newline, and regenerates the structured JSON fields before the documented local verification gates are run.
-
-Use the same local log and provenance to verify the committed artifact without modifying it:
-
-```bash
-pnpm fixtures:ios-pass-replay:check -- \
-  --log-file /path/to/ios-validation.log \
-  --workflow-name "iOS Validation" \
-  --run-id 28928015548 \
-  --run-url https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/28928015548 \
-  --head-sha c6981c3b6b06e5e6e34f42147a94e4299a0f82b2
-```
-
-Append `--json` to the check command when automation needs the stable report schema instead of human-readable text. The report fields are ordered as `schemaVersion`, `mode`, `status`, `artifactPath`, `differences`, and `error`; `status` is `current`, `stale`, or `invalid`. A current report exits `0`, while stale and invalid reports exit `1` and still write exactly one JSON object to stdout with no human prefix.
-
-Audit the committed artifact without retaining or passing the original Actions log:
-
-```bash
-pnpm fixtures:ios-pass-replay:audit -- --json
-```
-
-Audit mode validates canonical JSON, fixture schema, provenance fields, the exact source-line SHA-256, and the capability-driven PASS payload contract owned by `scripts/ios-smoke-contract.mjs` and `scripts/ios-smoke-pass-replay-fixture.mjs`. Check additionally compares the artifact with a supplied local log and provenance. Check and audit modes perform no writes; refresh, check, and audit perform no GitHub or other network requests.
-
-Registry verification confirmed both npm `version` and `dist-tags.latest` at `0.2.55`, published at `2026-07-14T12:41:56.173Z`. The real 51-file, 75,022-byte registry tarball retained the registry-independent `Status: v0.2.55 release` package README, matched integrity `sha512-942yS0LCt6Che8zP+ZGNCl7AKA/h4oMEYO4TT1u2F+JIDM0vC3X16y8zStHQE4gIVmYscH8h37fOw/c5RuJbpw==` and shasum `525221309be1eda6fc2fdd80b5e2b9da13faf645`, contained no guarded stale-status snippets or development-only files, and passed clean consumer installation and public API typechecking. Two earlier CLI calls stopped at the pre-write EOTP authentication gate; the npm-only promotion then used one successful `npm publish --tag latest` registry write. No manual dist-tag change, git tag, or GitHub Release was created.
-
-Run the registry smoke with `--artifact-dir` to atomically preserve the exact validated tarball instead of downloading it again in the workflow:
-
-```bash
-pnpm smoke:registry -- \
-  --version 0.2.55 \
-  --expect-tag latest \
-  --json \
-  --artifact-dir registry-validation
-```
-
-The fixed bundle contains `registry-provenance.json`, byte-identical `stdout.json`, `package.tgz`, and canonical `bundle-manifest.json`. The manifest pins ordered `schemaVersion`, `status`, package/version/tag identity, report/stdout SHA-256, tarball SHA-512 integrity and SHA-1 shasum, file count, packed size, unpacked size, and error fields. Bundle creation uses a sibling temporary directory plus atomic rename, so a write or rename failure does not expose an incomplete artifact.
-
-After downloading a Registry Validation artifact, verify it without npm, GitHub, or any other network access:
-
-```bash
-pnpm verify:registry-provenance -- \
-  --artifact-dir /path/to/registry-validation \
-  --expect-package react-native-image-compression-kit \
-  --expect-version 0.2.55 \
-  --expect-tag latest \
-  --json
-```
-
-The offline verifier requires the exact four-file bundle, canonical manifest/report bytes and field ordering, report/stdout byte equality, caller-supplied package/version/tag expectations, all declared digests, actual gzip/tar sizes, tarball `package.json`, required/forbidden package files, and real README release status. It parses the archive in memory, rejects traversal, links, duplicate files, unsupported entries, and paths outside `package/`, and never extracts tarball contents. `--report-file <path>` atomically writes the exact canonical verifier JSON emitted to stdout. The manual Registry Validation workflow builds this bundle from the same tarball used by registry smoke, runs the offline verifier before upload, and records bundle-manifest, report, stdout, and tarball checksums in the GitHub Step Summary. Successful [Registry Validation run 29182554246](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29182554246) on commit `d233529ddb3804b9fff05832bc4b327348f0fc51` uploaded the fixed four-file v0.2.48 bundle with GitHub artifact digest `sha256:9039f1c127ce2f743d17a80e4469972a65343cabf91f3b5074808294ac670fa3`; the downloaded bundle passed all offline checks without publishing a package.
-
-The same manual workflow uses `actions/attest@v4` to attest the canonical manifest and uploads a separate attestation artifact. After downloading both workflow artifacts, verify the GitHub identity and subject digest offline:
-
-```bash
-pnpm verify:registry-attestation -- \
-  --manifest /path/to/registry-validation/bundle-manifest.json \
-  --attestation-bundle /path/to/registry-attestation/attestation.jsonl \
-  --trusted-root /path/to/registry-attestation/trusted-root.jsonl \
-  --expect-repository GGULBAE/react-native-image-compression-kit \
-  --expect-workflow GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml \
-  --expect-ref refs/heads/master \
-  --expect-head-sha <workflow-head-sha> \
-  --json \
-  --report-file /path/to/registry-attestation/attestation-verification.json
-```
-
-The attestation verifier calls the official GitHub CLI with `--bundle` and `--custom-trusted-root` while network proxies are forced to a closed local endpoint. It pins the trusted-root bytes to SHA-256 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`, requires GitHub's OIDC issuer and SLSA v1 predicate, rejects self-hosted runners, and then independently validates the canonical verifier JSON. Its fixed report fields are `schemaVersion`, `status`, `subject`, `subjectSha256`, `repository`, `signerWorkflow`, `sourceRef`, `sourceDigest`, `oidcIssuer`, `predicateType`, `verifiedTimestamps`, and `error`; verified timestamps are normalized to UTC ISO strings so report bytes are timezone-independent, and `--report-file` atomically writes exactly the stdout bytes. The existing `registry-provenance-<version>` artifact remains exactly four files. The separate `registry-provenance-attestation-<version>` artifact contains `attestation.jsonl`, `trusted-root.jsonl`, and `attestation-verification.json` so the evidence can be replayed without npm, GitHub, Sigstore, or any other network service.
-
-Successful [Registry Validation run 29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614) on release-ready commit `194e9387406f71763bc0d617ece0d7d58e235e29` attested manifest SHA-256 `45677e0204b46a3f388b5cdb5ac7cfa83269dd03479854c25d7ef203582fe2af` as [attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248). The exact four-file `registry-provenance-0.2.55` artifact has GitHub digest `sha256:7463b03ff6294b5017d9b3cad05d4c3ea87b542398a5cb70f503cea148dca826`; the separate three-file `registry-provenance-attestation-0.2.55` artifact has GitHub digest `sha256:545c63da880d9d91f9ade1cf40ce36a366634c11ff524b87579e6b0fd6d8e28f`. Downloaded offline replay reproduced the workflow report byte-for-byte at SHA-256 `095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4` under both UTC and Asia/Seoul, while the Step Summary recorded successful provenance, online attestation, downloaded-bundle offline attestation, and pinned-root checks.
-
-### Expiration-independent release evidence
-
-The v0.2.55 publication commits its downloaded workflow evidence at `evidence/npm/0.2.55/`; the historical v0.2.50 archive remains replayable at `evidence/npm/0.2.50/`. Each repository-owned archive contains one canonical `release-evidence-index.json`, exactly four files in `provenance/`, and exactly three files in `attestation/`. The v0.2.55 index pins Registry Validation run `29333540614`, both artifact IDs and GitHub archive digests, attestation `35257248`, source commit `194e9387406f71763bc0d617ece0d7d58e235e29`, artifact expiration `2026-10-12T12:42:48Z`, every retained file size/SHA-256, and aggregate evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`.
-
-Replay the entire retained trust chain with one network-free command:
-
-```bash
-pnpm verify:release-evidence -- --version 0.2.55
-```
-
-The verifier requires the exact archive layout and canonical index bytes, matches the index against the committed version policy, recomputes all seven file digests and the aggregate evidence digest, runs the existing tarball provenance verifier, and invokes GitHub CLI attestation verification with the retained bundle and pinned trusted root while all network proxies point to a closed local endpoint. It then requires the regenerated attestation report to match the retained `attestation-verification.json` byte-for-byte and checks package/version/tag, repository, workflow, ref, source commit, subject digest, OIDC/SLSA identity, verified timestamp, run chronology, and artifact expiration metadata.
-
-Successful output is one canonical JSON object with ordered `schemaVersion`, `status`, `archiveDir`, `package`, `version`, `expectedTag`, `evidenceSha256`, `provenanceReportSha256`, `manifestSha256`, `attestationReportSha256`, `sourceDigest`, `checks`, and `error` fields. Ordered checks are `layout`, `index`, `files`, `provenance`, `attestation`, `identity`, and `timestamps`; `--report-file` atomically writes the same bytes. `pnpm verify` runs the committed v0.2.50 and v0.2.55 archive set replay without npm, GitHub, Sigstore, or other network access. The `evidence/` tree, tarball, scripts, and tests remain repository-only and are excluded from the npm package file list.
-
-### Authenticated Registry Validation artifact acquisition
-
-After reviewing a successful Registry Validation run, acquire its exact GitHub evidence with every trust input explicit:
-
-```bash
-pnpm acquire:release-evidence -- \
-  --repository GGULBAE/react-native-image-compression-kit \
-  --workflow .github/workflows/registry-validation.yml \
-  --source-ref refs/heads/master \
-  --source-digest 194e9387406f71763bc0d617ece0d7d58e235e29 \
-  --run-id 29333540614 \
-  --version 0.2.55 \
-  --expected-tag latest \
-  --output-dir /tmp/registry-acquisition-0.2.55 \
-  --json \
-  --report-file /tmp/registry-acquisition-0.2.55-report.json
-```
-
-The command never selects the latest run. It requires the repository, workflow path, source ref, 40-character source commit, run ID, package version, and expected tag; validates a completed successful `workflow_dispatch` run against repository/workflow/ref/head SHA; and requires exactly the named provenance and attestation artifacts. Each artifact ZIP is downloaded from its immutable artifact ID, its bytes must match the API `size_in_bytes` and `sha256:` digest, expired artifacts fail closed, archive entries must be the exact fixed file set, and unsafe or duplicate paths are rejected before extraction.
-
-The manifest subject SHA-256 selects the GitHub attestation API record. Its bundle must equal the downloaded `attestation.jsonl`, its repository ID and attestation ID must match the committed release policy, and the verified Rekor timestamp comes from the downloaded offline verification report. The normalized run, artifact, attestation, publication, and package evidence must then equal the committed version policy.
-
-A successful acquisition atomically creates exactly `acquisition-manifest.json`, `release-evidence-metadata.json`, `provenance/`, and `attestation/`. Manifest fields are ordered as `schemaVersion`, `status`, `package`, `version`, `expectedTag`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `runId`, `runAttempt`, `provenanceArtifact`, `attestationArtifact`, `attestation`, `metadataFile`, `metadataSha256`, `files`, `acquisitionSha256`, and `error`. It records every handoff file size/SHA-256 and one aggregate acquisition SHA-256. Before exposing the destination through one rename, the acquisition core calls the existing importer against the staged bundle and requires the complete evidence replay to pass; an existing destination is never replaced and staged output is removed after any failure.
-
-The canonical report fields are `schemaVersion`, `status`, `outputDir`, `package`, `version`, `expectedTag`, `repository`, `runId`, `sourceDigest`, `acquisitionSha256`, `evidenceSha256`, `checks`, and `error`. Ordered checks are `inputs`, `run`, `artifacts`, `provenance`, `attestation`, `metadata`, `manifest`, `handoff`, and `atomicWrite`; `--report-file` atomically writes the same canonical bytes.
-
-The acquisition CLI uses the existing authenticated `gh` session without writing tokens, `.npmrc`, or `.gitconfig`. Its validation core contains no network or child-process path. Exact v0.2.50/v0.2.55 GitHub artifact ZIP fixtures are retained for offline regression; refresh is explicitly networked, while check mode is offline:
-
-```bash
-pnpm fixtures:release-evidence-acquisition
-pnpm fixtures:release-evidence-acquisition:check
-```
-
-### Reviewed release evidence policy promotion
-
-Prepare a canonical policy candidate and stable diff from an acquisition bundle without changing committed policy or any evidence archive:
-
-```bash
-pnpm prepare:release-evidence-policy -- \
-  --acquisition-dir /tmp/registry-acquisition-0.2.55 \
-  --candidate-file /tmp/release-evidence-policy-candidate-0.2.55.json \
-  --json \
-  --report-file /tmp/release-evidence-policy-candidate-0.2.55-report.json
-```
-
-The preparation command requires the exact four-entry acquisition layout, canonical manifest and metadata, all eight recorded file sizes/digests, aggregate acquisition SHA-256, and matching manifest/metadata identity. It then uses the existing importer with the observed candidate policy only in a temporary directory to replay provenance and attestation offline. The candidate fields are ordered as `schemaVersion`, `status`, `version`, `policy`, `source`, and `error`; its source binds `acquisitionManifest`, `acquisitionManifestSha256`, `acquisitionSha256`, `metadataFile`, and `metadataSha256`.
-
-The canonical preparation report fields are `schemaVersion`, `status`, `acquisitionDir`, `candidateFile`, `version`, `candidateSha256`, `policyStatus`, `changes`, `checks`, and `error`. `policyStatus` is `match`, `missing`, or `drift`; each stable leaf change contains ordered `path`, `committed`, and `candidate` values. Ordered checks are `layout`, `manifest`, `metadata`, `evidence`, `candidate`, `diff`, and `atomicWrite`. A missing or drifting policy is reported successfully for review, but no command applies it. Policy source changes must be made in a normal commit and pass code review.
-
-After reviewing the candidate bytes and committing the exact policy, promote through the digest-bound gate:
-
-```bash
-pnpm promote:release-evidence-policy -- \
-  --acquisition-dir /tmp/registry-acquisition-0.2.55 \
-  --candidate-file /tmp/release-evidence-policy-candidate-0.2.55.json \
-  --version 0.2.55 \
-  --reviewed-candidate-sha256 <64-character-candidate-sha256> \
-  --reviewer <reviewer-identity> \
-  --reviewed-at <UTC-ISO-timestamp> \
-  --archive-root /tmp/evidence/npm \
-  --approve \
-  --json \
-  --report-file /tmp/release-evidence-policy-promotion-0.2.55.json
-```
-
-Promotion regenerates the candidate from the acquisition bundle, requires byte equality and the explicit reviewed digest, records a whitespace/control-free reviewer identity and canonical review time that cannot precede Registry Validation completion, rejects missing approval, requires the candidate policy to equal the committed immutable version policy, and rejects an existing version archive. The existing importer creates only a staged archive; the complete committed policy set is replayed with the staged version substituted before one final rename exposes it. Import, set verification, or rename failure removes staging without changing the archive set.
-
-The promotion report fields are ordered as `schemaVersion`, `status`, `archiveDir`, `package`, `version`, `candidateSha256`, `reviewer`, `reviewedAt`, `evidenceSha256`, `setVersions`, `checks`, and `error`. Ordered checks are `candidate`, `review`, `policy`, `duplicate`, `import`, `set`, and `atomicWrite`. The preparation CLI has no policy mutation option, promotion has no `--apply` option, and neither command accesses npm, GitHub, Sigstore, or another network service.
-
-Authenticated acquisition run `29333540614` was replayed through this gate locally: acquisition SHA-256 `1545317c2047808f35f253a1387f7a019b2174ca317cbcb6b325b6ac1b797681` produced canonical candidate SHA-256 `aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d` with `policyStatus=match`. Reviewed promotion passed all seven checks, reproduced evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`, and the promoted v0.2.55 archive was byte-for-byte identical to the retained repository archive.
-
-### Manual policy review receipt and promotion rehearsal
-
-The manual `Release Evidence Policy Review` workflow accepts only the explicit Registry Validation trust tuple: `repository`, `workflow`, `source_ref`, `source_digest`, `registry_validation_run_id`, `version`, `expected_tag`, and `reviewed_candidate_sha256`. It never selects the latest run. The dispatch actor is the reviewer; the workflow binds that actor and reviewed digest to the review repository/ref/head SHA, workflow path/ref/SHA, run ID/attempt, normalized `workflow_dispatch` event, and GitHub run start time.
-
-The workflow calls the existing acquisition and candidate preparation commands, then runs the reviewed rehearsal and offline verifier:
-
-```bash
-pnpm review:release-evidence-policy -- \
-  --acquisition-dir release-evidence-acquisition \
-  --candidate-file policy-candidate.json \
-  --policy-report-file policy-diff-source.json \
-  --archive-root evidence/npm \
-  --bundle-dir release-evidence-policy-review \
-  --report-file review-report.json \
-  --reviewed-candidate-sha256 <sha256> \
-  <explicit-review-execution-and-registry-inputs> \
-  --json
-
-pnpm verify:release-evidence-review -- \
-  --artifact-dir release-evidence-policy-review \
-  --expect-package react-native-image-compression-kit \
-  --expect-version <version> \
-  --expect-candidate-sha256 <sha256> \
-  --expect-reviewer <github-actor> \
-  --expect-repository <owner/repo> \
-  --expect-workflow <owner/repo/.github/workflows/release-evidence-policy-review.yml> \
-  --expect-ref <refs/heads/name> \
-  --expect-head-sha <review-workflow-commit> \
-  --expect-run-id <run-id> \
-  --expect-run-attempt <attempt> \
-  --json \
-  --report-file review-verification.json
-```
-
-The ordered receipt fields are `schemaVersion`, `status`, `package`, `version`, `candidateSha256`, `reviewer`, `reviewedAt`, `repository`, `workflow`, `workflowSha`, `reviewRunId`, `reviewRunAttempt`, `sourceRef`, `sourceDigest`, `acquisitionSha256`, `evidenceSha256`, `promotionReportSha256`, `setReportSha256`, and `error`. Builder stdout, `--report-file`, the bundled `review-receipt.json`, verifier stdout, and verifier report are byte-for-byte identical after success.
-
-The atomic review bundle contains the exact acquisition bundle, `policy-candidate.json`, normalized `policy-diff.json`, `github-execution.json`, `workflow-dispatch-event.json`, the exact review workflow definition, `promotion-report.json`, `release-evidence-set-report.json`, `review-receipt.json`, the complete rehearsed `archive-set`, and a recursively complete `artifact-manifest.json`. It copies only non-target committed archives into staging, invokes the existing reviewed promotion gate to add the target, verifies every committed policy version together, replays the operation again before final rename, and requires the replayed target archive to be byte-for-byte identical. Candidate/acquisition mismatch, policy drift, identity drift, duplicate target, import/set failure, manifest tampering, or final rename failure leaves no success bundle and never changes `evidence/npm`.
-
-The workflow attests only the canonical `artifact-manifest.json`, downloads the Sigstore bundle and pinned GitHub trusted root, verifies subject/repository/workflow/ref/source/workflow digest and exact invocation ID offline, records the receipt and manifest evidence in the GitHub Step Summary, and uploads separate review and attestation artifacts. Downloaded trust material can be checked without network access:
-
-```bash
-pnpm verify:release-evidence-review-attestation -- \
-  --artifact-dir release-evidence-policy-review \
-  --attestation-bundle release-evidence-policy-review-attestation/attestation.jsonl \
-  --trusted-root release-evidence-policy-review-attestation/trusted-root.jsonl \
-  <the-same-explicit-review-expectations> \
-  --json \
-  --report-file attestation-verification.json
-```
-
-Successful [Release Evidence Policy Review run 29390495773](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29390495773) on v0.2.59 candidate commit `2782a6e34c70660a6c44a6189c39304317072a22` bound reviewer `GGULBAE` and review time `2026-07-15T05:03:59Z` to candidate SHA-256 `aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d`. The receipt reproduced acquisition SHA-256 `1545317c2047808f35f253a1387f7a019b2174ca317cbcb6b325b6ac1b797681`, evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`, promotion report SHA-256 `c3b7887499ccd0d0a4599fdf7296d12f697893ede8025799e87b19f2ce43739b`, and set report SHA-256 `c28965f087cf84ac8122e7deb09675b1c2744bc6e42c071034ca6c24b11f75a6` for rehearsed versions v0.2.50 and v0.2.55.
-
-The successful GitHub Step Summary recorded those receipt values, manifest SHA-256 `48cfd454b636cf1911b7d19dae996e7ead2797247d2b974687bb02aeebb439ff`, [attestation 35388408](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35388408), and successful downloaded-bundle verification. Review artifact `8333046539` has GitHub digest `sha256:f1ea6c9c2498e4d773a6cc5f6b49d39d9bfacba8bd40ec76c5364c7d3c21c836`; attestation artifact `8333046693` has digest `sha256:05ab03d322d15e97cc733e3d0325f6dbb7a468197245ea9c6738241e2477f4d6`. Downloaded blocked-network replay reproduced receipt SHA-256 `45ddefa85cba6a9fed62cb1c187dd0bab2246b72ba66a803b1282e4eac07efad` and attestation-verification SHA-256 `af6913ce48934b7d90fd7b9e6f2cb34634357a28932168597a25c28000521f90` byte-for-byte, and the rehearsed v0.2.55 archive remained byte-identical to `evidence/npm/0.2.55/`.
-
-The workflow is evidence-only: it does not edit policy source, update the retained archive, publish npm, change a dist-tag, create a tag or release, open a PR, or push a commit. Default `pnpm verify`, review bundle creation, bundle replay, and downloaded-attestation verification remain network-free; only explicit GitHub acquisition and the manual workflow's attestation exchange use the network.
-
-### Expiration-independent review evidence archive
-
-The exact review artifact ZIP and attestation artifact ZIP from run `29390495773` are retained with their extracted contents under `evidence/reviews/0.2.55/`. The canonical `review-evidence-index.json` pins reviewer `GGULBAE`, run attempt 1, source commit `2782a6e34c70660a6c44a6189c39304317072a22`, artifact IDs `8333046539` and `8333046693`, their GitHub ZIP digests, [attestation 35388408](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35388408), receipt SHA-256 `45ddefa85cba6a9fed62cb1c187dd0bab2246b72ba66a803b1282e4eac07efad`, manifest SHA-256 `48cfd454b636cf1911b7d19dae996e7ead2797247d2b974687bb02aeebb439ff`, evidence SHA-256 `e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`, all 39 retained file records, and aggregate archive SHA-256 `f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd`.
-
-Import already-downloaded exact ZIPs through the network-free importer. The canonical metadata must exactly match the committed review archive policy; the command never downloads an artifact or reads GitHub state:
-
-```bash
-pnpm import:release-evidence-review -- \
-  --version 0.2.55 \
-  --metadata-file /path/to/review-archive-metadata.json \
-  --review-artifact-zip /path/to/review.zip \
-  --attestation-artifact-zip /path/to/attestation.zip \
-  --archive-dir /tmp/evidence/reviews/0.2.55 \
-  --release-archive-root evidence/npm \
-  --json \
-  --report-file /tmp/review-archive-import.json
-```
-
-Metadata and index identity fields are ordered as `schemaVersion`, `status`, `package`, `version`, `candidateSha256`, `reviewer`, `reviewedAt`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `reviewRun`, `reviewArtifact`, `attestationArtifact`, `attestation`, `receiptSha256`, `manifestSha256`, `evidenceSha256`, and `error`; the index inserts `files` and `archiveSha256` before `error`. The importer validates exact ZIP ID/name/size/SHA-256/creation/expiration metadata, parses the ZIP central directory itself, rejects traversal, duplicate names, symlinks, directories, encryption, unsupported compression, CRC or size drift, and requires every extracted file to equal its ZIP entry. It writes the ZIPs, review bundle, attestation material, and index below one sibling staging directory, fully replays the review and signer attestation, byte-compares `review/archive-set/0.2.55` with `evidence/npm/0.2.55`, and exposes the archive plus an optional byte-identical report only after all checks pass. Existing destinations are never replaced; index, report, or rename failure removes all partial success state.
-
-Verify one retained archive or the complete committed review archive set without npm, GitHub, Sigstore, or other network access:
-
-```bash
-pnpm verify:release-evidence-review-archive -- \
-  --version 0.2.55 \
-  --json \
-  --report-file /tmp/review-archive-verification.json
-
-pnpm verify:release-evidence-review-archive-set -- --json
-```
-
-The archive verifier reuses the existing review bundle, review attestation, and release evidence set verifiers. Ordered checks are `layout`, `index`, `artifacts`, `files`, `review`, `attestation`, and `targetArchive`. The set verifier runs every committed review archive policy in stable version order and continues through all selected versions so every failure remains visible. Default `pnpm verify` invokes this set gate; the retained ZIPs and extracted review evidence remain repository-only and are excluded from the npm package.
-
-### Authenticated review artifact acquisition and canonical handoff
-
-Acquire the exact review evidence from one explicitly selected Release Evidence Policy Review run. The command never discovers or selects a latest run, and every trust selector is required:
-
-```bash
-pnpm acquire:release-evidence-review -- \
-  --repository GGULBAE/react-native-image-compression-kit \
-  --workflow .github/workflows/release-evidence-policy-review.yml \
-  --source-ref refs/heads/master \
-  --source-digest 2782a6e34c70660a6c44a6189c39304317072a22 \
-  --run-id 29390495773 \
-  --version 0.2.55 \
-  --output-dir /tmp/review-acquisition-0.2.55 \
-  --release-archive-root evidence/npm \
-  --json \
-  --report-file /tmp/review-acquisition-0.2.55.json
-```
-
-Only the GitHub adapter executes `gh api`. The network-free validation core requires a completed successful `workflow_dispatch` run with the exact repository, workflow path, ref, source commit, run ID/attempt, repository IDs, actor, and chronology. It selects exactly `release-evidence-policy-review-0.2.55-29390495773` and `release-evidence-policy-review-attestation-0.2.55-29390495773`, rejects an artifact already expired at acquisition time, validates each artifact ID/name/size/digest/creation/expiration record, and verifies the downloaded ZIP bytes with the dependency-free safe ZIP parser. Once exact ZIPs are retained, v0.2.60 replay remains independent of the current clock.
-
-The acquisition output contains exactly `review-evidence-metadata.json`, `artifacts/review.zip`, `artifacts/attestation.zip`, and `review-acquisition-manifest.json`. The ordered manifest binds `schemaVersion`, `status`, package/version/candidate/reviewer/review and acquisition times, repository/workflow/ref/source identity, run ID/attempt, both artifact records, normalized attestation ID/time, metadata path/digest, sorted file size/SHA-256 records, aggregate acquisition SHA-256, and `error`. Signed download URLs, credentials, tokens, `.npmrc`, and login state are never retained.
-
-Before output is visible, the staged metadata and exact ZIPs are passed to the existing `import:release-evidence-review` implementation. That handoff must reproduce aggregate review archive SHA-256 `f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd`, including complete review, attestation, and byte-identical v0.2.55 target-archive replay. The output directory and optional report are exposed only through coordinated sibling renames; write, handoff, output-rename, or report-rename failure removes newly created state, duplicate destinations are never replaced, and stdout/report bytes are identical canonical one-line JSON.
-
-Authenticated acquisition at `2026-07-15T06:51:05.525Z` reproduced the retained review ZIP and attestation ZIP byte-for-byte, wrote byte-identical stdout/report JSON, produced metadata SHA-256 `6e4074a785ba2b596fdf336d1990eb522d30237927f75c56abfb27a4ba726d4c` and aggregate acquisition SHA-256 `b2cae5664d149cbc2c3a7202dc580b7c8008520d50050ce7e7bbf822e7285c7c`, and passed every importer handoff check with the committed archive digest.
-
-Default verification does not contact GitHub. It reuses the exact retained ZIPs in `evidence/reviews/0.2.55/artifacts/`, synthesizes the pinned GitHub responses, reruns acquisition and importer handoff in temporary directories, and verifies exact output bytes:
-
-```bash
-pnpm fixtures:release-evidence-review-acquisition:check
-```
-
-### Offline release evidence archive import
-
-After downloading the two Registry Validation artifacts, prepare a canonical metadata JSON file from the reviewed GitHub run, artifact, and attestation records, then import into a new destination:
-
-```bash
-pnpm import:release-evidence -- \
-  --version 0.2.55 \
-  --provenance-artifact-dir /path/to/registry-provenance-0.2.55 \
-  --attestation-artifact-dir /path/to/registry-provenance-attestation-0.2.55 \
-  --metadata-file /path/to/release-evidence-metadata.json \
-  --archive-dir /tmp/evidence/npm/0.2.55 \
-  --json
-```
-
-The metadata fields are fixed as `schemaVersion`, `status`, `package`, `version`, `expectedTag`, `publishedAt`, `repository`, `workflow`, `sourceRef`, `sourceDigest`, `registryValidationRun`, `provenanceArtifact`, `attestation`, `attestationArtifact`, and `error`; nested run, artifact, and attestation fields reuse the canonical release index order. Metadata must be one-line canonical JSON and exactly match the committed policy, so the importer cannot silently invent or normalize GitHub evidence.
-
-The importer accepts exactly the four provenance files and three attestation files, rejects symlinks and additional/missing files, copies exact bytes into a sibling temporary directory, derives the canonical index and all seven file digests, and runs the complete provenance plus GitHub attestation replay there with network proxies blocked. An acquisition bundle can be handed off directly by passing its `provenance/`, `attestation/`, and `release-evidence-metadata.json` paths. Only a fully verified archive is exposed through one rename. Existing destinations are never replaced, and any validation or rename failure removes the temporary directory without leaving a partial archive.
-
-Replay every committed archive policy in stable version order with one command:
-
-```bash
-pnpm verify:release-evidence-set -- --json
-```
-
-The set report fields are ordered as `schemaVersion`, `status`, `archiveRoot`, `versions`, `results`, and `error`. Each result fixes `version`, `status`, `evidenceSha256`, `sourceDigest`, all seven existing archive checks, and `error`. With no selectors the command verifies v0.2.50 and v0.2.55, continues through the complete set so every failed version is visible, supports repeated `--version` selectors, and atomically supports `--report-file`. The importer and set verifier perform no npm, GitHub, Sigstore, or other network requests; default `pnpm verify` now runs this two-version set gate.
-
-### Immutable workflow Action supply chain
-
-All 36 remote `uses:` declarations across the six GitHub workflow files are pinned to lowercase 40-character commit SHAs. Each pin retains its reviewed release tag as an inline comment such as `# v7`; mutable tags or branches, short SHAs, missing release comments, and different SHAs for the same Action are rejected.
-
-`.github/actions-lock.json` is canonical one-line JSON with ordered `schemaVersion`, `status`, `workflows`, `actions`, and `error` fields. Each of the nine unique Action records fixes `action`, source `repository`, reviewed `version`, immutable `sha`, and per-workflow `usages` with exact occurrence counts across six workflows. The committed lock SHA-256 is `b2a9cb18b067694052844d6346d0eecaf4bdb446c3f14bc7a8c694783cf76747`.
-
-Verify the complete local workflow/lock contract without resolving tags or making network requests:
-
-```bash
-pnpm verify:workflow-supply-chain -- --json
-```
-
-The fixed report fields are `schemaVersion`, `status`, `lockFile`, `workflowCount`, `actionCount`, `usageCount`, `lockSha256`, `checks`, and `error`. Ordered checks are `workflows`, `pins`, `comments`, `consistency`, `lock`, and `dependabot`; `--report-file` atomically writes bytes identical to stdout. Fixtures reject mutable refs, short SHAs, missing/additional/duplicate/digest-drift lock entries, cross-workflow SHA disagreement, comment drift, Dependabot drift, and partial report replacement.
-
-`.github/dependabot.yml` enables weekly `github-actions` updates. A Dependabot update must preserve a full SHA plus reviewed release-tag comment and update the canonical lock in the same change; default `pnpm verify` fails closed until all workflow occurrences and the lock agree. The verifier does not call GitHub, resolve a release tag, or update a pin. The lock, Dependabot configuration, verifier scripts, tests, and retained evidence are repository-only and excluded from the npm package.
-
-### Manual Action pin provenance review
-
-The workflow lock proves that committed workflow pins agree; the manual **Action Pin Review** workflow proves that a reviewed GitHub tag resolves to the proposed locked commit at review time. It checks out both the selected candidate ref and a trusted baseline ref, runs the offline workflow/lock gate first, then resolves `refs/tags/<release-tag>` through the GitHub Git database API. Lightweight tags resolve directly to a commit. Annotated tags retain both the tag-reference object and its dereferenced tag object and must resolve directly to a commit.
-
-The networked command boundary is explicit:
-
-```bash
-pnpm review:action-pin -- \
-  --action gradle/actions/setup-gradle \
-  --repository gradle/actions \
-  --release-tag v6 \
-  --proposed-sha 3f131e8634966bd73d06cc69884922b02e6faf92 \
-  --baseline-ref master \
-  --baseline-lock /path/to/base/.github/actions-lock.json \
-  --candidate-lock .github/actions-lock.json \
-  --source-repository GGULBAE/react-native-image-compression-kit \
-  --source-ref refs/heads/master \
-  --source-head-sha '<40-character candidate commit SHA>' \
-  --workflow-name "Action Pin Review" \
-  --workflow-path .github/workflows/action-pin-review.yml \
-  --workflow-ref GGULBAE/react-native-image-compression-kit/.github/workflows/action-pin-review.yml@refs/heads/master \
-  --workflow-sha '<40-character workflow commit SHA>' \
-  --workflow-file .github/workflows/action-pin-review.yml \
-  --run-id '<GitHub run ID>' \
-  --run-attempt 1 \
-  --event-name workflow_dispatch \
-  --github-event /path/to/github-event.json \
-  --artifact-dir action-pin-review \
-  --json
-```
-
-The validator requires the Action in both locks, an unchanged owner/repository, no major-version downgrade, exact candidate release-tag and SHA agreement, exact GitHub API repository/tag/object URLs, a valid lightweight or single annotated-tag dereference, and final tag-to-proposed-commit equality. It also normalizes the `workflow_dispatch` payload and requires its repository, ref, workflow path, review inputs, and baseline ref to match the supplied execution identity. It never edits workflow pins or the lock.
-
-The canonical artifact contains `artifact-manifest.json`, `action-pin-provenance.json`, baseline and candidate lock bytes, canonical `github-execution.json`, normalized `workflow-dispatch-event.json`, exact `action-pin-review-workflow.yml` bytes, `tag-reference.json`, and optional `annotated-tag.json`. The manifest records every evidence file's sorted relative path, byte size, and SHA-256; report and manifest files are excluded from that list to avoid recursive digests, while the report binds the manifest SHA-256. Offline replay restores source/workflow/run identity from `github-execution.json`, so changing report identity alone is rejected. Verification also rejects noncanonical or traversing paths, duplicate/missing/additional files, symlinks, size drift, and digest drift.
-
-The schema v2 report adds ordered `sourceRepository`, `sourceRef`, `sourceHeadSha`, `workflowName`, `workflowPath`, `workflowRef`, `workflowSha`, `runId`, and `runAttempt` fields after tag resolution. Evidence additionally binds the dispatch event, workflow definition, and manifest digests; ordered checks are `inputs`, `execution`, `event`, `registration`, `repository`, `releaseTag`, `noDowngrade`, `candidateLock`, `workflow`, `tagReference`, `dereference`, `commit`, and `manifest`. Artifact creation and standalone `--report-file` writes use temporary siblings and atomic rename so partial reports are never exposed.
-
-After downloading the workflow artifact, reproduce the report byte-for-byte without GitHub or any other network service:
-
-```bash
-pnpm verify:action-pin-provenance -- \
-  --artifact-dir /path/to/action-pin-review \
-  --json \
-  --report-file /path/to/reproduced-action-pin-provenance.json
-```
-
-The workflow then uses GitHub Actions OIDC to attest the canonical `artifact-manifest.json`. It uploads the provenance directory as `action-pin-review-<run-id>` and uploads `attestation.jsonl`, `trusted-root.jsonl`, and `attestation-verification.json` separately as `action-pin-attestation-<run-id>`. Verify both downloaded artifacts with network access blocked:
-
-```bash
-pnpm verify:action-pin-attestation -- \
-  --artifact-dir /path/to/action-pin-review \
-  --attestation-bundle /path/to/action-pin-attestation/attestation.jsonl \
-  --trusted-root /path/to/action-pin-attestation/trusted-root.jsonl \
-  --json \
-  --report-file /path/to/action-pin-attestation/attestation-verification.json
-```
-
-The verifier first replays the complete provenance artifact, then invokes the official GitHub CLI with the downloaded bundle, pinned trusted root, closed network proxies, exact repository, signer workflow, source ref, source commit, GitHub OIDC issuer, SLSA v1 predicate, and hosted-runner policy. Its fixed report binds the manifest SHA-256, source repository/ref/head SHA, workflow SHA, run ID/attempt, signer workflow, verified timestamps, and ordered `provenance`, `manifest`, `subject`, `repository`, `workflow`, `ref`, `sourceDigest`, `workflowDigest`, `invocation`, and `signature` checks. The signed SLSA `invocationId` must equal the provenance run ID/attempt URL. Fixtures reject wrong subject, repository, workflow, ref, source SHA, invocation, provenance-to-manifest disagreement, and bundle tampering without network access.
-
-Successful [Action Pin Review run 29320049736](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29320049736) on source commit `2db9c690627a155ea1fe3d83ce4e71b13ba9aa7c` attested `artifact-manifest.json` SHA-256 `d4f85ff96839e5424a3152275f7d1b4047073df9fab1be2bf6d249cd7fd948a8` as [attestation 35224280](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35224280). The provenance artifact has ID `8305522072` and GitHub digest `sha256:d09e9b5d579d6ada53caa6e3d012b6ad7d6665eab9fd8bfbb73c275ee88b2439`; the separate attestation artifact has ID `8305522316` and GitHub digest `sha256:3ffcf711c0c3827636b6a6cfca9f83ee010fcc2f849933d69f4c51b7e0984f76`. The downloaded report SHA-256 is `361a7f8357070c879f620b9db101cef114e82b9b785a5d1511daa0c6ff6c2cd8`, bundle SHA-256 is `701fc32bac71bf310f30001b052183f567673ebf867829d53fcb6f8d88ae0e09`, and trusted-root SHA-256 is the pinned `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`. Local blocked-network replay reproduced the workflow report byte-for-byte under both UTC and Asia/Seoul. These exact downloaded provenance and attestation files are the committed default fixture.
-
-The committed annotated-tag fixture for `gradle/actions/setup-gradle@v6` includes a synthetic GitHub `workflow_dispatch` event, exact current workflow definition, and canonical manifest, then exercises complete replay from default `pnpm verify`. Only `scripts/action-pin-review-github.mjs` performs GitHub requests; the validation core, offline verifier, fixture gate, and default verify path contain no network or command-execution route. The manual workflow writes source/workflow/run identity plus lock/workflow/manifest digests to the GitHub Step Summary and uploads the exact artifact, but it never changes a pin, lock, Dependabot PR, npm package, or trusted root.
-
-The Android `compressImage()` scaffold still rejects `output.format: 'avif'` with `ERR_NOT_IMPLEMENTED` before source access or helper entry, keeps `avif.output=false`, and leaves metadata preserve, target-size, and animated AVIF production semantics disabled.
-
-Android includes a published image compression MVP for `file://` and `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF inputs, JPEG EXIF orientation correction, optional resize, metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output, and JPEG, PNG, or WebP output encoding. GIF input is decoded as a static first frame. HEIC / HEIF input is Android SDK and device-codec dependent: API 28+ uses `ImageDecoder`, API 26-27 attempts a guarded `BitmapFactory` fallback, and earlier Android versions reject HEIC / HEIF with `ERR_UNSUPPORTED_FORMAT`. AVIF input is Android 14+ only and uses `ImageDecoder`. Android `getImageCompressionCapabilities()` reports AVIF `input=true`, AVIF `output=false`, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`. Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.
-
-The current iOS JPEG/PNG/GIF/WebP/HEIC/HEIF/AVIF MVP supports `file://` and `content://` JPEG, PNG, GIF, WebP, HEIC, HEIF, or runtime-available AVIF input, optional resize, quality-based JPEG output, target-size JPEG output with `output.maxBytes`, PNG output, runtime ImageIO-backed WebP output with target-size `output.maxBytes` when `CGImageDestination` advertises WebP destination support, cache-file results, `metadata: 'preserve'` for JPEG source to JPEG output with output orientation and pixel dimension metadata normalized after rendering, and `safe` / `strip` metadata policies that re-encode without copying source metadata. GIF, WebP, HEIC, HEIF, and runtime-available AVIF input are decoded as static images through ImageIO on iOS. iOS `getImageCompressionCapabilities()` reports JPEG input/output, PNG input/output, GIF input with no GIF output, WebP input with runtime-gated WebP output, HEIC input with no HEIC output, HEIF input with no HEIF output, AVIF input only when `CGImageSourceCopyTypeIdentifiers()` advertises an AVIF source type, AVIF output always false, and notes that selecting `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`; future iOS AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.
-
-Both platforms keep metadata='preserve', output.maxBytes, and animated AVIF preservation unsupported for AVIF output until explicitly designed and tested. The capabilities also report `metadataPolicies: ['preserve', 'safe', 'strip']`, target-size compression support for JPEG output and runtime-available WebP output, and no cancellation. The v0.2.17 Android AVIF output smoke keeps AVIF output disabled while attempting a repo-owned 16x12 Bitmap to static AVIF cache-file encode through an API 34+ `MediaCodec` `image/avif` route, validating `ftyp` `avif` / `avis` signature bytes and `ImageDecoder` decode-back dimensions when a file is produced. The v0.2.20 candidate keeps that smoke disabled-by-contract and adds production-decision fields: `blockerCode`, `outputCanBeEnabled=false`, and `productionDecision`. If the SDK is too old, the emulator has no encoder, the codec route fails, the muxer rejects the stream, the result has invalid `ftyp` `avif` / `avis` signature bytes, or `ImageDecoder` decode-back fails, instrumentation records an explicit blocker code (`sdk_unavailable`, `no_image_avif_encoder`, `codec_failure`, `invalid_signature`, or `decode_back_failure`) and capability reporting remains `output=false`. The v0.2.21 candidate adds `AndroidAvifOutputProductionScaffold` at the Android `compressImage()` output boundary, so AVIF output requests parse metadata and `output.maxBytes` but reject before source access or MediaCodec encode/decode-back helper entry while capability reporting remains `output=false`. The v0.2.22 candidate extracts the encode/decode-back implementation into `AndroidAvifOutputHelper`, adds explicit helper input/output/result types, and keeps the scaffold's `willEnterEncodeDecodeBackHelper=false` boundary before source access. The v0.2.23 candidate adds `AndroidAvifOutputHelperDependencies` so tests can inject encoder, muxer, output-file, and validation behavior for fake encoded bytes, invalid signatures, decode-back failures, and codec failures while `compressImage()` and capability reporting still keep AVIF output disabled. The v0.2.24 candidate adds an injected muxed success contract that fixes helper success expectations for `byteSize`, `signatureValid`, `decodeBackValid`, `blockerCode=null`, and `PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED` while production capability reporting remains `avif.output=false`. The v0.2.25 candidate adds a direct-output success contract that fixes the direct encoder output route, output path, byte size, `blockerCode=null`, production decision, and muxer-skip expectation when direct fake AVIF bytes pass decode-back validation. The v0.2.26 candidate fixes helper `details` ordering across direct, muxed, invalid signature, decode-back failure, and codec failure paths so the injectable validation seam, dependency details, and route blockers remain stable for production-wiring diagnostics. The v0.2.27 candidate fixes blocked-route details for `sdk_unavailable` and `no_image_avif_encoder` paths and proves the smoke adapter preserves blocked helper `blockerCode`, `details`, and `outputCanBeEnabled=false`. The v0.2.28 candidate fixes helper temp-file lifecycle expectations for direct, muxed, invalid-signature, and decode-back validation paths so returned `outputFilePath`/`byteSize` always describe the chosen final validation file while intermediate direct files are not reported as muxed/failure results. The v0.2.29 candidate fixes helper validation-result provenance expectations so direct and muxed validation details each carry file name, byte size, signature result, decode-back result, and exact encoder -> direct validation -> muxer -> final validation ordering after direct failure. The v0.2.30 candidate hardens iOS smoke retry and timeout diagnostics around `RNICK_IOS_SMOKE_PASS` so CI logs explain simulator/app/log state before a timeout-only retry or final failure. The v0.2.31 candidate fixes those iOS smoke retry and diagnostic contracts in simulator-free Node-level tests before further CI hardening. The v0.2.32 candidate fixes the CLI timeout assembly and retry warning order with fake launch/log stream/Metro/unified-log fixtures. The v0.2.33 candidate fixes iOS smoke process lifecycle cleanup with fake EventEmitter Metro/log stream fixtures. The v0.2.34 candidate fixes iOS smoke log stream error output, snapshot state, and timeout diagnostics fixture coverage. The v0.2.35 candidate fixes iOS smoke diagnostics packed log artifact and GitHub Step Summary fixture coverage. The v0.2.36 candidate fixes iOS smoke artifact failure-path dry-run fixture coverage. The v0.2.37 candidate fixes iOS smoke diagnostics artifact schema snapshot coverage. The v0.2.38 candidate fixes iOS smoke PASS payload schema snapshot coverage. The v0.2.39 candidate fixes iOS WebP-output available PASS payload schema snapshot coverage. The v0.2.40 release fixes iOS AVIF-input unavailable PASS payload schema snapshot coverage. The v0.2.41 candidate fixes iOS PASS payload schema matrix helper coverage. The v0.2.42 candidate fixes iOS PASS payload CI log replay fixture coverage. The v0.2.43 candidate fixes replay fixture source provenance and refresh guidance. The still-open production gates are production wiring, byte-signature validation, ImageDecoder decode-back validation, explicit metadata preserve behavior, `output.maxBytes` semantics, and animated AVIF boundaries.
-
-The v0.2.44 candidate fixes replay fixture source-line SHA-256 integrity and missing/duplicate PASS-line rejection.
-
-The v0.2.45 candidate fixes structured replay artifact ownership and deterministic offline refresh coverage.
-
-The v0.2.46 candidate fixes read-only offline replay artifact freshness checking and concise drift reporting.
-
-The v0.2.47 release fixes semantic PASS payload validation, standalone replay artifact auditing, stable JSON reports, and local/CI audit gating.
-
-The v0.2.48 release adds a canonical registry provenance report, exact version/dist-tag validation, shared README status validation, offline failure fixtures, atomic report writes, and a manual Registry Validation workflow.
-
-The v0.2.49 candidate adds an atomic four-file provenance bundle, exact-tarball retention, checksum manifest, secure in-memory tar inspection, a stable offline verifier JSON report, and network-free corruption/security fixtures.
-
-The v0.2.50 release adds GitHub OIDC artifact attestation for the canonical bundle manifest, a pinned offline trusted root, strict repository/workflow/ref/commit/subject verification, and deterministic offline attestation fixtures without changing the provenance bundle contract.
-
-The GitHub Actions iOS Validation runner currently uses Xcode 26.5 and the iPhoneSimulator26.5 SDK, and reports WebP `output=false` because ImageIO does not advertise a WebP destination type there; AVIF input is capability-gated the same way and rejects with `ERR_UNSUPPORTED_FORMAT` when ImageIO does not advertise AVIF source support. GIF output, GIF animation preservation, animated WebP preservation, animated AVIF preservation, HEIC / HEIF output, AVIF output, and metadata preservation outside JPEG source to JPEG output are not implemented yet.
-
-## Current Implementation Scope
-
-The current implementation is intentionally small:
-
-- Runtime compression is implemented on Android and on the current iOS JPEG/PNG/GIF/WebP/HEIC/HEIF/runtime-available AVIF MVP surface.
-- Android supports `file://` and `content://` local URI input. iOS supports `file://` and best-effort `content://` local URI input through Foundation URL loading.
-- JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input. GIF input is static first-frame only, Android HEIC / HEIF input depends on Android SDK and device codec support, iOS HEIC / HEIF input uses static ImageIO decode, Android AVIF input requires Android 14+ baseline image support, and iOS AVIF input requires runtime ImageIO AVIF source support.
-- iOS input is currently JPEG, PNG, static ImageIO GIF, static ImageIO WebP, static ImageIO HEIC, static ImageIO HEIF, and runtime-available static ImageIO AVIF.
-- Android output is JPEG, PNG, and WebP. iOS output is JPEG, PNG, and WebP only when ImageIO advertises a WebP destination type at runtime. HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED` on both platforms.
-- Quality-based compression for JPEG, Android WebP output, and runtime-available iOS WebP output. PNG output ignores `quality`.
-- Target-size compression with `maxBytes` for Android JPEG and WebP output, iOS JPEG output, and runtime-available iOS WebP output. Android and iOS PNG output reject `maxBytes`.
-- JPEG EXIF orientation correction before resize and selected output encoding.
-- Optional resize with `maxWidth`, `maxHeight`, and `contain`, `cover`, or `stretch` mode.
-- Android supports metadata `preserve`, privacy-filtered `safe`, and `strip` policies for JPEG source to JPEG output. PNG/WebP/GIF/HEIC/HEIF/AVIF sources and PNG/WebP output do not preserve source EXIF metadata. iOS supports `preserve` only for JPEG source to JPEG output; `safe` and `strip` re-encode without copying source metadata, and non-JPEG preserve requests reject with `ERR_NOT_IMPLEMENTED`.
-- Output file written to the platform app cache directory.
-- `CompressionResult` returns `uri`, `format`, final `width`, final `height`, `byteSize`, `originalByteSize`, and `compressionRatio`.
-
-The following remain planned and are not implemented in the MVP:
-
-- AVIF output; selecting `output.format: 'avif'` currently rejects with `ERR_NOT_IMPLEMENTED`.
-- HEIC / HEIF output.
-- GIF output and GIF/WebP animation preservation.
-- Metadata support for non-JPEG formats and broader iOS metadata preservation.
-
-## Why
-
-Image handling in React Native can become fragmented when compression, HEIC conversion, WebP processing, resizing, and metadata handling live in separate tools. That fragmentation can lead to:
-
-- Different APIs for different formats.
-- Platform-specific behavior that is difficult to predict.
-- Limited support for target file size compression.
-- Image processing logic coupled too tightly to upload logic.
-- Extra application code for capability checks and fallback paths.
-
-React Native Image Compression Kit aims to provide one native-first API for image compression while staying composable with any uploader or storage layer.
-
-## Core Concept
-
-```text
-Supported input image
-        ↓
-Detect and decode
-        ↓
-Auto-orient
-        ↓
-Resize when needed
-        ↓
-Compress
-        ↓
-Encode in selected format
-        ↓
-Local output URI
-```
-
-Any supported image in. A compressed image out, in your chosen supported format.
-
-## Planned Features
-
-The following product features are planned or only partially implemented.
-
-- Automatic format detection.
-- Quality-based compression.
-- Target file size compression with `maxBytes`. Android MVP support is implemented for JPEG and WebP output; iOS support is implemented for JPEG output and runtime-available WebP output, while iOS PNG output intentionally rejects `maxBytes`.
-- Optional resize during compression. Android MVP and iOS JPEG/PNG/GIF/WebP/HEIC/HEIF/runtime-available AVIF MVP support is implemented.
-- Output format selection. Android MVP supports JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC / HEIF, and Android 14+ AVIF input with JPEG, PNG, and WebP output. iOS MVP supports JPEG, PNG, and runtime-gated ImageIO-backed WebP output from JPEG, PNG, static GIF, static WebP, static HEIC, static HEIF, and runtime-available static AVIF input.
-- Automatic EXIF orientation correction. Android MVP support is implemented for JPEG input.
-- Metadata preservation and stripping policies. Android MVP supports `preserve`, `safe`, and `strip` for JPEG source to JPEG output. iOS supports `preserve` for JPEG source to JPEG output, plus `safe` and `strip` no-copy re-encode behavior.
-- Alpha-channel handling.
-- Local URI input and output.
-- Compression statistics.
-- Cancellation.
-- Runtime capability inspection.
-- Android and iOS support. Android has the broader MVP; iOS currently supports JPEG/PNG/GIF/WebP/HEIC/HEIF/runtime-available AVIF input to JPEG, PNG, or runtime-gated ImageIO-backed WebP output, with GIF, WebP, HEIC, HEIF, and AVIF decoded as static ImageIO images.
-- React Native New Architecture-first design.
-
-## Planned Format Support
-
-The table below describes planned input and output support. Actual availability may depend on platform codecs and will be reported through runtime capability APIs.
-
-| Format | Planned input | Planned output | Notes |
-|---|---:|---:|---|
-| JPEG | Yes | Yes | Lossy compression |
-| PNG | Yes | Yes | Lossless compression |
-| WebP | Yes | Yes | Lossy and lossless |
-| HEIC / HEIF | Yes | Optional / later | Android input implemented with SDK and codec gating; iOS input implemented as static ImageIO decode |
-| AVIF | Yes | Later | Android input implemented on API 34+ with ImageDecoder; iOS input is runtime-gated by ImageIO AVIF source support |
-| GIF | Yes | Later | Static first-frame support before animation preservation |
-
-Current Android MVP support is narrower than the planned table: JPEG, PNG, WebP, static first-frame GIF, SDK-gated HEIC, SDK-gated HEIF, and Android 14+ AVIF input are implemented, and JPEG, PNG, and WebP output are implemented. Current iOS MVP support is narrower again: JPEG, PNG, static ImageIO GIF, static ImageIO WebP, static ImageIO HEIC, static ImageIO HEIF, and runtime-available static ImageIO AVIF input are implemented, JPEG output is implemented with quality, resize, and target-size compression, PNG output is implemented without target-size compression, and WebP output is implemented with quality and target-size compression through ImageIO when the runtime advertises a WebP destination type. GIF output, GIF animation preservation, animated WebP preservation, animated AVIF preservation, HEIC / HEIF output, and AVIF output remain planned; HEIC, HEIF, and AVIF output selections reject with `ERR_NOT_IMPLEMENTED`. HEIC / HEIF inputs on Android versions below 8.0, AVIF inputs on Android versions below 14, and AVIF inputs on iOS runtimes without ImageIO AVIF source support reject as `ERR_UNSUPPORTED_FORMAT`. Corrupt supported-format inputs, including corrupt GIF, HEIC / HEIF, and AVIF candidates on supported SDKs or runtimes, reject as `ERR_DECODE_FAILED`.
-
-Animation preservation for GIF, animated WebP, and animated AVIF is not planned as an initial-version guarantee.
-
-## iOS MVP Behavior
-
-Version `0.2.0` replaces the previous iOS package stub with a native JPEG MVP. Version `0.2.1` extends that iOS JPEG MVP with target-size compression. Version `0.2.2` adds PNG output. Version `0.2.3` adds GIF input decoded as a static first frame. Version `0.2.4` adds WebP input decoded as a static first frame. Version `0.2.5` adds a runtime-gated ImageIO-backed WebP output path. Version `0.2.6` adds target-size `output.maxBytes` support to that runtime-available WebP output path. Version `0.2.7` adds HEIC/HEIF input decoded as static ImageIO images. Version `0.2.10` adds capability-gated AVIF input decoded as a static ImageIO image when the runtime advertises AVIF source support. Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output. Version `0.2.13` normalizes preserved iOS JPEG orientation and dimension metadata after rendering. Version `0.2.14` keeps AVIF output unsupported while making capability notes and `ERR_NOT_IMPLEMENTED` messaging explicit:
-
-- `compressImage()` accepts `file://` and best-effort `content://` JPEG, PNG, GIF, WebP, HEIC, HEIF, or runtime-available AVIF source URIs.
-- JPEG output is encoded with ImageIO `CGImageDestination` into the iOS app cache directory.
-- PNG output is encoded with `UIImagePNGRepresentation()` into the iOS app cache directory.
-- WebP output is encoded with ImageIO `CGImageDestination` into the iOS app cache directory when `CGImageDestinationCopyTypeIdentifiers()` advertises a WebP destination type.
-- On the current GitHub Actions iOS Validation runner with Xcode 26.5 and the iPhoneSimulator26.5 SDK, ImageIO does not advertise a WebP destination type. In that environment WebP reports `input=true` and `output=false`, and `output.format: 'webp'` rejects with `ERR_NOT_IMPLEMENTED`.
-- GIF, WebP, HEIC, HEIF, and runtime-available AVIF input are decoded through ImageIO as static images before resize and output encoding; animation preservation is not implemented for animated formats.
-- `resize.maxWidth`, `resize.maxHeight`, and `contain`, `cover`, or `stretch` mode are supported before output encoding.
-- `output.quality` controls JPEG quality and runtime-available WebP quality from `0` to `100`; when omitted, iOS uses the same default quality of `80`.
-- PNG output ignores `quality`.
-- `output.maxBytes` is supported for JPEG output and runtime-available WebP output. iOS treats `quality` as the upper quality bound and searches for the highest JPEG or WebP quality that fits under `maxBytes`; if even the lowest quality cannot fit, it returns the smallest generated output. PNG output rejects `maxBytes` with `ERR_NOT_IMPLEMENTED`.
-- PNG output preserves alpha where the processed image contains transparency. Runtime-available WebP output uses the processed image alpha as provided by ImageIO. JPEG output still composites alpha over white.
-- `metadata: 'preserve'` copies source JPEG metadata only for JPEG source to JPEG output, including resize, quality, and `output.maxBytes` paths. Preserved JPEG output normalizes top-level orientation, TIFF orientation, top-level pixel width/height, and EXIF `PixelXDimension` / `PixelYDimension` to the rendered output. `metadata: 'safe'` and `metadata: 'strip'` re-encode without copying source metadata. Non-JPEG input or non-JPEG output with `preserve` rejects with `ERR_NOT_IMPLEMENTED`.
-- AVIF input is enabled only when `CGImageSourceCopyTypeIdentifiers()` advertises an AVIF source type. On runtimes without that support, AVIF input rejects with `ERR_UNSUPPORTED_FORMAT`.
-- AVIF output is not implemented. `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED` even on runtimes that can decode AVIF input.
-- `getImageCompressionCapabilities()` resolves with `platform: 'ios'`, JPEG `input=true` and `output=true`, PNG `input=true` and `output=true`, GIF `input=true` and `output=false`, WebP `input=true` and WebP `output=true` when the runtime advertises ImageIO WebP destination support, HEIC `input=true` and `output=false`, HEIF `input=true` and `output=false`, AVIF `input=true` only when the runtime advertises ImageIO AVIF source support, AVIF `output=false`, AVIF notes that say `output.format: 'avif'` rejects with `ERR_NOT_IMPLEMENTED`, `metadataPolicies: ['preserve', 'safe', 'strip']`, `supportsTargetSizeCompression: true` for JPEG and runtime-available WebP output, and `supportsCancellation: false`.
-- If the TypeScript API throws `ERR_NATIVE_MODULE_UNAVAILABLE`, the native module was not found by React Native. Rebuild the app after installing or linking the package; this is separate from platform capability errors returned by the native implementation.
-
-Version `0.2.15` does not change iOS runtime behavior. It records that future AVIF output on iOS must be runtime-gated the same way as WebP output: call `CGImageDestinationCopyTypeIdentifiers()`, advertise AVIF `output=true` only when ImageIO returns an AVIF destination type, and otherwise keep `output.format: 'avif'` on the current `ERR_NOT_IMPLEMENTED` path.
-
-Version `0.2.16` also does not change iOS runtime behavior. It narrows the next Android AVIF output question to an internal API 34+ encoder route prototype while keeping iOS AVIF output on the runtime-gated ImageIO destination plan above. Version `0.2.17` again does not change iOS runtime behavior; it only exercises the Android AVIF output smoke attempt and keeps iOS AVIF output on the same future ImageIO destination plan. Version `0.2.19` keeps iOS AVIF output disabled while making the future gate explicit: Future iOS AVIF output must be runtime-gated by ImageIO AVIF destination support and static output validation.
-
-## Android HEIC / HEIF Input
-
-Android platform documentation lists [HEIF decode support on Android 8.0+](https://developer.android.com/media/platform/supported-formats) for `.heic` and `.heif` files, while the Java [`ImageDecoder` API](https://developer.android.com/reference/android/graphics/ImageDecoder) is available from API 28 and explicitly supports decoding HEIF into drawable or bitmap outputs. The Android implementation route is:
-
-- Use `ImageDecoder` on API 28+ for HEIC / HEIF input and force software bitmap allocation before resize and output encoding.
-- Attempt a guarded `BitmapFactory` HEIF decode fallback on API 26-27, because platform HEIF decode support exists there but remains device codec dependent.
-- Reject HEIC / HEIF inputs with `ERR_UNSUPPORTED_FORMAT` below Android 8.0.
-- Keep HEIC / HEIF output unsupported unless a later goal explicitly designs it.
-
-Runtime capabilities currently expose HEIC / HEIF with `input=true` and `output=false`, plus notes that describe the Android 8.0+ platform decode condition, the API 28+ `ImageDecoder` route, the API 26-27 guarded `BitmapFactory` fallback, and the unsupported output state. The main CI validates the version-gated structure and rejection boundaries, and the separate Android Instrumentation workflow validates committed HEIC / HEIF sample decoding on an API 35 emulator.
-
-## Android AVIF Input
-
-Android platform documentation lists AVIF baseline image support as mandatory on Android 14+. The Android implementation route is:
-
-- Use `ImageDecoder` on API 34+ for AVIF input and force software bitmap allocation before resize and output encoding.
-- Reject AVIF inputs with `ERR_UNSUPPORTED_FORMAT` below Android 14.
-- Keep AVIF output unsupported unless a later goal explicitly designs it.
-
-Runtime capabilities currently expose AVIF with `input=true` and `output=false`, plus notes that describe the Android 14+ `ImageDecoder` route, static image support, no EXIF metadata copy, unsupported animation preservation, `output.format: 'avif'` rejecting with `ERR_NOT_IMPLEMENTED`, and the production gate that keeps Android AVIF output disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation. The main CI validates the API-gated unsupported boundary, corrupt-candidate decode failure behavior, and AVIF output unsupported messaging, and the separate Android Instrumentation workflow validates committed AVIF sample decoding on an API 35 emulator.
-
-## AVIF Output Feasibility Spike
-
-Version `0.2.15` is a documentation and verification candidate only; it does not enable AVIF output. The spike records these implementation constraints:
-
-- Android platform docs list AVIF baseline image encoder and decoder support on Android 14+, but the current Android implementation encodes through `Bitmap.compress()` and `Bitmap.CompressFormat` exposes JPEG, PNG, WebP, WebP lossless, and WebP lossy with no AVIF enum. Android `ExifInterface` also lists AVIF under readable formats while writable metadata formats remain JPEG, PNG, and WebP. The minimum Android AVIF output implementation therefore needs a separate encoder route, API 34+ device validation, byte-signature and decode-back tests, and explicit metadata and target-size behavior before AVIF can report `output=true`.
-- iOS ImageIO destination support is not a compile-time guarantee in this codebase. Future iOS AVIF output must mirror the WebP output path: query `CGImageDestinationCopyTypeIdentifiers()` for AVIF identifiers at runtime, report AVIF `output=true` only when a destination type is present, encode with `CGImageDestination`, and keep `ERR_NOT_IMPLEMENTED` otherwise.
-- Current v0.2.15 capability reporting remains unchanged: Android AVIF `input=true` on Android 14+ and `output=false`; iOS AVIF input is runtime source-gated and AVIF output remains `false`.
-- Partial implementation criteria: static image output only, no animation preservation, metadata preserve rejected unless explicitly designed, target-size disabled until AVIF quality semantics are validated, and release requires Android instrumentation plus iOS host-app smoke validation.
-
-## Android AVIF Output Prototype
-
-Version `0.2.16` adds an internal Android AVIF output encoder route prototype without enabling AVIF output. The candidate route is a `MediaCodec image/avif encoder probe`: on Android 14+ it builds an `image/avif` `MediaFormat` with `COLOR_FormatYUV420Flexible` input and asks `MediaCodecList.findEncoderForFormat()` whether a still-image AVIF encoder is available. It also records whether a `video/av01` AV1 encoder exists as fallback evidence, but that fallback is not enough by itself because AVIF output still needs a valid still-image file/container write path.
-
-The prototype is intentionally not wired into `compressImage()` and does not change capability reporting. Android `getImageCompressionCapabilities().formats.avif.output=false` remains the production contract, and selecting `output.format: 'avif'` still rejects with `ERR_NOT_IMPLEMENTED`.
-
-The production gate remains closed until the Android path can:
-
-- Feed processed `Bitmap` pixels into the encoder as YUV420 input.
-- Write a complete static `.avif` file from encoder output.
-- Assert the result has an `ftyp` box with `avif` or `avis` compatible brand.
-- Decode the result with `ImageDecoder` and assert dimensions match the processed bitmap.
-- Keep animated AVIF preservation unsupported unless it is explicitly designed.
-- Reject or implement `metadata: 'preserve'` for AVIF output with documented metadata behavior.
-- Reject or implement `output.maxBytes` for AVIF output with tested quality and size-search semantics.
-
-The v0.2.16 Android instrumentation check runs on an API 35 emulator and verifies the prototype route report and production gate. The v0.2.17 instrumentation check keeps that probe and adds the encode/decode-back smoke below; AVIF output still cannot report `output=true` unless the smoke produces a valid static AVIF file and the remaining production semantics are implemented.
-
-## Android AVIF Output Encode/Decode-Back Smoke
-
-Version `0.2.17` adds an internal Android AVIF output encode/decode-back smoke attempt without enabling AVIF output. The smoke is intentionally not wired into `compressImage()` or output capability reporting.
-
-The internal route is named `MediaCodec image/avif encode/decode-back smoke` so instrumentation logs, release notes, and source checks refer to the same experiment.
-
-On Android 14+ it creates a repo-owned 16x12 ARGB bitmap pattern in instrumentation, probes an `image/avif` encoder with `MediaCodecList.findEncoderForFormat()`, queues YUV420 input through `MediaCodec`, and collects the encoder output. It first validates the direct encoder bytes as a possible AVIF file, then tries to mux the encoded samples with `MediaMuxer.MUXER_OUTPUT_HEIF` and validates the muxed file.
-
-The smoke success criteria are strict: the output must have an `ftyp` box with `avif` or `avis` compatible brand, and `ImageDecoder` must decode it back to 16x12 pixels. Missing encoders, codec failures, muxer/container failures, invalid signatures, or decode-back failures are reported as blockers instead of enabling a partial AVIF output surface.
-
-Current GitHub Android Instrumentation result: the API 35 Google APIs emulator does not expose an `image/avif` encoder through `MediaCodecList.findEncoderForFormat()`. The smoke therefore reports `attempted=false`, `success=false`, `blockerCode=no_image_avif_encoder`, and blocker `No image/avif encoder was discovered through MediaCodecList.findEncoderForFormat().` AVIF output remains disabled.
-
-Android `getImageCompressionCapabilities().formats.avif.output=false` remains the production contract, and selecting `output.format: 'avif'` still rejects with `ERR_NOT_IMPLEMENTED`. `metadata: 'preserve'`, `output.maxBytes`, animated AVIF preservation, and production AVIF output wiring remain non-goals until a later enabling goal explicitly implements them.
-
-Version `0.2.19` keeps AVIF output disabled while making the production gate explicit across Android and iOS capability notes, unsupported-output errors, README guidance, and verification expectations. Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation. iOS AVIF output remains disabled until ImageIO advertises AVIF destination support and static output validation exists. metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested.
-
-Version `0.2.20` keeps AVIF output disabled and turns the Android smoke into a production-decision preflight. Smoke results now carry `blockerCode`, `outputCanBeEnabled=false`, and `productionDecision`, distinguishing `sdk_unavailable`, `no_image_avif_encoder`, `codec_failure`, `invalid_signature`, and `decode_back_failure` so the next implementation step can decide whether a runtime can safely remain disabled or move toward production wiring.
-
-Version `0.2.21` keeps AVIF output disabled and adds an Android production wiring scaffold at the `compressImage()` output boundary. The scaffold reuses the encode/decode-back helper route as the future production helper, but `willEnterEncodeDecodeBackHelper=false` while `avif.output=false`; AVIF requests continue to reject with `ERR_NOT_IMPLEMENTED` before source access, helper entry, metadata preserve, `output.maxBytes`, or animated AVIF preservation can be treated as implemented.
-
-Version `0.2.22` keeps AVIF output disabled and extracts the Android AVIF encode/decode-back implementation into `AndroidAvifOutputHelper`. The helper owns reusable input, encoded output, sample, file-validation, and result types for future production wiring, while `compressImage()` still rejects `output.format: 'avif'` through the scaffold before source access or helper entry and capability reporting remains `avif.output=false`.
-
-Version `0.2.23` keeps AVIF output disabled and adds an injectable validation seam to `AndroidAvifOutputHelper`. `AndroidAvifOutputHelperDependencies` wraps the default bitmap, encoder, output-file, muxer, and decode-back validator path, while Android JVM tests inject fake encoded bytes, invalid signature results, decode-back failures, and codec failures to prove helper result classification without wiring AVIF output into `compressImage()`.
-
-Version `0.2.24` keeps AVIF output disabled and fixes the injected success contract for `AndroidAvifOutputHelper`. Android JVM tests now inject fake valid AVIF bytes, a muxed output file, and a successful decode-back result so helper success reports `byteSize`, `signatureValid=true`, `decodeBackValid=true`, `blockerCode=null`, and `PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED` while `compressImage()` and capability reporting still keep AVIF output disabled.
-
-Version `0.2.25` keeps AVIF output disabled and fixes the injected direct-output success contract for `AndroidAvifOutputHelper`. Android JVM tests now inject fake valid direct AVIF bytes plus successful decode-back validation so helper success reports the `MediaCodec image/avif encode/decode-back smoke direct encoder output` route, a direct `.avif` output path, `byteSize`, `blockerCode=null`, and `PRODUCTION_DECISION_SMOKE_PASSED_KEEP_DISABLED`, and proves `muxEncodedSamples` is not called after direct validation success.
-
-Version `0.2.26` keeps AVIF output disabled and fixes the helper validation detail contract for `AndroidAvifOutputHelper`. Android JVM tests now pin direct success, muxed success, invalid signature, decode-back failure, and codec failure `details` ordering so validation results report `INJECTABLE_VALIDATION_SEAM` first, dependency-provided encoder/direct/muxer/validator details next, and route blockers last, while codec failure reports route blockers before the seam and helper-disabled message.
-
-Version `0.2.27` keeps AVIF output disabled and fixes the blocked-route detail contract for `AndroidAvifOutputHelper` and `AndroidAvifOutputPrototype.runEncodeDecodeBackSmoke()`. Android JVM tests now pin below-API-34 and no-image/avif-encoder blocked helper details to route blockers, `INJECTABLE_VALIDATION_SEAM`, and `HELPER_DISABLED_FROM_COMPRESS_IMAGE`, and verify the smoke adapter preserves `blockerCode`, `details`, and `outputCanBeEnabled=false`.
-
-Version `0.2.28` keeps AVIF output disabled and fixes the temp-file lifecycle contract for `AndroidAvifOutputHelper`. Android JVM tests now pin direct success to direct-file-only creation, muxer skip, and direct `outputFilePath`/`byteSize`; pin direct-failure plus muxed-success to the muxed result path while keeping the direct intermediate unreported; and pin invalid-signature/decode-back failures to the final muxed blocker path and final-file `byteSize`.
-
-Version `0.2.29` keeps AVIF output disabled and fixes the validation-result provenance contract for `AndroidAvifOutputHelper`. Android JVM tests now pin direct validation details to the direct file name, byte size, signature result, and decode-back result; pin muxed validation details to the muxed file name, byte size, signature result, and decode-back result; and pin direct failure followed by muxed success or failure to encoder -> direct validation -> muxer -> final validation detail order.
-
-Version `0.2.30` keeps AVIF output disabled and hardens iOS host-app smoke retry and timeout diagnostics. The iOS smoke runner now supports `RNICK_IOS_SMOKE_ATTEMPTS`, starts the unified log stream before launching the app, retries timeout-only smoke attempts with a fresh launch, and prints simulator state, app container paths, app process lookup, launch output, captured `RNICK_IOS_SMOKE_*` stream tail, Metro output tail, and recent unified logs from `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`.
-
-Version `0.2.31` keeps AVIF output disabled and fixes the iOS smoke retry and diagnostic contract in simulator-free Node-level tests. `scripts/ios-smoke-contract.mjs` now owns environment parsing, timeout-only retry decisions, retry warnings, and timeout diagnostic formatting; `test/iosSmokeContract.test.mjs` covers those helpers without launching Xcode, Metro, or a simulator.
-
-Version `0.2.32` keeps AVIF output disabled and fixes CLI-level iOS smoke timeout fixture coverage. `createSmokeTimeoutErrorFromCLIState()` now owns the `runSmokeAttempt` timeout diagnostic input assembly, `formatSmokeRetryWarningMessages()` owns diagnostics-before-retry warning order, and `test/iosSmokeCliTimeout.test.mjs` covers fake launch, log stream, Metro, unified log, app lookup, and process lookup output without launching Xcode, Metro, or a simulator.
-
-Version `0.2.33` keeps AVIF output disabled and fixes iOS smoke process lifecycle fixture coverage. `createSmokeAttemptLifecycle()` now owns Metro/log stream listener cleanup, log process termination, and `setLogProcess(null)` after PASS, FAIL, or timeout settle, while `test/iosSmokeLifecycle.test.mjs` covers those paths with fake EventEmitter fixtures without launching Xcode, Metro, or a simulator.
-
-Version `0.2.34` keeps AVIF output disabled and fixes iOS smoke log stream error fixture coverage. `createSmokeAttemptLifecycle()` now records log process `error` events as `iOS smoke log stream error:` output and smoke-log snapshot state, while `test/iosSmokeLifecycle.test.mjs` proves that state is available to timeout diagnostics without launching Xcode, Metro, or a simulator.
-
-Version `0.2.35` keeps AVIF output disabled and fixes iOS smoke diagnostics packed log artifact coverage. The iOS Validation workflow now writes failed smoke output to `ios-smoke-diagnostics/ios-smoke.log`, generates `ios-smoke-diagnostics/ios-smoke-summary.md`, appends the same ordered marker excerpt to the GitHub Step Summary, and uploads the packed diagnostics artifact without changing the simulator smoke behavior.
-
-Version `0.2.36` keeps AVIF output disabled and fixes iOS smoke artifact failure-path dry-run fixture coverage. `test/iosSmokeSummaryCli.test.mjs` runs `node scripts/ios-validation.mjs summarize-smoke-log` against a fake `ios-smoke.log`, verifies stdout matches `$GITHUB_STEP_SUMMARY`, and pins the failure-only `if: failure()` summary/upload artifact path without forcing a real simulator failure.
-
-Version `0.2.37` keeps AVIF output disabled and fixes iOS smoke diagnostics artifact schema snapshot coverage. `test/iosSmokeContract.test.mjs` now pins the exact `formatIOSSmokeDiagnosticsSummary()` markdown shape for normal, empty, no-marker, and very-long-log fixtures, including fallback text and marker/tail window bounds.
-
-Version `0.2.38` keeps AVIF output disabled and fixes iOS smoke PASS payload schema snapshot coverage. `test/iosSmokeContract.test.mjs` now parses a prefixed `RNICK_IOS_SMOKE_PASS` JSON log fixture, pins the required payload key order and type schema, and covers missing or malformed PASS payload logs without forcing a real simulator run. Version `0.2.39` keeps runtime behavior unchanged and fixes WebP-output available PASS payload schema snapshot coverage, including conditional WebP result byte fields, `webpTargetSizeResultBytes`, and `unsupportedOutputs` excluding `webp`. Version `0.2.40` keeps runtime behavior unchanged and fixes AVIF-input unavailable PASS payload schema snapshot coverage, including conditional omission of `avifResultBytes`, `avifToPngResultBytes`, and `avifToWebPResultBytes` plus `unsupportedInputs` including `avif`. Version `0.2.41` keeps runtime behavior unchanged and fixes iOS PASS payload schema matrix helper coverage, deriving all four WebP output x AVIF input required-field schemas from `IOS_SMOKE_PASS_PAYLOAD_SCHEMA_MATRIX` and shared fixture factory tests. Version `0.2.42` keeps runtime behavior unchanged and fixes iOS PASS payload CI log replay fixture coverage, parsing a successful GitHub Actions iOS Validation `RNICK_IOS_SMOKE_PASS` line with the real job/step/timestamp and unified-log prefixes. Version `0.2.43` keeps runtime behavior unchanged and pins that replay fixture's workflow, run, head SHA, job, step, timestamp, source URL, and refresh procedure.
-
-Version `0.2.44` keeps runtime behavior unchanged and pins the exact GitHub Actions PASS source-line SHA-256, including missing and duplicate source-line rejection, without network access in tests. Version `0.2.45` keeps runtime behavior unchanged and moves provenance/sourceLine into a canonical JSON artifact with deterministic offline refresh CLI coverage. Version `0.2.46` keeps runtime behavior unchanged and adds a read-only offline check for artifact schema, provenance, digest, source-line, and canonical-format drift. Version `0.2.47` keeps runtime behavior unchanged and adds semantic PASS payload validation, standalone artifact audit, stable current/stale/invalid JSON reports, and local/CI quality gates.
-
-## HEIC / HEIF / AVIF Codec Sample Validation Strategy
-
-This repository now commits tiny HEIC / HEIF / AVIF samples generated from repo-owned PNG sources. The fixture paths are:
-
-- Use `android/src/test/assets/heic-heif/source.png`, a repo-owned 16x12 RGB PNG pattern with no user-photo content.
-- Track source and generated output metadata in `android/src/test/assets/heic-heif/manifest.json`.
-- Validate the source image, manifest fields, and committed sample files with `pnpm fixtures:heic-heif:check`.
-- Generate or refresh committed fixtures with `pnpm fixtures:heic-heif`, which uses `heif-enc --quality 80 source.png -o sample.heic` and `heif-enc --quality 80 source.png -o sample.heif`.
-- Generated fixtures are committed because they are tiny, repo-owned derivative assets, and covered by MIT provenance in the manifest.
-- Store committed fixtures under `android/src/test/assets/heic-heif/` so Android runtime tests can load them without depending on network access.
-- When regenerating with a different `libheif` / `heif-enc` version, update byte size, SHA-256, generator version, dimensions, generation command, and license/provenance in the manifest.
-- Use `android/src/test/assets/avif/source.png` and `android/src/test/assets/avif/sample.avif` for AVIF runtime validation.
-- Validate the AVIF source image, manifest fields, and committed sample file with `pnpm fixtures:avif:check`.
-- Generate or refresh the committed AVIF fixture with `pnpm fixtures:avif`, which uses `heif-enc --quality 80 --avif source.png -o sample.avif`.
-
-Current lightweight coverage is intentionally narrower than real codec validation. `pnpm verify`, `pnpm example:android-unit-test`, and the main GitHub Actions CI validate the HEIC / HEIF / AVIF MIME and extension routing, SDK gates, capability notes, corrupt-candidate rejection boundaries, and committed fixture metadata. They verify the fixture files and metadata, but they do not boot an emulator.
-
-A separate Android Instrumentation workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout, and runs `pnpm example:android-instrumentation`. That task executes `:react-native-image-compression-kit:connectedDebugAndroidTest`, validates the committed `sample.heic`, `sample.heif`, and `sample.avif` fixtures through their `ImageDecoder` routes, asserts JPEG, PNG, and WebP output success with 16x12 result dimensions and byte-signature checks, and runs the Android AVIF output encode/decode-back smoke while keeping AVIF output capability reporting false.
-
-Manual codec validation beyond CI should use a codec-backed Android device or emulator on API 28+ first, because that also exercises the `ImageDecoder` route through the example app. After installing the example app, copy a fixture into the app-private files directory and paste the resulting file URI into the example screen:
-
-```bash
-pnpm example:android
-adb shell run-as com.imagecompressionkit.example mkdir -p files/rnick-codec
-adb shell run-as com.imagecompressionkit.example sh -c 'cat > files/rnick-codec/sample.heic' < android/src/test/assets/heic-heif/sample.heic
-```
-
-Then use `file:///data/data/com.imagecompressionkit.example/files/rnick-codec/sample.heic` as the source URI and verify JPEG, PNG, and WebP outputs. Repeat with `sample.heif`. API 26-27 should still be checked separately for the guarded `BitmapFactory` fallback because emulator/device codec availability can differ from API 28+.
-
-For AVIF manual validation, use an API 34+ device or emulator and repeat the copy/paste flow with `android/src/test/assets/avif/sample.avif`.
-
-## Public API
-
-The API below is available from the package. Runtime compression succeeds on the Android MVP for JPEG, PNG, WebP, GIF, HEIC, HEIF, and Android 14+ AVIF input to JPEG, PNG, or WebP output. On iOS, runtime compression succeeds for JPEG, PNG, static ImageIO GIF, static ImageIO WebP, static ImageIO HEIC, static ImageIO HEIF, or runtime-available static ImageIO AVIF input to JPEG, PNG, or runtime-gated ImageIO-backed WebP output, including JPEG `output.maxBytes` and runtime-available WebP `output.maxBytes`. Call `getImageCompressionCapabilities()` to guard platform-specific format, metadata, AVIF source support, output support, and target-size support before compression; HEIC, HEIF, and AVIF output currently reject with `ERR_NOT_IMPLEMENTED`.
-
-```ts
-import { compressImage } from 'react-native-image-compression-kit';
-
-const result = await compressImage({
-  source: {
-    uri: imageUri,
-  },
-
-  resize: {
-    maxWidth: 2048,
-    maxHeight: 2048,
-    mode: 'contain',
-  },
-
-  output: {
-    format: 'webp',
-    quality: 80,
-    maxBytes: 500_000,
-  },
-
-  metadata: 'safe',
-});
-```
-
-Example result:
-
-```ts
-{
-  uri: 'file:///...',
-  format: 'webp',
-  width: 2048,
-  height: 1365,
-  byteSize: 482_319,
-  originalByteSize: 3_814_220,
-  compressionRatio: 0.126,
-}
-```
-
-## Compression Modes
-
-### 1. Quality-based compression
-
-```ts
-output: {
-  format: 'jpeg',
-  quality: 80,
-}
-```
-
-### 2. Compression with resize
-
-```ts
-resize: {
-  maxWidth: 2048,
-  maxHeight: 2048,
-  mode: 'contain',
-},
-output: {
-  format: 'jpeg',
-  quality: 80,
-}
-```
-
-Android MVP and iOS JPEG/PNG/GIF/WebP/HEIC/HEIF/runtime-available AVIF MVP resize support `contain`, `cover`, and `stretch`. JPEG EXIF orientation is applied before resize, and the result `width` and `height` describe the final encoded image dimensions after orientation correction and resize.
-
-### 3. Target-size compression
-
-```ts
-output: {
-  format: 'webp',
-  maxBytes: 500_000,
-}
-```
-
-Target-size compression treats `quality` as the upper quality bound when both `quality` and `maxBytes` are provided. If `quality` is omitted, the native implementation starts from the default quality. Android searches for the highest JPEG or WebP quality that fits under `maxBytes`; iOS searches the same way for JPEG output and for WebP output when ImageIO advertises WebP destination encoding. If even the lowest quality cannot fit, the native implementation returns the smallest generated output instead. Android and iOS PNG output do not support `maxBytes`; iOS HEIC, HEIF, AVIF, and other unsupported outputs also reject `maxBytes`. `maxBytes` is not intended to guarantee an exact byte size for every source image, format, platform, or codec.
-
-### 4. Compression with format conversion
-
-```ts
-output: {
-  format: 'webp',
-  quality: 65,
-}
-```
-
-## Metadata Policy
-
-The proposed API includes three metadata policies:
-
-```ts
-metadata: 'preserve'
-metadata: 'safe'
-metadata: 'strip'
-```
-
-Android MVP currently supports `preserve`, `safe`, and `strip` for JPEG source to JPEG output. JPEG EXIF orientation is applied to pixels before encoding, so output orientation metadata is normalized instead of preserving the original rotation flag. PNG/WebP/GIF/HEIC/HEIF/AVIF sources and PNG/WebP output do not copy source EXIF metadata.
-
-The iOS JPEG/PNG/GIF/WebP/HEIC/HEIF/runtime-available AVIF MVP supports `preserve` only for JPEG source to JPEG output. It copies source JPEG metadata through resize, quality, and `output.maxBytes` JPEG output paths, then normalizes output orientation and pixel dimension metadata to match the rendered JPEG. `safe` and `strip` re-encode without copying source metadata, so the default `safe` policy is privacy-preserving but narrower than Android's EXIF allowlist. PNG/WebP/GIF/HEIC/HEIF/AVIF sources and PNG/WebP output still reject `preserve` with `ERR_NOT_IMPLEMENTED`.
-
-`safe` is the default policy. In the Android MVP it copies a privacy-filtered JPEG EXIF allowlist into JPEG output, including common camera, date/time, exposure, lens, and color-space attributes. It excludes GPS/location, owner/serial identifiers, maker note, user comment, image-unique ID, XMP, and other broad free-form metadata.
-
-`strip` removes metadata from the encoded output where possible through JPEG re-encode.
-
-On Android, `preserve` copies supported source EXIF attributes into the output JPEG, including camera, date/time, exposure, lens, GPS, and XMP attributes. Output orientation is set to normal after pixels are transformed, and output EXIF width/height tags are updated to the final encoded dimensions. On iOS, `preserve` copies source JPEG metadata for JPEG source to JPEG output, normalizes output orientation metadata after rendering, and updates output pixel dimension metadata to the rendered JPEG dimensions. ICC color profile preservation remains planned.
-
-## Design Principles
-
-- Compression first.
-- One decode and encode pipeline.
-- Native processing.
-- Predictable output.
-- Explicit capability reporting.
-- No silent animation loss.
-- No silent alpha-channel loss.
-- Safe defaults.
-- Composable with any uploader.
-
-The target architecture avoids moving full pixel data through JavaScript. Native code should do decode, transform, compress, and encode work, then return a local output URI and result metadata to JavaScript.
-
-## Non-goals
-
-This project is not intended to handle:
-
-- Uploading images.
-- Remote image downloading.
-- Rendering or caching images.
-- Replacing an image picker.
-- Supporting every existing image format or camera RAW format.
-- Providing a full image editor.
-- Guaranteeing identical encoded bytes across Android and iOS.
-- CDN optimization, lazy loading, gallery UI, or photo management workflows.
-
-## Roadmap
-
-- [x] Repository and API design.
-- [x] Initial TypeScript public API contract.
-- [x] Unit test foundation for API and validation.
-- [x] React Native Codegen and native module foundation.
-- [x] Android JPEG to JPEG quality compression MVP.
-- [x] Android JPEG EXIF orientation correction.
-- [x] Android JPEG resize support.
-- [x] Android JPEG target-size compression.
-- [x] Android JPEG input to PNG and WebP output encoding.
-- [x] Android PNG and WebP input support.
-- [x] Android JPEG-input output format behavior and byte signature JVM tests.
-- [x] Android JPEG-input module-level compression integration JVM tests.
-- [x] Android `content://` JPEG source module-level JVM tests.
-- [x] Android PNG/WebP input module-level JVM tests.
-- [x] Android PNG/WebP input resize, target-size, and metadata no-copy regression JVM tests.
-- [x] Android AVIF unsupported input and HEIC/HEIF SDK-gated decode-boundary JVM tests.
-- [x] Android HEIC/HEIF input decode path and capability notes.
-- [x] Android HEIC/HEIF real codec sample validation strategy.
-- [x] Android HEIC/HEIF committed sample fixtures and manifest metadata.
-- [x] Android AVIF input decode path, fixture manifest, and emulator validation.
-- [x] Android GIF static first-frame input support.
-- [x] Android GIF input module-level JVM tests for file/content URI, resize, target-size, and metadata no-copy behavior.
-- [x] Android JPEG-input resize/orientation module-level JVM tests.
-- [x] Android JPEG/WebP target-size module-level JVM tests.
-- [x] Android JPEG metadata `safe` / `strip` policy basics.
-- [x] Android JPEG metadata `preserve` EXIF copy.
-- [x] Android JPEG metadata `safe` privacy-filtered EXIF copy.
-- [x] Android JPEG metadata policy unit tests with real EXIF read/write.
-- [x] iOS JPEG/PNG input to JPEG output MVP.
-- [x] iOS JPEG/PNG input to PNG output MVP.
-- [x] iOS optional resize and JPEG quality support.
-- [x] iOS JPEG target-size compression.
-- [x] iOS PNG output.
-- [x] iOS GIF static first-frame input support.
-- [x] iOS WebP static first-frame input support.
-- [x] iOS runtime-gated WebP output path through ImageIO destination support.
-- [x] iOS runtime-gated WebP target-size compression.
-- [x] iOS HEIC/HEIF static ImageIO input support.
-- [x] iOS capability-gated AVIF static ImageIO input support.
-- [x] iOS JPEG metadata `preserve` for JPEG source to JPEG output.
-- [x] iOS JPEG metadata `preserve` orientation and dimension normalization.
-- [x] iOS capability reporting for JPEG/PNG/GIF/WebP/HEIC/HEIF/runtime-available AVIF input, JPEG/PNG/runtime-gated WebP output, metadata policies, target-size support, and cancellation.
-- [x] Example application.
-- [x] Example metadata policy selector and result summary.
-- [x] Example output format selector for JPEG, PNG, and WebP.
-- [x] Android HEIC / HEIF input.
-- [x] Android HEIC / HEIF emulator/instrumentation validation.
-- [x] Android AVIF input.
-- [x] AVIF output feasibility spike.
-- [x] Android AVIF output encoder route prototype.
-- [x] Android AVIF output encode/decode-back smoke attempt.
-- [ ] AVIF output.
-- [ ] Metadata support for non-JPEG formats and broader iOS metadata preservation.
-- [ ] Cancellation and progress.
-- [x] Public npm release.
+Compress supported local images to JPEG, PNG, or WebP, with optional resize,
+quality, target-size, and metadata controls. Use the runtime capability API to
+handle platform codec differences before compression.
+
+## Current status
+
+- Package version: `0.2.62`
+- npm latest: `0.2.55`
+- Release state: `candidate`
+- Native/API behavior: unchanged from the published `0.2.55` runtime surface
+
+This candidate reorganizes package and repository documentation and replaces
+prose-coupled documentation checks with semantic status, structure, and link
+validation. It does not publish a package or change image processing behavior.
+<!-- package-status:end -->
 
 ## Installation
-
-The repository package metadata is `0.2.61` for the unpublished review artifact acquisition automation and canonical archive handoff candidate; npm `latest` remains v0.2.55. Repository, issue tracker, homepage, MIT license, React Native peer dependency, CommonJS entrypoint, TypeScript declarations, React Native Codegen source, Android main sources, and iOS native source remain included in a package tarball; `.github/`, repository scripts/tests/fixtures, acquisition/import/policy/review/archive tooling, generated or retained review bundles and attestations, exact artifact ZIPs, generated Action pin review and attestation artifacts, and the repository-owned `evidence/` archive remain excluded.
-
-Version `0.1.0` introduced the Android MVP, version `0.1.1` is the published docs-only patch for README/npm package page status, version `0.1.2` is the published iOS-stub clarity patch for native-unavailable messaging, README guidance, and iOS capability reporting, version `0.2.0` is the published iOS native JPEG MVP release, version `0.2.1` is the published iOS JPEG target-size release, version `0.2.2` is the published iOS PNG output release, version `0.2.3` is the published iOS GIF static first-frame input release, version `0.2.4` is the published iOS WebP static first-frame input release, version `0.2.5` is the published iOS runtime-gated WebP output release, version `0.2.6` is the published iOS runtime-gated WebP target-size release, version `0.2.7` is the published iOS HEIC/HEIF static input release, version `0.2.8` is the published post-publish registry smoke automation release, version `0.2.9` is the published docs-only npm package page README correction release, version `0.2.10` is the published iOS AVIF input capability-gated static decode release, version `0.2.11` is the published docs-only npm README correction release, version `0.2.12` is the published iOS JPEG metadata preserve release, version `0.2.13` is the published iOS JPEG metadata preserve hardening release, version `0.2.14` is the published AVIF output capability/error surface release, version `0.2.15` is the unpublished AVIF output feasibility candidate, version `0.2.16` is the unpublished Android AVIF output encoder route prototype candidate, version `0.2.17` is the published Android AVIF output encode/decode-back smoke release, version `0.2.18` is the published docs-only npm package-page README correction release, version `0.2.19` is the published AVIF output production gate release, version `0.2.20` is the unpublished AVIF output production wiring preflight candidate, version `0.2.21` is the unpublished Android AVIF output production wiring scaffold candidate, version `0.2.22` is the unpublished Android AVIF output production helper extraction candidate, version `0.2.23` is the unpublished Android AVIF output helper injectable validation seam candidate, version `0.2.24` is the unpublished Android AVIF output helper injected success contract candidate, version `0.2.25` is the unpublished Android AVIF output helper direct-output success contract candidate, version `0.2.26` is the unpublished Android AVIF output helper validation detail contract candidate, version `0.2.27` is the unpublished Android AVIF output helper blocked-route detail contract candidate, version `0.2.28` is the unpublished Android AVIF output helper temp-file lifecycle contract candidate, version `0.2.29` is the unpublished Android AVIF output helper validation-result provenance contract candidate, version `0.2.30` is the unpublished iOS smoke retry and diagnostic hardening candidate, version `0.2.31` is the unpublished iOS smoke diagnostic testability hardening candidate, version `0.2.32` is the unpublished iOS smoke timeout CLI fixture coverage candidate, version `0.2.33` is the unpublished iOS smoke process lifecycle fixture coverage candidate, version `0.2.34` is the unpublished iOS smoke log stream error fixture coverage candidate, version `0.2.35` is the unpublished iOS smoke diagnostics packed log artifact coverage candidate, version `0.2.36` is the unpublished iOS smoke artifact failure-path dry-run fixture candidate, version `0.2.37` is the unpublished iOS smoke diagnostics artifact schema snapshot candidate, version `0.2.38` is the published iOS smoke PASS payload schema snapshot release, version `0.2.39` is the unpublished iOS WebP-output available PASS payload schema snapshot candidate, version `0.2.40` is the published iOS AVIF-input unavailable PASS payload schema snapshot release, version `0.2.41` is the unpublished iOS PASS payload schema matrix helper candidate, and version `0.2.42` is the unpublished iOS PASS payload CI log replay fixture candidate. Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.
-
-Version `0.2.43` is the unpublished iOS PASS payload replay fixture provenance candidate. Version `0.2.44` is the unpublished iOS PASS replay fixture source-line integrity digest candidate. Version `0.2.45` is the unpublished iOS PASS replay fixture offline refresh artifact candidate. Version `0.2.46` is the unpublished iOS PASS replay fixture offline check mode candidate. Version `0.2.47` is the iOS PASS replay automation gate release. Version `0.2.48` is the registry provenance and manual CI gate release. Version `0.2.49` is the unpublished Registry provenance bundle offline verification candidate. Version `0.2.50` is the GitHub artifact attestation and offline identity verification release. Version `0.2.51` is the unpublished expiration-independent release evidence archive and offline replay gate candidate. Version `0.2.52` is the unpublished immutable GitHub Actions pin and workflow supply-chain gate candidate. Version `0.2.53` is the unpublished GitHub Action pin update provenance and manual review gate candidate. Version `0.2.54` is the unpublished Action pin provenance execution identity and artifact manifest binding candidate. Version `0.2.55` is the Action Pin artifact GitHub OIDC attestation and offline signer verification release. Version `0.2.56` is the unpublished release evidence archive import automation and multi-version regression gate candidate. Version `0.2.57` is the unpublished Registry Validation artifact acquisition and canonical metadata handoff candidate. Version `0.2.58` is the unpublished release evidence policy candidate and reviewed promotion gate candidate. Version `0.2.59` is the unpublished release evidence policy review receipt and manual promotion rehearsal candidate. Version `0.2.60` is the unpublished release evidence review archive import and expiration-independent replay gate candidate. Version `0.2.61` is the unpublished review artifact acquisition automation and canonical archive handoff candidate.
-
-The repository contains an initial TypeScript API scaffold, an Android image MVP with JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input, GIF static first-frame decoding, HEIC/HEIF SDK-gated input decoding, Android 14+ AVIF input decoding, JPEG EXIF orientation correction, optional resize, JPEG/PNG/WebP output encoding, JPEG/WebP target-size compression, and metadata `preserve` / privacy-filtered `safe` / `strip` handling for JPEG source to JPEG output.
-
-Version `0.2.0` adds an iOS native MVP with JPEG/PNG input, optional resize, quality-based JPEG output, `safe` / `strip` metadata behavior, and iOS capability reporting. Version `0.2.1` adds iOS JPEG target-size compression. Version `0.2.2` adds iOS PNG output. Version `0.2.3` adds iOS GIF input decoded as a static first frame. Version `0.2.4` adds iOS WebP input decoded as a static first frame. Version `0.2.5` adds a runtime-gated iOS WebP output path through ImageIO destination encoding. Version `0.2.6` adds target-size `output.maxBytes` support to that runtime-available WebP output path. Version `0.2.7` adds iOS HEIC/HEIF input decoded as static ImageIO images. Version `0.2.8` adds post-publish registry smoke automation without runtime behavior changes. Version `0.2.9` corrects the packaged npm README without runtime behavior changes. Version `0.2.10` adds iOS AVIF input decoded as a runtime-available static ImageIO image. Version `0.2.11` corrects the packaged npm README without runtime behavior changes. Version `0.2.12` adds iOS JPEG metadata preserve for JPEG source to JPEG output. Version `0.2.13` hardens that iOS preserve path by normalizing output orientation and pixel dimension metadata. Version `0.2.14` aligns AVIF output unsupported capability notes and `ERR_NOT_IMPLEMENTED` messages without adding AVIF encoding. Version `0.2.15` documents the AVIF output feasibility decision without runtime behavior changes. Version `0.2.16` adds an internal Android AVIF output encoder route prototype without enabling AVIF output. Version `0.2.17` adds an internal Android AVIF output encode/decode-back smoke attempt without enabling AVIF output. Version `0.2.18` corrects the packaged npm README without runtime behavior changes. Version `0.2.19` clarifies the AVIF output production gate, capability notes, and `ERR_NOT_IMPLEMENTED` messages without enabling AVIF output. Version `0.2.20` adds Android AVIF output smoke production-decision blocker codes without enabling AVIF output. Version `0.2.21` adds an Android AVIF output production wiring scaffold without enabling AVIF output. Version `0.2.22` extracts the Android AVIF output encode/decode-back helper boundary without enabling AVIF output. Version `0.2.23` adds injectable Android AVIF output helper validation dependencies without enabling AVIF output. Version `0.2.24` fixes the injected Android AVIF output helper success contract without enabling AVIF output. Version `0.2.25` fixes the injected Android AVIF output helper direct-output success contract without enabling AVIF output. Version `0.2.26` fixes the Android AVIF output helper validation detail ordering contract without enabling AVIF output. Version `0.2.27` fixes the Android AVIF output helper blocked-route detail and smoke adapter contract without enabling AVIF output. Version `0.2.28` fixes the Android AVIF output helper temp-file lifecycle contract without enabling AVIF output. Version `0.2.29` fixes the Android AVIF output helper validation-result provenance contract without enabling AVIF output. Version `0.2.30` hardens iOS smoke retry and timeout diagnostics without enabling AVIF output. Version `0.2.31` hardens simulator-free iOS smoke diagnostic test coverage without enabling AVIF output. Version `0.2.32` hardens CLI-level iOS smoke timeout fixture coverage without enabling AVIF output. Version `0.2.33` hardens iOS smoke process lifecycle fixture coverage without enabling AVIF output. Version `0.2.34` hardens iOS smoke log stream error fixture coverage without enabling AVIF output. Version `0.2.35` hardens iOS smoke diagnostics packed log artifact coverage without enabling AVIF output. Version `0.2.36` hardens iOS smoke artifact failure-path dry-run fixture coverage without enabling AVIF output. Version `0.2.37` hardens iOS smoke diagnostics artifact schema snapshot coverage without enabling AVIF output. Version `0.2.38` hardens iOS smoke PASS payload schema snapshot coverage without enabling AVIF output. Version `0.2.39` hardens iOS WebP-output available PASS payload schema snapshot coverage without enabling AVIF output. Version `0.2.40` hardens iOS AVIF-input unavailable PASS payload schema snapshot coverage without enabling AVIF output. Version `0.2.41` hardens iOS PASS payload schema matrix helper coverage without enabling AVIF output. Version `0.2.42` hardens iOS PASS payload CI log replay fixture coverage without enabling AVIF output. HEIC/HEIF output, AVIF output, metadata preservation outside JPEG source to JPEG output, GIF animation preservation, animated AVIF preservation, and animated WebP preservation are not implemented yet.
-
-Version `0.2.43` hardens iOS PASS payload replay fixture provenance and refresh guidance without enabling AVIF output. Version `0.2.44` hardens iOS PASS replay fixture source-line SHA-256 integrity without enabling AVIF output. Version `0.2.45` adds the structured replay artifact and offline deterministic refresh CLI without enabling AVIF output. Version `0.2.46` adds read-only offline artifact freshness checking without enabling AVIF output. Version `0.2.47` adds semantic payload validation, standalone audit mode, machine-readable reports, and local/CI audit gating without enabling AVIF output. Version `0.2.48` adds registry provenance reporting and a manual validation gate without enabling AVIF output. Version `0.2.49` adds exact-tarball provenance bundle retention and offline self-consistency verification without enabling AVIF output. Version `0.2.50` adds canonical manifest attestation and offline GitHub identity verification without enabling AVIF output. Version `0.2.51` retains that evidence under repository ownership and adds an expiration-independent offline replay gate without enabling AVIF output. Version `0.2.52` pins remote workflow Actions and adds a canonical offline supply-chain lock gate without enabling AVIF output. Version `0.2.53` adds manual tag-resolution provenance and offline Action pin review replay without enabling AVIF output. Version `0.2.54` binds that review to GitHub execution identity, exact workflow bytes, and a complete canonical artifact manifest without enabling AVIF output. Version `0.2.55` attests that manifest and adds offline GitHub signer identity verification without enabling AVIF output. Version `0.2.56` automates verified atomic archive import and gates every retained release evidence version without enabling AVIF output. Version `0.2.57` acquires immutable GitHub artifact ZIPs and canonical metadata for verified importer handoff without enabling AVIF output. Version `0.2.58` adds canonical policy candidate review and digest-bound archive promotion without enabling AVIF output. Version `0.2.59` binds the reviewed candidate to GitHub workflow execution identity and a self-contained, attested promotion rehearsal bundle without enabling AVIF output. Version `0.2.60` retains the exact review ZIPs and extracted trust chain under repository ownership and gates their expiration-independent offline replay without enabling AVIF output. Version `0.2.61` acquires those exact review artifacts by immutable GitHub identity and proves canonical v0.2.60 importer handoff without enabling AVIF output.
-
-Install from npm:
 
 ```bash
 npm install react-native-image-compression-kit
 ```
 
-## Example Application
-
-The repository includes a React Native example app in `example/`. The Android app links this local package through the pnpm workspace and exercises the Android JPEG/PNG/WebP/GIF/HEIC/HEIF/AVIF input MVP against a `file://` or `content://` source URI. The iOS host app under `example/ios` links the local package through CocoaPods and drives the iOS JPEG/PNG/GIF/WebP/HEIC/HEIF/runtime-available AVIF MVP smoke validation.
-
-Install dependencies from the repository root:
+Or with pnpm:
 
 ```bash
-pnpm install
+pnpm add react-native-image-compression-kit
 ```
 
-Start Metro:
+For iOS, install pods after adding the package:
 
 ```bash
-pnpm example:start
+cd ios && pod install
 ```
 
-In another terminal, run the Android app:
+React Native `>=0.73 <1.0` is supported. The package is New
+Architecture/Codegen ready.
 
-```bash
-pnpm example:android
-```
-
-The example screen copies a bundled `sample.jpg` asset into the app cache and uses that cache file URI by default. You can also paste another local `file://` or `content://` JPEG, PNG, WebP, GIF, HEIC, HEIF, or AVIF URI. The screen calls:
+## Quick start
 
 ```ts
-compressImage({
-  source: { uri },
+import {
+  compressImage,
+  getImageCompressionCapabilities,
+} from 'react-native-image-compression-kit';
+
+const capabilities = await getImageCompressionCapabilities();
+const canWriteWebP = capabilities.formats.some(
+  ({ format, output }) => format === 'webp' && output
+);
+
+const result = await compressImage({
+  source: { uri: imageUri },
   resize: {
-    maxWidth,
-    maxHeight,
-    mode,
+    maxWidth: 2048,
+    maxHeight: 2048,
+    mode: 'contain',
   },
   output: {
-    format,
-    quality,
-    maxBytes,
+    format: canWriteWebP ? 'webp' : 'jpeg',
+    quality: 80,
   },
-  metadata,
+  metadata: 'safe',
+});
+
+console.log(result.uri, result.byteSize, result.width, result.height);
+```
+
+Input must be a local URI accessible to the native app. Android supports
+`file://` and `content://`; iOS supports `file://` and best-effort local
+`content://` loading.
+
+## Public API
+
+### `compressImage(options)`
+
+Returns `Promise<CompressionResult>`.
+
+```ts
+interface CompressionOptions {
+  source: { uri: string };
+  resize?: {
+    maxWidth?: number;
+    maxHeight?: number;
+    mode?: 'contain' | 'cover' | 'stretch';
+  };
+  output: {
+    format: 'jpeg' | 'png' | 'webp' | 'heic' | 'heif' | 'avif';
+    quality?: number;
+    maxBytes?: number;
+  };
+  metadata?: 'preserve' | 'safe' | 'strip';
+}
+
+interface CompressionResult {
+  uri: string;
+  format: 'jpeg' | 'png' | 'webp' | 'heic' | 'heif' | 'avif';
+  width: number;
+  height: number;
+  byteSize: number;
+  originalByteSize: number;
+  compressionRatio: number;
+}
+```
+
+### `getImageCompressionCapabilities()`
+
+Returns the current platform's input/output format availability, metadata
+policies, target-size support, and cancellation support. Check it at runtime;
+codec support is not identical across Android versions, devices, and iOS
+runtimes.
+
+### Other exports
+
+- `ImageCompressionKitError`
+- `IMAGE_FORMATS`, `OUTPUT_FORMATS`, `METADATA_POLICIES`, `RESIZE_MODES`
+- Public TypeScript types for options, results, formats, resize, metadata, and
+  capabilities
+
+## Compression examples
+
+### Quality and resize
+
+```ts
+const result = await compressImage({
+  source: { uri: imageUri },
+  resize: { maxWidth: 1600, maxHeight: 1600, mode: 'contain' },
+  output: { format: 'jpeg', quality: 82 },
+  metadata: 'safe',
 });
 ```
 
-The example lets you choose JPEG, PNG, or WebP output and `preserve`, `safe`, or `strip` metadata handling before compression. It displays the current native output format capability list, the current native `metadataPolicies` capability list, the selected output format, the selected metadata policy, the compressed output URI, result format, final width and height, compressed byte size, original byte size, compression ratio, the metadata policy used for the latest result, and native error code/message when the call fails.
+### Target size
 
-Android Codegen and native build checks can also be run through the example app:
-
-```bash
-pnpm example:codegen
-pnpm example:android-unit-test
-pnpm example:android-instrumentation
-pnpm example:build
+```ts
+const result = await compressImage({
+  source: { uri: imageUri },
+  output: { format: 'webp', quality: 90, maxBytes: 500_000 },
+  metadata: 'strip',
+});
 ```
 
-These commands require a Java runtime and Android SDK. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for the package, including real JPEG EXIF read/write coverage for metadata policies, native-graphics JPEG/PNG/WebP output checks for file byte signatures, and module-level `compressImage` coverage for file URI results, `content://` source parity and read failures, AVIF API-gated decode boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF/AVIF capability notes, corrupt supported-format decode failures, PNG/WebP/GIF input, GIF static first-frame decoding, PNG/WebP/GIF input resize modes, PNG/WebP/GIF input target-size `maxBytes`, PNG/WebP/GIF metadata no-copy behavior, result metadata, resize modes, EXIF orientation normalization, JPEG/WebP target-size `maxBytes`, target-size fallback metadata, and PNG `maxBytes` rejection. `pnpm example:android-instrumentation` requires a connected API 34+ emulator or device and runs the committed HEIC/HEIF/AVIF sample-to-JPEG/PNG/WebP instrumentation test. `pnpm android:doctor` also validates the HEIC/HEIF and AVIF source and committed sample fixture manifests, byte sizes, SHA-256 hashes, and instrumentation wiring. `pnpm example:android` still requires a connected emulator/device.
+`quality` is the upper bound when used with `maxBytes`. The native pipeline
+searches for the highest supported quality under the target. It returns the
+smallest generated result if the target cannot be reached. PNG does not support
+`maxBytes`.
 
-## iOS Host-App Validation
+### Format conversion
 
-The repository includes a React Native iOS example host app under `example/ios`. It links the local package through CocoaPods and includes an iOS-only `ExampleImageSource` native module that generates tiny JPEG, PNG, GIF, WebP, HEIC, HEIF, and AVIF smoke fixtures in the simulator cache.
-
-Install the iOS pods:
-
-```bash
-pnpm example:ios:pods
+```ts
+const result = await compressImage({
+  source: { uri: heicUri },
+  output: { format: 'jpeg', quality: 85 },
+  metadata: 'safe',
+});
 ```
 
-Build the iOS example app for an available simulator:
+### Error handling
 
-```bash
-pnpm example:ios:build
+```ts
+import {
+  compressImage,
+  ImageCompressionKitError,
+} from 'react-native-image-compression-kit';
+
+try {
+  await compressImage(options);
+} catch (error) {
+  if (error instanceof ImageCompressionKitError) {
+    console.warn(error.code, error.message);
+  }
+}
 ```
 
-Run the automated iOS host-app smoke:
+## Platform capabilities and limitations
 
-```bash
-pnpm example:ios:smoke
-```
+| Capability | Android | iOS |
+| --- | --- | --- |
+| JPEG/PNG/WebP input | Yes | Yes; WebP is static ImageIO decode |
+| GIF input | Static first frame | Static ImageIO decode |
+| HEIC/HEIF input | SDK/device codec gated | Static ImageIO decode |
+| AVIF input | Android 14+ (`ImageDecoder`) | Runtime ImageIO source gated |
+| JPEG output | Yes | Yes |
+| PNG output | Yes | Yes |
+| WebP output | Yes | Runtime ImageIO destination gated |
+| HEIC/HEIF/AVIF output | Not implemented | Not implemented |
+| `maxBytes` | JPEG and WebP | JPEG and runtime-available WebP |
+| Resize modes | `contain`, `cover`, `stretch` | `contain`, `cover`, `stretch` |
+| Cancellation | Not implemented | Not implemented |
 
-The smoke command requires full Xcode with an iOS simulator SDK, Ruby 3.1 or newer with Bundler or CocoaPods, and an available iPhone simulator. It installs pods when needed, starts Metro, builds the Debug simulator app, installs it, launches it with `RNICK_IOS_SMOKE=1`, and waits for the `RNICK_IOS_SMOKE_PASS` log marker. By default the smoke runner tries two timeout-only attempts through `RNICK_IOS_SMOKE_ATTEMPTS=2`, warms the unified log stream before launch with `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS=1000`, and collects recent diagnostics from `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW=10m` when a pass marker is not observed. The example Gemfile pins the CocoaPods validation toolchain to patched ActiveSupport and Concurrent Ruby ranges; that Ruby toolchain is used for local/CI validation only and is excluded from the published npm tarball.
+Important limitations:
 
-The pod install path treats CocoaPods `pathname contains null byte` as an external path-resolution flake. The example Podfile applies a local CocoaPods pathname workaround for pnpm-symlinked pods, and the validation script retries once by default after removing generated `example/ios/Pods`, `example/ios/ImageCompressionKitExample.xcworkspace`, and `example/ios/Podfile.lock` artifacts. It prints Ruby, Bundler, CocoaPods, pnpm, and bundle path diagnostics before retrying or failing. Override `RNICK_IOS_POD_INSTALL_ATTEMPTS` when a CI image needs a different number of pod install attempts.
+- HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`.
+- GIF output and animation preservation for GIF/WebP/AVIF are not implemented.
+- `metadata: 'preserve'` is supported only for JPEG source to JPEG output.
+- Android `safe` copies a privacy-filtered JPEG EXIF allowlist. iOS `safe` and
+  `strip` re-encode without copying source metadata.
+- JPEG orientation is rendered into pixels before resize/encode; preserved
+  output orientation and dimensions are normalized.
+- Capability checks should drive fallbacks for SDK-, device-, and
+  runtime-dependent codecs.
 
-When an iOS smoke attempt times out waiting for `RNICK_IOS_SMOKE_PASS`, the validation script now prints an `iOS smoke diagnostics:` block before retrying or failing. That block includes simulator state, app and data container lookup, app process lookup, launch output, the captured `RNICK_IOS_SMOKE_*` stream tail, Metro output tail, and a recent unified log tail filtered to `RNICK_IOS_SMOKE_*` messages or the `ImageCompressionKitExample` process.
-
-On GitHub Actions failure, `.github/workflows/ios-validation.yml` captures the full smoke command output in `ios-smoke-diagnostics/ios-smoke.log`, generates `ios-smoke-diagnostics/ios-smoke-summary.md`, appends the same `formatIOSSmokeDiagnosticsSummary()` excerpt to `$GITHUB_STEP_SUMMARY`, and uploads the packed diagnostics directory as the `ios-smoke-diagnostics` artifact. The workflow uploads the `ios-smoke-diagnostics` artifact only through `if: failure()` steps, so successful smoke runs do not upload the diagnostic artifact.
-
-The retry, timeout diagnostic, process lifecycle, log stream error, packed diagnostics summary, artifact markdown schema, PASS payload schema, WebP-output available PASS payload schema, AVIF-input unavailable PASS payload schema, and `summarize-smoke-log` CLI stdout/`$GITHUB_STEP_SUMMARY` dry-run contracts are also covered without Xcode, Metro, or a simulator by `test/iosSmokeContract.test.mjs`, `test/iosSmokePassReplayFixture.test.mjs`, `test/iosSmokeSummaryCli.test.mjs`, `test/iosSmokeCliTimeout.test.mjs`, and `test/iosSmokeLifecycle.test.mjs`. The Node-level Vitest suites validate `scripts/ios-smoke-contract.mjs` defaults and overrides for `RNICK_IOS_SMOKE_ATTEMPTS`, `RNICK_IOS_SMOKE_LOG_STREAM_WARMUP_MS`, and `RNICK_IOS_SMOKE_DIAGNOSTIC_LOG_WINDOW`, timeout-only retry decisions, diagnostic formatting, packed diagnostics summary marker extraction and log-tail ordering, exact `formatIOSSmokeDiagnosticsSummary()` markdown schema snapshots for normal, empty, no-marker, and very-long-log fixtures, exact `RNICK_IOS_SMOKE_PASS` payload schema snapshots for platform, result byte, capability, target-size, and unsupported format fields, exact WebP-output available `RNICK_IOS_SMOKE_PASS` payload schema snapshots for conditional WebP output byte fields and `webpTargetSizeResultBytes`, exact AVIF-input unavailable `RNICK_IOS_SMOKE_PASS` payload schema snapshots for omitted `avifResultBytes`, `avifToPngResultBytes`, and `avifToWebPResultBytes`, matrix-driven `RNICK_IOS_SMOKE_PASS` payload schema snapshots for WebP output x AVIF input combinations, shared PASS payload fixture factory coverage, reusable semantic payload validator coverage across exact field order, positive result bytes, capability booleans, and unsupported-format consistency, successful GitHub Actions iOS Validation PASS log replay fixture coverage, missing or malformed PASS payload log handling, missing conditional WebP and AVIF payload field handling, `unsupportedInputs` including `avif` when AVIF input is unavailable, `unsupportedOutputs` excluding `webp` when WebP output is available, `summarize-smoke-log` CLI stdout/`$GITHUB_STEP_SUMMARY` parity from a fake `ios-smoke.log`, CLI timeout input assembly from fake launch/log stream/Metro/unified-log output, diagnostics-before-retry warning order, fake EventEmitter Metro/log stream listener cleanup plus log process stop and `setLogProcess(null)` after PASS, FAIL, and timeout settle paths, and log stream error output/snapshot/timeout diagnostics propagation.
-
-The CI replay fixture artifact coverage validates `test/fixtures/ios-smoke-pass-ci-replay.json`, its canonical JSON formatting, workflow, run, head SHA, job, step, timestamp, source URL, exact PASS source line, SHA-256, and semantic payload contract. Fake-log CLI coverage proves refresh is deterministic, check/audit are no-write and network-free, JSON stdout is stable for current/stale/invalid results, and conflicting modes fail without ambiguous output.
-
-Metro startup waits up to 180 seconds by default to tolerate cold macOS CI runners. Override `RNICK_IOS_METRO_READY_TIMEOUT_MS` when a local machine or CI image needs a shorter or longer readiness window.
-
-The smoke path validates the native module link plus runtime behavior from the React Native host app: iOS capabilities report JPEG input/output, PNG input/output, GIF input with no GIF output, WebP input with capability-driven output, HEIC input with no HEIC output, HEIF input with no HEIF output, AVIF input only when ImageIO advertises AVIF source support and no AVIF output, `metadataPolicies: ['preserve', 'safe', 'strip']`, target-size compression support, and no cancellation; JPEG, PNG, GIF, WebP, HEIC, HEIF, and capability-available AVIF fixtures compress to JPEG output; JPEG source metadata is generated with stale TIFF orientation and source-size EXIF pixel dimensions, read, preserved through JPEG output with `metadata: 'preserve'`, resize, quality, and `output.maxBytes`, then read back from the compressed result with orientation normalized to `1` and pixel dimension metadata matching the compressed JPEG; JPEG, PNG, GIF, WebP, HEIC, HEIF, and capability-available AVIF fixtures compress to PNG output; GIF, WebP, HEIC, HEIF, and capability-available AVIF JPEG output run through the `output.maxBytes` path and return `byteSize <= maxBytes` for the smoke target; JPEG `output.maxBytes` succeeds and returns `byteSize <= maxBytes` for the smoke target; PNG `output.maxBytes` rejects with `ERR_NOT_IMPLEMENTED`; JPEG input to PNG output with `metadata: 'preserve'` rejects with `ERR_NOT_IMPLEMENTED`; when ImageIO advertises a WebP destination type, JPEG, PNG, GIF, WebP, HEIC, HEIF, and capability-available AVIF fixtures also compress to WebP output and WebP `output.maxBytes` succeeds with `byteSize <= maxBytes`; when ImageIO does not advertise a WebP destination type, `output.format: 'webp'` rejects with `ERR_NOT_IMPLEMENTED`; when ImageIO does not advertise AVIF source support, AVIF input rejects with `ERR_UNSUPPORTED_FORMAT`; HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`; and GIF output remains rejected by TypeScript validation with `ERR_INVALID_OPTIONS`.
-
-## Continuous Integration
-
-GitHub Actions runs the repository checks and Android example build on pushes to `master` and pull requests. The lightweight workflow is defined in `.github/workflows/ci.yml`.
-
-The CI job uses Node.js 24, pnpm 11.7.0, Temurin JDK 21, Android SDK platform 36, Android build tools 36.0.0, and Android NDK 27.1.12297006. The GitHub Actions workflow actions are kept on Node 24 runtime-compatible majors: `actions/checkout@v7`, `actions/setup-node@v6`, `actions/setup-java@v5`, `android-actions/setup-android@v4`, `pnpm/action-setup@v6`, and `gradle/actions/setup-gradle@v6`. It enables pnpm and Gradle caching, then runs:
-
-```bash
-pnpm install --frozen-lockfile
-pnpm verify
-pnpm example:typecheck
-pnpm example:codegen
-pnpm example:android-unit-test
-pnpm example:build
-pnpm smoke:consumer
-```
-
-`pnpm example:codegen` runs React Native Codegen through the example app's Android Gradle project. `pnpm example:android-unit-test` runs Robolectric-backed Android JVM unit tests for native metadata policy behavior, native-graphics JPEG/PNG/WebP/GIF input and JPEG/PNG/WebP output format and byte-signature behavior, and module-level `compressImage` file URI, content URI, AVIF API-gated decode boundaries, HEIC/HEIF SDK-gated decode boundaries, HEIC/HEIF/AVIF capability-note structure, corrupt supported-format decode failure, GIF static first-frame decoding, PNG/WebP/GIF input resize, EXIF orientation, target-size, and metadata no-copy integration behavior. `pnpm example:build` assembles the Android debug build, which verifies the package can be compiled inside a real React Native app with the JPEG, PNG, WebP, GIF, HEIC, HEIF, and AVIF input paths and JPEG, PNG, and WebP output paths.
-
-`pnpm smoke:consumer` builds the TypeScript output, creates a `pnpm pack` tarball, installs that tarball into a separate temporary React Native consumer project, and typechecks imports from `react-native-image-compression-kit` against the packed package. This pre-release smoke test verifies the npm package shape without publishing to npm or running Metro/native device builds. Set `RNICK_CONSUMER_SMOKE_KEEP=1` to keep the temporary project for inspection, or `RNICK_CONSUMER_SMOKE_TMPDIR=/path/to/tmp` to choose its parent directory.
-
-After npm publication, `pnpm smoke:registry -- --version <published-version> --expect-tag latest --json --artifact-dir registry-validation` validates the requested registry package and atomically retains its exact tarball in the fixed provenance bundle. It runs `npm view`, requires `latest` to resolve the exact requested version, downloads the registry tarball with `npm pack`, checks integrity/shasum, real tarball README status, required runtime files and forbidden development-only files, installs the published version into a separate temporary React Native consumer project with `npm install --ignore-scripts --legacy-peer-deps`, and runs `npm run typecheck` against public imports from the registry package. The canonical registry report schema remains unchanged. `pnpm verify:registry-provenance -- --artifact-dir registry-validation --expect-package react-native-image-compression-kit --expect-version <published-version> --expect-tag latest --json` then checks the four-file bundle without network or extraction. This post-publish smoke test intentionally is not part of the default CI or `pnpm release:dry-run`, because creating new evidence requires an already published npm version; offline bundle verification itself performs no registry access. Set `RNICK_REGISTRY_SMOKE_KEEP=1` to keep the temporary project for inspection, `RNICK_REGISTRY_SMOKE_TMPDIR=/path/to/tmp` to choose its parent directory, or `RNICK_REGISTRY_SMOKE_VERSION=<published-version>` to provide the version without CLI arguments.
-
-The workflow-dispatch-only `.github/workflows/registry-validation.yml` provides the networked manual gate without adding npm registry access to `pnpm verify`. It accepts an exact version and expected dist-tag, atomically writes the canonical report, identical stdout, exact validated tarball, and checksum manifest, runs the offline verifier, adds bundle-manifest/report/stdout/tarball digests to the GitHub Step Summary, uploads the fixed four-file `registry-provenance-<version>` bundle, and fails the job when either registry or offline verification is not `passed`.
-
-The separate `.github/workflows/android-instrumentation.yml` workflow enables KVM permissions, boots an API 35 Google APIs emulator with an extended boot timeout, and runs `pnpm example:android-instrumentation`. This workflow validates that the committed HEIC, HEIF, and AVIF fixtures decode on the Android `ImageDecoder` paths and can be compressed to JPEG, PNG, and WebP; it also runs the Android AVIF output encode/decode-back smoke and asserts AVIF output capability reporting remains false. It stays separate from the lightweight CI because emulator startup and codec execution are slower and more environment-sensitive than JVM tests.
-
-The separate `.github/workflows/ios-validation.yml` workflow runs on a macOS runner, executes `pnpm fixtures:ios-pass-replay:audit -- --json`, and then executes `pnpm example:ios:smoke`. The audit fails before simulator work when the committed artifact is malformed, noncanonical, provenance/hash-invalid, or payload-contract-invalid. The host-app smoke validates pod install, React Native Codegen/autolinking, simulator build/install/launch, JPEG/PNG/GIF/WebP/HEIC/HEIF/runtime-available AVIF input to JPEG, PNG, and capability-driven WebP runtime compression, iOS capability reporting, JPEG target-size behavior, JPEG source to JPEG output metadata preserve, WebP target-size behavior when ImageIO WebP destination encoding is available, AVIF input rejection when ImageIO AVIF source support is unavailable, and the expected iOS unsupported-option error surface. The workflow inherits the guarded CocoaPods null-byte retry behavior and the timeout-only smoke retry/diagnostic behavior from `scripts/ios-validation.mjs` so one transient CocoaPods path-resolution failure or one missing `RNICK_IOS_SMOKE_PASS` log observation does not immediately fail the validation run.
-
-## Docker Android Build/Test Environment
-
-The repository includes a Docker-based Android build/test environment for machines that do not have Java, Android SDK, build tools, CMake, or NDK installed locally. The root `Dockerfile` mirrors the lightweight CI environment with Node.js 24, pnpm 11.7.0, Temurin JDK 21, Android SDK platform 36, Android build tools 36.0.0, Android build tools 35.0.0 for React Native/AGP compatibility, CMake 3.22.1, and Android NDK 27.1.12297006.
-
-Build the image:
-
-```bash
-pnpm docker:android:build
-```
-
-Run the full non-emulator Android verification flow in Docker:
-
-```bash
-pnpm docker:android:ci
-```
-
-That command installs dependencies inside Docker-managed volumes, then runs:
+## Development verification
 
 ```bash
 pnpm verify
 pnpm example:typecheck
-pnpm example:codegen
-pnpm example:android-unit-test
-pnpm example:build
+pnpm docs:check
+git diff --check
+pnpm pack --dry-run
 ```
 
-You can also run individual Docker-backed checks:
+`pnpm verify` runs TypeScript checks, Vitest, the build, offline fixture and
+release-evidence replay gates, workflow pin checks, and the Android repository
+doctor. `pnpm docs:check` is network-free and validates the current-status block,
+required documentation structure, local links/anchors, and npm package
+exclusions.
 
-```bash
-pnpm docker:android:verify
-pnpm docker:android:example:typecheck
-pnpm docker:android:example:codegen
-pnpm docker:android:example:android-unit-test
-pnpm docker:android:example:build
-```
-
-The Docker runner uses `linux/amd64` by default so Android SDK build tools behave like the GitHub Actions Linux environment. It bind-mounts the repository at `/workspace`, disables Gradle VFS watching for Docker bind-mount stability, and uses named Docker volumes for `node_modules`, the pnpm store, and the Gradle home cache so container dependencies do not overwrite the host install. Override the image, platform, or volume prefix with `RNICK_ANDROID_DOCKER_IMAGE`, `RNICK_ANDROID_DOCKER_PLATFORM`, or `RNICK_ANDROID_DOCKER_VOLUME_PREFIX` if needed.
-
-Docker covers repository checks, Android Codegen, Android JVM unit tests, and the example Android debug build. It does not run an Android emulator, `pnpm example:android`, or `pnpm example:android-instrumentation`; those still require a connected API 34+ emulator/device or the separate GitHub Actions instrumentation workflow.
-
-## Development Verification
-
-Run the JavaScript and TypeScript checks:
-
-```bash
-pnpm verify
-```
-
-`pnpm verify` runs type checking, unit tests (including acquisition/import/policy promotion atomicity, immutable artifact ZIP digest and handoff coverage, reviewed candidate digest/policy/set gates, GitHub review receipt and recursive bundle/attestation identity failures, exact review ZIP safety and atomic review archive failures, review artifact acquisition expiration/identity/rollback contracts, the v0.2.50/v0.2.55 release evidence set, the retained v0.2.55 review archive set, and committed Action Pin provenance/signer-identity fixtures), the TypeScript build, `pnpm fixtures:ios-pass-replay:audit`, the offline `pnpm fixtures:release-evidence-acquisition:check`, the offline `pnpm fixtures:release-evidence-review-acquisition:check`, `pnpm verify:release-evidence-set -- --json`, `pnpm verify:release-evidence-review-archive-set -- --json`, `pnpm verify:workflow-supply-chain -- --json`, `pnpm verify:action-pin-fixture`, the real-bundle `pnpm verify:action-pin-attestation-fixture`, and the Android verification doctor. All default gates, policy candidate preparation, reviewed promotion, review bundle generation/replay, review archive import/replay, and downloaded-attestation verification are network-free; only separately invoked acquisition, fixture refresh, Action tag review, and explicit manual workflow attestation commands access GitHub.
-
-Run the pack-based consumer smoke test before release-oriented changes:
+For release-oriented changes, also run:
 
 ```bash
 pnpm smoke:consumer
-```
-
-This command builds the package, creates a local tarball with `pnpm pack`, installs it into a separate temporary React Native consumer project, and typechecks public API imports from the packed package.
-
-For the published v0.2.55 npm release, create the exact-tarball provenance bundle and verify it offline:
-
-```bash
-pnpm smoke:registry -- --version 0.2.55 --expect-tag latest --json --artifact-dir registry-validation
-pnpm verify:registry-provenance -- --artifact-dir registry-validation --expect-package react-native-image-compression-kit --expect-version 0.2.55 --expect-tag latest --json
-```
-
-The first command reads npm registry metadata, validates the published tarball and clean consumer, then atomically retains the exact validated bytes. The second command performs no network access, does not extract the tarball, and verifies canonical JSON, package/version/tag identity, all manifest digests, archive sizes, package contents, and README status. Neither command publishes to npm.
-
-To verify the repository-owned v0.2.55 provenance and attestation evidence after the workflow artifacts expire:
-
-```bash
-pnpm verify:release-evidence -- --version 0.2.55
-```
-
-This command reads only `evidence/npm/0.2.55`, blocks all GitHub CLI network paths, checks the exact seven-file archive and canonical index, and replays both provenance and attestation identity verification. The archive is a repository verification asset and is not packed into `react-native-image-compression-kit`; pass `--version 0.2.50` to replay the preserved previous release archive.
-
-To verify immutable third-party Action pins, release-tag comments, the canonical lock, exact workflow usage counts, and weekly Dependabot configuration:
-
-```bash
-pnpm verify:workflow-supply-chain -- --json
-```
-
-This verifier reads only committed workflow, lock, and Dependabot files. It performs no GitHub or other network requests and does not resolve or update Action versions.
-
-To replay the committed annotated-tag Action pin provenance fixture without network access:
-
-```bash
-pnpm verify:action-pin-fixture
-pnpm verify:action-pin-attestation-fixture
-```
-
-Use the manual **Action Pin Review** workflow or `pnpm review:action-pin` only when reviewing a proposed SHA update. Downloaded provenance artifacts can be replayed with `pnpm verify:action-pin-provenance -- --artifact-dir <path> --json`; downloaded provenance plus attestation artifacts can be replayed with `pnpm verify:action-pin-attestation -- --artifact-dir <path> --attestation-bundle <path> --trusted-root <path> --json`.
-
-To run only the Android repository checks:
-
-```bash
-pnpm android:doctor
-```
-
-Android Codegen and native compilation require a React Native app build environment. React Native Codegen is run through the React Native app build, so point the verification scripts at an app's Android project:
-
-```bash
-RNICK_ANDROID_APP_DIR=/path/to/App/android pnpm android:codegen
-RNICK_ANDROID_APP_DIR=/path/to/App/android pnpm android:build
-RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build
-```
-
-For the bundled example app, use `pnpm example:codegen`, `pnpm example:android-unit-test`, and `pnpm example:build`.
-Use `pnpm example:android-instrumentation` only when an API 34+ emulator or device is connected.
-
-`pnpm android:codegen` runs `generateCodegenArtifactsFromSchema` in the app Android project. `pnpm android:build` runs `assembleDebug` by default. To use a different Gradle task:
-
-```bash
-RNICK_ANDROID_APP_DIR=/path/to/App/android RNICK_ANDROID_GRADLE_TASK=:app:assembleDebug pnpm android:build
-```
-
-The executable Android checks require a Java runtime, Android SDK, and a Gradle wrapper or `gradle` command in the target app. If those are not installed locally, use `pnpm docker:android:build` followed by `pnpm docker:android:ci` to run the non-emulator Android verification flow in the reproducible Docker environment.
-
-## Release Dry Run Checklist
-
-The v0.2.61 review artifact acquisition automation and canonical archive handoff candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.60 release evidence review archive import and expiration-independent replay gate candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.59 release evidence policy review receipt and manual promotion rehearsal candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.58 release evidence policy candidate and reviewed promotion gate candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.57 Registry Validation artifact acquisition and canonical metadata handoff candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.56 release evidence archive import automation and multi-version regression gate candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification release notes are in [RELEASE.md](RELEASE.md). The v0.2.54 Action pin provenance execution identity and artifact manifest binding candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.53 GitHub Action pin update provenance and manual review gate candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.52 immutable GitHub Actions pin and workflow supply-chain gate candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.51 expiration-independent release evidence archive and offline replay gate candidate notes are in [RELEASE.md](RELEASE.md). The v0.2.50 GitHub artifact attestation and offline identity verification release notes are in [RELEASE.md](RELEASE.md). The v0.2.49 Registry provenance bundle offline verification candidate notes are in [RELEASE.md](RELEASE.md).
-
-Actual npm publishing requires an authenticated npm registry session and is intentionally outside the dry-run checklist. See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review. Before publishing a new version, review the intended version and package metadata, then run the dry-run release gate from the repository root:
-
-```bash
 pnpm release:dry-run
 ```
 
-That command does not publish to npm. It runs the required pre-publish checks in this order:
+The release dry run never publishes. While this README declares the current
+package as a candidate, it intentionally stops at the packed README status gate.
 
-```bash
-pnpm verify
-pnpm example:typecheck
-git diff --check
-pnpm pack --dry-run
-packed README stale status check
-pnpm smoke:consumer
-pnpm publish --dry-run --no-git-checks
-```
+## Repository documentation
 
-The packed README stale status check packs the package to a temporary directory, extracts `package/README.md`, and fails if stale pre-release status snippets remain. The final `pnpm publish --dry-run --no-git-checks` step exercises the publish packaging path without uploading a package. The `--no-git-checks` flag keeps the dry run usable before the release commit exists; the actual publish decision should still wait for a clean working tree, the intended version, reviewed release notes, and successful GitHub Actions CI, Android Instrumentation, and iOS Validation runs on the pushed release commit. Git tags and GitHub Releases are separate work and are not required by this npm promotion. After npm publish, run `pnpm smoke:registry -- --version <published-version>` to verify the real registry tarball and clean consumer install. This registry smoke step is intentionally outside `pnpm release:dry-run` and the default CI because it requires a version that already exists on npm. npm publish, registry smoke, and post-publish security review commands are documented in `RELEASE.md` and should only be run manually after those checks pass.
+Operational material is repository-only and is not included in the npm
+tarball:
 
-### Local Commit Hook
-
-Install the repository git hooks once per clone:
-
-```bash
-pnpm hooks:install
-```
-
-The `pre-commit` hook runs `git diff --cached --check`, `pnpm verify`, and `pnpm example:typecheck`. Commits should only be created after these checks pass. After each completed development task, keep `README.md` aligned with the current implementation status before committing.
-
-## Contributing
-
-The project is in its initial design phase. Issues and discussions about the proposed API, format priorities, platform behavior, metadata policy, and native implementation strategy are welcome once the repository is ready for public collaboration.
+- [Release evidence operations](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/README.md)
+- [Registry provenance](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/registry-provenance.md)
+- [Policy review](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/policy-review.md)
+- [Review archive](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/review-archive.md)
+- [Evidence acquisition](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/acquisition.md)
+- [GitHub Action pins](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/supply-chain/action-pins.md)
+- [Current and recent release work](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/RELEASE.md)
+- [Complete 0.2 release history](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/releases/0.2-history.md)
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, dependency triage, and package security hygiene. Published packages should not run install-time lifecycle scripts, and release verification should confirm that credentials, `.npmrc`, `.env*`, tests, fixtures, example app files, and debug keystores stay out of the npm tarball.
+See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting,
+package prohibitions, and links to repository-only execution procedures.
 
 ## License
 

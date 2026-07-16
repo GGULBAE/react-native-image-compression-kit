@@ -11,6 +11,25 @@ function readProjectFile(filePath: string): string {
   return readFileSync(path.join(ROOT, filePath), 'utf8');
 }
 
+function readRepositoryDocs(): string {
+  return [
+    'README.md',
+    'RELEASE.md',
+    'SECURITY.md',
+    'docs/release-evidence/README.md',
+    'docs/release-evidence/registry-provenance.md',
+    'docs/release-evidence/policy-review.md',
+    'docs/release-evidence/review-archive.md',
+    'docs/release-evidence/acquisition.md',
+    'docs/supply-chain/action-pins.md',
+    'docs/releases/0.2-history.md',
+    'docs/legacy/README-v0.2.61.md',
+    'docs/legacy/SECURITY-v0.2.61.md',
+  ]
+    .map(readProjectFile)
+    .join('\n');
+}
+
 function readProjectBinary(filePath: string): Buffer {
   return readFileSync(path.join(ROOT, filePath));
 }
@@ -42,8 +61,9 @@ function extractKotlinArray(source: string, arrayName: string): string {
 }
 
 describe('Android verification scripts', () => {
-  it('declares the v0.2.61 review artifact acquisition candidate metadata', () => {
-    const readmeSource = readProjectFile('README.md');
+  it('declares the v0.2.62 documentation candidate metadata', () => {
+    const readmeSource = readRepositoryDocs();
+    const currentReadmeSource = readProjectFile('README.md');
     const staleReadmeSnippets = [
       'Status: v0.2.8 candidate',
       'v0.2.8%20candidate',
@@ -205,7 +225,7 @@ describe('Android verification scripts', () => {
     ];
 
     expect(packageJson.name).toBe('react-native-image-compression-kit');
-    expect(packageJson.version).toBe('0.2.61');
+    expect(packageJson.version).toBe('0.2.62');
     expect(packageJson.license).toBe('MIT');
     expect(packageJson.repository).toEqual({
       type: 'git',
@@ -778,7 +798,7 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain('Partial implementation criteria: static image output only');
     expect(readmeSource).toContain("metadataPolicies: ['preserve', 'safe', 'strip']");
     for (const snippet of staleReadmeSnippets) {
-      expect(readmeSource).not.toContain(snippet);
+      expect(currentReadmeSource).not.toContain(snippet);
     }
     expect(readmeSource).toContain(
       'Development scripts, Android JVM tests, instrumentation tests, and codec fixtures are intentionally excluded from the publish tarball.'
@@ -810,7 +830,7 @@ describe('Android verification scripts', () => {
     const dockerfileSource = readProjectFile('Dockerfile');
     const dockerIgnoreSource = readProjectFile('.dockerignore');
     const dockerScriptSource = readProjectFile('scripts/docker-android.mjs');
-    const readmeSource = readProjectFile('README.md');
+    const readmeSource = readRepositoryDocs();
 
     expect(packageJson.scripts['docker:android:build']).toBe(
       'node scripts/docker-android.mjs build'
@@ -897,7 +917,7 @@ describe('Android verification scripts', () => {
   it('wires the packed package consumer smoke test', () => {
     const smokeScriptSource = readProjectFile('scripts/consumer-smoke-test.mjs');
     const ciWorkflowSource = readProjectFile('.github/workflows/ci.yml');
-    const readmeSource = readProjectFile('README.md');
+    const readmeSource = readRepositoryDocs();
 
     expect(packageJson.scripts['smoke:consumer']).toBe(
       'pnpm build && node scripts/consumer-smoke-test.mjs'
@@ -941,7 +961,7 @@ describe('Android verification scripts', () => {
     const registryAttestationTestSource = readProjectFile('test/registryAttestation.test.mjs');
     const readmeValidatorSource = readProjectFile('scripts/readme-status-validator.mjs');
     const registryWorkflowSource = readProjectFile('.github/workflows/registry-validation.yml');
-    const readmeSource = readProjectFile('README.md');
+    const readmeSource = readRepositoryDocs();
 
     expect(packageJson.scripts['smoke:registry']).toBe(
       'node scripts/registry-smoke-test.mjs'
@@ -1044,7 +1064,7 @@ describe('Android verification scripts', () => {
   it('documents and wires the release dry-run checklist', () => {
     const releaseScriptSource = readProjectFile('scripts/release-dry-run.mjs');
     const releaseTestSource = readProjectFile('test/releaseDryRun.test.mjs');
-    const readmeSource = readProjectFile('README.md');
+    const readmeSource = readRepositoryDocs();
 
     expect(packageJson.scripts['release:dry-run']).toBe(
       'node scripts/release-dry-run.mjs'
@@ -1056,55 +1076,23 @@ describe('Android verification scripts', () => {
     expect(releaseScriptSource).toContain("args: ['example:typecheck']");
     expect(releaseScriptSource).toContain("args: ['diff', '--check']");
     expect(releaseScriptSource).toContain("args: ['pack', '--dry-run']");
-    expect(releaseScriptSource).toContain('Check packed README status');
-    expect(releaseScriptSource).toContain('STALE_PACKED_README_SNIPPETS');
+    expect(releaseScriptSource).toContain('Check packed README current status');
     expect(releaseScriptSource).toContain('checkPackedReadmeStatus');
     expect(releaseScriptSource).toContain('getPackedReadmeStatusViolations');
     expect(releaseScriptSource).toContain('validatePackedReadmeStatus');
-    expect(releaseScriptSource).toContain('Status: v0.2.47 candidate');
-    expect(releaseScriptSource).toContain(
-      'Version `0.2.47` is an unpublished iOS PASS replay automation gate candidate'
-    );
-    expect(releaseScriptSource).toContain('Status: v0.2.48 candidate');
-    expect(releaseScriptSource).toContain(
-      'Version `0.2.48` is an unpublished registry provenance and manual CI gate candidate'
-    );
-    expect(releaseScriptSource).toContain('Status: v0.2.59 candidate');
-    expect(releaseScriptSource).toContain(
-      'Version `0.2.59` is the unpublished release evidence policy review receipt and manual promotion rehearsal candidate.'
-    );
+    expect(releaseScriptSource).toContain('requireStatusBlock: true');
     expect(releaseScriptSource).toContain('package/README.md');
     expect(releaseScriptSource).toContain(
-      'Packed README release status check completed.'
+      'Packed README current status check completed.'
     );
     expect(releaseTestSource).toContain(
-      'rejects the v0.2.47 candidate snippet'
+      'rejects only the current v0.2.62 candidate block'
     );
     expect(releaseTestSource).toContain(
-      'accepts registry-independent v0.2.47 release wording'
+      'ignores historical candidate prose outside a release current-status block'
     );
     expect(releaseTestSource).toContain(
-      'rejects the v0.2.48 candidate snippet'
-    );
-    expect(releaseTestSource).toContain(
-      'accepts registry-independent v0.2.48 release wording'
-    );
-    expect(releaseTestSource).toContain(
-      'rejects the v0.2.59 candidate snippet'
-    );
-    expect(releaseScriptSource).toContain('Status: v0.2.60 candidate');
-    expect(releaseScriptSource).toContain(
-      'Version `0.2.60` is the unpublished release evidence review archive import and expiration-independent replay gate candidate.'
-    );
-    expect(releaseTestSource).toContain(
-      'rejects the v0.2.60 candidate snippet'
-    );
-    expect(releaseScriptSource).toContain('Status: v0.2.61 candidate');
-    expect(releaseScriptSource).toContain(
-      'Version `0.2.61` is the unpublished review artifact acquisition automation and canonical archive handoff candidate.'
-    );
-    expect(releaseTestSource).toContain(
-      'rejects the v0.2.61 candidate snippet'
+      'rejects a current-status version that differs from package metadata'
     );
     expect(releaseScriptSource).toContain("args: ['smoke:consumer']");
     expect(releaseScriptSource).toContain(
@@ -1128,7 +1116,7 @@ describe('Android verification scripts', () => {
   });
 
   it('documents and guards iOS host-app validation stability', () => {
-    const readmeSource = readProjectFile('README.md');
+    const readmeSource = readRepositoryDocs();
     const gemfileSource = readProjectFile('example/Gemfile');
     const podfileSource = readProjectFile('example/ios/Podfile');
     const podfileWorkaroundSource = readProjectFile(
@@ -1174,7 +1162,7 @@ describe('Android verification scripts', () => {
       'node scripts/refresh-ios-smoke-pass-replay.mjs --audit'
     );
     expect(packageJson.scripts.verify).toBe(
-      'pnpm typecheck && pnpm test && pnpm build && pnpm fixtures:ios-pass-replay:audit && pnpm fixtures:release-evidence-acquisition:check && pnpm fixtures:release-evidence-review-acquisition:check && pnpm verify:release-evidence-set -- --json && pnpm verify:release-evidence-review-archive-set -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor'
+      'pnpm typecheck && pnpm test && pnpm build && pnpm docs:check && pnpm fixtures:ios-pass-replay:audit && pnpm fixtures:release-evidence-acquisition:check && pnpm fixtures:release-evidence-review-acquisition:check && pnpm verify:release-evidence-set -- --json && pnpm verify:release-evidence-review-archive-set -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor'
     );
     expect(readmeSource).toContain('## iOS Host-App Validation');
     expect(readmeSource).toContain('pnpm example:ios:smoke');
@@ -1597,11 +1585,11 @@ describe('Android verification scripts', () => {
     expect(validationScriptSource).toContain('iOS pod install diagnostics:');
   });
 
-  it('documents the v0.2.61 review acquisition candidate and retained v0.2.55 evidence', () => {
-    const releaseSource = readProjectFile('RELEASE.md');
-    const readmeSource = readProjectFile('README.md');
+  it('documents the v0.2.62 documentation candidate and retained v0.2.55 evidence', () => {
+    const releaseSource = readRepositoryDocs();
+    const readmeSource = readRepositoryDocs();
 
-    expect(packageJson.version).toBe('0.2.61');
+    expect(packageJson.version).toBe('0.2.62');
     expect(releaseSource).toContain('## v0.2.61');
     expect(releaseSource).toContain(
       'Status: unpublished review artifact acquisition automation and canonical archive handoff candidate. npm `version` and `dist-tags.latest` remain `0.2.55`; no npm publish, dist-tag change, `v0.2.61` git tag, or GitHub Release is part of this candidate.'
@@ -5047,43 +5035,43 @@ describe('Android verification scripts', () => {
       'gh release create v0.1.0 --title "v0.1.0" --notes-file RELEASE.md'
     );
     expect(readmeSource).toContain(
-      'See [RELEASE.md](RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
+      'See [RELEASE.md](../../RELEASE.md) for the v0.2.42 iOS PASS payload CI log replay fixture candidate notes, v0.2.41 iOS PASS payload schema matrix helper candidate notes, v0.2.40 iOS AVIF-input unavailable PASS payload schema snapshot release notes, v0.2.39 iOS WebP-output available PASS payload schema snapshot candidate notes, v0.2.38 iOS smoke PASS payload schema snapshot release notes, v0.2.37 iOS smoke diagnostics artifact schema snapshot candidate notes, v0.2.36 iOS smoke artifact failure-path dry-run fixture candidate notes, v0.2.35 iOS smoke diagnostics packed log artifact coverage candidate notes, v0.2.34 iOS smoke log stream error fixture coverage candidate notes, v0.2.33 iOS smoke process lifecycle fixture coverage candidate notes, v0.2.32 iOS smoke timeout CLI fixture coverage candidate notes, v0.2.31 iOS smoke diagnostic testability hardening candidate notes, v0.2.30 iOS smoke retry and diagnostic hardening candidate notes, v0.2.29 Android AVIF output helper validation-result provenance contract candidate notes, v0.2.28 Android AVIF output helper temp-file lifecycle contract candidate notes, v0.2.27 Android AVIF output helper blocked-route detail contract candidate notes, v0.2.26 Android AVIF output helper validation detail contract candidate notes, v0.2.25 Android AVIF output helper direct-output success contract candidate notes, v0.2.24 Android AVIF output helper injected success contract candidate notes, v0.2.23 Android AVIF output helper injectable validation seam candidate notes, v0.2.22 Android AVIF output production helper extraction candidate notes, v0.2.21 Android AVIF output production wiring scaffold candidate notes, v0.2.20 AVIF output production wiring preflight candidate notes, v0.2.19 published AVIF output production gate release notes, v0.2.18 docs-only npm README correction release notes, v0.2.17 published Android AVIF output encode/decode-back smoke release notes, v0.2.16 Android AVIF output encoder route prototype candidate notes, v0.2.15 AVIF output feasibility candidate notes, v0.2.14 published AVIF output capability/error surface release notes, v0.2.13 published iOS JPEG metadata preserve hardening release notes, v0.2.12 published iOS JPEG metadata preserve release notes, v0.2.11 docs-only correction notes, v0.2.10 published release notes, v0.2.9 release notes, v0.2.8 release notes, v0.2.7 release notes, v0.2.6 release notes, v0.2.5 release notes, v0.2.4 release notes, v0.2.3 release notes, v0.2.2 release notes, v0.2.1 release notes, v0.2.0 published release notes, v0.1.2 published patch notes, v0.1.1 docs-only patch notes, v0.1.0 published artifact details, tag checklist, and post-publish security review.'
     );
     expect(readmeSource).toContain(
-      'The v0.2.61 review artifact acquisition automation and canonical archive handoff candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.61 review artifact acquisition automation and canonical archive handoff candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.60 release evidence review archive import and expiration-independent replay gate candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.60 release evidence review archive import and expiration-independent replay gate candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.59 release evidence policy review receipt and manual promotion rehearsal candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.59 release evidence policy review receipt and manual promotion rehearsal candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.58 release evidence policy candidate and reviewed promotion gate candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.58 release evidence policy candidate and reviewed promotion gate candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.57 Registry Validation artifact acquisition and canonical metadata handoff candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.57 Registry Validation artifact acquisition and canonical metadata handoff candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.56 release evidence archive import automation and multi-version regression gate candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.56 release evidence archive import automation and multi-version regression gate candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification release notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.55 Action Pin artifact GitHub OIDC attestation and offline signer verification release notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.53 GitHub Action pin update provenance and manual review gate candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.53 GitHub Action pin update provenance and manual review gate candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.52 immutable GitHub Actions pin and workflow supply-chain gate candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.52 immutable GitHub Actions pin and workflow supply-chain gate candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.51 expiration-independent release evidence archive and offline replay gate candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.51 expiration-independent release evidence archive and offline replay gate candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.50 GitHub artifact attestation and offline identity verification release notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.50 GitHub artifact attestation and offline identity verification release notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
-      'The v0.2.49 Registry provenance bundle offline verification candidate notes are in [RELEASE.md](RELEASE.md).'
+      'The v0.2.49 Registry provenance bundle offline verification candidate notes are in [RELEASE.md](../../RELEASE.md).'
     );
     expect(readmeSource).toContain(
       'Successful [Registry Validation run 29182554246](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29182554246) on commit `d233529ddb3804b9fff05832bc4b327348f0fc51` uploaded the fixed four-file v0.2.48 bundle'
@@ -5095,8 +5083,8 @@ describe('Android verification scripts', () => {
   });
 
   it('documents security policy and package hygiene expectations', () => {
-    const securitySource = readProjectFile('SECURITY.md');
-    const readmeSource = readProjectFile('README.md');
+    const securitySource = readRepositoryDocs();
+    const readmeSource = readRepositoryDocs();
 
     expect(securitySource).toContain('# Security Policy');
     expect(securitySource).toContain('| 0.2.x | Yes |');
@@ -5188,7 +5176,7 @@ describe('Android verification scripts', () => {
     );
     expect(readmeSource).toContain('## Security');
     expect(readmeSource).toContain(
-      'See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting guidance, dependency triage, and package security hygiene.'
+      'See [SECURITY.md](../../SECURITY.md) for supported versions, vulnerability reporting guidance, dependency triage, and package security hygiene.'
     );
     expect(readmeSource).toContain(
       'Published packages should not run install-time lifecycle scripts'
@@ -5200,7 +5188,7 @@ describe('Android verification scripts', () => {
     const instrumentationWorkflowSource = readProjectFile(
       '.github/workflows/android-instrumentation.yml'
     );
-    const readmeSource = readProjectFile('README.md');
+    const readmeSource = readRepositoryDocs();
     const expectedActions = [
       'uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7',
       'uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5',
@@ -5241,7 +5229,7 @@ describe('Android verification scripts', () => {
   });
 
   it('documents the HEIC, HEIF, and AVIF real codec sample validation strategy', () => {
-    const readmeSource = readProjectFile('README.md');
+    const readmeSource = readRepositoryDocs();
     const verificationSource = readProjectFile('scripts/android-verification.mjs');
 
     expect(readmeSource).toContain('## HEIC / HEIF / AVIF Codec Sample Validation Strategy');
@@ -5286,7 +5274,8 @@ describe('Android verification scripts', () => {
     expect(readmeSource).toContain(
       'For AVIF manual validation, use an API 34+ device or emulator'
     );
-    expect(verificationSource).toContain('checkHeicHeifCodecSampleStrategy');
+    expect(verificationSource).toContain('inspectDocumentation');
+    expect(verificationSource).not.toContain('checkHeicHeifCodecSampleStrategy');
   });
 
   it('wires HEIC, HEIF, and AVIF emulator instrumentation validation', () => {
@@ -5350,7 +5339,7 @@ describe('Android verification scripts', () => {
     expect(workflowSource).toContain('pnpm example:android-instrumentation');
     expect(workflowSource).toContain('instrumentation_status=$?');
     expect(workflowSource).toContain('adb logcat -d -s RNICK_AVIF_OUTPUT_SMOKE:I');
-    expect(verificationSource).toContain('checkHeicHeifInstrumentationValidation');
+    expect(verificationSource).not.toContain('checkHeicHeifInstrumentationValidation');
   });
 
   it('defines the AVIF source fixture manifest and committed sample', () => {

@@ -1,4 +1,10 @@
-const VERSION_STATUS_PATTERNS = [
+import {
+  parseCurrentStatus,
+  STATUS_END,
+  STATUS_START,
+} from './docs-semantic-core.mjs';
+
+const LEGACY_CANDIDATE_PATTERNS = [
   (version) => `Status: v${version} candidate`,
   (version) => `v${version}%20candidate`,
   (version) => `Version \`${version}\` is an unpublished`,
@@ -10,23 +16,53 @@ const VERSION_STATUS_PATTERNS = [
 
 export function getReadmeStatusViolations(
   readmeContents,
-  { version, forbiddenSnippets = [] } = {}
+  { version, requireStatusBlock = false, forbiddenSnippets = [] } = {}
 ) {
-  const versionSnippets = version
-    ? VERSION_STATUS_PATTERNS.map((pattern) => pattern(version))
-    : [];
+  const hasStatusMarker =
+    readmeContents.includes(STATUS_START) || readmeContents.includes(STATUS_END);
 
-  return [...new Set([...forbiddenSnippets, ...versionSnippets])].filter(
-    (snippet) => readmeContents.includes(snippet)
-  );
+  if (!hasStatusMarker && !requireStatusBlock) {
+    const legacySnippets = version
+      ? LEGACY_CANDIDATE_PATTERNS.map((pattern) => pattern(version))
+      : [];
+    return [...new Set([...forbiddenSnippets, ...legacySnippets])].filter(
+      (snippet) => readmeContents.includes(snippet)
+    );
+  }
+
+  let status;
+
+  try {
+    status = parseCurrentStatus(readmeContents);
+  } catch (error) {
+    return [error instanceof Error ? error.message : String(error)];
+  }
+
+  if (version && status.packageVersion !== version) {
+    return [
+      `current status package version ${status.packageVersion} does not match ${version}`,
+    ];
+  }
+
+  if (status.releaseState === 'candidate') {
+    return [
+      `current status declares package version ${status.packageVersion} as candidate`,
+    ];
+  }
+
+  return forbiddenSnippets.filter((snippet) => readmeContents.includes(snippet));
 }
 
 export function validateReadmeStatus(readmeContents, options = {}) {
   const violations = getReadmeStatusViolations(readmeContents, options);
 
   if (violations.length > 0) {
+    const hasStatusMarker =
+      readmeContents.includes(STATUS_START) || readmeContents.includes(STATUS_END);
     throw new Error(
-      `README contains stale package status snippets: ${violations.join(' | ')}`
+      `${hasStatusMarker || options.requireStatusBlock
+        ? 'README current status is not publishable'
+        : 'README contains stale package status snippets'}: ${violations.join(' | ')}`
     );
   }
 
