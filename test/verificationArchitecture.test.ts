@@ -53,4 +53,14 @@ describe('repository verification architecture', () => {
 
     expect(violations).toEqual([]);
   });
+
+  it('does not hardcode historical 0.2 candidate status prose', () => {
+    const violations = activeTestFiles().filter((fileName) =>
+      /Status: v0\.2\.\d+ candidate/u.test(
+        readFileSync(path.join(TEST_ROOT, fileName), 'utf8')
+      )
+    );
+
+    expect(violations).toEqual([]);
+  });
 });

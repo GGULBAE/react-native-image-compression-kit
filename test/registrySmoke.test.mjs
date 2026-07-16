@@ -16,6 +16,7 @@ const evidenceFixture = JSON.parse(
   readFileSync(path.join(FIXTURE_DIR, 'evidence.json'), 'utf8')
 );
 const readmeFixture = readFileSync(path.join(FIXTURE_DIR, 'README.md'), 'utf8');
+const REGISTRY_VERSION = evidenceFixture.registryMetadata.version;
 
 function evidence(overrides = {}) {
   return {
@@ -83,9 +84,18 @@ describe('registry provenance report', () => {
 
   it('rejects stale candidate, unpublished, and no-publish README status', () => {
     for (const [stale, violation] of [
-      ['Status: v0.2.47 candidate', 'Status: v0.2.47 candidate'],
-      ['Version `0.2.47` is an unpublished registry candidate', 'Version `0.2.47` is an unpublished'],
-      ['v0.2.47 no-publish', 'v0.2.47 no-publish'],
+      [
+        `Status: v${REGISTRY_VERSION} candidate`,
+        `Status: v${REGISTRY_VERSION} candidate`,
+      ],
+      [
+        `Version \`${REGISTRY_VERSION}\` is an unpublished registry candidate`,
+        `Version \`${REGISTRY_VERSION}\` is an unpublished`,
+      ],
+      [
+        `v${REGISTRY_VERSION} no-publish`,
+        `v${REGISTRY_VERSION} no-publish`,
+      ],
     ]) {
       const report = validateRegistryEvidence(
         evidence({ readmeContents: `${readmeFixture}\n${stale}\n` })
