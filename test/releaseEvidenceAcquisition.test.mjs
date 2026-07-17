@@ -61,7 +61,7 @@ const CORE = path.join(
   'scripts',
   'release-evidence-acquisition-core.mjs'
 );
-const VERSIONS = ['0.2.50', '0.2.55'];
+const VERSIONS = ['0.2.50', '0.2.55', '0.2.62'];
 const REPOSITORY_ID = 1278863793;
 
 function acquisitionOptions(parent, version = '0.2.55') {
@@ -611,6 +611,58 @@ describe('Registry Validation release evidence acquisition', () => {
     expect(calls.some((call) => call.args.includes('latest'))).toBe(false);
   });
 
+  it('hydrates a bundle URL response through an exact-subject gh download', () => {
+    const subjectBytes = Buffer.from('{"subject":"exact"}\n');
+    const bundle = { mediaType: 'application/vnd.dev.sigstore.bundle.v0.3+json' };
+    const calls = [];
+    const runCommand = (command, args, options = {}) => {
+      calls.push({ command, args, options });
+      if (args[0] === 'api') {
+        return JSON.stringify({
+          attestations: [
+            {
+              repository_id: 123,
+              bundle: null,
+              bundle_url: 'https://example.test/attestation',
+            },
+          ],
+        });
+      }
+      if (args[0] === 'attestation' && args[1] === 'download') {
+        expect(readFileSync(args[2])).toEqual(subjectBytes);
+        writeFileSync(
+          path.join(options.cwd, 'sha256-test.jsonl'),
+          `${JSON.stringify(bundle)}\n`
+        );
+        return '';
+      }
+      throw new Error(`Unexpected command: ${command} ${args.join(' ')}`);
+    };
+    const github = createReleaseEvidenceGitHubClient({ runCommand });
+    const response = github.getAttestations({
+      repository: 'owner/repo',
+      subjectSha256: 'a'.repeat(64),
+      subjectBytes,
+    });
+    expect(response.attestations).toEqual([
+      {
+        repository_id: 123,
+        bundle,
+        bundle_url: 'https://example.test/attestation',
+      },
+    ]);
+    expect(calls[1].args).toEqual([
+      'attestation',
+      'download',
+      expect.any(String),
+      '--repo',
+      'owner/repo',
+      '--limit',
+      '2',
+    ]);
+    expect(calls.some((call) => call.args.includes('latest'))).toBe(false);
+  });
+
   it('keeps validation core network-free and fixture checking offline', () => {
     const source = readFileSync(CORE, 'utf8');
     for (const forbidden of [
@@ -637,5 +689,6 @@ describe('Registry Validation release evidence acquisition', () => {
     expect(result.stderr).toBe('');
     expect(result.stdout).toContain('0.2.50');
     expect(result.stdout).toContain('0.2.55');
+    expect(result.stdout).toContain('0.2.62');
   });
 });

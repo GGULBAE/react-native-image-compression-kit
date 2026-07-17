@@ -18,7 +18,7 @@ handle platform codec differences before compression.
 ## Current status
 
 - Package version: `0.2.62`
-- npm latest: `0.2.55`
+- npm latest: `0.2.62`
 - Release state: `release`
 - Registry checked at: `2026-07-17`
 <!-- package-status:end -->

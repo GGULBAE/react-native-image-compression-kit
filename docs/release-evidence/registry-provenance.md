@@ -2,15 +2,16 @@
 
 ## Published baseline
 
-npm `version` and `dist-tags.latest` are `0.2.55`, published at
-`2026-07-14T12:41:56.173Z`. The validated 51-file registry tarball was 75,022
+npm `version` and `dist-tags.latest` are `0.2.62`, published at
+`2026-07-17T05:52:59.853Z`. The validated 78-file registry tarball was 56,284
 bytes with integrity
-`sha512-942yS0LCt6Che8zP+ZGNCl7AKA/h4oMEYO4TT1u2F+JIDM0vC3X16y8zStHQE4gIVmYscH8h37fOw/c5RuJbpw==`
-and shasum `525221309be1eda6fc2fdd80b5e2b9da13faf645`.
+`sha512-dhfg8LSOEcCyYlGsKib0E2jWt8kXCpmRNuKyCWnxrAc/0XxayBr7guCCAAuFycD0T3qaLIhzS9ZgPo7VLZgjwA==`
+and shasum `c2f7aa1548ec550d9778a8f4bad87f5bba1e5724`.
 
-Two earlier publish CLI calls stopped at the pre-write EOTP gate. The npm-only
-promotion used one successful `npm publish --tag latest`; no manual dist-tag,
-git tag, or GitHub Release was created.
+The promotion used one successful `npm publish --tag latest`; no separate
+dist-tag mutation was required. Annotated tag `v0.2.62` and the GitHub Release
+both resolve to source commit
+`43c157728ef345528053e2508e9aa9292457a55b`.
 
 ## Networked registry smoke
 
@@ -18,7 +19,7 @@ Run only after the exact version is published:
 
 ```bash
 pnpm smoke:registry -- \
-  --version 0.2.55 \
+  --version 0.2.62 \
   --expect-tag latest \
   --json \
   --artifact-dir registry-validation
@@ -39,7 +40,7 @@ Native consumer, and atomically writes exactly:
 pnpm verify:registry-provenance -- \
   --artifact-dir /path/to/registry-validation \
   --expect-package react-native-image-compression-kit \
-  --expect-version 0.2.55 \
+  --expect-version 0.2.62 \
   --expect-tag latest \
   --json
 ```
@@ -49,14 +50,15 @@ or unsupported entries, validates canonical JSON and every declared digest and
 size, and performs no npm, GitHub, or other network request.
 
 Successful Registry Validation run
-[29333540614](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29333540614)
-on commit `194e9387406f71763bc0d617ece0d7d58e235e29` attested manifest
-SHA-256 `45677e0204b46a3f388b5cdb5ac7cfa83269dd03479854c25d7ef203582fe2af`
-as [attestation 35257248](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35257248).
+[29558617089](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29558617089)
+on `refs/tags/v0.2.62` and commit
+`43c157728ef345528053e2508e9aa9292457a55b` attested manifest SHA-256
+`6b3b231761efd1234903f204693792c9717463efcffd48351f888886b5c1e2e0`
+as [attestation 35774740](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35774740).
 The provenance artifact digest is
-`sha256:7463b03ff6294b5017d9b3cad05d4c3ea87b542398a5cb70f503cea148dca826`;
+`sha256:f76ff92c8e142a3bb2734dc60f7b332473201ee0d7350b41acf11e1c8e78bc99`;
 the attestation artifact digest is
-`sha256:545c63da880d9d91f9ade1cf40ce36a366634c11ff524b87579e6b0fd6d8e28f`.
+`sha256:84608ed6f02ee9681dda8006e42f243af67e1e045231392a0e1dd9af8c8ec893`.
 
 ## Offline attestation verification
 
@@ -67,32 +69,33 @@ pnpm verify:registry-attestation -- \
   --trusted-root /path/to/registry-attestation/trusted-root.jsonl \
   --expect-repository GGULBAE/react-native-image-compression-kit \
   --expect-workflow GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml \
-  --expect-ref refs/heads/master \
-  --expect-head-sha 194e9387406f71763bc0d617ece0d7d58e235e29 \
+  --expect-ref refs/tags/v0.2.62 \
+  --expect-head-sha 43c157728ef345528053e2508e9aa9292457a55b \
   --json
 ```
 
 The pinned trusted-root SHA-256 is
 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`.
 Blocked-network replay reproduced the canonical report at SHA-256
-`095756820c5305d50173225edc56d510a724cf95390a7f45f0e179f2207b3ce4`
+`e497952a7c67212abd71c7784ae39819002ef964a5b64968f51fd013c6972e9c`
 under UTC and Asia/Seoul.
 
 ## Repository-owned archive
 
-The v0.2.50 and v0.2.55 archives live under `evidence/npm/<version>/`. Replay
-one version or the complete supported set:
+The v0.2.50, v0.2.55, and v0.2.62 archives live under
+`evidence/npm/<version>/`. Replay one version or the complete supported set:
 
 ```bash
-pnpm verify:release-evidence -- --version 0.2.55
+pnpm verify:release-evidence -- --version 0.2.62
 pnpm verify:release-evidence-set -- --json
 ```
 
-The v0.2.55 index pins Registry Validation run `29333540614`, source commit
-`194e9387406f71763bc0d617ece0d7d58e235e29`, attestation `35257248`, every
+The v0.2.62 index pins Registry Validation run `29558617089`, source commit
+`43c157728ef345528053e2508e9aa9292457a55b`, attestation `35774740`, every
 retained file, and aggregate evidence SHA-256
-`e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78`.
-With no selectors the set verifier checks v0.2.50 and v0.2.55 in stable order.
+`e5a23c12d99362d5ec3c882de3acfb161b6644e9777b16dc036e0d675cf511a6`.
+With no selectors the set verifier checks v0.2.50, v0.2.55, and v0.2.62 in
+stable order.
 
 See [Acquisition](acquisition.md) for authenticated artifact download and
 canonical importer handoff.

@@ -96,6 +96,7 @@ export function runReleaseEvidenceAcquisition(options, dependencies = {}) {
   const attestationsResponse = github.getAttestations({
     ...options,
     subjectSha256,
+    subjectBytes: provenance.files.get(REGISTRY_BUNDLE_FILES.manifest),
   });
 
   return acquireReleaseEvidenceBundle(

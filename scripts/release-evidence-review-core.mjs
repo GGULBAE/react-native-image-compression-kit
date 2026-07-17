@@ -686,9 +686,38 @@ export function verifyReleaseEvidenceReviewBundle(
     const archiveSet = path.join(root, RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_DIR);
     const storedSetBytes = readSecureFile(path.join(root, RELEASE_EVIDENCE_REVIEW_SET_FILE), 'release evidence set report');
     const storedSet = parseCanonicalSetReport(storedSetBytes);
+    const reviewedVersions = [...storedSet.versions];
+    assert(
+      reviewedVersions.length > 0 &&
+        new Set(reviewedVersions).size === reviewedVersions.length,
+      'Bundled release evidence set versions must be non-empty and unique.'
+    );
+    assert(
+      JSON.stringify(reviewedVersions) ===
+        JSON.stringify([...reviewedVersions].sort(compareVersions)),
+      'Bundled release evidence set versions must use stable order.'
+    );
+    assert(
+      reviewedVersions.includes(candidate.version),
+      'Bundled release evidence set must contain the reviewed candidate version.'
+    );
+    const reviewedPolicies = Object.fromEntries(
+      reviewedVersions.map((version) => {
+        assert(
+          policies[version],
+          `Bundled release evidence set references an unsupported policy version: ${version}.`
+        );
+        return [version, policies[version]];
+      })
+    );
+    assertExactEntries(
+      readdirSync(archiveSet),
+      reviewedVersions,
+      'Bundled release evidence archive set'
+    );
     const directSet = (dependencies.verifySet ?? verifyReleaseEvidenceSet)({
       archiveRoot: archiveSet,
-      versions: Object.keys(policies).sort(compareVersions),
+      versions: reviewedVersions,
     });
     assert(directSet.status === 'passed', `Bundled archive set verification failed: ${directSet.error}`);
     assert(
@@ -699,7 +728,7 @@ export function verifyReleaseEvidenceReviewBundle(
     replayRoot = mkdtempSync(path.join(os.tmpdir(), 'rnick-review-replay-'));
     const replaySet = path.join(replayRoot, RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_DIR);
     mkdirSync(replaySet);
-    for (const version of Object.keys(policies).sort(compareVersions)) {
+    for (const version of reviewedVersions) {
       if (version === candidate.version) continue;
       copyDirectorySecure(path.join(archiveSet, version), path.join(replaySet, version));
     }
@@ -714,7 +743,10 @@ export function verifyReleaseEvidenceReviewBundle(
         approved: true,
         archiveRoot: replaySet,
       },
-      dependencies.promotionDependencies ?? {}
+      {
+        ...(dependencies.promotionDependencies ?? {}),
+        policies: reviewedPolicies,
+      }
     );
     assert(replayPromotion.status === 'passed', `Offline promotion replay failed: ${replayPromotion.error}`);
     const storedPromotionBytes = readSecureFile(
@@ -729,7 +761,7 @@ export function verifyReleaseEvidenceReviewBundle(
     );
     const replaySetReport = (dependencies.verifySet ?? verifyReleaseEvidenceSet)({
       archiveRoot: replaySet,
-      versions: Object.keys(policies).sort(compareVersions),
+      versions: reviewedVersions,
     });
     assert(replaySetReport.status === 'passed', `Offline set replay failed: ${replaySetReport.error}`);
     assert(

@@ -10,12 +10,13 @@ and never selects a latest run.
 pnpm acquire:release-evidence -- \
   --repository GGULBAE/react-native-image-compression-kit \
   --workflow .github/workflows/registry-validation.yml \
-  --source-ref refs/heads/master \
-  --source-digest 194e9387406f71763bc0d617ece0d7d58e235e29 \
-  --run-id 29333540614 \
-  --version 0.2.55 \
+  --source-ref refs/tags/v0.2.62 \
+  --source-digest 43c157728ef345528053e2508e9aa9292457a55b \
+  --run-id 29558617089 \
+  --version 0.2.62 \
   --expected-tag latest \
-  --output-dir /tmp/release-evidence-0.2.55 \
+  --output-dir /tmp/release-evidence-0.2.62 \
+  --report-file /tmp/release-evidence-0.2.62-report.json \
   --json
 ```
 
@@ -25,9 +26,36 @@ version-qualified artifacts by immutable artifact ID, matches GitHub SHA-256,
 size, creation, expiration, repository, and run metadata, then validates the
 downloaded ZIP bytes. It never infers a run.
 
+GitHub's current attestation response may expose a signed `bundle_url` instead
+of an inline bundle. The network client resolves that transport through
+`gh attestation download` using the exact manifest bytes, then retains the
+existing byte-equality check against the downloaded attestation artifact. No
+token or signed URL is retained.
+
+Run `29558617089` selected provenance artifact `8398387031` with digest
+`sha256:f76ff92c8e142a3bb2734dc60f7b332473201ee0d7350b41acf11e1c8e78bc99`
+and attestation artifact `8398387418` with digest
+`sha256:84608ed6f02ee9681dda8006e42f243af67e1e045231392a0e1dd9af8c8ec893`.
+The canonical acquisition SHA-256 is
+`ede6acc0c69c1d2e00cabffba73cd3b6a5133c7f88186c22cc86f1f2a1edd829`;
+the importer handoff produced evidence SHA-256
+`e5a23c12d99362d5ec3c882de3acfb161b6644e9777b16dc036e0d675cf511a6`.
+
 The output is exposed only after the existing offline importer accepts the
 staged canonical metadata and artifacts. Duplicate destinations and any
 validation, write, handoff, or rename failure fail closed.
+
+Import the accepted canonical bundle into the repository archive:
+
+```bash
+pnpm import:release-evidence -- \
+  --version 0.2.62 \
+  --provenance-artifact-dir /tmp/release-evidence-0.2.62/provenance \
+  --attestation-artifact-dir /tmp/release-evidence-0.2.62/attestation \
+  --metadata-file /tmp/release-evidence-0.2.62/release-evidence-metadata.json \
+  --archive-root evidence/npm \
+  --json
+```
 
 Verify the exact committed acquisition fixtures without network access:
 

@@ -134,11 +134,14 @@ function reviewedPromotionOptions(parent, prepared) {
 
 function createArchiveSetBase(archiveRoot, includeTarget = false) {
   mkdirSync(archiveRoot, { recursive: true });
-  cpSync(
-    path.join(EVIDENCE_ROOT, '0.2.50'),
-    path.join(archiveRoot, '0.2.50'),
-    { recursive: true }
-  );
+  for (const version of Object.keys(RELEASE_EVIDENCE_POLICIES)) {
+    if (version === VERSION) continue;
+    cpSync(
+      path.join(EVIDENCE_ROOT, version),
+      path.join(archiveRoot, version),
+      { recursive: true }
+    );
+  }
   if (includeTarget) {
     cpSync(
       path.join(EVIDENCE_ROOT, VERSION),
@@ -361,7 +364,7 @@ describe('reviewed release evidence policy promotion', () => {
         reviewedAt: REVIEWED_AT,
         evidenceSha256:
           'e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78',
-        setVersions: ['0.2.50', '0.2.55'],
+        setVersions: ['0.2.50', '0.2.55', '0.2.62'],
         checks: Object.fromEntries(
           RELEASE_EVIDENCE_POLICY_PROMOTION_CHECK_FIELDS.map((field) => [
             field,
@@ -422,7 +425,7 @@ describe('reviewed release evidence policy promotion', () => {
       });
       expect(report.status).toBe('failed');
       expect(report.error).toContain('(drift)');
-      expect(readdirSync(options.archiveRoot)).toEqual(['0.2.50']);
+      expect(readdirSync(options.archiveRoot)).toEqual(['0.2.50', '0.2.62']);
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }
@@ -506,7 +509,7 @@ describe('reviewed release evidence policy promotion', () => {
       );
       expect(report.status).toBe('failed');
       expect(report.error).toContain(error);
-      expect(readdirSync(options.archiveRoot)).toEqual(['0.2.50']);
+      expect(readdirSync(options.archiveRoot)).toEqual(['0.2.50', '0.2.62']);
       expect(
         readdirSync(options.archiveRoot).some((file) => file.includes('.tmp'))
       ).toBe(false);

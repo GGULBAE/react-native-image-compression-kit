@@ -7,7 +7,7 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 
 <!-- release-status:start -->
 - Package version: `0.2.62`
-- npm latest: `0.2.55`
+- npm latest: `0.2.62`
 - Release state: `release`
 - Registry checked at: `2026-07-17`
 <!-- release-status:end -->
@@ -173,6 +173,9 @@ manifest-aligned `release` after a reviewed status update.
 
 ## Recent release-evidence work
 
+- [v0.2.62 registry provenance](docs/release-evidence/registry-provenance.md)
+  retains exact tag-ref Registry Validation run `29558617089`, provenance,
+  attestation, and acquisition fixtures for offline replay.
 - [v0.2.61](docs/releases/0.2-history.md#v0261) added authenticated review
   artifact acquisition and canonical importer handoff.
 - [v0.2.60](docs/releases/0.2-history.md#v0260) retained the review archive for

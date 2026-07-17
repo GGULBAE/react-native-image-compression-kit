@@ -1,6 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import {
   mkdtempSync,
+  readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -27,13 +29,18 @@ export function createReleaseEvidenceGitHubClient(dependencies = {}) {
         run
       );
     },
-    getAttestations({ repository, subjectSha256 }) {
-      return requestJson(
+    getAttestations({ repository, subjectSha256, subjectBytes }) {
+      const response = requestJson(
         [
           'api',
           `repos/${repository}/attestations/sha256:${subjectSha256}`,
         ],
         'GitHub attestations',
+        run
+      );
+      return hydrateBundleUrlAttestation(
+        response,
+        { repository, subjectSha256, subjectBytes },
         run
       );
     },
@@ -86,9 +93,14 @@ export function extractArtifactArchive(
   }
 }
 
-export function runCommand(command, args, { encoding = 'utf8' } = {}) {
+export function runCommand(
+  command,
+  args,
+  { encoding = 'utf8', cwd } = {}
+) {
   const result = spawnSync(command, args, {
     encoding,
+    cwd,
     env: {
       ...process.env,
       GH_PROMPT_DISABLED: '1',
@@ -106,6 +118,79 @@ export function runCommand(command, args, { encoding = 'utf8' } = {}) {
     );
   }
   return result.stdout;
+}
+
+function hydrateBundleUrlAttestation(
+  response,
+  { repository, subjectSha256, subjectBytes },
+  run
+) {
+  if (
+    !Array.isArray(response?.attestations) ||
+    response.attestations.every((attestation) => attestation?.bundle != null)
+  ) {
+    return response;
+  }
+  assert(
+    response.attestations.length === 1 &&
+      response.attestations[0]?.bundle === null &&
+      typeof response.attestations[0]?.bundle_url === 'string',
+    'GitHub bundle URL fallback requires exactly one bundle-less attestation.'
+  );
+  assert(
+    Buffer.isBuffer(subjectBytes),
+    'GitHub bundle URL fallback requires exact subject bytes.'
+  );
+
+  const temporary = mkdtempSync(
+    path.join(os.tmpdir(), 'rnick-release-evidence-attestation-')
+  );
+  const subject = path.join(temporary, 'bundle-manifest.json');
+  try {
+    writeFileSync(subject, subjectBytes, { flag: 'wx' });
+    run(
+      'gh',
+      [
+        'attestation',
+        'download',
+        subject,
+        '--repo',
+        repository,
+        '--limit',
+        '2',
+      ],
+      { encoding: 'utf8', cwd: temporary }
+    );
+    const bundles = readdirSync(temporary).filter((file) =>
+      file.endsWith('.jsonl')
+    );
+    assert(
+      bundles.length === 1,
+      `Expected exactly one downloaded GitHub attestation file for sha256:${subjectSha256}.`
+    );
+    const lines = readFileSync(path.join(temporary, bundles[0]), 'utf8')
+      .trim()
+      .split('\n')
+      .filter(Boolean);
+    assert(
+      lines.length === 1,
+      `Expected exactly one downloaded GitHub attestation bundle for sha256:${subjectSha256}.`
+    );
+    let bundle;
+    try {
+      bundle = JSON.parse(lines[0]);
+    } catch (error) {
+      throw new Error(
+        `Downloaded GitHub attestation bundle is not valid JSON: ${error.message}`
+      );
+    }
+    return {
+      ...response,
+      attestations: [{ ...response.attestations[0], bundle }],
+    };
+  } finally {
+    rmSync(temporary, { recursive: true, force: true });
+  }
 }
 
 function requestJson(args, label, run) {
