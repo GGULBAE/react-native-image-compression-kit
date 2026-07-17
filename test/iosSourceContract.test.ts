@@ -38,6 +38,7 @@ describe('iOS source contract', () => {
     expect(podspec).toContain('s.platforms = { :ios => "13.4" }');
     expect(podspec).toContain('s.source_files = "ios/**/*.{h,m,mm}"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageDecoder.h"');
+    expect(podspec).toContain('"ios/RCTImageCompressionImageTransformer.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionInput.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionIOSCapabilities.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionRequest.h"');
@@ -99,6 +100,9 @@ describe('iOS source contract', () => {
     );
     expect(parserTestNames).toHaveLength(6);
     expect(packageJson.scripts['example:ios:request-parser-test']).toBe(
+      'node scripts/ios-validation.mjs request-parser-test'
+    );
+    expect(packageJson.scripts['example:ios:request-test']).toBe(
       'node scripts/ios-validation.mjs request-parser-test'
     );
     expect(runner).toContain("if (mode === 'request-parser-test')");
@@ -269,6 +273,111 @@ describe('iOS source contract', () => {
     expect(runner).toContain("if (mode === 'decoder-test')");
     expect(runner).toMatch(
       /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);/
+    );
+  });
+
+  it('isolates resize geometry and UIKit rendering behind native tables', () => {
+    const header = readProjectFile(
+      'ios/RCTImageCompressionImageTransformer.h'
+    );
+    const transformer = readProjectFile(
+      'ios/RCTImageCompressionImageTransformer.mm'
+    );
+    const uiKitTransformer = readProjectFile(
+      'ios/RCTImageCompressionUIKitImageTransformer.mm'
+    );
+    const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const nativeTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionImageTransformerTests.mm'
+    );
+    const runner = readProjectFile('scripts/ios-validation.mjs');
+    const transformerTestNames = [
+      ...nativeTests.matchAll(/static void (Test\w+)\(void\)/g),
+    ].map((match) => match[1]);
+    const methodStart = implementation.indexOf(
+      '- (void)compressImageWithDictionary:'
+    );
+    const methodEnd = implementation.indexOf(
+      '- (void)getImageCompressionCapabilities:',
+      methodStart
+    );
+    const methodLines = implementation
+      .slice(methodStart, methodEnd)
+      .split(/\r?\n/).length;
+
+    for (const identifier of [
+      '@interface RCTImageCompressionImageGeometry : NSObject',
+      '@interface RCTImageCompressionImageTransformRequest : NSObject',
+      '@interface RCTImageCompressionImageTransformError : NSObject',
+      '@interface RCTImageCompressionTransformedImage : NSObject',
+      '@interface RCTImageCompressionImageTransformer : NSObject',
+      'RCTImageCompressionImagePixelSizeProvider',
+      'RCTImageCompressionImageRenderer',
+      'RCTImageCompressionImageTransformExecutor',
+    ]) {
+      expect(header).toContain(identifier);
+    }
+    expect(transformer).not.toMatch(/#import <(?:UIKit|ImageIO|React)/);
+    expect(transformer).toContain(
+      'RCTImageCompressionImageGeometryCalculate('
+    );
+    expect(transformer).toContain(
+      'RCTImageCompressionKitImageTransformFailedCode'
+    );
+    expect(uiKitTransformer).toContain('UIGraphicsImageRenderer');
+    expect(uiKitTransformer).toContain('image.size.width * image.scale');
+    expect(uiKitTransformer).toContain('image.size.height * image.scale');
+    expect(uiKitTransformer).toContain('[UIColor whiteColor]');
+    expect(uiKitTransformer).toContain('[UIColor clearColor]');
+    expect(uiKitTransformer).toContain('[image drawInRect:geometry.drawRect]');
+    expect(uiKitTransformer).toContain('[NSThread isMainThread]');
+    expect(uiKitTransformer).toContain(
+      'dispatch_sync(dispatch_get_main_queue()'
+    );
+    expect(`${transformer}\n${uiKitTransformer}`).not.toMatch(
+      /(?:RCTImageCompression(?:Input|Source)|metadataPolicy|CGImageDestination|maxBytes|writeToFile:|RCTImageCompressionKitEncode)/
+    );
+    expect(implementation).toMatch(
+      /\[\s*\[RCTImageCompressionImageTransformer\s+defaultTransformer\]\s+transformRequest:request\s+error:nil\s*\]/
+    );
+    expect(implementation).toContain(
+      'RCTImageCompressionKitTransformImage(decodedImage.image, request.resizeOptions, request.outputIsJpeg)'
+    );
+    expect(implementation).not.toMatch(
+      /(?:UIGraphicsImageRenderer|drawInRect:|RCTImageCompressionKit(?:ContainSize|CoverSize|StretchSize|RenderImage))/
+    );
+    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(540);
+    expect(methodLines).toBeLessThanOrEqual(120);
+    expect(transformerTestNames).toEqual(
+      expect.arrayContaining([
+        'TestCalculatesGeometryMatrix',
+        'TestForwardsOpaqueAndTransparentRendererRequests',
+        'TestRunsPixelGeometryAndRendererInsideExecutor',
+        'TestRejectsMissingRenderAndSkippedExecutor',
+        'TestRetainsImmutableRequestResultAndErrorModels',
+        'TestClearsExistingErrorOnSuccess',
+      ])
+    );
+    expect(transformerTestNames).toHaveLength(6);
+    for (const geometryCase of [
+      'no-resize-landscape',
+      'contain-landscape',
+      'contain-portrait',
+      'width-only',
+      'height-only',
+      'stretch-both',
+      'cover-landscape-center-crop',
+      'cover-portrait-center-crop',
+      'cover-no-upscale',
+    ]) {
+      expect(nativeTests).toContain(`"${geometryCase}"`);
+    }
+    expect(packageJson.scripts['example:ios:transformer-test']).toBe(
+      'node scripts/ios-validation.mjs transformer-test'
+    );
+    expect(runner).toContain("if (mode === 'transformer-test')");
+    expect(runner).toMatch(
+      /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);/
     );
   });
 

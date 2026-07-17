@@ -38,6 +38,8 @@ const REQUIRED_FILES = [
   'src/NativeImageCompressionKit.ts',
   'ios/RCTImageCompressionImageDecoder.h',
   'ios/RCTImageCompressionImageDecoder.mm',
+  'ios/RCTImageCompressionImageTransformer.h',
+  'ios/RCTImageCompressionImageTransformer.mm',
   'ios/RCTImageCompressionInput.h',
   'ios/RCTImageCompressionInputInspector.mm',
   'ios/RCTImageCompressionIOSCapabilities.h',
@@ -46,6 +48,7 @@ const REQUIRED_FILES = [
   'ios/RCTImageCompressionRequest.mm',
   'ios/RCTImageCompressionSourceResolver.mm',
   'ios/RCTImageCompressionUIKitImageDecoder.mm',
+  'ios/RCTImageCompressionUIKitImageTransformer.mm',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/AndroidBitmapTransformer.kt',
   'android/src/main/java/com/imagecompressionkit/AndroidImageDecoder.kt',
@@ -127,6 +130,7 @@ const REQUIRED_FILES = [
   'test/packageContract.test.ts',
   'test/androidSourceContract.test.ts',
   'test/iosSourceContract.test.ts',
+  'test/ios-native/RCTImageCompressionImageTransformerTests.mm',
   'test/verificationArchitecture.test.ts',
   'test/releaseEvidence.test.mjs',
   'test/releaseEvidenceImport.test.mjs',
@@ -231,6 +235,7 @@ function runDoctor() {
     checkIOSRuntimeAuthorities(),
     checkIOSInputAuthorities(),
     checkIOSImageDecoderAuthorities(),
+    checkIOSImageTransformerAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -1079,6 +1084,166 @@ function checkIOSImageDecoderAuthorities() {
     detail:
       violations.length === 0
         ? 'decode routing, main-thread execution, immutable errors/results, bridge limits, and six native groups are aligned'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
+}
+
+function checkIOSImageTransformerAuthorities() {
+  const transformerHeader = readText(
+    'ios/RCTImageCompressionImageTransformer.h'
+  );
+  const transformerCore = readText(
+    'ios/RCTImageCompressionImageTransformer.mm'
+  );
+  const uiKitTransformer = readText(
+    'ios/RCTImageCompressionUIKitImageTransformer.mm'
+  );
+  const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionImageTransformerTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestCalculatesGeometryMatrix',
+    'TestForwardsOpaqueAndTransparentRendererRequests',
+    'TestRunsPixelGeometryAndRendererInsideExecutor',
+    'TestRejectsMissingRenderAndSkippedExecutor',
+    'TestRetainsImmutableRequestResultAndErrorModels',
+    'TestClearsExistingErrorOnSuccess',
+  ];
+  const requiredGeometryCases = [
+    'no-resize-landscape',
+    'contain-landscape',
+    'contain-portrait',
+    'width-only',
+    'height-only',
+    'stretch-both',
+    'cover-landscape-center-crop',
+    'cover-portrait-center-crop',
+    'cover-no-upscale',
+  ];
+  const methodStart = moduleContents.indexOf(
+    '- (void)compressImageWithDictionary:'
+  );
+  const methodEnd = moduleContents.indexOf(
+    '- (void)getImageCompressionCapabilities:',
+    methodStart
+  );
+  const methodLineCount =
+    methodStart >= 0 && methodEnd > methodStart
+      ? moduleContents.slice(methodStart, methodEnd).split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
+  const boundaryIdentifiers = [
+    '@interface RCTImageCompressionImageGeometry : NSObject',
+    '@interface RCTImageCompressionImageTransformRequest : NSObject',
+    '@interface RCTImageCompressionImageTransformError : NSObject',
+    '@interface RCTImageCompressionTransformedImage : NSObject',
+    '@interface RCTImageCompressionImageTransformer : NSObject',
+    'RCTImageCompressionImagePixelSizeProvider',
+    'RCTImageCompressionImageRenderer',
+    'RCTImageCompressionImageTransformExecutor',
+  ];
+  const forbiddenTransformerDependencies =
+    /(?:RCTImageCompression(?:Input|Source)|metadataPolicy|CGImageDestination|maxBytes|writeToFile:|RCTImageCompressionKitEncode)/u;
+  const directRenderAPIs =
+    /(?:UIGraphicsImageRenderer|drawInRect:|RCTImageCompressionKit(?:ContainSize|CoverSize|StretchSize|RenderImage))/u;
+  const structureChecks = [
+    {
+      ok: boundaryIdentifiers.every((identifier) =>
+        transformerHeader.includes(identifier)
+      ),
+      name: 'immutable transform request geometry result and error models',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|ImageIO|React)/u.test(transformerCore) &&
+        transformerCore.includes(
+          'RCTImageCompressionImageGeometryCalculate('
+        ) &&
+        transformerCore.includes(
+          'RCTImageCompressionKitImageTransformFailedCode'
+        ),
+      name: 'Foundation-only injected geometry orchestration',
+    },
+    {
+      ok:
+        uiKitTransformer.includes('UIGraphicsImageRenderer') &&
+        uiKitTransformer.includes('image.size.width * image.scale') &&
+        uiKitTransformer.includes('image.size.height * image.scale') &&
+        uiKitTransformer.includes('[UIColor whiteColor]') &&
+        uiKitTransformer.includes('[UIColor clearColor]') &&
+        uiKitTransformer.includes(
+          '[image drawInRect:geometry.drawRect]'
+        ) &&
+        uiKitTransformer.includes('[NSThread isMainThread]') &&
+        uiKitTransformer.includes(
+          'dispatch_sync(dispatch_get_main_queue()'
+        ),
+      name: 'UIKit renderer background and main-thread defaults',
+    },
+    {
+      ok: !forbiddenTransformerDependencies.test(
+        `${transformerCore}\n${uiKitTransformer}`
+      ),
+      name: 'transformer excludes source metadata encoder and output ownership',
+    },
+    {
+      ok:
+        /\[\s*\[RCTImageCompressionImageTransformer\s+defaultTransformer\]\s+transformRequest:request\s+error:nil\s*\]/u.test(
+          moduleContents
+        ) &&
+        moduleContents.includes(
+          'RCTImageCompressionKitTransformImage(decodedImage.image, request.resizeOptions, request.outputIsJpeg)'
+        ) &&
+        !directRenderAPIs.test(moduleContents),
+      name: 'bridge transformer delegation without direct render APIs',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 540,
+      name: 'iOS bridge source size boundary after transformer extraction',
+    },
+    {
+      ok: methodLineCount <= 120,
+      name: 'iOS compression orchestration size after transformer extraction',
+    },
+    {
+      ok:
+        nativeTestNames.length === 6 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)) &&
+        requiredGeometryCases.every((name) =>
+          nativeTests.includes(`"${name}"`)
+        ),
+      name: 'table-driven native image transformer test authority',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:transformer-test'] ===
+        'node scripts/ios-validation.mjs transformer-test',
+      name: 'iOS image transformer native-test command',
+    },
+    {
+      ok:
+        validationRunner.includes("if (mode === 'transformer-test')") &&
+        /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'image transformer tests integrated into iOS smoke',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS image transformer boundary and native tests are present',
+    detail:
+      violations.length === 0
+        ? 'geometry, renderer background, main-thread execution, immutable models, bridge limits, and six native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }

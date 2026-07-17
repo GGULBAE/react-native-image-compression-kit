@@ -62,6 +62,17 @@ const IMAGE_DECODER_TEST_SOURCE = path.join(
   'ios-native',
   'RCTImageCompressionImageDecoderTests.mm'
 );
+const IMAGE_TRANSFORMER_CORE_SOURCE = path.join(
+  ROOT,
+  'ios',
+  'RCTImageCompressionImageTransformer.mm'
+);
+const IMAGE_TRANSFORMER_TEST_SOURCE = path.join(
+  ROOT,
+  'test',
+  'ios-native',
+  'RCTImageCompressionImageTransformerTests.mm'
+);
 const IOS_VALIDATION_CONFIG = createIOSValidationConfig(process.env);
 const METRO_PORT = IOS_VALIDATION_CONFIG.metroPort;
 const METRO_READY_TIMEOUT_MS = IOS_VALIDATION_CONFIG.metroReadyTimeoutMs;
@@ -110,6 +121,11 @@ async function main() {
     return;
   }
 
+  if (mode === 'transformer-test') {
+    runImageTransformerTests();
+    return;
+  }
+
   if (mode === 'build') {
     checkIOSBuildEnvironment();
     ensurePodsInstalled();
@@ -124,6 +140,7 @@ async function main() {
     runRequestParserTests();
     runInputTests();
     runImageDecoderTests();
+    runImageTransformerTests();
     ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
@@ -197,6 +214,14 @@ function runImageDecoderTests() {
       IMAGE_DECODER_TEST_SOURCE,
     ],
     ['Foundation', 'ImageIO']
+  );
+}
+
+function runImageTransformerTests() {
+  runNativeTests(
+    'RCTImageCompressionImageTransformerTests',
+    [IMAGE_TRANSFORMER_CORE_SOURCE, IMAGE_TRANSFORMER_TEST_SOURCE],
+    ['Foundation']
   );
 }
 
@@ -347,7 +372,9 @@ function ensurePodsInstalled() {
     'RCTImageCompressionSourceResolver.mm',
     'RCTImageCompressionInputInspector.mm',
     'RCTImageCompressionImageDecoder.mm',
+    'RCTImageCompressionImageTransformer.mm',
     'RCTImageCompressionUIKitImageDecoder.mm',
+    'RCTImageCompressionUIKitImageTransformer.mm',
     'RCTImageCompressionIOSCapabilities.mm',
   ];
   const podProjectContents = pathExists(PODS_PROJECT_FILE)

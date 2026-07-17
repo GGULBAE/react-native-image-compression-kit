@@ -15,7 +15,7 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 - Scope: documentation information architecture, semantic status gates,
   repository verification contract decomposition, Android request parsing, and
   source/decode/bitmap-transform boundary extraction, plus iOS request and
-  source/inspection and image-decoder ownership boundaries
+  source/inspection, image-decoder, and resize/render ownership boundaries
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -59,9 +59,12 @@ injected data/security-scope hooks, and ImageIO type/signature classification
 flows through an immutable input inspector with bridge-provided AVIF runtime
 availability. UIImage decode and ImageIO first-frame selection now flow through
 an immutable decoder result/error boundary with injected decode, validation,
-and main-thread executor hooks. Capability projection moved unchanged to a
-private helper so the bridge stays focused on orchestration. Resize/render,
-metadata copy, and encoding behavior are unchanged.
+and main-thread executor hooks. Resize geometry now flows through immutable
+transform request, geometry, result, and error models; the UIKit default owns
+pixel-size lookup, opaque white versus alpha-preserving backgrounds,
+`UIGraphicsImageRenderer`, and main-thread rendering. Capability projection
+moved unchanged to a private helper so the bridge stays focused on
+orchestration. Metadata copy and encoding behavior are unchanged.
 
 ### Included
 
@@ -96,6 +99,11 @@ metadata copy, and encoding behavior are unchanged.
 - Typed iOS image-decoder ownership with native coverage for JPEG/PNG ordinary
   decode, GIF/WebP/HEIC/HEIF/AVIF first-frame routing, synchronous executor
   ownership, immutable results/errors, and stable decode failures.
+- Typed iOS resize/render ownership with exact geometry tables for no-resize,
+  contain, cover, stretch, width-only, height-only, portrait/landscape,
+  no-upscale, and center crop; injected renderer tests preserve opaque/alpha
+  policy, synchronous executor ownership, immutable models, and stable failure
+  classification.
 
 ### Not included
 
@@ -110,8 +118,9 @@ metadata copy, and encoding behavior are unchanged.
 pnpm verify
 pnpm example:typecheck
 pnpm example:ios:decoder-test
+pnpm example:ios:transformer-test
 pnpm example:ios:input-test
-pnpm example:ios:request-parser-test
+pnpm example:ios:request-test
 pnpm example:ios:build
 pnpm example:ios:smoke
 pnpm fixtures:release-evidence-review-acquisition:check

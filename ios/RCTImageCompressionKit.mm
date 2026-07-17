@@ -1,5 +1,6 @@
 #import "RCTImageCompressionKit.h"
 #import "RCTImageCompressionImageDecoder.h"
+#import "RCTImageCompressionImageTransformer.h"
 #import "RCTImageCompressionInput.h"
 #import "RCTImageCompressionIOSCapabilities.h"
 #import "RCTImageCompressionRequest.h"
@@ -7,7 +8,6 @@
 #import <ImageIO/ImageIO.h>
 #import <UIKit/UIKit.h>
 
-#include <math.h>
 #include <memory>
 
 static NSString *const RCTImageCompressionKitEncodeFailedCode = @"ERR_ENCODE_FAILED";
@@ -64,104 +64,14 @@ static BOOL RCTImageCompressionKitCanDecodeAVIF(void)
   return NO;
 }
 
-static CGFloat RCTImageCompressionKitDimension(CGFloat value)
+static RCTImageCompressionTransformedImage *RCTImageCompressionKitTransformImage(UIImage *image, RCTImageCompressionKitResizeOptions resize, BOOL opaque)
 {
-  return MAX((CGFloat)1.0, round(value));
-}
-
-static CGSize RCTImageCompressionKitPixelSize(UIImage *image)
-{
-  return CGSizeMake(
-    RCTImageCompressionKitDimension(image.size.width * image.scale),
-    RCTImageCompressionKitDimension(image.size.height * image.scale)
-  );
-}
-
-static CGSize RCTImageCompressionKitContainSize(CGSize imageSize, RCTImageCompressionKitResizeOptions resize)
-{
-  CGFloat scale = 1.0;
-
-  if (resize.hasMaxWidth) {
-    scale = MIN(scale, (CGFloat)resize.maxWidth / imageSize.width);
-  }
-  if (resize.hasMaxHeight) {
-    scale = MIN(scale, (CGFloat)resize.maxHeight / imageSize.height);
-  }
-
-  return CGSizeMake(
-    RCTImageCompressionKitDimension(imageSize.width * scale),
-    RCTImageCompressionKitDimension(imageSize.height * scale)
-  );
-}
-
-static CGSize RCTImageCompressionKitStretchSize(CGSize imageSize, RCTImageCompressionKitResizeOptions resize)
-{
-  CGFloat targetWidth = resize.hasMaxWidth ? MIN((CGFloat)resize.maxWidth, imageSize.width) : imageSize.width;
-  CGFloat targetHeight = resize.hasMaxHeight ? MIN((CGFloat)resize.maxHeight, imageSize.height) : imageSize.height;
-
-  return CGSizeMake(
-    RCTImageCompressionKitDimension(targetWidth),
-    RCTImageCompressionKitDimension(targetHeight)
-  );
-}
-
-static CGSize RCTImageCompressionKitCoverSize(CGSize imageSize, RCTImageCompressionKitResizeOptions resize)
-{
-  if (!resize.hasMaxWidth || !resize.hasMaxHeight) {
-    return RCTImageCompressionKitContainSize(imageSize, resize);
-  }
-
-  return CGSizeMake(
-    RCTImageCompressionKitDimension(MIN((CGFloat)resize.maxWidth, imageSize.width)),
-    RCTImageCompressionKitDimension(MIN((CGFloat)resize.maxHeight, imageSize.height))
-  );
-}
-
-static UIImage *RCTImageCompressionKitRenderImage(
-  UIImage *image,
-  RCTImageCompressionKitResizeOptions resize,
-  BOOL opaque
-)
-{
-  CGSize imageSize = RCTImageCompressionKitPixelSize(image);
-  CGSize targetSize = imageSize;
-  CGRect drawRect = CGRectMake(0, 0, imageSize.width, imageSize.height);
-
-  if (resize.enabled && resize.mode == RCTImageCompressionKitResizeModeStretch) {
-    targetSize = RCTImageCompressionKitStretchSize(imageSize, resize);
-    drawRect = CGRectMake(0, 0, targetSize.width, targetSize.height);
-  } else if (resize.enabled && resize.mode == RCTImageCompressionKitResizeModeCover) {
-    targetSize = RCTImageCompressionKitCoverSize(imageSize, resize);
-    CGFloat scale = MIN(
-      MAX(targetSize.width / imageSize.width, targetSize.height / imageSize.height),
-      (CGFloat)1.0
-    );
-    CGSize drawSize = CGSizeMake(
-      RCTImageCompressionKitDimension(imageSize.width * scale),
-      RCTImageCompressionKitDimension(imageSize.height * scale)
-    );
-    drawRect = CGRectMake(
-      (targetSize.width - drawSize.width) / 2.0,
-      (targetSize.height - drawSize.height) / 2.0,
-      drawSize.width,
-      drawSize.height
-    );
-  } else if (resize.enabled) {
-    targetSize = RCTImageCompressionKitContainSize(imageSize, resize);
-    drawRect = CGRectMake(0, 0, targetSize.width, targetSize.height);
-  }
-
-  UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
-  format.scale = 1.0;
-  format.opaque = opaque;
-
-  UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:targetSize format:format];
-  return [renderer imageWithActions:^(UIGraphicsImageRendererContext *rendererContext) {
-    (void)rendererContext;
-    [(opaque ? [UIColor whiteColor] : [UIColor clearColor]) setFill];
-    UIRectFill(CGRectMake(0, 0, targetSize.width, targetSize.height));
-    [image drawInRect:drawRect];
-  }];
+  RCTImageCompressionImageTransformRequest *request = [[RCTImageCompressionImageTransformRequest alloc]
+    initWithImage:image
+    resizeOptions:resize
+    opaque:opaque
+  ];
+  return [[RCTImageCompressionImageTransformer defaultTransformer] transformRequest:request error:nil];
 }
 
 static NSDictionary *RCTImageCompressionKitSourceImageProperties(NSData *sourceData)
@@ -397,11 +307,10 @@ static NSString *RCTImageCompressionKitOutputPath(NSString *outputFormat, NSErro
 static NSDictionary *RCTImageCompressionKitResult(
   NSString *outputPath,
   NSString *outputFormat,
-  UIImage *processedImage,
+  CGSize outputSize,
   NSData *outputData,
   NSData *sourceData
 ) {
-  CGSize outputSize = RCTImageCompressionKitPixelSize(processedImage);
   double byteSize = (double)outputData.length;
   double originalByteSize = (double)sourceData.length;
   double compressionRatio = originalByteSize > 0.0 ? byteSize / originalByteSize : 1.0;
@@ -494,7 +403,6 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
 {
   @try {
     RCTImageCompressionKitSmokeLog(@"compress-start");
-
     RCTImageCompressionRequestError *requestError = nil;
     RCTImageCompressionRequest *request = [RCTImageCompressionRequestParser
       parseOptions:options
@@ -508,7 +416,6 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       return;
     }
     RCTImageCompressionKitSmokeLog(@"options-validated");
-
     RCTImageCompressionInputError *inputError = nil;
     RCTImageCompressionInputInspection *input = [[RCTImageCompressionInputLoader defaultLoader]
       loadSourceURI:request.sourceURI
@@ -524,7 +431,6 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     RCTImageCompressionKitSmokeLog(@"source-url-ready");
     RCTImageCompressionKitSmokeLog(@"source-read");
     RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"image-type-%@", input.imageType]);
-
     BOOL metadataPreserveRequested = [request.metadataPolicy isEqualToString:RCTImageCompressionKitPreserveMetadataPolicy];
     BOOL canPreserveJpegMetadata = metadataPreserveRequested && request.outputIsJpeg && input.jpeg;
     if (metadataPreserveRequested && !canPreserveJpegMetadata) {
@@ -550,32 +456,34 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(reject, decodeError.code, decodeError.message, decodeError.underlyingError);
       return;
     }
-    UIImage *sourceImage = decodedImage.image;
-    __block UIImage *processedImage = nil;
+    RCTImageCompressionTransformedImage *transformedImage = RCTImageCompressionKitTransformImage(decodedImage.image, request.resizeOptions, request.outputIsJpeg);
+    if (transformedImage == nil) {
+      RCTImageCompressionKitSmokeLog(@"image-work-finished");
+      NSString *message = [NSString stringWithFormat:@"iOS MVP could not encode %@ output.", request.outputFormat.uppercaseString];
+      RCTImageCompressionKitReject(reject, RCTImageCompressionKitEncodeFailedCode, message, nil);
+      return;
+    }
     __block NSData *outputData = nil;
     RCTImageCompressionKitRunImageWork(^{
-      processedImage = RCTImageCompressionKitRenderImage(sourceImage, request.resizeOptions, request.outputIsJpeg);
       if (request.outputIsPng) {
-        outputData = RCTImageCompressionKitEncodePng(processedImage);
+        outputData = RCTImageCompressionKitEncodePng(transformedImage.image);
       } else if (request.outputIsWebP) {
         outputData = request.hasMaxBytes
-          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, request.outputFormat, request.quality, request.maxBytes, nil)
-          : RCTImageCompressionKitEncodeWebP(processedImage, request.quality);
+          ? RCTImageCompressionKitEncodeToTargetSize(transformedImage.image, request.outputFormat, request.quality, request.maxBytes, nil)
+          : RCTImageCompressionKitEncodeWebP(transformedImage.image, request.quality);
       } else {
         outputData = request.hasMaxBytes
-          ? RCTImageCompressionKitEncodeToTargetSize(processedImage, request.outputFormat, request.quality, request.maxBytes, jpegSourceProperties)
-          : RCTImageCompressionKitEncodeJpeg(processedImage, request.quality, jpegSourceProperties);
+          ? RCTImageCompressionKitEncodeToTargetSize(transformedImage.image, request.outputFormat, request.quality, request.maxBytes, jpegSourceProperties)
+          : RCTImageCompressionKitEncodeJpeg(transformedImage.image, request.quality, jpegSourceProperties);
       }
     });
     RCTImageCompressionKitSmokeLog(@"image-work-finished");
-
-    if (processedImage == nil || outputData == nil || outputData.length == 0) {
+    if (outputData == nil || outputData.length == 0) {
       NSString *message = [NSString stringWithFormat:@"iOS MVP could not encode %@ output.", request.outputFormat.uppercaseString];
       RCTImageCompressionKitReject(reject, RCTImageCompressionKitEncodeFailedCode, message, nil);
       return;
     }
     RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"%@-encoded", request.outputFormat]);
-
     NSError *outputPathError = nil;
     NSString *outputPath = RCTImageCompressionKitOutputPath(request.outputFormat, &outputPathError);
     if (outputPath == nil) {
@@ -584,7 +492,6 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       return;
     }
     RCTImageCompressionKitSmokeLog(@"output-path-ready");
-
     NSError *writeError = nil;
     if (![outputData writeToFile:outputPath options:NSDataWritingAtomic error:&writeError]) {
       NSString *message = [NSString stringWithFormat:@"iOS MVP could not write %@ output.", request.outputFormat.uppercaseString];
@@ -592,8 +499,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       return;
     }
     RCTImageCompressionKitSmokeLog(@"output-written");
-
-    resolve(RCTImageCompressionKitResult(outputPath, request.outputFormat, processedImage, outputData, input.source.data));
+    resolve(RCTImageCompressionKitResult(outputPath, request.outputFormat, transformedImage.pixelSize, outputData, input.source.data));
     RCTImageCompressionKitSmokeLog(@"compress-resolved");
   } @catch (NSException *exception) {
     RCTImageCompressionKitReject(reject, RCTImageCompressionKitNativeOperationFailedCode,

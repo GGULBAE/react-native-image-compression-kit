@@ -217,6 +217,7 @@ Important limitations:
 pnpm verify
 pnpm example:typecheck
 pnpm example:ios:decoder-test
+pnpm example:ios:transformer-test
 pnpm docs:check
 git diff --check
 pnpm pack --dry-run
