@@ -99,6 +99,7 @@ export function runReleaseEvidenceReviewAcquisition(options, dependencies = {}) 
   const attestationsResponse = github.getAttestations({
     ...normalized,
     subjectSha256,
+    subjectBytes: review.files.get(RELEASE_EVIDENCE_REVIEW_MANIFEST_FILE),
   });
   return acquireReleaseEvidenceReviewBundle(
     {

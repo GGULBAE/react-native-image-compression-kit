@@ -23,10 +23,10 @@ policy diff. It cannot apply the candidate.
 pnpm promote:release-evidence-policy -- \
   --acquisition-dir /path/to/acquisition \
   --candidate-file /tmp/policy-candidate.json \
-  --version 0.2.55 \
-  --reviewed-candidate-sha256 <sha256> \
-  --reviewer <identity> \
-  --reviewed-at <UTC-ISO> \
+  --version 0.2.62 \
+  --reviewed-candidate-sha256 0af980676b08f73b62b2e785dd39320d9ce1c55bfac58df43ebf6b87eb102cdc \
+  --reviewer GGULBAE \
+  --reviewed-at 2026-07-17T06:49:02Z \
   --archive-root /tmp/rehearsal-evidence \
   --approve \
   --json
@@ -53,14 +53,14 @@ pnpm review:release-evidence-policy -- \
 pnpm verify:release-evidence-review -- \
   --artifact-dir /tmp/review-bundle \
   --expect-package react-native-image-compression-kit \
-  --expect-version 0.2.55 \
-  --expect-candidate-sha256 <sha256> \
+  --expect-version 0.2.62 \
+  --expect-candidate-sha256 0af980676b08f73b62b2e785dd39320d9ce1c55bfac58df43ebf6b87eb102cdc \
   --expect-reviewer GGULBAE \
   --expect-repository GGULBAE/react-native-image-compression-kit \
   --expect-workflow GGULBAE/react-native-image-compression-kit/.github/workflows/release-evidence-policy-review.yml \
   --expect-ref refs/heads/master \
-  --expect-head-sha 2782a6e34c70660a6c44a6189c39304317072a22 \
-  --expect-run-id 29390495773 \
+  --expect-head-sha dd63305e33a4a0e3f9c8eb40a0cfa3a3eb68c7d2 \
+  --expect-run-id 29561132321 \
   --expect-run-attempt 1 \
   --json
 ```
@@ -82,15 +82,19 @@ pnpm verify:release-evidence-review-attestation -- \
 ```
 
 Manual Release Evidence Policy Review run
-[29390495773](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29390495773)
-passed on commit `2782a6e34c70660a6c44a6189c39304317072a22` and produced
-[attestation 35388408](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35388408).
+[29561132321](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29561132321)
+passed on commit `dd63305e33a4a0e3f9c8eb40a0cfa3a3eb68c7d2` and produced
+[attestation 35780183](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35780183).
 The reviewed candidate SHA-256 is
-`aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d`;
+`0af980676b08f73b62b2e785dd39320d9ce1c55bfac58df43ebf6b87eb102cdc`;
 the receipt SHA-256 is
-`45ddefa85cba6a9fed62cb1c187dd0bab2246b72ba66a803b1282e4eac07efad`;
+`4d05d0fec2ec9d43575336a1b0fd4d17059f87b4db8879afeefeacd4d5d6cd2f`;
 the manifest SHA-256 is
-`48cfd454b636cf1911b7d19dae996e7ead2797247d2b974687bb02aeebb439ff`.
+`fd6f036f2f878031679c2c4dcf711c58f886883f8711bc1ad66be7970fdaef91`.
+Promotion and set replay produced SHA-256
+`f4dda2799cbb885ce5a8a00b5fccab33653c2b86f6217bfcd6e23880f8260521`
+and `f2406db5c562aae6c3727ff8bf12d5fbd8da7a09f81ee974b9f9178256b2bdfa`
+for the stable v0.2.50, v0.2.55, and v0.2.62 archive set.
 
 See [Review archive](review-archive.md) for durable exact-ZIP retention and
 expiration-independent replay.

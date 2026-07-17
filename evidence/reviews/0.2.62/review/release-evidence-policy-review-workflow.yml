@@ -1,0 +1,376 @@
+name: Release Evidence Policy Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: Repository that produced Registry Validation evidence
+        required: true
+        default: GGULBAE/react-native-image-compression-kit
+        type: string
+      workflow:
+        description: Exact Registry Validation workflow path
+        required: true
+        default: .github/workflows/registry-validation.yml
+        type: string
+      source_ref:
+        description: Exact release source ref recorded by Registry Validation
+        required: true
+        default: refs/heads/master
+        type: string
+      source_digest:
+        description: Exact release source commit recorded by Registry Validation
+        required: true
+        default: 194e9387406f71763bc0d617ece0d7d58e235e29
+        type: string
+      registry_validation_run_id:
+        description: Exact successful Registry Validation run ID
+        required: true
+        default: "29333540614"
+        type: string
+      version:
+        description: Exact published package version under review
+        required: true
+        default: "0.2.55"
+        type: string
+      expected_tag:
+        description: Dist-tag recorded by Registry Validation
+        required: true
+        default: latest
+        type: string
+      reviewed_candidate_sha256:
+        description: Exact canonical policy candidate SHA-256 reviewed by the dispatcher
+        required: true
+        default: aade4a8057bbb8f6b3dc92690b3d9cc5e3b57352a5734396e3921a143a449f8d
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  release-evidence-policy-review:
+    name: Review policy and rehearse promotion
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          version: 11.7.0
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify workflow supply chain
+        run: pnpm verify:workflow-supply-chain -- --json
+
+      - name: Acquire exact Registry Validation evidence
+        id: acquire
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REGISTRY_REPOSITORY: ${{ inputs.repository }}
+          REGISTRY_WORKFLOW: ${{ inputs.workflow }}
+          REGISTRY_SOURCE_REF: ${{ inputs.source_ref }}
+          REGISTRY_SOURCE_DIGEST: ${{ inputs.source_digest }}
+          REGISTRY_RUN_ID: ${{ inputs.registry_validation_run_id }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+          EXPECTED_TAG: ${{ inputs.expected_tag }}
+        shell: bash
+        run: |
+          rm -rf release-evidence-acquisition
+          rm -f acquisition-report.json acquisition-stdout.json
+          set -o pipefail
+          pnpm acquire:release-evidence -- \
+            --repository "$REGISTRY_REPOSITORY" \
+            --workflow "$REGISTRY_WORKFLOW" \
+            --source-ref "$REGISTRY_SOURCE_REF" \
+            --source-digest "$REGISTRY_SOURCE_DIGEST" \
+            --run-id "$REGISTRY_RUN_ID" \
+            --version "$PACKAGE_VERSION" \
+            --expected-tag "$EXPECTED_TAG" \
+            --output-dir release-evidence-acquisition \
+            --report-file acquisition-report.json \
+            --json \
+            | tee acquisition-stdout.json
+          cmp acquisition-report.json acquisition-stdout.json
+          rm acquisition-stdout.json
+
+      - name: Prepare canonical policy candidate and diff
+        id: prepare
+        if: steps.acquire.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          rm -f policy-candidate.json policy-diff-source.json policy-diff-stdout.json
+          set -o pipefail
+          pnpm prepare:release-evidence-policy -- \
+            --acquisition-dir release-evidence-acquisition \
+            --candidate-file policy-candidate.json \
+            --report-file policy-diff-source.json \
+            --json \
+            | tee policy-diff-stdout.json
+          cmp policy-diff-source.json policy-diff-stdout.json
+          rm policy-diff-stdout.json
+
+      - name: Build and replay canonical review bundle
+        id: review
+        if: steps.acquire.outcome == 'success' && steps.prepare.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_REPOSITORY: ${{ github.repository }}
+          REVIEW_SOURCE_REF: ${{ github.ref }}
+          REVIEW_SOURCE_DIGEST: ${{ github.sha }}
+          REVIEW_WORKFLOW_NAME: ${{ github.workflow }}
+          REVIEW_WORKFLOW_PATH: .github/workflows/release-evidence-policy-review.yml
+          REVIEW_WORKFLOW_REF: ${{ github.workflow_ref }}
+          REVIEW_WORKFLOW_SHA: ${{ github.workflow_sha }}
+          REVIEW_RUN_ID: ${{ github.run_id }}
+          REVIEW_RUN_ATTEMPT: ${{ github.run_attempt }}
+          REVIEWER: ${{ github.actor }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_PATH: ${{ github.event_path }}
+          REGISTRY_REPOSITORY: ${{ inputs.repository }}
+          REGISTRY_WORKFLOW: ${{ inputs.workflow }}
+          REGISTRY_SOURCE_REF: ${{ inputs.source_ref }}
+          REGISTRY_SOURCE_DIGEST: ${{ inputs.source_digest }}
+          REGISTRY_RUN_ID: ${{ inputs.registry_validation_run_id }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+          EXPECTED_TAG: ${{ inputs.expected_tag }}
+          REVIEWED_CANDIDATE_SHA256: ${{ inputs.reviewed_candidate_sha256 }}
+        shell: bash
+        run: |
+          rm -rf release-evidence-policy-review
+          rm -f review-report.json review-stdout.json review-verification.json review-verification-stdout.json
+          reviewed_at=$(gh api "repos/$REVIEW_REPOSITORY/actions/runs/$REVIEW_RUN_ID" --jq .run_started_at)
+          if [[ -z "$reviewed_at" ]]; then
+            echo "Could not resolve the review run start time." >&2
+            exit 1
+          fi
+          set -o pipefail
+          pnpm review:release-evidence-policy -- \
+            --acquisition-dir release-evidence-acquisition \
+            --candidate-file policy-candidate.json \
+            --policy-report-file policy-diff-source.json \
+            --archive-root evidence/npm \
+            --bundle-dir release-evidence-policy-review \
+            --report-file review-report.json \
+            --reviewed-candidate-sha256 "$REVIEWED_CANDIDATE_SHA256" \
+            --review-repository "$REVIEW_REPOSITORY" \
+            --review-source-ref "$REVIEW_SOURCE_REF" \
+            --review-source-digest "$REVIEW_SOURCE_DIGEST" \
+            --review-workflow-name "$REVIEW_WORKFLOW_NAME" \
+            --review-workflow-path "$REVIEW_WORKFLOW_PATH" \
+            --review-workflow-ref "$REVIEW_WORKFLOW_REF" \
+            --review-workflow-sha "$REVIEW_WORKFLOW_SHA" \
+            --review-run-id "$REVIEW_RUN_ID" \
+            --review-run-attempt "$REVIEW_RUN_ATTEMPT" \
+            --reviewer "$REVIEWER" \
+            --reviewed-at "$reviewed_at" \
+            --event-name "$EVENT_NAME" \
+            --github-event "$EVENT_PATH" \
+            --workflow-file "$REVIEW_WORKFLOW_PATH" \
+            --registry-repository "$REGISTRY_REPOSITORY" \
+            --registry-workflow "$REGISTRY_WORKFLOW" \
+            --registry-source-ref "$REGISTRY_SOURCE_REF" \
+            --registry-source-digest "$REGISTRY_SOURCE_DIGEST" \
+            --registry-run-id "$REGISTRY_RUN_ID" \
+            --version "$PACKAGE_VERSION" \
+            --expected-tag "$EXPECTED_TAG" \
+            --json \
+            | tee review-stdout.json
+          cmp review-report.json review-stdout.json
+          cmp release-evidence-policy-review/review-receipt.json review-stdout.json
+
+          pnpm verify:release-evidence-review -- \
+            --artifact-dir release-evidence-policy-review \
+            --expect-package react-native-image-compression-kit \
+            --expect-version "$PACKAGE_VERSION" \
+            --expect-candidate-sha256 "$REVIEWED_CANDIDATE_SHA256" \
+            --expect-reviewer "$REVIEWER" \
+            --expect-repository "$REVIEW_REPOSITORY" \
+            --expect-workflow "$REVIEW_REPOSITORY/$REVIEW_WORKFLOW_PATH" \
+            --expect-ref "$REVIEW_SOURCE_REF" \
+            --expect-head-sha "$REVIEW_SOURCE_DIGEST" \
+            --expect-run-id "$REVIEW_RUN_ID" \
+            --expect-run-attempt "$REVIEW_RUN_ATTEMPT" \
+            --report-file review-verification.json \
+            --json \
+            | tee review-verification-stdout.json
+          cmp review-verification.json review-verification-stdout.json
+          cmp release-evidence-policy-review/review-receipt.json review-verification.json
+          rm review-stdout.json review-verification-stdout.json
+
+      - name: Attest canonical review artifact manifest
+        id: attest
+        if: steps.review.outcome == 'success'
+        continue-on-error: true
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
+        with:
+          subject-path: release-evidence-policy-review/artifact-manifest.json
+
+      - name: Verify and package review attestation trust material
+        id: verify_attestation
+        if: steps.review.outcome == 'success' && steps.attest.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_REPOSITORY: ${{ github.repository }}
+          REVIEW_WORKFLOW_PATH: .github/workflows/release-evidence-policy-review.yml
+          REVIEW_SOURCE_REF: ${{ github.ref }}
+          REVIEW_SOURCE_DIGEST: ${{ github.sha }}
+          REVIEW_RUN_ID: ${{ github.run_id }}
+          REVIEW_RUN_ATTEMPT: ${{ github.run_attempt }}
+          REVIEWER: ${{ github.actor }}
+          PACKAGE_VERSION: ${{ inputs.version }}
+          REVIEWED_CANDIDATE_SHA256: ${{ inputs.reviewed_candidate_sha256 }}
+        shell: bash
+        run: |
+          rm -rf release-evidence-policy-review-attestation release-evidence-policy-review-attestation-download
+          rm -f review-attestation-online.json review-attestation-verification-stdout.json
+          mkdir -p release-evidence-policy-review-attestation release-evidence-policy-review-attestation-download
+
+          policy=(
+            --repo "$REVIEW_REPOSITORY"
+            --signer-workflow "$REVIEW_REPOSITORY/$REVIEW_WORKFLOW_PATH"
+            --source-ref "$REVIEW_SOURCE_REF"
+            --source-digest "$REVIEW_SOURCE_DIGEST"
+            --cert-oidc-issuer https://token.actions.githubusercontent.com
+            --predicate-type https://slsa.dev/provenance/v1
+            --deny-self-hosted-runners
+          )
+          gh attestation verify \
+            release-evidence-policy-review/artifact-manifest.json \
+            "${policy[@]}" \
+            --format json \
+            > review-attestation-online.json
+
+          (
+            cd release-evidence-policy-review-attestation-download
+            gh attestation download \
+              ../release-evidence-policy-review/artifact-manifest.json \
+              --repo "$REVIEW_REPOSITORY"
+          )
+          mapfile -t downloaded_bundles < <(
+            find release-evidence-policy-review-attestation-download -maxdepth 1 -type f -name 'sha256*.jsonl' -print
+          )
+          if [[ "${#downloaded_bundles[@]}" -ne 1 ]]; then
+            echo "Expected exactly one downloaded attestation JSONL, found ${#downloaded_bundles[@]}." >&2
+            exit 1
+          fi
+          mv "${downloaded_bundles[0]}" release-evidence-policy-review-attestation/attestation.jsonl
+          gh attestation trusted-root > release-evidence-policy-review-attestation/trusted-root.jsonl
+          trusted_root_sha256=$(sha256sum release-evidence-policy-review-attestation/trusted-root.jsonl | cut -d ' ' -f 1)
+          if [[ "$trusted_root_sha256" != "65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c" ]]; then
+            echo "Unexpected GitHub trusted root SHA-256: $trusted_root_sha256" >&2
+            exit 1
+          fi
+
+          pnpm verify:release-evidence-review-attestation -- \
+            --artifact-dir release-evidence-policy-review \
+            --attestation-bundle release-evidence-policy-review-attestation/attestation.jsonl \
+            --trusted-root release-evidence-policy-review-attestation/trusted-root.jsonl \
+            --expect-package react-native-image-compression-kit \
+            --expect-version "$PACKAGE_VERSION" \
+            --expect-candidate-sha256 "$REVIEWED_CANDIDATE_SHA256" \
+            --expect-reviewer "$REVIEWER" \
+            --expect-repository "$REVIEW_REPOSITORY" \
+            --expect-workflow "$REVIEW_REPOSITORY/$REVIEW_WORKFLOW_PATH" \
+            --expect-ref "$REVIEW_SOURCE_REF" \
+            --expect-head-sha "$REVIEW_SOURCE_DIGEST" \
+            --expect-run-id "$REVIEW_RUN_ID" \
+            --expect-run-attempt "$REVIEW_RUN_ATTEMPT" \
+            --report-file release-evidence-policy-review-attestation/attestation-verification.json \
+            --json \
+            | tee review-attestation-verification-stdout.json
+          cmp \
+            release-evidence-policy-review-attestation/attestation-verification.json \
+            review-attestation-verification-stdout.json
+          rm review-attestation-verification-stdout.json
+
+      - name: Write release evidence policy review summary
+        if: always()
+        env:
+          ATTESTATION_ID: ${{ steps.attest.outputs.attestation-id }}
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
+          ATTESTATION_OUTCOME: ${{ steps.attest.outcome }}
+          ATTESTATION_VERIFY_OUTCOME: ${{ steps.verify_attestation.outcome }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+          const receiptPath = 'release-evidence-policy-review/review-receipt.json';
+          let markdown = '## Release Evidence Policy Review\n\n';
+          if (existsSync(receiptPath)) {
+            const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
+            const manifestSha256 = createHash('sha256')
+              .update(readFileSync('release-evidence-policy-review/artifact-manifest.json'))
+              .digest('hex');
+            const set = JSON.parse(readFileSync('release-evidence-policy-review/release-evidence-set-report.json', 'utf8'));
+            const attestation = existsSync('release-evidence-policy-review-attestation/attestation-verification.json')
+              ? JSON.parse(readFileSync('release-evidence-policy-review-attestation/attestation-verification.json', 'utf8'))
+              : { status: 'not-run' };
+            markdown += `- Status: **${receipt.status}**\n`;
+            markdown += `- Package: \`${receipt.package}@${receipt.version}\`\n`;
+            markdown += `- Reviewed candidate SHA-256: \`${receipt.candidateSha256}\`\n`;
+            markdown += `- Reviewer: \`${receipt.reviewer}\`\n`;
+            markdown += `- Reviewed at: \`${receipt.reviewedAt}\`\n`;
+            markdown += `- Review run: \`${receipt.reviewRunId}\` attempt \`${receipt.reviewRunAttempt}\`\n`;
+            markdown += `- Review workflow: \`${receipt.workflow}\`\n`;
+            markdown += `- Review source: \`${receipt.sourceRef}@${receipt.sourceDigest}\`\n`;
+            markdown += `- Acquisition SHA-256: \`${receipt.acquisitionSha256}\`\n`;
+            markdown += `- Evidence SHA-256: \`${receipt.evidenceSha256}\`\n`;
+            markdown += `- Promotion report SHA-256: \`${receipt.promotionReportSha256}\`\n`;
+            markdown += `- Set report SHA-256: \`${receipt.setReportSha256}\`\n`;
+            markdown += `- Rehearsed archive versions: \`${set.versions.join(', ')}\`\n`;
+            markdown += `- Artifact manifest SHA-256: \`${manifestSha256}\`\n`;
+            markdown += `- Manifest attestation: \`${process.env.ATTESTATION_OUTCOME}\`\n`;
+            markdown += `- Attestation ID: \`${process.env.ATTESTATION_ID || 'not-created'}\`\n`;
+            markdown += `- Attestation URL: ${process.env.ATTESTATION_URL || 'not-created'}\n`;
+            markdown += `- Offline attestation verification: \`${attestation.status}\`\n`;
+            markdown += `- Attestation verification step: \`${process.env.ATTESTATION_VERIFY_OUTCOME}\`\n`;
+          } else {
+            markdown += '- Status: **failed before an atomic review bundle was created**\n';
+          }
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown, 'utf8');
+          NODE
+
+      - name: Upload release evidence policy review artifact
+        if: always() && hashFiles('release-evidence-policy-review/review-receipt.json') != ''
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-evidence-policy-review-${{ inputs.version }}-${{ github.run_id }}
+          path: release-evidence-policy-review
+          if-no-files-found: error
+
+      - name: Upload release evidence policy review attestation artifact
+        if: always() && steps.attest.outcome == 'success'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-evidence-policy-review-attestation-${{ inputs.version }}-${{ github.run_id }}
+          path: release-evidence-policy-review-attestation
+          if-no-files-found: error
+
+      - name: Enforce release evidence policy review result
+        if: >-
+          steps.acquire.outcome != 'success' ||
+          steps.prepare.outcome != 'success' ||
+          steps.review.outcome != 'success' ||
+          steps.attest.outcome != 'success' ||
+          steps.verify_attestation.outcome != 'success'
+        run: exit 1

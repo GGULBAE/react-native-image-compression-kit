@@ -34,6 +34,7 @@ import {
   runReleaseEvidenceReviewAcquisition,
 } from '../scripts/acquire-release-evidence-review.mjs';
 import {
+  REVIEW_ACQUISITION_FIXTURE_VERSION,
   REVIEW_ACQUISITION_FIXTURE_TIME,
   createReleaseEvidenceReviewAcquisitionFixture,
 } from '../scripts/check-release-evidence-review-acquisition-fixture.mjs';
@@ -50,7 +51,7 @@ const CHECKER = path.join(
   'scripts',
   'check-release-evidence-review-acquisition-fixture.mjs'
 );
-const VERSION = '0.2.55';
+const VERSION = REVIEW_ACQUISITION_FIXTURE_VERSION;
 
 function temporaryFixture(label) {
   const parent = mkdtempSync(
@@ -93,7 +94,7 @@ describe('release evidence review artifact acquisition', () => {
         package: 'react-native-image-compression-kit',
         version: VERSION,
         reviewer: 'GGULBAE',
-        runId: 29390495773,
+        runId: RELEASE_EVIDENCE_REVIEW_ARCHIVE_POLICIES[VERSION].reviewRun.id,
         archiveSha256:
           RELEASE_EVIDENCE_REVIEW_ARCHIVE_POLICIES[VERSION].archiveSha256,
         checks: Object.fromEntries(
@@ -218,8 +219,10 @@ describe('release evidence review artifact acquisition', () => {
     ['ID', (fixture) => {
       fixture.attestationsResponse.attestations[0].bundle_url =
         fixture.attestationsResponse.attestations[0].bundle_url.replace(
-          '35388408.json.sn',
-          '35388409.json.sn'
+          `${RELEASE_EVIDENCE_REVIEW_ARCHIVE_POLICIES[VERSION].attestation.id}.json.sn`,
+          `${
+            RELEASE_EVIDENCE_REVIEW_ARCHIVE_POLICIES[VERSION].attestation.id + 1
+          }.json.sn`
         );
     }],
   ])('rejects attestation %s disagreement', (_, mutate) => {
@@ -427,6 +430,60 @@ describe('release evidence review artifact acquisition', () => {
       ['api', 'repos/owner/repo/actions/artifacts/456/zip'],
     ]);
     expect(calls.flatMap((call) => call.args)).not.toContain('latest');
+  });
+
+  it('hydrates a bundle URL response through an exact-subject gh download', () => {
+    const subjectBytes = Buffer.from('{"subject":"exact"}\n');
+    const bundle = {
+      mediaType: 'application/vnd.dev.sigstore.bundle.v0.3+json',
+    };
+    const calls = [];
+    const runCommand = (command, args, options = {}) => {
+      calls.push({ command, args, options });
+      if (args[0] === 'api') {
+        return JSON.stringify({
+          attestations: [
+            {
+              repository_id: 123,
+              bundle: null,
+              bundle_url: 'https://example.test/attestation',
+            },
+          ],
+        });
+      }
+      if (args[0] === 'attestation' && args[1] === 'download') {
+        expect(readFileSync(args[2])).toEqual(subjectBytes);
+        writeFileSync(
+          path.join(options.cwd, 'sha256-test.jsonl'),
+          `${JSON.stringify(bundle)}\n`
+        );
+        return '';
+      }
+      throw new Error(`Unexpected command: ${command} ${args.join(' ')}`);
+    };
+    const github = createReleaseEvidenceReviewGitHubClient({ runCommand });
+    const response = github.getAttestations({
+      repository: 'owner/repo',
+      subjectSha256: 'a'.repeat(64),
+      subjectBytes,
+    });
+    expect(response.attestations).toEqual([
+      {
+        repository_id: 123,
+        bundle,
+        bundle_url: 'https://example.test/attestation',
+      },
+    ]);
+    expect(calls[1].args).toEqual([
+      'attestation',
+      'download',
+      expect.any(String),
+      '--repo',
+      'owner/repo',
+      '--limit',
+      '2',
+    ]);
+    expect(calls.some((call) => call.args.includes('latest'))).toBe(false);
   });
 
   it('keeps validation and default fixture checking offline', () => {

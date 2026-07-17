@@ -70,31 +70,35 @@ pnpm acquire:release-evidence-review -- \
   --repository GGULBAE/react-native-image-compression-kit \
   --workflow .github/workflows/release-evidence-policy-review.yml \
   --source-ref refs/heads/master \
-  --source-digest 2782a6e34c70660a6c44a6189c39304317072a22 \
-  --run-id 29390495773 \
-  --version 0.2.55 \
-  --output-dir /tmp/review-acquisition-0.2.55 \
+  --source-digest dd63305e33a4a0e3f9c8eb40a0cfa3a3eb68c7d2 \
+  --run-id 29561132321 \
+  --version 0.2.62 \
+  --output-dir /tmp/review-acquisition-0.2.62 \
   --release-archive-root evidence/npm \
   --json \
-  --report-file /tmp/review-acquisition-0.2.55.json
+  --report-file /tmp/review-acquisition-0.2.62.json
 ```
 
-The selected review artifact is ID `8333046539`, 285,466 bytes, GitHub digest
-`sha256:f1ea6c9c2498e4d773a6cc5f6b49d39d9bfacba8bd40ec76c5364c7d3c21c836`.
-The attestation artifact is ID `8333046693`, 15,751 bytes, digest
-`sha256:05ab03d322d15e97cc733e3d0325f6dbb7a468197245ea9c6738241e2477f4d6`.
-Both record creation `2026-07-15T05:04:37Z` and expiration
-`2026-10-13T05:04:01Z`.
+The selected review artifact is ID `8399292402`, 342,228 bytes, GitHub digest
+`sha256:26c2880f1ed325cbd55956b02bc8558a692a2fecd47b2502be10ca89a7d57855`.
+The attestation artifact is ID `8399292698`, 15,618 bytes, digest
+`sha256:e6e3b25ea56fe52be16f86e8d5cb7bfc65c8c673f383d03f190682e1546501ae`.
+They expire at `2026-10-15T06:49:03Z`.
+
+As with registry acquisition, a bundle-less GitHub attestation response is
+resolved with `gh attestation download` against the exact review manifest
+bytes. The downloaded bundle must then equal the retained attestation ZIP
+entry byte-for-byte; no token or signed URL is retained.
 
 The canonical directory contains `review-evidence-metadata.json`, exact
 `artifacts/review.zip` and `artifacts/attestation.zip`, and
 `review-acquisition-manifest.json`. Authenticated acquisition at
-`2026-07-15T06:51:05.525Z` produced metadata SHA-256
-`6e4074a785ba2b596fdf336d1990eb522d30237927f75c56abfb27a4ba726d4c`
+`2026-07-17T06:53:06.508Z` produced metadata SHA-256
+`67093793f6092b3f898c44c67bf6d2a71ee4c71874bd904890b8124bc596b08f`
 and acquisition SHA-256
-`b2cae5664d149cbc2c3a7202dc580b7c8008520d50050ce7e7bbf822e7285c7c`.
+`6357a742bede4abf1e8274819c565ed774ac2c9d2f465b64f851c44981e19aac`.
 Importer handoff reproduced archive SHA-256
-`f63924d58ef18c94379b102949e6870e838a014ac883b7c9c03fca5abc6b56dd`.
+`49ce812d70e53a62581b2ad5dda8e67a920d815506f885afb5267c68b2bd041d`.
 
 Verify the retained-ZIP fixture and handoff without network access:
 

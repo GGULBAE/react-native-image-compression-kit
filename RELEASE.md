@@ -174,8 +174,10 @@ manifest-aligned `release` after a reviewed status update.
 ## Recent release-evidence work
 
 - [v0.2.62 registry provenance](docs/release-evidence/registry-provenance.md)
-  retains exact tag-ref Registry Validation run `29558617089`, provenance,
-  attestation, and acquisition fixtures for offline replay.
+  retains exact tag-ref Registry Validation run `29558617089`; the linked
+  [policy review](docs/release-evidence/policy-review.md) and
+  [durable archive](docs/release-evidence/review-archive.md) retain exact review
+  run `29561132321`, attestation, ZIPs, and offline replay.
 - [v0.2.61](docs/releases/0.2-history.md#v0261) added authenticated review
   artifact acquisition and canonical importer handoff.
 - [v0.2.60](docs/releases/0.2-history.md#v0260) retained the review archive for

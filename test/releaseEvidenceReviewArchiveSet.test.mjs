@@ -61,20 +61,23 @@ describe('release evidence review archive regression set', () => {
     );
     expect(DEFAULT_RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERSIONS).toEqual([
       '0.2.55',
+      '0.2.62',
     ]);
     expect(Object.keys(report)).toEqual(
       RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_FIELDS
     );
     expect(report.status).toBe('passed');
-    expect(report.versions).toEqual(['0.2.55']);
-    expect(report.results).toHaveLength(1);
-    expect(Object.keys(report.results[0])).toEqual(
-      RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_RESULT_FIELDS
-    );
-    expect(Object.keys(report.results[0].checks)).toEqual(
-      RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERIFICATION_CHECK_FIELDS
-    );
-    expect(Object.values(report.results[0].checks).every(Boolean)).toBe(true);
+    expect(report.versions).toEqual(['0.2.55', '0.2.62']);
+    expect(report.results).toHaveLength(2);
+    for (const result of report.results) {
+      expect(Object.keys(result)).toEqual(
+        RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_RESULT_FIELDS
+      );
+      expect(Object.keys(result.checks)).toEqual(
+        RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERIFICATION_CHECK_FIELDS
+      );
+      expect(Object.values(result.checks).every(Boolean)).toBe(true);
+    }
     expect(canonicalReleaseEvidenceReviewArchiveSetReport(report).trim().split('\n'))
       .toHaveLength(1);
   });
@@ -117,7 +120,7 @@ describe('release evidence review archive regression set', () => {
       expect(readFileSync(reportFile, 'utf8')).toBe(result.stdout);
       expect(JSON.parse(result.stdout)).toMatchObject({
         status: 'passed',
-        versions: ['0.2.55'],
+        versions: ['0.2.55', '0.2.62'],
       });
     } finally {
       rmSync(parent, { recursive: true, force: true });
@@ -147,8 +150,9 @@ describe('release evidence review archive regression set', () => {
       );
       expect(report.status).toBe('failed');
       expect(report.error).toContain('0.2.55');
-      expect(report.results).toHaveLength(1);
+      expect(report.results).toHaveLength(2);
       expect(report.results[0].status).toBe('failed');
+      expect(report.results[1].status).toBe('passed');
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }
