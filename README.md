@@ -19,11 +19,11 @@ handle platform codec differences before compression.
 
 - Package version: `0.2.62`
 - npm latest: `0.2.55`
-- Release state: `candidate`
-- Registry checked at: `2026-07-16`
+- Release state: `release`
+- Registry checked at: `2026-07-17`
 <!-- package-status:end -->
 
-The current candidate keeps the public API and image output behavior unchanged
+Version 0.2.62 keeps the public API and image output behavior unchanged
 while isolating iOS request, input, decode, resize/render, JPEG metadata, and
 output encoder/persistence ownership plus pipeline orchestration behind
 executable native contracts.

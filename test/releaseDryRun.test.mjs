@@ -66,14 +66,17 @@ describe('release dry-run packed README current-status guard', () => {
   });
 
   it('rejects only the current candidate block', () => {
+    const candidateManifest = { ...MANIFEST, releaseState: 'candidate' };
     const packedReadme = readmeWithStatus({
+      releaseState: 'candidate',
       after: 'Historical note: a previous package was a candidate.',
     });
+    const options = { manifest: candidateManifest };
 
-    expect(getPackedReadmeStatusViolations(packedReadme)).toEqual([
+    expect(getPackedReadmeStatusViolations(packedReadme, options)).toEqual([
       `current status declares package version ${PACKAGE_VERSION} as candidate`,
     ]);
-    expect(() => validatePackedReadmeStatus(packedReadme)).toThrow(
+    expect(() => validatePackedReadmeStatus(packedReadme, options)).toThrow(
       `current status declares package version ${PACKAGE_VERSION} as candidate`
     );
   });
@@ -93,14 +96,16 @@ describe('release dry-run packed README current-status guard', () => {
 
   it('rejects package and manifest mismatches before evaluating publishability', () => {
     const otherVersion = '9.9.9';
+    const otherReleaseState =
+      MANIFEST.releaseState === 'candidate' ? 'release' : 'candidate';
     const packageMismatch = readmeWithStatus({ packageVersion: otherVersion });
-    const statusMismatch = readmeWithStatus({ releaseState: 'release' });
+    const statusMismatch = readmeWithStatus({ releaseState: otherReleaseState });
 
     expect(getPackedReadmeStatusViolations(packageMismatch)).toEqual([
       `README: Package version expected "${PACKAGE_VERSION}" from package.json, received "${otherVersion}"`,
     ]);
     expect(getPackedReadmeStatusViolations(statusMismatch)).toEqual([
-      'README: Release state expected "candidate" from docs/release-status.json, received "release"',
+      `README: Release state expected "${MANIFEST.releaseState}" from docs/release-status.json, received "${otherReleaseState}"`,
     ]);
   });
 

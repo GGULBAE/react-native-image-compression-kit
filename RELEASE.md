@@ -8,8 +8,8 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 <!-- release-status:start -->
 - Package version: `0.2.62`
 - npm latest: `0.2.55`
-- Release state: `candidate`
-- Registry checked at: `2026-07-16`
+- Release state: `release`
+- Registry checked at: `2026-07-17`
 <!-- release-status:end -->
 
 - Scope: documentation information architecture, semantic status gates,
