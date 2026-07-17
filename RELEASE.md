@@ -15,8 +15,8 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 - Scope: documentation information architecture, semantic status gates,
   repository verification contract decomposition, Android request parsing, and
   source/decode/bitmap-transform boundary extraction, plus iOS request and
-  source/inspection, image-decoder, resize/render, and JPEG metadata ownership
-  boundaries
+  source/inspection, image-decoder, resize/render, JPEG metadata, and output
+  encoder ownership boundaries
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -54,7 +54,7 @@ The iOS bridge now delegates option parsing and static validation to an
 immutable, Foundation-only request boundary. Source URI, output selection,
 quality, target size, metadata, and resize defaults/errors are covered by a
 table-driven native executable. Runtime WebP availability is still determined
-by the bridge and queried only for WebP output, preserving validation order.
+through ImageIO and queried only for WebP output, preserving validation order.
 Source URI acquisition now flows through a Foundation-only resolver with
 injected data/security-scope hooks, and ImageIO type/signature classification
 flows through an immutable input inspector with bridge-provided AVIF runtime
@@ -69,8 +69,13 @@ orchestration. JPEG metadata preserve eligibility, ImageIO source-property
 reading, and destination orientation/dimension normalization now flow through
 immutable request/result/error models with an injected source-property reader.
 The bridge and encoder no longer manipulate metadata dictionaries directly;
-encoding, target-size iteration, and output writes remain in the module.
-Metadata copy and encoded output behavior are unchanged.
+the JPEG metadata result supplies destination properties to the platform
+encoder. Format routing and target-size binary search now flow through an
+immutable encoder request/result/error boundary with injected JPEG, PNG, WebP,
+and synchronous executor hooks. The UIKit/ImageIO default owns codec calls,
+WebP destination discovery, and main-thread execution. Output path creation,
+file writes, and result projection remain in the module. Metadata copy and
+encoded output behavior are unchanged.
 
 ### Included
 
@@ -114,6 +119,10 @@ Metadata copy and encoded output behavior are unchanged.
   eligibility, exact unsupported errors, safe/strip quality-only properties,
   ImageIO reads, TIFF/EXIF orientation and dimension normalization, malformed
   or missing source properties, immutable models, and unchanged source data.
+- Typed iOS output encoder ownership with native coverage for JPEG/PNG/WebP
+  routing, metadata forwarding, synchronous executor ownership, quality-cap
+  short circuit, exact target-size probe order, unreachable targets, missing
+  candidates, immutable models, and stable encode failures.
 
 ### Not included
 
@@ -128,6 +137,7 @@ Metadata copy and encoded output behavior are unchanged.
 pnpm verify
 pnpm example:typecheck
 pnpm example:ios:decoder-test
+pnpm example:ios:encoder-test
 pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm example:ios:input-test

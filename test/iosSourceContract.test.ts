@@ -38,6 +38,7 @@ describe('iOS source contract', () => {
     expect(podspec).toContain('s.platforms = { :ios => "13.4" }');
     expect(podspec).toContain('s.source_files = "ios/**/*.{h,m,mm}"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageDecoder.h"');
+    expect(podspec).toContain('"ios/RCTImageCompressionImageEncoder.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageTransformer.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionJpegMetadata.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionInput.h"');
@@ -456,6 +457,95 @@ describe('iOS source contract', () => {
     expect(runner).toContain("if (mode === 'metadata-test')");
     expect(runner).toMatch(
       /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);/
+    );
+  });
+
+  it('isolates output encoding and target-size search behind native tables', () => {
+    const header = readProjectFile('ios/RCTImageCompressionImageEncoder.h');
+    const encoder = readProjectFile('ios/RCTImageCompressionImageEncoder.mm');
+    const uiKitEncoder = readProjectFile(
+      'ios/RCTImageCompressionUIKitImageEncoder.mm'
+    );
+    const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const nativeTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionImageEncoderTests.mm'
+    );
+    const runner = readProjectFile('scripts/ios-validation.mjs');
+    const encoderTestNames = [
+      ...nativeTests.matchAll(/static void (Test\w+)\(void\)/g),
+    ].map((match) => match[1]);
+    const methodStart = implementation.indexOf(
+      '- (void)compressImageWithDictionary:'
+    );
+    const methodEnd = implementation.indexOf(
+      '- (void)getImageCompressionCapabilities:',
+      methodStart
+    );
+    const methodLines = implementation
+      .slice(methodStart, methodEnd)
+      .split(/\r?\n/).length;
+
+    for (const identifier of [
+      '@interface RCTImageCompressionImageEncodeRequest : NSObject',
+      '@interface RCTImageCompressionImageEncodeError : NSObject',
+      '@interface RCTImageCompressionEncodedImage : NSObject',
+      '@interface RCTImageCompressionImageEncoder : NSObject',
+      'RCTImageCompressionJpegImageEncoder',
+      'RCTImageCompressionPngImageEncoder',
+      'RCTImageCompressionWebPImageEncoder',
+      'RCTImageCompressionImageEncodeExecutor',
+    ]) {
+      expect(header).toContain(identifier);
+    }
+    expect(encoder).not.toMatch(/#import <(?:UIKit|ImageIO|React)/);
+    expect(encoder).toContain('RCTImageCompressionKitMinQuality');
+    expect(encoder).toContain('while (low <= high)');
+    expect(uiKitEncoder).toContain('UIImagePNGRepresentation(image)');
+    expect(uiKitEncoder).toContain('CGImageDestinationCopyTypeIdentifiers');
+    expect(uiKitEncoder).toContain('CGImageDestinationCreateWithData');
+    expect(uiKitEncoder).toContain('CGImageDestinationAddImage');
+    expect(uiKitEncoder).toContain('CGImageDestinationFinalize');
+    expect(uiKitEncoder).toContain('org.webmproject.webp');
+    expect(uiKitEncoder).toContain('public.webp');
+    expect(uiKitEncoder).toContain(
+      'destinationPropertiesForQuality:quality'
+    );
+    expect(uiKitEncoder).toContain('[NSThread isMainThread]');
+    expect(uiKitEncoder).toContain(
+      'dispatch_sync(dispatch_get_main_queue(), operation)'
+    );
+    expect(`${encoder}\n${uiKitEncoder}`).not.toMatch(
+      /(?:RCTImageCompression(?:Input|ImageDecoder|ImageTransformer)|UIGraphicsImageRenderer|writeToFile:|NSCachesDirectory|RCTPromise)/
+    );
+    expect(implementation).toMatch(
+      /\[\[RCTImageCompressionImageEncoder\s+defaultEncoder\]\s*encodeRequest:encodeRequest\s*error:&encodeError\s*\]/
+    );
+    expect(implementation).toContain(
+      '[RCTImageCompressionImageEncoder defaultWebPOutputAvailable]'
+    );
+    expect(implementation).not.toMatch(
+      /(?:CGImageDestination|UIImagePNGRepresentation|RCTImageCompressionKitEncode(?:Jpeg|Png|WebP|QualityOutput|ToTargetSize)|while \(low <= high\))/
+    );
+    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(380);
+    expect(methodLines).toBeLessThanOrEqual(115);
+    expect(encoderTestNames).toEqual(
+      expect.arrayContaining([
+        'TestRoutesFormatMatrixInsideExecutor',
+        'TestReturnsQualityCapWhenWithinTarget',
+        'TestFindsHighestQualityWithinTarget',
+        'TestReturnsSmallestOutputWhenTargetCannotBeMet',
+        'TestRejectsMissingOutputsAndSkippedExecutor',
+        'TestCopiesImmutableRequestResultAndErrorModels',
+        'TestClearsExistingErrorOnSuccess',
+      ])
+    );
+    expect(encoderTestNames).toHaveLength(7);
+    expect(packageJson.scripts['example:ios:encoder-test']).toBe(
+      'node scripts/ios-validation.mjs encoder-test'
+    );
+    expect(runner).toContain("if (mode === 'encoder-test')");
+    expect(runner).toMatch(
+      /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);\s*runImageEncoderTests\(\);/
     );
   });
 

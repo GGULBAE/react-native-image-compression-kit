@@ -38,6 +38,8 @@ const REQUIRED_FILES = [
   'src/NativeImageCompressionKit.ts',
   'ios/RCTImageCompressionImageDecoder.h',
   'ios/RCTImageCompressionImageDecoder.mm',
+  'ios/RCTImageCompressionImageEncoder.h',
+  'ios/RCTImageCompressionImageEncoder.mm',
   'ios/RCTImageCompressionImageTransformer.h',
   'ios/RCTImageCompressionImageTransformer.mm',
   'ios/RCTImageCompressionInput.h',
@@ -50,6 +52,7 @@ const REQUIRED_FILES = [
   'ios/RCTImageCompressionRequest.mm',
   'ios/RCTImageCompressionSourceResolver.mm',
   'ios/RCTImageCompressionUIKitImageDecoder.mm',
+  'ios/RCTImageCompressionUIKitImageEncoder.mm',
   'ios/RCTImageCompressionUIKitImageTransformer.mm',
   'android/build.gradle',
   'android/src/main/java/com/imagecompressionkit/AndroidBitmapTransformer.kt',
@@ -132,6 +135,7 @@ const REQUIRED_FILES = [
   'test/packageContract.test.ts',
   'test/androidSourceContract.test.ts',
   'test/iosSourceContract.test.ts',
+  'test/ios-native/RCTImageCompressionImageEncoderTests.mm',
   'test/ios-native/RCTImageCompressionJpegMetadataTests.mm',
   'test/ios-native/RCTImageCompressionImageTransformerTests.mm',
   'test/verificationArchitecture.test.ts',
@@ -240,6 +244,7 @@ function runDoctor() {
     checkIOSImageDecoderAuthorities(),
     checkIOSImageTransformerAuthorities(),
     checkIOSJpegMetadataAuthorities(),
+    checkIOSImageEncoderAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -1371,6 +1376,145 @@ function checkIOSJpegMetadataAuthorities() {
     detail:
       violations.length === 0
         ? 'preserve policy, ImageIO reads, normalized destination properties, bridge limits, and seven native groups are aligned'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
+}
+
+function checkIOSImageEncoderAuthorities() {
+  const encoderHeader = readText('ios/RCTImageCompressionImageEncoder.h');
+  const encoderCore = readText('ios/RCTImageCompressionImageEncoder.mm');
+  const uiKitEncoder = readText(
+    'ios/RCTImageCompressionUIKitImageEncoder.mm'
+  );
+  const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionImageEncoderTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestRoutesFormatMatrixInsideExecutor',
+    'TestReturnsQualityCapWhenWithinTarget',
+    'TestFindsHighestQualityWithinTarget',
+    'TestReturnsSmallestOutputWhenTargetCannotBeMet',
+    'TestRejectsMissingOutputsAndSkippedExecutor',
+    'TestCopiesImmutableRequestResultAndErrorModels',
+    'TestClearsExistingErrorOnSuccess',
+  ];
+  const methodStart = moduleContents.indexOf(
+    '- (void)compressImageWithDictionary:'
+  );
+  const methodEnd = moduleContents.indexOf(
+    '- (void)getImageCompressionCapabilities:',
+    methodStart
+  );
+  const methodLineCount =
+    methodStart >= 0 && methodEnd > methodStart
+      ? moduleContents.slice(methodStart, methodEnd).split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
+  const boundaryIdentifiers = [
+    '@interface RCTImageCompressionImageEncodeRequest : NSObject',
+    '@interface RCTImageCompressionImageEncodeError : NSObject',
+    '@interface RCTImageCompressionEncodedImage : NSObject',
+    '@interface RCTImageCompressionImageEncoder : NSObject',
+    'RCTImageCompressionJpegImageEncoder',
+    'RCTImageCompressionPngImageEncoder',
+    'RCTImageCompressionWebPImageEncoder',
+    'RCTImageCompressionImageEncodeExecutor',
+  ];
+  const platformEncoderAPIs = [
+    'UIImagePNGRepresentation(image)',
+    'CGImageDestinationCopyTypeIdentifiers',
+    'CGImageDestinationCreateWithData',
+    'CGImageDestinationAddImage',
+    'CGImageDestinationFinalize',
+    'org.webmproject.webp',
+    'public.webp',
+    'destinationPropertiesForQuality:quality',
+    '[NSThread isMainThread]',
+    'dispatch_sync(dispatch_get_main_queue(), operation)',
+  ];
+  const forbiddenEncoderDependencies =
+    /(?:RCTImageCompression(?:Input|ImageDecoder|ImageTransformer)|UIGraphicsImageRenderer|writeToFile:|NSCachesDirectory|RCTPromise)/u;
+  const directEncoderAPIs =
+    /(?:CGImageDestination|UIImagePNGRepresentation|RCTImageCompressionKitEncode(?:Jpeg|Png|WebP|QualityOutput|ToTargetSize)|while \(low <= high\))/u;
+  const structureChecks = [
+    {
+      ok: boundaryIdentifiers.every((identifier) =>
+        encoderHeader.includes(identifier)
+      ),
+      name: 'immutable image encode request result and error models',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|ImageIO|React)/u.test(encoderCore) &&
+        encoderCore.includes('RCTImageCompressionKitMinQuality') &&
+        encoderCore.includes('while (low <= high)'),
+      name: 'Foundation-only injected format routing and target-size search',
+    },
+    {
+      ok: platformEncoderAPIs.every((api) => uiKitEncoder.includes(api)),
+      name: 'UIKit ImageIO codec WebP availability and main-thread defaults',
+    },
+    {
+      ok: !forbiddenEncoderDependencies.test(
+        `${encoderCore}\n${uiKitEncoder}`
+      ),
+      name: 'encoder excludes source decode transform and output-file ownership',
+    },
+    {
+      ok:
+        /\[\[RCTImageCompressionImageEncoder\s+defaultEncoder\]\s*encodeRequest:encodeRequest\s*error:&encodeError\s*\]/u.test(
+          moduleContents
+        ) &&
+        moduleContents.includes(
+          '[RCTImageCompressionImageEncoder defaultWebPOutputAvailable]'
+        ) &&
+        !directEncoderAPIs.test(moduleContents),
+      name: 'bridge encoder delegation without direct codec or search APIs',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 380,
+      name: 'iOS bridge source size boundary after encoder extraction',
+    },
+    {
+      ok: methodLineCount <= 115,
+      name: 'iOS compression orchestration size after encoder extraction',
+    },
+    {
+      ok:
+        nativeTestNames.length === 7 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)),
+      name: 'table-driven native image encoder test authority',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:encoder-test'] ===
+        'node scripts/ios-validation.mjs encoder-test',
+      name: 'iOS image encoder native-test command',
+    },
+    {
+      ok:
+        validationRunner.includes("if (mode === 'encoder-test')") &&
+        /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);\s*runImageEncoderTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'image encoder tests integrated into iOS smoke',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS image encoder boundary and native tests are present',
+    detail:
+      violations.length === 0
+        ? 'format routing, WebP availability, target-size search, codec defaults, bridge limits, and seven native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }

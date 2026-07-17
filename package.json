@@ -42,6 +42,7 @@
     "example:ios:pods": "node scripts/ios-validation.mjs pods",
     "example:ios:build": "node scripts/ios-validation.mjs build",
     "example:ios:decoder-test": "node scripts/ios-validation.mjs decoder-test",
+    "example:ios:encoder-test": "node scripts/ios-validation.mjs encoder-test",
     "example:ios:metadata-test": "node scripts/ios-validation.mjs metadata-test",
     "example:ios:transformer-test": "node scripts/ios-validation.mjs transformer-test",
     "example:ios:input-test": "node scripts/ios-validation.mjs input-test",

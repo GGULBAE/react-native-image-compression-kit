@@ -24,8 +24,8 @@ handle platform codec differences before compression.
 <!-- package-status:end -->
 
 The current candidate keeps the public API and image output behavior unchanged
-while isolating iOS request, input, decode, resize/render, and JPEG metadata
-ownership behind executable native contracts.
+while isolating iOS request, input, decode, resize/render, JPEG metadata, and
+output encoder ownership behind executable native contracts.
 
 ## Installation
 
@@ -218,6 +218,7 @@ Important limitations:
 pnpm verify
 pnpm example:typecheck
 pnpm example:ios:decoder-test
+pnpm example:ios:encoder-test
 pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm docs:check
