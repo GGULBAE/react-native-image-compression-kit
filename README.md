@@ -23,8 +23,9 @@ handle platform codec differences before compression.
 - Registry checked at: `2026-07-16`
 <!-- package-status:end -->
 
-The documentation and repository-verification refactor does not publish a
-package or change native API or image-processing behavior.
+The current candidate keeps the public API and image output behavior unchanged
+while isolating iOS request, input, decode, resize/render, and JPEG metadata
+ownership behind executable native contracts.
 
 ## Installation
 
@@ -217,6 +218,7 @@ Important limitations:
 pnpm verify
 pnpm example:typecheck
 pnpm example:ios:decoder-test
+pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm docs:check
 git diff --check

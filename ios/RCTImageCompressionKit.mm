@@ -3,6 +3,7 @@
 #import "RCTImageCompressionImageTransformer.h"
 #import "RCTImageCompressionInput.h"
 #import "RCTImageCompressionIOSCapabilities.h"
+#import "RCTImageCompressionJpegMetadata.h"
 #import "RCTImageCompressionRequest.h"
 
 #import <ImageIO/ImageIO.h>
@@ -74,61 +75,10 @@ static RCTImageCompressionTransformedImage *RCTImageCompressionKitTransformImage
   return [[RCTImageCompressionImageTransformer defaultTransformer] transformRequest:request error:nil];
 }
 
-static NSDictionary *RCTImageCompressionKitSourceImageProperties(NSData *sourceData)
-{
-  CGImageSourceRef imageSource = CGImageSourceCreateWithData((__bridge CFDataRef)sourceData, nil);
-  if (imageSource == nil) {
-    return nil;
-  }
-
-  NSDictionary *properties = nil;
-  if (CGImageSourceGetCount(imageSource) > 0) {
-    properties = CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil));
-  }
-
-  CFRelease(imageSource);
-  return properties;
-}
-
-static NSDictionary *RCTImageCompressionKitJpegDestinationProperties(
-  NSInteger quality,
-  NSDictionary *sourceProperties,
-  NSUInteger pixelWidth,
-  NSUInteger pixelHeight
-) {
-  NSMutableDictionary *properties = sourceProperties != nil
-    ? [sourceProperties mutableCopy]
-    : [NSMutableDictionary dictionary];
-
-  properties[(__bridge NSString *)kCGImageDestinationLossyCompressionQuality] = @((CGFloat)quality / 100.0);
-  if (sourceProperties != nil) {
-    properties[(__bridge NSString *)kCGImagePropertyPixelWidth] = @(pixelWidth);
-    properties[(__bridge NSString *)kCGImagePropertyPixelHeight] = @(pixelHeight);
-    properties[(__bridge NSString *)kCGImagePropertyOrientation] = @1;
-
-    NSDictionary *tiffProperties = properties[(__bridge NSString *)kCGImagePropertyTIFFDictionary];
-    if ([tiffProperties isKindOfClass:[NSDictionary class]]) {
-      NSMutableDictionary *mutableTiffProperties = [tiffProperties mutableCopy];
-      mutableTiffProperties[(__bridge NSString *)kCGImagePropertyTIFFOrientation] = @1;
-      properties[(__bridge NSString *)kCGImagePropertyTIFFDictionary] = mutableTiffProperties;
-    }
-
-    NSDictionary *exifProperties = properties[(__bridge NSString *)kCGImagePropertyExifDictionary];
-    if ([exifProperties isKindOfClass:[NSDictionary class]]) {
-      NSMutableDictionary *mutableExifProperties = [exifProperties mutableCopy];
-      mutableExifProperties[(__bridge NSString *)kCGImagePropertyExifPixelXDimension] = @(pixelWidth);
-      mutableExifProperties[(__bridge NSString *)kCGImagePropertyExifPixelYDimension] = @(pixelHeight);
-      properties[(__bridge NSString *)kCGImagePropertyExifDictionary] = mutableExifProperties;
-    }
-  }
-
-  return properties;
-}
-
 static NSData *RCTImageCompressionKitEncodeJpeg(
   UIImage *image,
   NSInteger quality,
-  NSDictionary *sourceProperties
+  RCTImageCompressionJpegMetadataResult *metadata
 ) {
   CGImageRef cgImage = image.CGImage;
   if (cgImage == nil) {
@@ -146,13 +96,12 @@ static NSData *RCTImageCompressionKitEncodeJpeg(
     return nil;
   }
 
-  NSDictionary *properties = RCTImageCompressionKitJpegDestinationProperties(
-    quality,
-    sourceProperties,
-    CGImageGetWidth(cgImage),
-    CGImageGetHeight(cgImage)
-  );
-  CGImageDestinationAddImage(destination, cgImage, (__bridge CFDictionaryRef)properties);
+  NSDictionary *destinationProperties = [metadata
+    destinationPropertiesForQuality:quality
+    pixelWidth:CGImageGetWidth(cgImage)
+    pixelHeight:CGImageGetHeight(cgImage)
+  ];
+  CGImageDestinationAddImage(destination, cgImage, (__bridge CFDictionaryRef)destinationProperties);
   BOOL finalized = CGImageDestinationFinalize(destination);
   CFRelease(destination);
 
@@ -216,13 +165,13 @@ static NSData *RCTImageCompressionKitEncodeQualityOutput(
   UIImage *image,
   NSString *outputFormat,
   NSInteger quality,
-  NSDictionary *jpegSourceProperties
+  RCTImageCompressionJpegMetadataResult *jpegMetadata
 ) {
   if ([outputFormat isEqualToString:RCTImageCompressionKitWebPFormat]) {
     return RCTImageCompressionKitEncodeWebP(image, quality);
   }
 
-  return RCTImageCompressionKitEncodeJpeg(image, quality, jpegSourceProperties);
+  return RCTImageCompressionKitEncodeJpeg(image, quality, jpegMetadata);
 }
 
 static NSData *RCTImageCompressionKitEncodeToTargetSize(
@@ -230,13 +179,13 @@ static NSData *RCTImageCompressionKitEncodeToTargetSize(
   NSString *outputFormat,
   NSInteger qualityCap,
   NSUInteger maxBytes,
-  NSDictionary *jpegSourceProperties
+  RCTImageCompressionJpegMetadataResult *jpegMetadata
 ) {
   NSData *outputData = RCTImageCompressionKitEncodeQualityOutput(
     image,
     outputFormat,
     qualityCap,
-    jpegSourceProperties
+    jpegMetadata
   );
   if (outputData == nil || outputData.length == 0 || outputData.length <= maxBytes) {
     return outputData;
@@ -254,7 +203,7 @@ static NSData *RCTImageCompressionKitEncodeToTargetSize(
       image,
       outputFormat,
       currentQuality,
-      jpegSourceProperties
+      jpegMetadata
     );
     if (candidateData == nil || candidateData.length == 0) {
       return candidateData;
@@ -431,20 +380,21 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
     RCTImageCompressionKitSmokeLog(@"source-url-ready");
     RCTImageCompressionKitSmokeLog(@"source-read");
     RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"image-type-%@", input.imageType]);
-    BOOL metadataPreserveRequested = [request.metadataPolicy isEqualToString:RCTImageCompressionKitPreserveMetadataPolicy];
-    BOOL canPreserveJpegMetadata = metadataPreserveRequested && request.outputIsJpeg && input.jpeg;
-    if (metadataPreserveRequested && !canPreserveJpegMetadata) {
-      RCTImageCompressionKitReject(
-        reject,
-        RCTImageCompressionKitNotImplementedCode,
-        @"iOS metadata preserve is supported only for JPEG input to JPEG output. Use safe or strip metadata for other iOS format conversions.",
-        nil
-      );
+    RCTImageCompressionJpegMetadataRequest *metadataRequest = [[RCTImageCompressionJpegMetadataRequest alloc]
+      initWithMetadataPolicy:request.metadataPolicy
+      jpegInput:input.jpeg
+      jpegOutput:request.outputIsJpeg
+      sourceData:input.source.data
+    ];
+    RCTImageCompressionJpegMetadataError *metadataError = nil;
+    RCTImageCompressionJpegMetadataResult *jpegMetadata = [[RCTImageCompressionJpegMetadata defaultMetadata]
+      prepareRequest:metadataRequest
+      error:&metadataError
+    ];
+    if (jpegMetadata == nil) {
+      RCTImageCompressionKitReject(reject, metadataError.code, metadataError.message, nil);
       return;
     }
-    NSDictionary *jpegSourceProperties = canPreserveJpegMetadata
-      ? RCTImageCompressionKitSourceImageProperties(input.source.data)
-      : nil;
     RCTImageCompressionKitSmokeLog(@"image-work-start");
     RCTImageCompressionImageDecodeError *decodeError = nil;
     RCTImageCompressionDecodedImage *decodedImage = [[RCTImageCompressionImageDecoder defaultDecoder]
@@ -469,12 +419,12 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
         outputData = RCTImageCompressionKitEncodePng(transformedImage.image);
       } else if (request.outputIsWebP) {
         outputData = request.hasMaxBytes
-          ? RCTImageCompressionKitEncodeToTargetSize(transformedImage.image, request.outputFormat, request.quality, request.maxBytes, nil)
+          ? RCTImageCompressionKitEncodeToTargetSize(transformedImage.image, request.outputFormat, request.quality, request.maxBytes, jpegMetadata)
           : RCTImageCompressionKitEncodeWebP(transformedImage.image, request.quality);
       } else {
         outputData = request.hasMaxBytes
-          ? RCTImageCompressionKitEncodeToTargetSize(transformedImage.image, request.outputFormat, request.quality, request.maxBytes, jpegSourceProperties)
-          : RCTImageCompressionKitEncodeJpeg(transformedImage.image, request.quality, jpegSourceProperties);
+          ? RCTImageCompressionKitEncodeToTargetSize(transformedImage.image, request.outputFormat, request.quality, request.maxBytes, jpegMetadata)
+          : RCTImageCompressionKitEncodeJpeg(transformedImage.image, request.quality, jpegMetadata);
       }
     });
     RCTImageCompressionKitSmokeLog(@"image-work-finished");

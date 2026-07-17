@@ -44,6 +44,8 @@ const REQUIRED_FILES = [
   'ios/RCTImageCompressionInputInspector.mm',
   'ios/RCTImageCompressionIOSCapabilities.h',
   'ios/RCTImageCompressionIOSCapabilities.mm',
+  'ios/RCTImageCompressionJpegMetadata.h',
+  'ios/RCTImageCompressionJpegMetadata.mm',
   'ios/RCTImageCompressionRequest.h',
   'ios/RCTImageCompressionRequest.mm',
   'ios/RCTImageCompressionSourceResolver.mm',
@@ -130,6 +132,7 @@ const REQUIRED_FILES = [
   'test/packageContract.test.ts',
   'test/androidSourceContract.test.ts',
   'test/iosSourceContract.test.ts',
+  'test/ios-native/RCTImageCompressionJpegMetadataTests.mm',
   'test/ios-native/RCTImageCompressionImageTransformerTests.mm',
   'test/verificationArchitecture.test.ts',
   'test/releaseEvidence.test.mjs',
@@ -236,6 +239,7 @@ function runDoctor() {
     checkIOSInputAuthorities(),
     checkIOSImageDecoderAuthorities(),
     checkIOSImageTransformerAuthorities(),
+    checkIOSJpegMetadataAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -1244,6 +1248,129 @@ function checkIOSImageTransformerAuthorities() {
     detail:
       violations.length === 0
         ? 'geometry, renderer background, main-thread execution, immutable models, bridge limits, and six native groups are aligned'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
+}
+
+function checkIOSJpegMetadataAuthorities() {
+  const metadataHeader = readText('ios/RCTImageCompressionJpegMetadata.h');
+  const metadataCore = readText('ios/RCTImageCompressionJpegMetadata.mm');
+  const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionJpegMetadataTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestRejectsUnsupportedPreserveCombinations',
+    'TestReadsSourcePropertiesOnlyForSupportedPreserve',
+    'TestBuildsQualityOnlyPropertiesForSafeAndStrip',
+    'TestNormalizesPreservedMetadataWithoutMutatingSource',
+    'TestHandlesMissingAndMalformedSourceProperties',
+    'TestUsesDefaultImageIOReaderAndImmutableModels',
+    'TestClearsExistingErrorOnSuccess',
+  ];
+  const methodStart = moduleContents.indexOf(
+    '- (void)compressImageWithDictionary:'
+  );
+  const methodEnd = moduleContents.indexOf(
+    '- (void)getImageCompressionCapabilities:',
+    methodStart
+  );
+  const methodLineCount =
+    methodStart >= 0 && methodEnd > methodStart
+      ? moduleContents.slice(methodStart, methodEnd).split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
+  const boundaryIdentifiers = [
+    '@interface RCTImageCompressionJpegMetadataRequest : NSObject',
+    '@interface RCTImageCompressionJpegMetadataError : NSObject',
+    '@interface RCTImageCompressionJpegMetadataResult : NSObject',
+    '@interface RCTImageCompressionJpegMetadata : NSObject',
+    'RCTImageCompressionJpegSourcePropertyReader',
+  ];
+  const requiredMetadataProperties = [
+    'kCGImageDestinationLossyCompressionQuality',
+    'kCGImagePropertyPixelWidth',
+    'kCGImagePropertyPixelHeight',
+    'kCGImagePropertyOrientation',
+    'kCGImagePropertyTIFFOrientation',
+    'kCGImagePropertyExifPixelXDimension',
+    'kCGImagePropertyExifPixelYDimension',
+  ];
+  const forbiddenMetadataDependencies =
+    /(?:CGImageDestinationCreateWithData|CGImageDestinationAddImage|CGImageDestinationFinalize|UIImage|maxBytes|writeToFile:|RCTPromise)/u;
+  const directMetadataAPIs =
+    /(?:RCTImageCompressionKitSourceImageProperties|RCTImageCompressionKitJpegDestinationProperties|CGImageSourceCreateWithData|CGImageSourceCopyPropertiesAtIndex|kCGImageProperty(?:PixelWidth|PixelHeight|Orientation|TIFFDictionary|ExifDictionary))/u;
+  const structureChecks = [
+    {
+      ok: boundaryIdentifiers.every((identifier) =>
+        metadataHeader.includes(identifier)
+      ),
+      name: 'immutable JPEG metadata request result and error models',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|React)/u.test(metadataCore) &&
+        metadataCore.includes('CGImageSourceCreateWithData') &&
+        metadataCore.includes('CGImageSourceCopyPropertiesAtIndex') &&
+        requiredMetadataProperties.every((property) =>
+          metadataCore.includes(property)
+        ),
+      name: 'ImageIO source reader and destination property normalization',
+    },
+    {
+      ok: !forbiddenMetadataDependencies.test(metadataCore),
+      name: 'metadata boundary excludes encoder render and output ownership',
+    },
+    {
+      ok:
+        /\[\[RCTImageCompressionJpegMetadata\s+defaultMetadata\]\s*prepareRequest:metadataRequest\s*error:&metadataError\s*\]/u.test(
+          moduleContents
+        ) && !directMetadataAPIs.test(moduleContents),
+      name: 'bridge metadata delegation without direct property APIs',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 500,
+      name: 'iOS bridge source size boundary after metadata extraction',
+    },
+    {
+      ok: methodLineCount <= 115,
+      name: 'iOS compression orchestration size after metadata extraction',
+    },
+    {
+      ok:
+        nativeTestNames.length === 7 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)),
+      name: 'table-driven native JPEG metadata test authority',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:metadata-test'] ===
+        'node scripts/ios-validation.mjs metadata-test',
+      name: 'iOS JPEG metadata native-test command',
+    },
+    {
+      ok:
+        validationRunner.includes("if (mode === 'metadata-test')") &&
+        /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'JPEG metadata tests integrated into iOS smoke',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS JPEG metadata boundary and native tests are present',
+    detail:
+      violations.length === 0
+        ? 'preserve policy, ImageIO reads, normalized destination properties, bridge limits, and seven native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }

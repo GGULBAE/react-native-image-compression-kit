@@ -128,6 +128,8 @@ describe('npm package contract', () => {
       'example:ios:smoke': 'node scripts/ios-validation.mjs smoke',
       'example:ios:decoder-test':
         'node scripts/ios-validation.mjs decoder-test',
+      'example:ios:metadata-test':
+        'node scripts/ios-validation.mjs metadata-test',
       'example:ios:transformer-test':
         'node scripts/ios-validation.mjs transformer-test',
       'example:ios:input-test': 'node scripts/ios-validation.mjs input-test',

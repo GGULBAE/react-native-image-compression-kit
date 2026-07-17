@@ -15,7 +15,8 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 - Scope: documentation information architecture, semantic status gates,
   repository verification contract decomposition, Android request parsing, and
   source/decode/bitmap-transform boundary extraction, plus iOS request and
-  source/inspection, image-decoder, and resize/render ownership boundaries
+  source/inspection, image-decoder, resize/render, and JPEG metadata ownership
+  boundaries
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -64,7 +65,12 @@ transform request, geometry, result, and error models; the UIKit default owns
 pixel-size lookup, opaque white versus alpha-preserving backgrounds,
 `UIGraphicsImageRenderer`, and main-thread rendering. Capability projection
 moved unchanged to a private helper so the bridge stays focused on
-orchestration. Metadata copy and encoding behavior are unchanged.
+orchestration. JPEG metadata preserve eligibility, ImageIO source-property
+reading, and destination orientation/dimension normalization now flow through
+immutable request/result/error models with an injected source-property reader.
+The bridge and encoder no longer manipulate metadata dictionaries directly;
+encoding, target-size iteration, and output writes remain in the module.
+Metadata copy and encoded output behavior are unchanged.
 
 ### Included
 
@@ -104,6 +110,10 @@ orchestration. Metadata copy and encoding behavior are unchanged.
   no-upscale, and center crop; injected renderer tests preserve opaque/alpha
   policy, synchronous executor ownership, immutable models, and stable failure
   classification.
+- Typed iOS JPEG metadata ownership with native coverage for preserve
+  eligibility, exact unsupported errors, safe/strip quality-only properties,
+  ImageIO reads, TIFF/EXIF orientation and dimension normalization, malformed
+  or missing source properties, immutable models, and unchanged source data.
 
 ### Not included
 
@@ -118,6 +128,7 @@ orchestration. Metadata copy and encoding behavior are unchanged.
 pnpm verify
 pnpm example:typecheck
 pnpm example:ios:decoder-test
+pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm example:ios:input-test
 pnpm example:ios:request-test

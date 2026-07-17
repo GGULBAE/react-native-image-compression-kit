@@ -73,6 +73,17 @@ const IMAGE_TRANSFORMER_TEST_SOURCE = path.join(
   'ios-native',
   'RCTImageCompressionImageTransformerTests.mm'
 );
+const JPEG_METADATA_CORE_SOURCE = path.join(
+  ROOT,
+  'ios',
+  'RCTImageCompressionJpegMetadata.mm'
+);
+const JPEG_METADATA_TEST_SOURCE = path.join(
+  ROOT,
+  'test',
+  'ios-native',
+  'RCTImageCompressionJpegMetadataTests.mm'
+);
 const IOS_VALIDATION_CONFIG = createIOSValidationConfig(process.env);
 const METRO_PORT = IOS_VALIDATION_CONFIG.metroPort;
 const METRO_READY_TIMEOUT_MS = IOS_VALIDATION_CONFIG.metroReadyTimeoutMs;
@@ -126,6 +137,11 @@ async function main() {
     return;
   }
 
+  if (mode === 'metadata-test') {
+    runJpegMetadataTests();
+    return;
+  }
+
   if (mode === 'build') {
     checkIOSBuildEnvironment();
     ensurePodsInstalled();
@@ -141,6 +157,7 @@ async function main() {
     runInputTests();
     runImageDecoderTests();
     runImageTransformerTests();
+    runJpegMetadataTests();
     ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
@@ -222,6 +239,18 @@ function runImageTransformerTests() {
     'RCTImageCompressionImageTransformerTests',
     [IMAGE_TRANSFORMER_CORE_SOURCE, IMAGE_TRANSFORMER_TEST_SOURCE],
     ['Foundation']
+  );
+}
+
+function runJpegMetadataTests() {
+  runNativeTests(
+    'RCTImageCompressionJpegMetadataTests',
+    [
+      REQUEST_PARSER_SOURCE,
+      JPEG_METADATA_CORE_SOURCE,
+      JPEG_METADATA_TEST_SOURCE,
+    ],
+    ['Foundation', 'ImageIO', 'CoreGraphics']
   );
 }
 
@@ -373,6 +402,7 @@ function ensurePodsInstalled() {
     'RCTImageCompressionInputInspector.mm',
     'RCTImageCompressionImageDecoder.mm',
     'RCTImageCompressionImageTransformer.mm',
+    'RCTImageCompressionJpegMetadata.mm',
     'RCTImageCompressionUIKitImageDecoder.mm',
     'RCTImageCompressionUIKitImageTransformer.mm',
     'RCTImageCompressionIOSCapabilities.mm',

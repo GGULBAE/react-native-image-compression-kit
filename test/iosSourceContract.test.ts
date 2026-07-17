@@ -39,6 +39,7 @@ describe('iOS source contract', () => {
     expect(podspec).toContain('s.source_files = "ios/**/*.{h,m,mm}"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageDecoder.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageTransformer.h"');
+    expect(podspec).toContain('"ios/RCTImageCompressionJpegMetadata.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionInput.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionIOSCapabilities.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionRequest.h"');
@@ -378,6 +379,83 @@ describe('iOS source contract', () => {
     expect(runner).toContain("if (mode === 'transformer-test')");
     expect(runner).toMatch(
       /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);/
+    );
+  });
+
+  it('isolates JPEG metadata policy and ImageIO properties behind native tables', () => {
+    const header = readProjectFile('ios/RCTImageCompressionJpegMetadata.h');
+    const metadata = readProjectFile('ios/RCTImageCompressionJpegMetadata.mm');
+    const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const nativeTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionJpegMetadataTests.mm'
+    );
+    const runner = readProjectFile('scripts/ios-validation.mjs');
+    const metadataTestNames = [
+      ...nativeTests.matchAll(/static void (Test\w+)\(void\)/g),
+    ].map((match) => match[1]);
+    const methodStart = implementation.indexOf(
+      '- (void)compressImageWithDictionary:'
+    );
+    const methodEnd = implementation.indexOf(
+      '- (void)getImageCompressionCapabilities:',
+      methodStart
+    );
+    const methodLines = implementation
+      .slice(methodStart, methodEnd)
+      .split(/\r?\n/).length;
+
+    for (const identifier of [
+      '@interface RCTImageCompressionJpegMetadataRequest : NSObject',
+      '@interface RCTImageCompressionJpegMetadataError : NSObject',
+      '@interface RCTImageCompressionJpegMetadataResult : NSObject',
+      '@interface RCTImageCompressionJpegMetadata : NSObject',
+      'RCTImageCompressionJpegSourcePropertyReader',
+    ]) {
+      expect(header).toContain(identifier);
+    }
+    expect(metadata).not.toMatch(/#import <(?:UIKit|React)/);
+    expect(metadata).toContain('CGImageSourceCreateWithData');
+    expect(metadata).toContain('CGImageSourceCopyPropertiesAtIndex');
+    for (const propertyKey of [
+      'kCGImageDestinationLossyCompressionQuality',
+      'kCGImagePropertyPixelWidth',
+      'kCGImagePropertyPixelHeight',
+      'kCGImagePropertyOrientation',
+      'kCGImagePropertyTIFFOrientation',
+      'kCGImagePropertyExifPixelXDimension',
+      'kCGImagePropertyExifPixelYDimension',
+    ]) {
+      expect(metadata).toContain(propertyKey);
+    }
+    expect(metadata).not.toMatch(
+      /(?:CGImageDestinationCreateWithData|CGImageDestinationAddImage|CGImageDestinationFinalize|UIImage|maxBytes|writeToFile:|RCTPromise)/
+    );
+    expect(implementation).toMatch(
+      /\[\[RCTImageCompressionJpegMetadata\s+defaultMetadata\]\s*prepareRequest:metadataRequest\s*error:&metadataError\s*\]/
+    );
+    expect(implementation).not.toMatch(
+      /(?:RCTImageCompressionKitSourceImageProperties|RCTImageCompressionKitJpegDestinationProperties|CGImageSourceCreateWithData|CGImageSourceCopyPropertiesAtIndex|kCGImageProperty(?:PixelWidth|PixelHeight|Orientation|TIFFDictionary|ExifDictionary))/
+    );
+    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(500);
+    expect(methodLines).toBeLessThanOrEqual(115);
+    expect(metadataTestNames).toEqual(
+      expect.arrayContaining([
+        'TestRejectsUnsupportedPreserveCombinations',
+        'TestReadsSourcePropertiesOnlyForSupportedPreserve',
+        'TestBuildsQualityOnlyPropertiesForSafeAndStrip',
+        'TestNormalizesPreservedMetadataWithoutMutatingSource',
+        'TestHandlesMissingAndMalformedSourceProperties',
+        'TestUsesDefaultImageIOReaderAndImmutableModels',
+        'TestClearsExistingErrorOnSuccess',
+      ])
+    );
+    expect(metadataTestNames).toHaveLength(7);
+    expect(packageJson.scripts['example:ios:metadata-test']).toBe(
+      'node scripts/ios-validation.mjs metadata-test'
+    );
+    expect(runner).toContain("if (mode === 'metadata-test')");
+    expect(runner).toMatch(
+      /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);/
     );
   });
 
