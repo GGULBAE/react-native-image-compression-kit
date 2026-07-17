@@ -99,7 +99,6 @@ export function createReleaseEvidenceReviewAcquisitionFixture(parent) {
   const bundle = JSON.parse(
     attestationFiles.get('attestation.jsonl').toString('utf8').trim()
   );
-  const date = policy.attestation.verifiedAt.slice(0, 10).replaceAll('-', '/');
   const fixture = {
     options: {
       repository: policy.repository,
@@ -124,9 +123,7 @@ export function createReleaseEvidenceReviewAcquisitionFixture(parent) {
       attestations: [
         {
           repository_id: REVIEW_ACQUISITION_REPOSITORY_ID,
-          bundle_url:
-            `https://fixtures.invalid/attestations/${REVIEW_ACQUISITION_REPOSITORY_ID}/` +
-            `${date}/${policy.attestation.id}.json.sn?signature=redacted`,
+          attestation_id: policy.attestation.id,
           bundle,
         },
       ],

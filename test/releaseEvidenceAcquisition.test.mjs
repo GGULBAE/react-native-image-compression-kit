@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   cpSync,
   mkdtempSync,
@@ -125,15 +126,12 @@ function fixtureResponses(version) {
       .toString('utf8')
       .trim()
   );
-  const verifiedDate = policy.attestation.verifiedAt.slice(0, 10).replaceAll('-', '/');
   const attestationsResponse = {
     attestations: [
       {
         repository_id: REPOSITORY_ID,
         initiator: 'user',
-        bundle_url:
-          `https://fixtures.invalid/attestations/${REPOSITORY_ID}/` +
-          `${verifiedDate}/${policy.attestation.id}.json.sn?signature=redacted`,
+        attestation_id: policy.attestation.id,
         bundle: downloadedBundle,
       },
     ],
@@ -353,11 +351,7 @@ describe('Registry Validation release evidence acquisition', () => {
   it.each([
     ['bundle', (fixture) => (fixture.attestationsResponse.attestations[0].bundle = {})],
     ['ID', (fixture) => {
-      fixture.attestationsResponse.attestations[0].bundle_url =
-        fixture.attestationsResponse.attestations[0].bundle_url.replace(
-          '35257248.json.sn',
-          '35257249.json.sn'
-        );
+      fixture.attestationsResponse.attestations[0].attestation_id += 1;
     }],
   ])('rejects an attestation %s disagreement', (_, mutate) => {
     const parent = mkdtempSync(
@@ -573,12 +567,28 @@ describe('Registry Validation release evidence acquisition', () => {
   });
 
   it('builds exact gh API requests and extracts only validated ZIP entries', () => {
+    const subjectBytes = Buffer.from('{"subject":"inline"}\n');
+    const subjectSha256 = createHash('sha256')
+      .update(subjectBytes)
+      .digest('hex');
     const calls = [];
     const runCommand = (command, args, { encoding }) => {
       calls.push({ command, args, encoding });
       if (command === 'unzip' && args[0] === '-Z1') return 'file.txt\n';
       if (command === 'unzip' && args[0] === '-p') return Buffer.from('file');
       if (args.at(-1)?.endsWith('/zip')) return Buffer.from('zip');
+      if (args[1]?.includes('/attestations/sha256:')) {
+        return JSON.stringify({
+          attestations: [
+            {
+              repository_id: 123,
+              bundle_url:
+                'https://example.test/attestations/123/2026/07/17/456.json.sn?signature=secret',
+              bundle: { mediaType: 'test' },
+            },
+          ],
+        });
+      }
       return JSON.stringify({ ok: true });
     };
     const github = createReleaseEvidenceGitHubClient({ runCommand });
@@ -591,9 +601,18 @@ describe('Registry Validation release evidence acquisition', () => {
     expect(
       github.getAttestations({
         repository: 'owner/repo',
-        subjectSha256: 'a'.repeat(64),
+        subjectSha256,
+        subjectBytes,
       })
-    ).toEqual({ ok: true });
+    ).toEqual({
+      attestations: [
+        {
+          repository_id: 123,
+          attestation_id: 456,
+          bundle: { mediaType: 'test' },
+        },
+      ],
+    });
     const archive = github.downloadArtifact({
       repository: 'owner/repo',
       artifactId: 456,
@@ -605,7 +624,7 @@ describe('Registry Validation release evidence acquisition', () => {
       .toEqual([
         ['api', 'repos/owner/repo/actions/runs/123'],
         ['api', 'repos/owner/repo/actions/runs/123/artifacts'],
-        ['api', `repos/owner/repo/attestations/sha256:${'a'.repeat(64)}`],
+        ['api', `repos/owner/repo/attestations/sha256:${subjectSha256}`],
         ['api', 'repos/owner/repo/actions/artifacts/456/zip'],
       ]);
     expect(calls.some((call) => call.args.includes('latest'))).toBe(false);
@@ -613,6 +632,9 @@ describe('Registry Validation release evidence acquisition', () => {
 
   it('hydrates a bundle URL response through an exact-subject gh download', () => {
     const subjectBytes = Buffer.from('{"subject":"exact"}\n');
+    const subjectSha256 = createHash('sha256')
+      .update(subjectBytes)
+      .digest('hex');
     const bundle = { mediaType: 'application/vnd.dev.sigstore.bundle.v0.3+json' };
     const calls = [];
     const runCommand = (command, args, options = {}) => {
@@ -623,7 +645,8 @@ describe('Registry Validation release evidence acquisition', () => {
             {
               repository_id: 123,
               bundle: null,
-              bundle_url: 'https://example.test/attestation',
+              bundle_url:
+                'https://example.test/attestations/123/2026/07/17/456.json.sn?signature=secret',
             },
           ],
         });
@@ -641,14 +664,14 @@ describe('Registry Validation release evidence acquisition', () => {
     const github = createReleaseEvidenceGitHubClient({ runCommand });
     const response = github.getAttestations({
       repository: 'owner/repo',
-      subjectSha256: 'a'.repeat(64),
+      subjectSha256,
       subjectBytes,
     });
     expect(response.attestations).toEqual([
       {
         repository_id: 123,
+        attestation_id: 456,
         bundle,
-        bundle_url: 'https://example.test/attestation',
       },
     ]);
     expect(calls[1].args).toEqual([

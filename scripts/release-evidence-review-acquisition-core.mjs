@@ -669,7 +669,11 @@ function normalizeAttestation(
     (entry) => entry?.repository_id === repositoryId && isDeepStrictEqual(entry.bundle, bundle)
   );
   assert(matches.length === 1, 'Expected exactly one GitHub attestation matching the downloaded bundle.');
-  const id = attestationIdFromBundleUrl(matches[0].bundle_url);
+  assert(
+    Number.isSafeInteger(matches[0].attestation_id) && matches[0].attestation_id > 0,
+    'GitHub attestation ID must be a positive integer.'
+  );
+  const id = matches[0].attestation_id;
   assertRecord(report, 'Review attestation report');
   assert(report.status === 'passed', 'Review attestation report status must be passed.');
   assert(report.subject === RELEASE_EVIDENCE_REVIEW_MANIFEST_FILE, `Attestation subject must be ${RELEASE_EVIDENCE_REVIEW_MANIFEST_FILE}.`);
@@ -779,21 +783,6 @@ function parseJson(bytes, label) {
   } catch (error) {
     throw new Error(`${label} is not valid JSON: ${error.message}`);
   }
-}
-
-function attestationIdFromBundleUrl(bundleUrl) {
-  let parsed;
-  try {
-    parsed = new URL(bundleUrl);
-  } catch {
-    throw new Error('GitHub attestation bundle URL is invalid.');
-  }
-  assert(parsed.protocol === 'https:', 'GitHub attestation bundle URL must use HTTPS.');
-  const match = parsed.pathname.match(/^\/attestations\/\d+\/\d{4}\/\d{2}\/\d{2}\/(\d+)\.json\.sn$/);
-  assert(match, 'GitHub attestation bundle URL does not contain an attestation ID.');
-  const id = Number(match[1]);
-  assert(Number.isSafeInteger(id) && id > 0, 'GitHub attestation ID must be a positive integer.');
-  return id;
 }
 
 function requireIsoTimestamp(value, label) {

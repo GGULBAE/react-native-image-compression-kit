@@ -26,11 +26,22 @@ version-qualified artifacts by immutable artifact ID, matches GitHub SHA-256,
 size, creation, expiration, repository, and run metadata, then validates the
 downloaded ZIP bytes. It never infers a run.
 
-GitHub's current attestation response may expose a signed `bundle_url` instead
-of an inline bundle. The network client resolves that transport through
-`gh attestation download` using the exact manifest bytes, then retains the
-existing byte-equality check against the downloaded attestation artifact. No
-token or signed URL is retained.
+GitHub's attestation response may expose either an inline bundle or a signed
+`bundle_url`. Registry and policy-review acquisition share one exact-subject
+transport boundary. Before accepting either form, it requires the requested
+SHA-256 to match the exact manifest bytes, exactly one API attestation, a
+positive repository ID, and an HTTPS bundle URL containing one attestation ID.
+The boundary returns only `repository_id`, `attestation_id`, and the parsed
+bundle; the raw URL, its query token, and unrelated API fields are discarded.
+
+For a bundle-less response, the boundary runs `gh attestation download` against
+the exact manifest in a private temporary directory. It requires exactly one
+regular JSONL file and exactly one non-empty JSON record, then applies the same
+JSON-object validation used for an inline bundle. Missing subjects, duplicate
+attestations, duplicate JSONL files or records, invalid JSON, and command
+failure all fail closed. The temporary subject and download directory are
+removed on success and every failure path. The acquisition core still requires
+the normalized bundle to equal the bundle retained in the attestation artifact.
 
 Run `29558617089` selected provenance artifact `8398387031` with digest
 `sha256:f76ff92c8e142a3bb2734dc60f7b332473201ee0d7350b41acf11e1c8e78bc99`
@@ -85,10 +96,10 @@ The attestation artifact is ID `8399292698`, 15,618 bytes, digest
 `sha256:e6e3b25ea56fe52be16f86e8d5cb7bfc65c8c673f383d03f190682e1546501ae`.
 They expire at `2026-10-15T06:49:03Z`.
 
-As with registry acquisition, a bundle-less GitHub attestation response is
-resolved with `gh attestation download` against the exact review manifest
-bytes. The downloaded bundle must then equal the retained attestation ZIP
-entry byte-for-byte; no token or signed URL is retained.
+Policy-review acquisition uses the same exact-subject transport boundary with
+`artifact-manifest.json` as its temporary subject name. The normalized bundle
+must equal the retained attestation ZIP entry byte-for-byte; transport URLs and
+credentials never enter canonical metadata, manifests, reports, or archives.
 
 The canonical directory contains `review-evidence-metadata.json`, exact
 `artifacts/review.zip` and `artifacts/attestation.zip`, and

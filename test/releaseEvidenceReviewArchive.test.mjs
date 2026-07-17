@@ -387,7 +387,9 @@ describe('repository-owned release evidence review archive', () => {
         verifierDependencies()
       );
       expect(report.status).toBe('failed');
-      expect(report.error).toMatch(/digest|files|exact ZIP|parse|decompress|CRC/i);
+      expect(report.error).toMatch(
+        /digest|files|exact ZIP|contain exactly|parse|decompress|CRC/i
+      );
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }
