@@ -1,19 +1,9 @@
 #import "RCTImageCompressionKit.h"
-#import "RCTImageCompressionImageDecoder.h"
-#import "RCTImageCompressionImageEncoder.h"
-#import "RCTImageCompressionImageTransformer.h"
-#import "RCTImageCompressionInput.h"
 #import "RCTImageCompressionIOSCapabilities.h"
-#import "RCTImageCompressionJpegMetadata.h"
-#import "RCTImageCompressionOutput.h"
+#import "RCTImageCompressionPipeline.h"
 #import "RCTImageCompressionRequest.h"
 
-#import <ImageIO/ImageIO.h>
-#import <UIKit/UIKit.h>
-
 #include <memory>
-
-static NSString *const RCTImageCompressionKitNativeOperationFailedCode = @"ERR_NATIVE_OPERATION_FAILED";
 
 static void RCTImageCompressionKitReject(
   RCTPromiseRejectBlock reject,
@@ -22,48 +12,6 @@ static void RCTImageCompressionKitReject(
   NSError *error
 ) {
   reject(code, message, error);
-}
-
-static BOOL RCTImageCompressionKitSmokeEnabled(void)
-{
-  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
-  NSString *enabled = processInfo.environment[@"RNICK_IOS_SMOKE"];
-  NSString *simctlEnabled = processInfo.environment[@"SIMCTL_CHILD_RNICK_IOS_SMOKE"];
-
-  return
-    [enabled isEqualToString:@"1"] ||
-    [simctlEnabled isEqualToString:@"1"] ||
-    [processInfo.arguments containsObject:@"--rnick-ios-smoke"];
-}
-
-static void RCTImageCompressionKitSmokeLog(NSString *stage)
-{
-  if (RCTImageCompressionKitSmokeEnabled()) {
-    NSLog(@"RNICK_IOS_SMOKE_NATIVE %@", stage);
-  }
-}
-
-static BOOL RCTImageCompressionKitCanDecodeAVIF(void)
-{
-  NSArray<NSString *> *supportedTypes = CFBridgingRelease(
-    CGImageSourceCopyTypeIdentifiers()
-  );
-  for (NSString *imageType in RCTImageCompressionAVIFTypeIdentifiers()) {
-    if ([supportedTypes containsObject:imageType]) {
-      return YES;
-    }
-  }
-  return NO;
-}
-
-static RCTImageCompressionTransformedImage *RCTImageCompressionKitTransformImage(UIImage *image, RCTImageCompressionKitResizeOptions resize, BOOL opaque)
-{
-  RCTImageCompressionImageTransformRequest *request = [[RCTImageCompressionImageTransformRequest alloc]
-    initWithImage:image
-    resizeOptions:resize
-    opaque:opaque
-  ];
-  return [[RCTImageCompressionImageTransformer defaultTransformer] transformRequest:request error:nil];
 }
 
 @implementation RCTImageCompressionKit
@@ -143,107 +91,19 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
                reject:(RCTPromiseRejectBlock)reject
 {
   @try {
-    RCTImageCompressionKitSmokeLog(@"compress-start");
-    RCTImageCompressionRequestError *requestError = nil;
-    RCTImageCompressionRequest *request = [RCTImageCompressionRequestParser
-      parseOptions:options
-      webPOutputAvailability:^BOOL{
-        return [RCTImageCompressionImageEncoder defaultWebPOutputAvailable];
-      }
-      error:&requestError
+    RCTImageCompressionPipeline *pipeline = [RCTImageCompressionPipeline defaultPipeline];
+    RCTImageCompressionPipelineRequest *request = [[RCTImageCompressionPipelineRequest alloc]
+      initWithOptions:options
     ];
-    if (request == nil) {
-      RCTImageCompressionKitReject(reject, requestError.code, requestError.message, nil);
+    RCTImageCompressionPipelineError *pipelineError = nil;
+    RCTImageCompressionPipelineResult *result = [pipeline executeRequest:request error:&pipelineError];
+    if (result == nil) {
+      RCTImageCompressionKitReject(reject, pipelineError.code, pipelineError.message,
+        pipelineError.underlyingError);
       return;
     }
-    RCTImageCompressionKitSmokeLog(@"options-validated");
-    RCTImageCompressionInputError *inputError = nil;
-    RCTImageCompressionInputInspection *input = [[RCTImageCompressionInputLoader defaultLoader]
-      loadSourceURI:request.sourceURI
-      avifInputAvailability:^BOOL{
-        return RCTImageCompressionKitCanDecodeAVIF();
-      }
-      error:&inputError
-    ];
-    if (input == nil) {
-      RCTImageCompressionKitReject(reject, inputError.code, inputError.message, inputError.underlyingError);
-      return;
-    }
-    RCTImageCompressionKitSmokeLog(@"source-url-ready");
-    RCTImageCompressionKitSmokeLog(@"source-read");
-    RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"image-type-%@", input.imageType]);
-    RCTImageCompressionJpegMetadataRequest *metadataRequest = [[RCTImageCompressionJpegMetadataRequest alloc]
-      initWithMetadataPolicy:request.metadataPolicy
-      jpegInput:input.jpeg
-      jpegOutput:request.outputIsJpeg
-      sourceData:input.source.data
-    ];
-    RCTImageCompressionJpegMetadataError *metadataError = nil;
-    RCTImageCompressionJpegMetadataResult *jpegMetadata = [[RCTImageCompressionJpegMetadata defaultMetadata]
-      prepareRequest:metadataRequest
-      error:&metadataError
-    ];
-    if (jpegMetadata == nil) {
-      RCTImageCompressionKitReject(reject, metadataError.code, metadataError.message, nil);
-      return;
-    }
-    RCTImageCompressionKitSmokeLog(@"image-work-start");
-    RCTImageCompressionImageDecodeError *decodeError = nil;
-    RCTImageCompressionDecodedImage *decodedImage = [[RCTImageCompressionImageDecoder defaultDecoder]
-      decodeInput:input
-      error:&decodeError
-    ];
-    if (decodedImage == nil) {
-      RCTImageCompressionKitSmokeLog(@"image-work-finished");
-      RCTImageCompressionKitReject(reject, decodeError.code, decodeError.message, decodeError.underlyingError);
-      return;
-    }
-    RCTImageCompressionTransformedImage *transformedImage = RCTImageCompressionKitTransformImage(decodedImage.image, request.resizeOptions, request.outputIsJpeg);
-    if (transformedImage == nil) {
-      RCTImageCompressionKitSmokeLog(@"image-work-finished");
-      NSString *message = [NSString stringWithFormat:@"iOS MVP could not encode %@ output.", request.outputFormat.uppercaseString];
-      RCTImageCompressionKitReject(reject, RCTImageCompressionKitImageEncodeFailedCode, message, nil);
-      return;
-    }
-    RCTImageCompressionImageEncodeRequest *encodeRequest = [[RCTImageCompressionImageEncodeRequest alloc]
-      initWithImage:transformedImage.image
-      outputFormat:request.outputFormat
-      quality:request.quality
-      hasMaxBytes:request.hasMaxBytes
-      maxBytes:request.maxBytes
-      jpegMetadata:jpegMetadata
-    ];
-    RCTImageCompressionImageEncodeError *encodeError = nil;
-    RCTImageCompressionEncodedImage *encodedImage = [[RCTImageCompressionImageEncoder defaultEncoder]
-      encodeRequest:encodeRequest
-      error:&encodeError
-    ];
-    RCTImageCompressionKitSmokeLog(@"image-work-finished");
-    if (encodedImage == nil) {
-      RCTImageCompressionKitReject(reject, encodeError.code, encodeError.message, nil);
-      return;
-    }
-    RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"%@-encoded", request.outputFormat]);
-    RCTImageCompressionOutputRequest *outputRequest = [[RCTImageCompressionOutputRequest alloc]
-      initWithData:encodedImage.data
-      outputFormat:request.outputFormat
-      outputSize:transformedImage.pixelSize
-      originalByteSize:input.source.data.length
-    ];
-    RCTImageCompressionOutputError *outputError = nil;
-    RCTImageCompressionOutputResult *outputResult = [[RCTImageCompressionOutput defaultOutput]
-      persistRequest:outputRequest
-      error:&outputError
-    ];
-    if (outputResult == nil) {
-      RCTImageCompressionKitReject(reject, outputError.code, outputError.message,
-        outputError.underlyingError);
-      return;
-    }
-    RCTImageCompressionKitSmokeLog(@"output-path-ready");
-    RCTImageCompressionKitSmokeLog(@"output-written");
-    resolve(outputResult.dictionaryRepresentation);
-    RCTImageCompressionKitSmokeLog(@"compress-resolved");
+    resolve(result.dictionaryRepresentation);
+    [pipeline notifyResolved];
   } @catch (NSException *exception) {
     RCTImageCompressionKitReject(reject, RCTImageCompressionKitNativeOperationFailedCode,
       @"iOS MVP compression failed.", nil);
@@ -254,8 +114,8 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
                                  reject:(RCTPromiseRejectBlock)reject
 {
   NSArray<NSDictionary *> *formats = RCTImageCompressionIOSFormatCapabilities(
-    [RCTImageCompressionImageEncoder defaultWebPOutputAvailable],
-    RCTImageCompressionKitCanDecodeAVIF()
+    [RCTImageCompressionPipeline defaultWebPOutputAvailable],
+    [RCTImageCompressionPipeline defaultAVIFInputAvailable]
   );
 
   resolve(@{

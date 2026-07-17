@@ -84,6 +84,17 @@ const OUTPUT_TEST_SOURCE = path.join(
   'ios-native',
   'RCTImageCompressionOutputTests.mm'
 );
+const PIPELINE_CORE_SOURCE = path.join(
+  ROOT,
+  'ios',
+  'RCTImageCompressionPipeline.mm'
+);
+const PIPELINE_TEST_SOURCE = path.join(
+  ROOT,
+  'test',
+  'ios-native',
+  'RCTImageCompressionPipelineTests.mm'
+);
 const IMAGE_TRANSFORMER_CORE_SOURCE = path.join(
   ROOT,
   'ios',
@@ -164,6 +175,11 @@ async function main() {
     return;
   }
 
+  if (mode === 'pipeline-test') {
+    runPipelineTests();
+    return;
+  }
+
   if (mode === 'transformer-test') {
     runImageTransformerTests();
     return;
@@ -192,6 +208,7 @@ async function main() {
     runJpegMetadataTests();
     runImageEncoderTests();
     runOutputTests();
+    runPipelineTests();
     ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
@@ -285,6 +302,24 @@ function runOutputTests() {
     'RCTImageCompressionOutputTests',
     [REQUEST_PARSER_SOURCE, OUTPUT_CORE_SOURCE, OUTPUT_TEST_SOURCE],
     ['Foundation']
+  );
+}
+
+function runPipelineTests() {
+  runNativeTests(
+    'RCTImageCompressionPipelineTests',
+    [
+      REQUEST_PARSER_SOURCE,
+      ...INPUT_SOURCES,
+      IMAGE_DECODER_CORE_SOURCE,
+      IMAGE_TRANSFORMER_CORE_SOURCE,
+      JPEG_METADATA_CORE_SOURCE,
+      IMAGE_ENCODER_CORE_SOURCE,
+      OUTPUT_CORE_SOURCE,
+      PIPELINE_CORE_SOURCE,
+      PIPELINE_TEST_SOURCE,
+    ],
+    ['Foundation', 'ImageIO', 'CoreGraphics']
   );
 }
 

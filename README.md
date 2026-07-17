@@ -25,7 +25,8 @@ handle platform codec differences before compression.
 
 The current candidate keeps the public API and image output behavior unchanged
 while isolating iOS request, input, decode, resize/render, JPEG metadata, and
-output encoder/persistence ownership behind executable native contracts.
+output encoder/persistence ownership plus pipeline orchestration behind
+executable native contracts.
 
 ## Installation
 
@@ -220,6 +221,7 @@ pnpm example:typecheck
 pnpm example:ios:decoder-test
 pnpm example:ios:encoder-test
 pnpm example:ios:output-test
+pnpm example:ios:pipeline-test
 pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm docs:check

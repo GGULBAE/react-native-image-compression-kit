@@ -42,6 +42,7 @@ describe('iOS source contract', () => {
     expect(podspec).toContain('"ios/RCTImageCompressionImageTransformer.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionJpegMetadata.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionOutput.h"');
+    expect(podspec).toContain('"ios/RCTImageCompressionPipeline.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionInput.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionIOSCapabilities.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionRequest.h"');
@@ -53,6 +54,10 @@ describe('iOS source contract', () => {
     const header = readProjectFile('ios/RCTImageCompressionRequest.h');
     const parser = readProjectFile('ios/RCTImageCompressionRequest.mm');
     const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const pipeline = readProjectFile('ios/RCTImageCompressionPipeline.mm');
+    const defaultPipeline = readProjectFile(
+      'ios/RCTImageCompressionDefaultPipeline.mm'
+    );
     const nativeTests = readProjectFile(
       'test/ios-native/RCTImageCompressionRequestTests.mm'
     );
@@ -85,9 +90,10 @@ describe('iOS source contract', () => {
     expect(parser).not.toMatch(/\b(?:RCTPromise|UIImage|CGImage)\b/);
     expect(parser).not.toContain('[NSData dataWithContentsOf');
     expect(parser).not.toContain('writeToFile:');
-    expect(implementation).toMatch(
+    expect(defaultPipeline).toMatch(
       /\[\s*RCTImageCompressionRequestParser\s+parseOptions:options/
     );
+    expect(pipeline).toContain('self.requestParser(');
     expect(implementation).not.toMatch(/\boptions\[@/);
     expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(1_100);
     expect(methodLines).toBeLessThanOrEqual(190);
@@ -123,6 +129,10 @@ describe('iOS source contract', () => {
       'ios/RCTImageCompressionInputInspector.mm'
     );
     const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const pipeline = readProjectFile('ios/RCTImageCompressionPipeline.mm');
+    const defaultPipeline = readProjectFile(
+      'ios/RCTImageCompressionDefaultPipeline.mm'
+    );
     const nativeTests = readProjectFile(
       'test/ios-native/RCTImageCompressionInputTests.mm'
     );
@@ -156,12 +166,12 @@ describe('iOS source contract', () => {
     expect(inspector).not.toMatch(
       /(?:startAccessingSecurityScopedResource|dataWithContentsOfURL|writeToFile:)/
     );
-    expect(implementation).toMatch(
+    expect(defaultPipeline).toMatch(
       /\[\s*RCTImageCompressionInputLoader\s+defaultLoader\]/
     );
-    expect(implementation).toMatch(
-      /loadSourceURI:request\.sourceURI[\s\S]*?avifInputAvailability:\^BOOL\{[\s\S]*?RCTImageCompressionKitCanDecodeAVIF\(\)/
-    );
+    expect(defaultPipeline).toContain('loadSourceURI:sourceURI');
+    expect(defaultPipeline).toContain('defaultAVIFInputAvailable');
+    expect(pipeline).toContain('self.inputLoader(');
     expect(implementation).not.toMatch(
       /(?:startAccessingSecurityScopedResource|dataWithContentsOfURL|RCTImageCompressionKit(?:SourceURL|ReadSourceData|ImageType|LooksLikeAVIFData|IsSupportedInputType|IsJpegType))/
     );
@@ -202,6 +212,10 @@ describe('iOS source contract', () => {
       'ios/RCTImageCompressionIOSCapabilities.mm'
     );
     const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const pipeline = readProjectFile('ios/RCTImageCompressionPipeline.mm');
+    const defaultPipeline = readProjectFile(
+      'ios/RCTImageCompressionDefaultPipeline.mm'
+    );
     const nativeTests = readProjectFile(
       'test/ios-native/RCTImageCompressionImageDecoderTests.mm'
     );
@@ -244,9 +258,11 @@ describe('iOS source contract', () => {
     expect(`${decoder}\n${uiKitDecoder}`).not.toMatch(
       /(?:RCTImageCompressionKit(?:Render|Encode|SourceImageProperties)|UIGraphicsImageRenderer|CGImageDestination|maxBytes|metadataPolicy|writeToFile:)/
     );
-    expect(implementation).toMatch(
-      /\[\s*\[RCTImageCompressionImageDecoder\s+defaultDecoder\]\s+decodeInput:input\s+error:&decodeError\s*\]/
+    expect(defaultPipeline).toContain(
+      '[RCTImageCompressionImageDecoder defaultDecoder]'
     );
+    expect(defaultPipeline).toContain('[decoder decodeInput:input error:error]');
+    expect(pipeline).toContain('self.imageDecoder(input, &decodeError)');
     expect(implementation).toContain(
       'RCTImageCompressionIOSFormatCapabilities('
     );
@@ -290,6 +306,10 @@ describe('iOS source contract', () => {
       'ios/RCTImageCompressionUIKitImageTransformer.mm'
     );
     const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const pipeline = readProjectFile('ios/RCTImageCompressionPipeline.mm');
+    const defaultPipeline = readProjectFile(
+      'ios/RCTImageCompressionDefaultPipeline.mm'
+    );
     const nativeTests = readProjectFile(
       'test/ios-native/RCTImageCompressionImageTransformerTests.mm'
     );
@@ -340,12 +360,16 @@ describe('iOS source contract', () => {
     expect(`${transformer}\n${uiKitTransformer}`).not.toMatch(
       /(?:RCTImageCompression(?:Input|Source)|metadataPolicy|CGImageDestination|maxBytes|writeToFile:|RCTImageCompressionKitEncode)/
     );
-    expect(implementation).toMatch(
-      /\[\s*\[RCTImageCompressionImageTransformer\s+defaultTransformer\]\s+transformRequest:request\s+error:nil\s*\]/
+    expect(defaultPipeline).toContain(
+      '[RCTImageCompressionImageTransformer defaultTransformer]'
     );
-    expect(implementation).toContain(
-      'RCTImageCompressionKitTransformImage(decodedImage.image, request.resizeOptions, request.outputIsJpeg)'
+    expect(defaultPipeline).toContain(
+      '[transformer transformRequest:request error:nil]'
     );
+    expect(pipeline).toContain(
+      'RCTImageCompressionImageTransformRequest *transformRequest'
+    );
+    expect(pipeline).toContain('self.imageTransformer(transformRequest)');
     expect(implementation).not.toMatch(
       /(?:UIGraphicsImageRenderer|drawInRect:|RCTImageCompressionKit(?:ContainSize|CoverSize|StretchSize|RenderImage))/
     );
@@ -388,6 +412,10 @@ describe('iOS source contract', () => {
     const header = readProjectFile('ios/RCTImageCompressionJpegMetadata.h');
     const metadata = readProjectFile('ios/RCTImageCompressionJpegMetadata.mm');
     const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const pipeline = readProjectFile('ios/RCTImageCompressionPipeline.mm');
+    const defaultPipeline = readProjectFile(
+      'ios/RCTImageCompressionDefaultPipeline.mm'
+    );
     const nativeTests = readProjectFile(
       'test/ios-native/RCTImageCompressionJpegMetadataTests.mm'
     );
@@ -432,9 +460,16 @@ describe('iOS source contract', () => {
     expect(metadata).not.toMatch(
       /(?:CGImageDestinationCreateWithData|CGImageDestinationAddImage|CGImageDestinationFinalize|UIImage|maxBytes|writeToFile:|RCTPromise)/
     );
-    expect(implementation).toMatch(
-      /\[\[RCTImageCompressionJpegMetadata\s+defaultMetadata\]\s*prepareRequest:metadataRequest\s*error:&metadataError\s*\]/
+    expect(defaultPipeline).toContain(
+      '[RCTImageCompressionJpegMetadata defaultMetadata]'
     );
+    expect(defaultPipeline).toContain(
+      '[metadata prepareRequest:request error:error]'
+    );
+    expect(pipeline).toContain(
+      'RCTImageCompressionJpegMetadataRequest *metadataRequest'
+    );
+    expect(pipeline).toContain('self.metadataPreparer(');
     expect(implementation).not.toMatch(
       /(?:RCTImageCompressionKitSourceImageProperties|RCTImageCompressionKitJpegDestinationProperties|CGImageSourceCreateWithData|CGImageSourceCopyPropertiesAtIndex|kCGImageProperty(?:PixelWidth|PixelHeight|Orientation|TIFFDictionary|ExifDictionary))/
     );
@@ -468,6 +503,10 @@ describe('iOS source contract', () => {
       'ios/RCTImageCompressionUIKitImageEncoder.mm'
     );
     const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const pipeline = readProjectFile('ios/RCTImageCompressionPipeline.mm');
+    const defaultPipeline = readProjectFile(
+      'ios/RCTImageCompressionDefaultPipeline.mm'
+    );
     const nativeTests = readProjectFile(
       'test/ios-native/RCTImageCompressionImageEncoderTests.mm'
     );
@@ -518,12 +557,17 @@ describe('iOS source contract', () => {
     expect(`${encoder}\n${uiKitEncoder}`).not.toMatch(
       /(?:RCTImageCompression(?:Input|ImageDecoder|ImageTransformer)|UIGraphicsImageRenderer|writeToFile:|NSCachesDirectory|RCTPromise)/
     );
-    expect(implementation).toMatch(
-      /\[\[RCTImageCompressionImageEncoder\s+defaultEncoder\]\s*encodeRequest:encodeRequest\s*error:&encodeError\s*\]/
+    expect(defaultPipeline).toContain(
+      '[RCTImageCompressionImageEncoder defaultEncoder]'
     );
-    expect(implementation).toContain(
+    expect(defaultPipeline).toContain('[encoder encodeRequest:request error:error]');
+    expect(defaultPipeline).toContain(
       '[RCTImageCompressionImageEncoder defaultWebPOutputAvailable]'
     );
+    expect(pipeline).toContain(
+      'RCTImageCompressionImageEncodeRequest *encodeRequest'
+    );
+    expect(pipeline).toContain('self.imageEncoder(encodeRequest, &encodeError)');
     expect(implementation).not.toMatch(
       /(?:CGImageDestination|UIImagePNGRepresentation|RCTImageCompressionKitEncode(?:Jpeg|Png|WebP|QualityOutput|ToTargetSize)|while \(low <= high\))/
     );
@@ -554,6 +598,10 @@ describe('iOS source contract', () => {
     const header = readProjectFile('ios/RCTImageCompressionOutput.h');
     const output = readProjectFile('ios/RCTImageCompressionOutput.mm');
     const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const pipeline = readProjectFile('ios/RCTImageCompressionPipeline.mm');
+    const defaultPipeline = readProjectFile(
+      'ios/RCTImageCompressionDefaultPipeline.mm'
+    );
     const nativeTests = readProjectFile(
       'test/ios-native/RCTImageCompressionOutputTests.mm'
     );
@@ -595,12 +643,16 @@ describe('iOS source contract', () => {
     expect(output).not.toMatch(
       /(?:UIImage|CGImageDestination|UIGraphicsImageRenderer|metadataPolicy|maxBytes|RCTPromise)/
     );
-    expect(implementation).toMatch(
-      /\[\[RCTImageCompressionOutput\s+defaultOutput\]\s*persistRequest:outputRequest\s*error:&outputError\s*\]/
+    expect(defaultPipeline).toContain(
+      '[RCTImageCompressionOutput defaultOutput]'
     );
-    expect(implementation).toContain(
-      'resolve(outputResult.dictionaryRepresentation)'
+    expect(defaultPipeline).toContain(
+      '[output persistRequest:request error:error]'
     );
+    expect(pipeline).toContain(
+      'RCTImageCompressionOutputRequest *outputRequest'
+    );
+    expect(pipeline).toContain('self.outputWriter(outputRequest, &outputError)');
     expect(implementation).not.toMatch(
       /(?:NSCachesDirectory|createDirectoryAtPath|writeToFile:|RCTImageCompressionKitOutputPath|RCTImageCompressionKitResult|compressionRatio|originalByteSize\s*=)/
     );
@@ -624,6 +676,115 @@ describe('iOS source contract', () => {
     expect(runner).toContain("if (mode === 'output-test')");
     expect(runner).toMatch(
       /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);\s*runImageEncoderTests\(\);\s*runOutputTests\(\);/
+    );
+  });
+
+  it('isolates compression orchestration behind an injected pipeline', () => {
+    const header = readProjectFile('ios/RCTImageCompressionPipeline.h');
+    const pipeline = readProjectFile('ios/RCTImageCompressionPipeline.mm');
+    const defaultPipeline = readProjectFile(
+      'ios/RCTImageCompressionDefaultPipeline.mm'
+    );
+    const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const nativeTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionPipelineTests.mm'
+    );
+    const runner = readProjectFile('scripts/ios-validation.mjs');
+    const pipelineTestNames = [
+      ...nativeTests.matchAll(/static void (Test\w+)\(void\)/g),
+    ].map((match) => match[1]);
+    const methodStart = implementation.indexOf(
+      '- (void)compressImageWithDictionary:'
+    );
+    const methodEnd = implementation.indexOf(
+      '- (void)getImageCompressionCapabilities:',
+      methodStart
+    );
+    const methodLines = implementation
+      .slice(methodStart, methodEnd)
+      .split(/\r?\n/).length;
+
+    for (const identifier of [
+      '@interface RCTImageCompressionPipelineRequest : NSObject',
+      '@interface RCTImageCompressionPipelineResult : NSObject',
+      '@interface RCTImageCompressionPipelineError : NSObject',
+      '@interface RCTImageCompressionPipeline : NSObject',
+      'RCTImageCompressionPipelineRuntimeAvailability',
+      'RCTImageCompressionPipelineRequestParser',
+      'RCTImageCompressionPipelineInputLoader',
+      'RCTImageCompressionPipelineMetadataPreparer',
+      'RCTImageCompressionPipelineImageDecoder',
+      'RCTImageCompressionPipelineImageTransformer',
+      'RCTImageCompressionPipelineImageEncoder',
+      'RCTImageCompressionPipelineOutputWriter',
+      'RCTImageCompressionPipelineStageObserver',
+    ]) {
+      expect(header).toContain(identifier);
+    }
+    expect(pipeline).not.toMatch(/#import <(?:UIKit|ImageIO|React)/);
+    for (const stageCall of [
+      'self.requestParser(',
+      'self.inputLoader(',
+      'self.metadataPreparer(',
+      'self.imageDecoder(',
+      'self.imageTransformer(',
+      'self.imageEncoder(',
+      'self.outputWriter(',
+    ]) {
+      expect(pipeline).toContain(stageCall);
+    }
+    expect(pipeline).toContain('self.webPOutputAvailability');
+    expect(pipeline).toContain('self.avifInputAvailability');
+    expect(pipeline).toContain('self.stageObserver(');
+    expect(pipeline).toContain('RCTImageCompressionKitNativeOperationFailedCode');
+    expect(defaultPipeline).toContain('CGImageSourceCopyTypeIdentifiers');
+    expect(defaultPipeline).toContain('RNICK_IOS_SMOKE_NATIVE %@');
+    for (const defaultOwner of [
+      'RCTImageCompressionInputLoader defaultLoader',
+      'RCTImageCompressionJpegMetadata defaultMetadata',
+      'RCTImageCompressionImageDecoder defaultDecoder',
+      'RCTImageCompressionImageTransformer defaultTransformer',
+      'RCTImageCompressionImageEncoder defaultEncoder',
+      'RCTImageCompressionOutput defaultOutput',
+    ]) {
+      expect(defaultPipeline).toContain(defaultOwner);
+    }
+    expect(implementation).toContain(
+      '[RCTImageCompressionPipeline defaultPipeline]'
+    );
+    expect(implementation).toContain(
+      '[pipeline executeRequest:request error:&pipelineError]'
+    );
+    expect(implementation).toMatch(
+      /resolve\(result\.dictionaryRepresentation\);\s*\[pipeline notifyResolved\];/
+    );
+    expect(implementation).not.toMatch(
+      /#import "RCTImageCompression(?:Input|ImageDecoder|ImageTransformer|JpegMetadata|ImageEncoder|Output)\.h"/
+    );
+    expect(implementation).not.toMatch(
+      /(?:defaultLoader|defaultDecoder|defaultTransformer|defaultMetadata|defaultEncoder|defaultOutput|loadSourceURI:|decodeInput:|transformRequest:|encodeRequest:|persistRequest:|CGImageSource|RNICK_IOS_SMOKE_NATIVE)/
+    );
+    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(200);
+    expect(methodLines).toBeLessThanOrEqual(35);
+    expect(pipeline.split(/\r?\n/).length).toBeLessThanOrEqual(320);
+    expect(defaultPipeline.split(/\r?\n/).length).toBeLessThanOrEqual(160);
+    expect(pipelineTestNames).toEqual(
+      expect.arrayContaining([
+        'TestRunsSuccessStagesAndForwardsRequests',
+        'TestForwardsFailureMatrixWithoutRunningDownstreamStages',
+        'TestUsesInjectedRuntimeCapabilityProviders',
+        'TestConvertsExceptionStageMatrixToNativeFailure',
+        'TestCopiesImmutableRequestResultAndErrorModels',
+        'TestClearsExistingErrorAndNotifiesResolution',
+      ])
+    );
+    expect(pipelineTestNames).toHaveLength(6);
+    expect(packageJson.scripts['example:ios:pipeline-test']).toBe(
+      'node scripts/ios-validation.mjs pipeline-test'
+    );
+    expect(runner).toContain("if (mode === 'pipeline-test')");
+    expect(runner).toMatch(
+      /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);\s*runImageEncoderTests\(\);\s*runOutputTests\(\);\s*runPipelineTests\(\);/
     );
   });
 

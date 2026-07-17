@@ -16,7 +16,7 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
   repository verification contract decomposition, Android request parsing, and
   source/decode/bitmap-transform boundary extraction, plus iOS request and
   source/inspection, image-decoder, resize/render, JPEG metadata, and output
-  encoder/persistence ownership boundaries
+  encoder/persistence and pipeline orchestration ownership boundaries
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -76,9 +76,13 @@ and synchronous executor hooks. The UIKit/ImageIO default owns codec calls,
 WebP destination discovery, and main-thread execution. Cache directory and
 extension selection, timestamp/UUID path generation, atomic file writes, and
 `CompressionResult` projection now flow through a Foundation-only output owner
-with injected filesystem, clock, and identifier hooks. The bridge only submits
-immutable encoded bytes and resolves the projected result. Output URI, stable
-errors, metrics, metadata copy, and encoded output behavior are unchanged.
+with injected filesystem, clock, and identifier hooks. A Foundation-only
+compression pipeline now owns the complete request, input, metadata, decode,
+transform, encode, and output sequence through injected stage adapters. The
+ImageIO-backed default supplies WebP/AVIF runtime providers and the native smoke
+stage observer. The bridge is limited to Codegen argument conversion, promise
+mapping, and capability projection. Output URI, stable errors, stage order,
+metrics, metadata copy, and encoded output behavior are unchanged.
 
 ### Included
 
@@ -130,6 +134,10 @@ errors, metrics, metadata copy, and encoded output behavior are unchanged.
   temporary-directory paths, JPEG/PNG/WebP extensions, clock/UUID naming,
   atomic writer delegation, immutable models, stable directory/write errors,
   output URI, byte metrics, and zero-source compression ratio.
+- Typed iOS pipeline orchestration with native coverage for exact success
+  stage order, every stage failure and downstream short circuit, underlying
+  error forwarding, runtime WebP/AVIF providers, native exception mapping,
+  immutable models, and post-promise resolution notification.
 
 ### Not included
 
@@ -146,6 +154,7 @@ pnpm example:typecheck
 pnpm example:ios:decoder-test
 pnpm example:ios:encoder-test
 pnpm example:ios:output-test
+pnpm example:ios:pipeline-test
 pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm example:ios:input-test

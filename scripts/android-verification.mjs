@@ -50,6 +50,9 @@ const REQUIRED_FILES = [
   'ios/RCTImageCompressionJpegMetadata.mm',
   'ios/RCTImageCompressionOutput.h',
   'ios/RCTImageCompressionOutput.mm',
+  'ios/RCTImageCompressionPipeline.h',
+  'ios/RCTImageCompressionPipeline.mm',
+  'ios/RCTImageCompressionDefaultPipeline.mm',
   'ios/RCTImageCompressionRequest.h',
   'ios/RCTImageCompressionRequest.mm',
   'ios/RCTImageCompressionSourceResolver.mm',
@@ -139,6 +142,7 @@ const REQUIRED_FILES = [
   'test/iosSourceContract.test.ts',
   'test/ios-native/RCTImageCompressionImageEncoderTests.mm',
   'test/ios-native/RCTImageCompressionOutputTests.mm',
+  'test/ios-native/RCTImageCompressionPipelineTests.mm',
   'test/ios-native/RCTImageCompressionJpegMetadataTests.mm',
   'test/ios-native/RCTImageCompressionImageTransformerTests.mm',
   'test/verificationArchitecture.test.ts',
@@ -249,6 +253,7 @@ function runDoctor() {
     checkIOSJpegMetadataAuthorities(),
     checkIOSImageEncoderAuthorities(),
     checkIOSOutputAuthorities(),
+    checkIOSPipelineAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -719,6 +724,10 @@ function checkIOSRuntimeAuthorities() {
   const requestHeader = readText('ios/RCTImageCompressionRequest.h');
   const requestParser = readText('ios/RCTImageCompressionRequest.mm');
   const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const pipelineCore = readText('ios/RCTImageCompressionPipeline.mm');
+  const defaultPipeline = readText(
+    'ios/RCTImageCompressionDefaultPipeline.mm'
+  );
   const nativeTests = readText(
     'test/ios-native/RCTImageCompressionRequestTests.mm'
   );
@@ -770,10 +779,11 @@ function checkIOSRuntimeAuthorities() {
       name: 'readonly request fields',
     },
     {
-      ok: /\[\s*RCTImageCompressionRequestParser\s+parseOptions:options/u.test(
-        moduleContents
-      ),
-      name: 'bridge parser delegation',
+      ok:
+        /\[\s*RCTImageCompressionRequestParser\s+parseOptions:options/u.test(
+          defaultPipeline
+        ) && pipelineCore.includes('self.requestParser('),
+      name: 'default pipeline parser composition',
     },
     {
       ok: !/\boptions\[@/u.test(moduleContents),
@@ -840,6 +850,10 @@ function checkIOSInputAuthorities() {
     'ios/RCTImageCompressionInputInspector.mm'
   );
   const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const pipelineCore = readText('ios/RCTImageCompressionPipeline.mm');
+  const defaultPipeline = readText(
+    'ios/RCTImageCompressionDefaultPipeline.mm'
+  );
   const nativeTests = readText(
     'test/ios-native/RCTImageCompressionInputTests.mm'
   );
@@ -891,12 +905,12 @@ function checkIOSInputAuthorities() {
     {
       ok:
         /\[\s*RCTImageCompressionInputLoader\s+defaultLoader\]/u.test(
-          moduleContents
+          defaultPipeline
         ) &&
-        /loadSourceURI:request\.sourceURI[\s\S]*?avifInputAvailability:\^BOOL\{[\s\S]*?RCTImageCompressionKitCanDecodeAVIF\(\)/u.test(
-          moduleContents
-        ),
-      name: 'bridge input loader delegation',
+        defaultPipeline.includes('loadSourceURI:sourceURI') &&
+        defaultPipeline.includes('defaultAVIFInputAvailable') &&
+        pipelineCore.includes('self.inputLoader('),
+      name: 'default pipeline input loader composition',
     },
     {
       ok: !directInputAPIs.test(moduleContents),
@@ -969,6 +983,10 @@ function checkIOSImageDecoderAuthorities() {
     'ios/RCTImageCompressionIOSCapabilities.mm'
   );
   const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const pipelineCore = readText('ios/RCTImageCompressionPipeline.mm');
+  const defaultPipeline = readText(
+    'ios/RCTImageCompressionDefaultPipeline.mm'
+  );
   const nativeTests = readText(
     'test/ios-native/RCTImageCompressionImageDecoderTests.mm'
   );
@@ -1042,10 +1060,13 @@ function checkIOSImageDecoderAuthorities() {
     },
     {
       ok:
-        /\[\s*\[RCTImageCompressionImageDecoder\s+defaultDecoder\]\s+decodeInput:input\s+error:&decodeError\s*\]/u.test(
-          moduleContents
-        ) && !directDecodeAPIs.test(moduleContents),
-      name: 'bridge decoder delegation without direct decode APIs',
+        defaultPipeline.includes(
+          '[RCTImageCompressionImageDecoder defaultDecoder]'
+        ) &&
+        defaultPipeline.includes('[decoder decodeInput:input error:error]') &&
+        pipelineCore.includes('self.imageDecoder(input, &decodeError)') &&
+        !directDecodeAPIs.test(moduleContents),
+      name: 'default pipeline decoder composition without bridge decode APIs',
     },
     {
       ok:
@@ -1112,6 +1133,10 @@ function checkIOSImageTransformerAuthorities() {
     'ios/RCTImageCompressionUIKitImageTransformer.mm'
   );
   const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const pipelineCore = readText('ios/RCTImageCompressionPipeline.mm');
+  const defaultPipeline = readText(
+    'ios/RCTImageCompressionDefaultPipeline.mm'
+  );
   const nativeTests = readText(
     'test/ios-native/RCTImageCompressionImageTransformerTests.mm'
   );
@@ -1206,14 +1231,15 @@ function checkIOSImageTransformerAuthorities() {
     },
     {
       ok:
-        /\[\s*\[RCTImageCompressionImageTransformer\s+defaultTransformer\]\s+transformRequest:request\s+error:nil\s*\]/u.test(
-          moduleContents
+        defaultPipeline.includes(
+          '[RCTImageCompressionImageTransformer defaultTransformer]'
         ) &&
-        moduleContents.includes(
-          'RCTImageCompressionKitTransformImage(decodedImage.image, request.resizeOptions, request.outputIsJpeg)'
+        defaultPipeline.includes(
+          '[transformer transformRequest:request error:nil]'
         ) &&
+        pipelineCore.includes('self.imageTransformer(transformRequest)') &&
         !directRenderAPIs.test(moduleContents),
-      name: 'bridge transformer delegation without direct render APIs',
+      name: 'default pipeline transformer composition without bridge render APIs',
     },
     {
       ok: moduleContents.split(/\r?\n/u).length <= 540,
@@ -1265,6 +1291,10 @@ function checkIOSJpegMetadataAuthorities() {
   const metadataHeader = readText('ios/RCTImageCompressionJpegMetadata.h');
   const metadataCore = readText('ios/RCTImageCompressionJpegMetadata.mm');
   const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const pipelineCore = readText('ios/RCTImageCompressionPipeline.mm');
+  const defaultPipeline = readText(
+    'ios/RCTImageCompressionDefaultPipeline.mm'
+  );
   const nativeTests = readText(
     'test/ios-native/RCTImageCompressionJpegMetadataTests.mm'
   );
@@ -1336,10 +1366,13 @@ function checkIOSJpegMetadataAuthorities() {
     },
     {
       ok:
-        /\[\[RCTImageCompressionJpegMetadata\s+defaultMetadata\]\s*prepareRequest:metadataRequest\s*error:&metadataError\s*\]/u.test(
-          moduleContents
-        ) && !directMetadataAPIs.test(moduleContents),
-      name: 'bridge metadata delegation without direct property APIs',
+        defaultPipeline.includes(
+          '[RCTImageCompressionJpegMetadata defaultMetadata]'
+        ) &&
+        defaultPipeline.includes('[metadata prepareRequest:request error:error]') &&
+        pipelineCore.includes('self.metadataPreparer(') &&
+        !directMetadataAPIs.test(moduleContents),
+      name: 'default pipeline metadata composition without bridge property APIs',
     },
     {
       ok: moduleContents.split(/\r?\n/u).length <= 500,
@@ -1391,6 +1424,10 @@ function checkIOSImageEncoderAuthorities() {
     'ios/RCTImageCompressionUIKitImageEncoder.mm'
   );
   const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const pipelineCore = readText('ios/RCTImageCompressionPipeline.mm');
+  const defaultPipeline = readText(
+    'ios/RCTImageCompressionDefaultPipeline.mm'
+  );
   const nativeTests = readText(
     'test/ios-native/RCTImageCompressionImageEncoderTests.mm'
   );
@@ -1471,14 +1508,16 @@ function checkIOSImageEncoderAuthorities() {
     },
     {
       ok:
-        /\[\[RCTImageCompressionImageEncoder\s+defaultEncoder\]\s*encodeRequest:encodeRequest\s*error:&encodeError\s*\]/u.test(
-          moduleContents
+        defaultPipeline.includes(
+          '[RCTImageCompressionImageEncoder defaultEncoder]'
         ) &&
-        moduleContents.includes(
+        defaultPipeline.includes('[encoder encodeRequest:request error:error]') &&
+        defaultPipeline.includes(
           '[RCTImageCompressionImageEncoder defaultWebPOutputAvailable]'
         ) &&
+        pipelineCore.includes('self.imageEncoder(encodeRequest, &encodeError)') &&
         !directEncoderAPIs.test(moduleContents),
-      name: 'bridge encoder delegation without direct codec or search APIs',
+      name: 'default pipeline encoder composition without bridge codec or search APIs',
     },
     {
       ok: moduleContents.split(/\r?\n/u).length <= 380,
@@ -1527,6 +1566,10 @@ function checkIOSOutputAuthorities() {
   const outputHeader = readText('ios/RCTImageCompressionOutput.h');
   const outputCore = readText('ios/RCTImageCompressionOutput.mm');
   const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const pipelineCore = readText('ios/RCTImageCompressionPipeline.mm');
+  const defaultPipeline = readText(
+    'ios/RCTImageCompressionDefaultPipeline.mm'
+  );
   const podspec = readText('react-native-image-compression-kit.podspec');
   const nativeTests = readText(
     'test/ios-native/RCTImageCompressionOutputTests.mm'
@@ -1599,14 +1642,11 @@ function checkIOSOutputAuthorities() {
     },
     {
       ok:
-        /\[\[RCTImageCompressionOutput\s+defaultOutput\]\s*persistRequest:outputRequest\s*error:&outputError\s*\]/u.test(
-          moduleContents
-        ) &&
-        moduleContents.includes(
-          'resolve(outputResult.dictionaryRepresentation)'
-        ) &&
+        defaultPipeline.includes('[RCTImageCompressionOutput defaultOutput]') &&
+        defaultPipeline.includes('[output persistRequest:request error:error]') &&
+        pipelineCore.includes('self.outputWriter(outputRequest, &outputError)') &&
         !directOutputAPIs.test(moduleContents),
-      name: 'bridge output delegation without path write or result calculation APIs',
+      name: 'default pipeline output composition without bridge path write or result APIs',
     },
     {
       ok: moduleContents.split(/\r?\n/u).length <= 300,
@@ -1651,6 +1691,173 @@ function checkIOSOutputAuthorities() {
     detail:
       violations.length === 0
         ? 'cache paths, atomic writes, stable errors, result projection, bridge limits, and seven native groups are aligned'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
+}
+
+function checkIOSPipelineAuthorities() {
+  const pipelineHeader = readText('ios/RCTImageCompressionPipeline.h');
+  const pipelineCore = readText('ios/RCTImageCompressionPipeline.mm');
+  const defaultPipeline = readText(
+    'ios/RCTImageCompressionDefaultPipeline.mm'
+  );
+  const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const podspec = readText('react-native-image-compression-kit.podspec');
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionPipelineTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestRunsSuccessStagesAndForwardsRequests',
+    'TestForwardsFailureMatrixWithoutRunningDownstreamStages',
+    'TestUsesInjectedRuntimeCapabilityProviders',
+    'TestConvertsExceptionStageMatrixToNativeFailure',
+    'TestCopiesImmutableRequestResultAndErrorModels',
+    'TestClearsExistingErrorAndNotifiesResolution',
+  ];
+  const methodStart = moduleContents.indexOf(
+    '- (void)compressImageWithDictionary:'
+  );
+  const methodEnd = moduleContents.indexOf(
+    '- (void)getImageCompressionCapabilities:',
+    methodStart
+  );
+  const methodLineCount =
+    methodStart >= 0 && methodEnd > methodStart
+      ? moduleContents.slice(methodStart, methodEnd).split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
+  const boundaryIdentifiers = [
+    '@interface RCTImageCompressionPipelineRequest : NSObject',
+    '@interface RCTImageCompressionPipelineResult : NSObject',
+    '@interface RCTImageCompressionPipelineError : NSObject',
+    '@interface RCTImageCompressionPipeline : NSObject',
+    'RCTImageCompressionPipelineRuntimeAvailability',
+    'RCTImageCompressionPipelineRequestParser',
+    'RCTImageCompressionPipelineInputLoader',
+    'RCTImageCompressionPipelineMetadataPreparer',
+    'RCTImageCompressionPipelineImageDecoder',
+    'RCTImageCompressionPipelineImageTransformer',
+    'RCTImageCompressionPipelineImageEncoder',
+    'RCTImageCompressionPipelineOutputWriter',
+    'RCTImageCompressionPipelineStageObserver',
+  ];
+  const injectedStageCalls = [
+    'self.requestParser(',
+    'self.inputLoader(',
+    'self.metadataPreparer(',
+    'self.imageDecoder(',
+    'self.imageTransformer(',
+    'self.imageEncoder(',
+    'self.outputWriter(',
+  ];
+  const defaultOwners = [
+    'RCTImageCompressionInputLoader defaultLoader',
+    'RCTImageCompressionJpegMetadata defaultMetadata',
+    'RCTImageCompressionImageDecoder defaultDecoder',
+    'RCTImageCompressionImageTransformer defaultTransformer',
+    'RCTImageCompressionImageEncoder defaultEncoder',
+    'RCTImageCompressionOutput defaultOutput',
+  ];
+  const directPipelineOwners =
+    /(?:defaultLoader|defaultDecoder|defaultTransformer|defaultMetadata|defaultEncoder|defaultOutput|loadSourceURI:|decodeInput:|transformRequest:|encodeRequest:|persistRequest:|CGImageSource|RNICK_IOS_SMOKE_NATIVE)/u;
+  const directComponentImports =
+    /#import "RCTImageCompression(?:Input|ImageDecoder|ImageTransformer|JpegMetadata|ImageEncoder|Output)\.h"/u;
+  const structureChecks = [
+    {
+      ok: boundaryIdentifiers.every((identifier) =>
+        pipelineHeader.includes(identifier)
+      ),
+      name: 'immutable pipeline request result error and injected stage models',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|ImageIO|React)/u.test(pipelineCore) &&
+        injectedStageCalls.every((call) => pipelineCore.includes(call)) &&
+        pipelineCore.includes('self.webPOutputAvailability') &&
+        pipelineCore.includes('self.avifInputAvailability') &&
+        pipelineCore.includes('self.stageObserver(') &&
+        pipelineCore.includes('RCTImageCompressionKitNativeOperationFailedCode'),
+      name: 'Foundation-only injected pipeline orchestration',
+    },
+    {
+      ok:
+        defaultPipeline.includes('CGImageSourceCopyTypeIdentifiers') &&
+        defaultPipeline.includes('RNICK_IOS_SMOKE_NATIVE %@') &&
+        defaultOwners.every((owner) => defaultPipeline.includes(owner)),
+      name: 'default component capability and smoke observer composition',
+    },
+    {
+      ok:
+        moduleContents.includes(
+          '[RCTImageCompressionPipeline defaultPipeline]'
+        ) &&
+        moduleContents.includes(
+          '[pipeline executeRequest:request error:&pipelineError]'
+        ) &&
+        /resolve\(result\.dictionaryRepresentation\);\s*\[pipeline notifyResolved\];/u.test(
+          moduleContents
+        ) &&
+        !directComponentImports.test(moduleContents) &&
+        !directPipelineOwners.test(moduleContents),
+      name: 'thin bridge pipeline promise adapter without stage composition',
+    },
+    {
+      ok:
+        moduleContents.includes(
+          '[RCTImageCompressionPipeline defaultWebPOutputAvailable]'
+        ) &&
+        moduleContents.includes(
+          '[RCTImageCompressionPipeline defaultAVIFInputAvailable]'
+        ),
+      name: 'capability endpoint uses pipeline runtime providers',
+    },
+    {
+      ok:
+        moduleContents.split(/\r?\n/u).length <= 200 &&
+        methodLineCount <= 35 &&
+        pipelineCore.split(/\r?\n/u).length <= 320 &&
+        defaultPipeline.split(/\r?\n/u).length <= 160,
+      name: 'bridge and pipeline source size boundaries',
+    },
+    {
+      ok:
+        nativeTestNames.length === 6 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)),
+      name: 'table-driven native pipeline integration authority',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:pipeline-test'] ===
+        'node scripts/ios-validation.mjs pipeline-test',
+      name: 'iOS pipeline native-test command',
+    },
+    {
+      ok:
+        validationRunner.includes("if (mode === 'pipeline-test')") &&
+        /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);\s*runImageEncoderTests\(\);\s*runOutputTests\(\);\s*runPipelineTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'pipeline tests integrated into iOS smoke',
+    },
+    {
+      ok: podspec.includes('"ios/RCTImageCompressionPipeline.h"'),
+      name: 'pipeline header remains private in pod package surface',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS compression pipeline boundary and native tests are present',
+    detail:
+      violations.length === 0
+        ? 'stage order, runtime providers, stable failure forwarding, smoke observation, thin bridge limits, and six native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }
