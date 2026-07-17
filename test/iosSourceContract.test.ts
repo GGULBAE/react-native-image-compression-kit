@@ -41,6 +41,7 @@ describe('iOS source contract', () => {
     expect(podspec).toContain('"ios/RCTImageCompressionImageEncoder.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageTransformer.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionJpegMetadata.h"');
+    expect(podspec).toContain('"ios/RCTImageCompressionOutput.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionInput.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionIOSCapabilities.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionRequest.h"');
@@ -546,6 +547,83 @@ describe('iOS source contract', () => {
     expect(runner).toContain("if (mode === 'encoder-test')");
     expect(runner).toMatch(
       /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);\s*runImageEncoderTests\(\);/
+    );
+  });
+
+  it('isolates output persistence and result projection behind native tables', () => {
+    const header = readProjectFile('ios/RCTImageCompressionOutput.h');
+    const output = readProjectFile('ios/RCTImageCompressionOutput.mm');
+    const implementation = readProjectFile('ios/RCTImageCompressionKit.mm');
+    const nativeTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionOutputTests.mm'
+    );
+    const runner = readProjectFile('scripts/ios-validation.mjs');
+    const outputTestNames = [
+      ...nativeTests.matchAll(/static void (Test\w+)\(void\)/g),
+    ].map((match) => match[1]);
+    const methodStart = implementation.indexOf(
+      '- (void)compressImageWithDictionary:'
+    );
+    const methodEnd = implementation.indexOf(
+      '- (void)getImageCompressionCapabilities:',
+      methodStart
+    );
+    const methodLines = implementation
+      .slice(methodStart, methodEnd)
+      .split(/\r?\n/).length;
+
+    for (const identifier of [
+      '@interface RCTImageCompressionOutputRequest : NSObject',
+      '@interface RCTImageCompressionOutputError : NSObject',
+      '@interface RCTImageCompressionOutputResult : NSObject',
+      '@interface RCTImageCompressionOutput : NSObject',
+      'RCTImageCompressionOutputCacheDirectoryProvider',
+      'RCTImageCompressionOutputPathExists',
+      'RCTImageCompressionOutputDirectoryCreator',
+      'RCTImageCompressionOutputClock',
+      'RCTImageCompressionOutputUUIDProvider',
+      'RCTImageCompressionOutputFileWriter',
+    ]) {
+      expect(header).toContain(identifier);
+    }
+    expect(output).not.toMatch(/#import <(?:UIKit|ImageIO|React)/);
+    expect(output).toContain('NSCachesDirectory');
+    expect(output).toContain('createDirectoryAtPath:path');
+    expect(output).toContain('NSDataWritingAtomic');
+    expect(output).toContain('compressionRatio =');
+    expect(output).toContain('dictionaryRepresentation');
+    expect(output).not.toMatch(
+      /(?:UIImage|CGImageDestination|UIGraphicsImageRenderer|metadataPolicy|maxBytes|RCTPromise)/
+    );
+    expect(implementation).toMatch(
+      /\[\[RCTImageCompressionOutput\s+defaultOutput\]\s*persistRequest:outputRequest\s*error:&outputError\s*\]/
+    );
+    expect(implementation).toContain(
+      'resolve(outputResult.dictionaryRepresentation)'
+    );
+    expect(implementation).not.toMatch(
+      /(?:NSCachesDirectory|createDirectoryAtPath|writeToFile:|RCTImageCompressionKitOutputPath|RCTImageCompressionKitResult|compressionRatio|originalByteSize\s*=)/
+    );
+    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(300);
+    expect(methodLines).toBeLessThanOrEqual(115);
+    expect(outputTestNames).toEqual(
+      expect.arrayContaining([
+        'TestBuildsFormatPathsAndPersistsBytes',
+        'TestReusesExistingDirectoryAndFallsBackToTemporaryPath',
+        'TestProjectsResultMetricsAndZeroSourceRatio',
+        'TestRejectsDirectoryCreationFailureWithStableError',
+        'TestRejectsWriteFailureMatrixWithStableErrors',
+        'TestCopiesImmutableRequestResultAndErrorModels',
+        'TestClearsExistingErrorOnSuccess',
+      ])
+    );
+    expect(outputTestNames).toHaveLength(7);
+    expect(packageJson.scripts['example:ios:output-test']).toBe(
+      'node scripts/ios-validation.mjs output-test'
+    );
+    expect(runner).toContain("if (mode === 'output-test')");
+    expect(runner).toMatch(
+      /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);\s*runImageEncoderTests\(\);\s*runOutputTests\(\);/
     );
   });
 

@@ -48,6 +48,8 @@ const REQUIRED_FILES = [
   'ios/RCTImageCompressionIOSCapabilities.mm',
   'ios/RCTImageCompressionJpegMetadata.h',
   'ios/RCTImageCompressionJpegMetadata.mm',
+  'ios/RCTImageCompressionOutput.h',
+  'ios/RCTImageCompressionOutput.mm',
   'ios/RCTImageCompressionRequest.h',
   'ios/RCTImageCompressionRequest.mm',
   'ios/RCTImageCompressionSourceResolver.mm',
@@ -136,6 +138,7 @@ const REQUIRED_FILES = [
   'test/androidSourceContract.test.ts',
   'test/iosSourceContract.test.ts',
   'test/ios-native/RCTImageCompressionImageEncoderTests.mm',
+  'test/ios-native/RCTImageCompressionOutputTests.mm',
   'test/ios-native/RCTImageCompressionJpegMetadataTests.mm',
   'test/ios-native/RCTImageCompressionImageTransformerTests.mm',
   'test/verificationArchitecture.test.ts',
@@ -245,6 +248,7 @@ function runDoctor() {
     checkIOSImageTransformerAuthorities(),
     checkIOSJpegMetadataAuthorities(),
     checkIOSImageEncoderAuthorities(),
+    checkIOSOutputAuthorities(),
     checkHeicHeifFixtures(),
     checkAvifFixtures(),
   ];
@@ -1515,6 +1519,138 @@ function checkIOSImageEncoderAuthorities() {
     detail:
       violations.length === 0
         ? 'format routing, WebP availability, target-size search, codec defaults, bridge limits, and seven native groups are aligned'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
+}
+
+function checkIOSOutputAuthorities() {
+  const outputHeader = readText('ios/RCTImageCompressionOutput.h');
+  const outputCore = readText('ios/RCTImageCompressionOutput.mm');
+  const moduleContents = readText('ios/RCTImageCompressionKit.mm');
+  const podspec = readText('react-native-image-compression-kit.podspec');
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionOutputTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestBuildsFormatPathsAndPersistsBytes',
+    'TestReusesExistingDirectoryAndFallsBackToTemporaryPath',
+    'TestProjectsResultMetricsAndZeroSourceRatio',
+    'TestRejectsDirectoryCreationFailureWithStableError',
+    'TestRejectsWriteFailureMatrixWithStableErrors',
+    'TestCopiesImmutableRequestResultAndErrorModels',
+    'TestClearsExistingErrorOnSuccess',
+  ];
+  const methodStart = moduleContents.indexOf(
+    '- (void)compressImageWithDictionary:'
+  );
+  const methodEnd = moduleContents.indexOf(
+    '- (void)getImageCompressionCapabilities:',
+    methodStart
+  );
+  const methodLineCount =
+    methodStart >= 0 && methodEnd > methodStart
+      ? moduleContents.slice(methodStart, methodEnd).split(/\r?\n/u).length
+      : Number.POSITIVE_INFINITY;
+  const boundaryIdentifiers = [
+    '@interface RCTImageCompressionOutputRequest : NSObject',
+    '@interface RCTImageCompressionOutputError : NSObject',
+    '@interface RCTImageCompressionOutputResult : NSObject',
+    '@interface RCTImageCompressionOutput : NSObject',
+    'RCTImageCompressionOutputCacheDirectoryProvider',
+    'RCTImageCompressionOutputPathExists',
+    'RCTImageCompressionOutputDirectoryCreator',
+    'RCTImageCompressionOutputClock',
+    'RCTImageCompressionOutputUUIDProvider',
+    'RCTImageCompressionOutputFileWriter',
+  ];
+  const defaultOutputAPIs = [
+    'NSCachesDirectory',
+    'createDirectoryAtPath:path',
+    'NSDataWritingAtomic',
+    '[NSDate date].timeIntervalSince1970',
+    '[NSUUID UUID].UUIDString',
+  ];
+  const forbiddenOutputDependencies =
+    /(?:UIImage|CGImageDestination|UIGraphicsImageRenderer|metadataPolicy|maxBytes|RCTPromise)/u;
+  const directOutputAPIs =
+    /(?:NSCachesDirectory|createDirectoryAtPath|writeToFile:|RCTImageCompressionKitOutputPath|RCTImageCompressionKitResult|compressionRatio\s*=)/u;
+  const structureChecks = [
+    {
+      ok: boundaryIdentifiers.every((identifier) =>
+        outputHeader.includes(identifier)
+      ),
+      name: 'immutable output request result error and injected owner models',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|ImageIO|React)/u.test(outputCore) &&
+        defaultOutputAPIs.every((api) => outputCore.includes(api)) &&
+        outputCore.includes('dictionaryRepresentation'),
+      name: 'Foundation-only cache path atomic writer and result projection defaults',
+    },
+    {
+      ok: !forbiddenOutputDependencies.test(outputCore),
+      name: 'output owner excludes codec transform metadata and bridge ownership',
+    },
+    {
+      ok:
+        /\[\[RCTImageCompressionOutput\s+defaultOutput\]\s*persistRequest:outputRequest\s*error:&outputError\s*\]/u.test(
+          moduleContents
+        ) &&
+        moduleContents.includes(
+          'resolve(outputResult.dictionaryRepresentation)'
+        ) &&
+        !directOutputAPIs.test(moduleContents),
+      name: 'bridge output delegation without path write or result calculation APIs',
+    },
+    {
+      ok: moduleContents.split(/\r?\n/u).length <= 300,
+      name: 'iOS bridge source size boundary after output extraction',
+    },
+    {
+      ok: methodLineCount <= 115,
+      name: 'iOS compression orchestration size after output extraction',
+    },
+    {
+      ok:
+        nativeTestNames.length === 7 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)),
+      name: 'table-driven native output test authority',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:output-test'] ===
+        'node scripts/ios-validation.mjs output-test',
+      name: 'iOS output native-test command',
+    },
+    {
+      ok:
+        validationRunner.includes("if (mode === 'output-test')") &&
+        /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);\s*runImageEncoderTests\(\);\s*runOutputTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'output tests integrated into iOS smoke',
+    },
+    {
+      ok: podspec.includes('"ios/RCTImageCompressionOutput.h"'),
+      name: 'output header remains private in pod package surface',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS output persistence boundary and native tests are present',
+    detail:
+      violations.length === 0
+        ? 'cache paths, atomic writes, stable errors, result projection, bridge limits, and seven native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }

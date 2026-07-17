@@ -5,6 +5,7 @@
 #import "RCTImageCompressionInput.h"
 #import "RCTImageCompressionIOSCapabilities.h"
 #import "RCTImageCompressionJpegMetadata.h"
+#import "RCTImageCompressionOutput.h"
 #import "RCTImageCompressionRequest.h"
 
 #import <ImageIO/ImageIO.h>
@@ -63,55 +64,6 @@ static RCTImageCompressionTransformedImage *RCTImageCompressionKitTransformImage
     opaque:opaque
   ];
   return [[RCTImageCompressionImageTransformer defaultTransformer] transformRequest:request error:nil];
-}
-
-static NSString *RCTImageCompressionKitOutputPath(NSString *outputFormat, NSError **error)
-{
-  NSArray<NSString *> *cachePaths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-  NSString *cachePath = [cachePaths firstObject] ?: NSTemporaryDirectory();
-  NSString *outputDirectory = [cachePath stringByAppendingPathComponent:@"ImageCompressionKit"];
-  NSFileManager *fileManager = [NSFileManager defaultManager];
-
-  if (![fileManager fileExistsAtPath:outputDirectory]) {
-    if (![fileManager createDirectoryAtPath:outputDirectory withIntermediateDirectories:YES attributes:nil error:error]) {
-      return nil;
-    }
-  }
-
-  NSString *extension = @"jpg";
-  if ([outputFormat isEqualToString:RCTImageCompressionKitPngFormat]) {
-    extension = @"png";
-  } else if ([outputFormat isEqualToString:RCTImageCompressionKitWebPFormat]) {
-    extension = @"webp";
-  }
-  NSString *fileName = [NSString stringWithFormat:
-    @"compressed-%lld-%@.%@",
-    (long long)([NSDate date].timeIntervalSince1970 * 1000.0),
-    [NSUUID UUID].UUIDString,
-    extension
-  ];
-  return [outputDirectory stringByAppendingPathComponent:fileName];
-}
-
-static NSDictionary *RCTImageCompressionKitResult(
-  NSString *outputPath,
-  NSString *outputFormat,
-  CGSize outputSize,
-  NSData *outputData,
-  NSData *sourceData
-) {
-  double byteSize = (double)outputData.length;
-  double originalByteSize = (double)sourceData.length;
-  double compressionRatio = originalByteSize > 0.0 ? byteSize / originalByteSize : 1.0;
-  return @{
-    @"uri" : [[NSURL fileURLWithPath:outputPath] absoluteString],
-    @"format" : outputFormat,
-    @"width" : @((NSInteger)outputSize.width),
-    @"height" : @((NSInteger)outputSize.height),
-    @"byteSize" : @(byteSize),
-    @"originalByteSize" : @(originalByteSize),
-    @"compressionRatio" : @(compressionRatio)
-  };
 }
 
 @implementation RCTImageCompressionKit
@@ -271,24 +223,26 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
       RCTImageCompressionKitReject(reject, encodeError.code, encodeError.message, nil);
       return;
     }
-    NSData *outputData = encodedImage.data;
     RCTImageCompressionKitSmokeLog([NSString stringWithFormat:@"%@-encoded", request.outputFormat]);
-    NSError *outputPathError = nil;
-    NSString *outputPath = RCTImageCompressionKitOutputPath(request.outputFormat, &outputPathError);
-    if (outputPath == nil) {
-      RCTImageCompressionKitReject(reject, RCTImageCompressionKitImageEncodeFailedCode,
-        @"iOS MVP could not create an output cache file.", outputPathError);
+    RCTImageCompressionOutputRequest *outputRequest = [[RCTImageCompressionOutputRequest alloc]
+      initWithData:encodedImage.data
+      outputFormat:request.outputFormat
+      outputSize:transformedImage.pixelSize
+      originalByteSize:input.source.data.length
+    ];
+    RCTImageCompressionOutputError *outputError = nil;
+    RCTImageCompressionOutputResult *outputResult = [[RCTImageCompressionOutput defaultOutput]
+      persistRequest:outputRequest
+      error:&outputError
+    ];
+    if (outputResult == nil) {
+      RCTImageCompressionKitReject(reject, outputError.code, outputError.message,
+        outputError.underlyingError);
       return;
     }
     RCTImageCompressionKitSmokeLog(@"output-path-ready");
-    NSError *writeError = nil;
-    if (![outputData writeToFile:outputPath options:NSDataWritingAtomic error:&writeError]) {
-      NSString *message = [NSString stringWithFormat:@"iOS MVP could not write %@ output.", request.outputFormat.uppercaseString];
-      RCTImageCompressionKitReject(reject, RCTImageCompressionKitImageEncodeFailedCode, message, writeError);
-      return;
-    }
     RCTImageCompressionKitSmokeLog(@"output-written");
-    resolve(RCTImageCompressionKitResult(outputPath, request.outputFormat, transformedImage.pixelSize, outputData, input.source.data));
+    resolve(outputResult.dictionaryRepresentation);
     RCTImageCompressionKitSmokeLog(@"compress-resolved");
   } @catch (NSException *exception) {
     RCTImageCompressionKitReject(reject, RCTImageCompressionKitNativeOperationFailedCode,

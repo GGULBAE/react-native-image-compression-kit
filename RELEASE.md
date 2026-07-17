@@ -16,7 +16,7 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
   repository verification contract decomposition, Android request parsing, and
   source/decode/bitmap-transform boundary extraction, plus iOS request and
   source/inspection, image-decoder, resize/render, JPEG metadata, and output
-  encoder ownership boundaries
+  encoder/persistence ownership boundaries
 
 This work separates the npm user README from repository-only release
 operations. It adds a network-free documentation gate for semantic status,
@@ -73,9 +73,12 @@ the JPEG metadata result supplies destination properties to the platform
 encoder. Format routing and target-size binary search now flow through an
 immutable encoder request/result/error boundary with injected JPEG, PNG, WebP,
 and synchronous executor hooks. The UIKit/ImageIO default owns codec calls,
-WebP destination discovery, and main-thread execution. Output path creation,
-file writes, and result projection remain in the module. Metadata copy and
-encoded output behavior are unchanged.
+WebP destination discovery, and main-thread execution. Cache directory and
+extension selection, timestamp/UUID path generation, atomic file writes, and
+`CompressionResult` projection now flow through a Foundation-only output owner
+with injected filesystem, clock, and identifier hooks. The bridge only submits
+immutable encoded bytes and resolves the projected result. Output URI, stable
+errors, metrics, metadata copy, and encoded output behavior are unchanged.
 
 ### Included
 
@@ -123,6 +126,10 @@ encoded output behavior are unchanged.
   routing, metadata forwarding, synchronous executor ownership, quality-cap
   short circuit, exact target-size probe order, unreachable targets, missing
   candidates, immutable models, and stable encode failures.
+- Typed iOS output persistence ownership with native coverage for cache and
+  temporary-directory paths, JPEG/PNG/WebP extensions, clock/UUID naming,
+  atomic writer delegation, immutable models, stable directory/write errors,
+  output URI, byte metrics, and zero-source compression ratio.
 
 ### Not included
 
@@ -138,6 +145,7 @@ pnpm verify
 pnpm example:typecheck
 pnpm example:ios:decoder-test
 pnpm example:ios:encoder-test
+pnpm example:ios:output-test
 pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm example:ios:input-test
