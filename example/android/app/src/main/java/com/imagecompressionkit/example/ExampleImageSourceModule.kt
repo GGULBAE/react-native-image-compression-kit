@@ -15,7 +15,7 @@ class ExampleImageSourceModule(
 
   @ReactMethod
   fun isDemoCaptureEnabled(promise: Promise) {
-    val enabled = currentActivity
+    val enabled = reactContext.getCurrentActivity()
       ?.intent
       ?.getBooleanExtra("rnick-demo-capture", false) == true
     promise.resolve(enabled)
