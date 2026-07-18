@@ -19,8 +19,11 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 The release keeps native compression and output behavior unchanged. It adds the
 public surfaces and operational controls required for a reproducible open
 source launch. The exact Android/iOS compatibility matrix and public Pages
-deployment are green; publication remains gated by the exact-source workflow
-and the protected `npm-production` environment approval.
+deployment are green. npm `0.3.0` was published from exact protected source
+`f8ad71f14ac50dac9dc433a46ee4e9a6d7e1bca7` through OIDC trusted publishing,
+and the immutable [v0.3.0 GitHub Release](https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.3.0)
+contains the matching tarball, checksum, provenance metadata, and registry
+consumer-smoke manifest.
 
 ### Included
 
@@ -54,9 +57,22 @@ and the protected `npm-production` environment approval.
   [run 29639654302](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29639654302)
   produced the checked Android/iOS assets and digest manifest.
 - Public Pages evidence:
-  [run 29640096509](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29640096509)
+  [run 29641396874](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29641396874)
   built, audited, and deployed the public documentation site from protected
   `master`.
+- Exact publication evidence:
+  [run 29641603870](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29641603870)
+  passed source/artifact preflight and all eight compatibility lanes, then
+  published the 58,780-byte tarball with npm OIDC provenance. Its continuation
+  stopped after npm 12 returned an unrecognized array-shaped registry response;
+  no package, tag, dist-tag, or Release asset was replaced.
+- Exact registry evidence:
+  [run 29643434413](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29643434413)
+  independently confirmed SHA-512 integrity, SLSA provenance metadata,
+  `latest` resolution, the 79-file inventory, packed README status, and a fresh
+  registry consumer install from immutable tag `v0.3.0`. The matching retained
+  evidence archive is replayed by `pnpm verify:release-evidence -- --version
+  0.3.0`.
 
 ```bash
 pnpm verify
@@ -73,6 +89,12 @@ pnpm pack --dry-run
 `pnpm release:dry-run` must pass without publishing. The trusted release remains
 fail-closed unless package, README, RELEASE, registry state, protected source
 SHA, and exact tarball identity stay aligned.
+
+The first post-publish continuation exposed an npm 12 transport-shape change:
+multi-field exact-version `npm view --json` responses are single-item arrays.
+The release artifact was already published correctly; the follow-up repository
+fix normalizes npm 11 object and npm 12 array responses and keeps polling until
+the semantic publication action is `resume`.
 
 ## v0.2.62
 

@@ -307,6 +307,7 @@ export function acquireReleaseEvidenceBundle(
       !operations.exists(destination),
       `Release evidence acquisition destination already exists: ${destination}`
     );
+    const policy = RELEASE_EVIDENCE_POLICIES[version];
     state.checks.inputs = true;
 
     const run = validateReleaseEvidenceRunResponse(runResponse, {
@@ -344,7 +345,7 @@ export function acquireReleaseEvidenceBundle(
     validateProvenanceReport(provenanceReport, {
       version,
       expectedTag,
-      packageName: RELEASE_EVIDENCE_POLICIES[version].package,
+      packageName: policy.package,
     });
     state.packageName = provenanceReport.package;
     state.checks.provenance = true;
@@ -360,15 +361,16 @@ export function acquireReleaseEvidenceBundle(
       'attestation-verification.json',
       'Attestation verification report'
     );
-    const downloadedBundle = parseJsonBytes(
+    const downloadedBundles = parseJsonLinesBytes(
       attestationArchive.files.get('attestation.jsonl'),
-      'Downloaded attestation bundle'
+      'Downloaded attestation bundles'
     );
     const manifestSha256 = sha256(
       provenance.files.get(REGISTRY_BUNDLE_FILES.manifest)
     );
     const attestation = normalizeAttestation(attestationsResponse, {
-      downloadedBundle,
+      downloadedBundles,
+      expectedAttestationId: policy.attestation.id,
       attestationReport,
       manifestSha256,
       repository,
@@ -651,7 +653,8 @@ function validateProvenanceReport(
 function normalizeAttestation(
   response,
   {
-    downloadedBundle,
+    downloadedBundles,
+    expectedAttestationId,
     attestationReport,
     manifestSha256,
     repository,
@@ -667,15 +670,25 @@ function normalizeAttestation(
     (attestation) =>
       attestation &&
       attestation.repository_id === repositoryId &&
-      isDeepStrictEqual(attestation.bundle, downloadedBundle)
+      attestation.attestation_id === expectedAttestationId
   );
-  assert(matches.length === 1, 'Expected exactly one GitHub attestation matching the downloaded bundle.');
+  assert(
+    matches.length === 1,
+    'Expected exactly one GitHub attestation matching the committed attestation ID.'
+  );
   const selected = matches[0];
   assert(
     Number.isSafeInteger(selected.attestation_id) && selected.attestation_id > 0,
     'GitHub attestation ID must be a positive integer.'
   );
   const id = selected.attestation_id;
+  const downloadedMatches = downloadedBundles.filter((bundle) =>
+    isDeepStrictEqual(selected.bundle, bundle)
+  );
+  assert(
+    downloadedMatches.length === 1,
+    'Expected the committed GitHub attestation bundle exactly once in the downloaded JSONL artifact.'
+  );
 
   assertRecord(attestationReport, 'Attestation verification report');
   assert(attestationReport.status === 'passed', 'Attestation verification report status must be passed.');
@@ -796,6 +809,27 @@ function parseJsonBytes(bytes, label) {
   } catch (error) {
     throw new Error(`${label} is not valid JSON: ${error.message}`);
   }
+}
+
+function parseJsonLinesBytes(bytes, label) {
+  const lines = bytes
+    .toString('utf8')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  assert(lines.length > 0, `${label} must contain at least one JSON record.`);
+  return lines.map((line, index) => {
+    let parsed;
+    try {
+      parsed = JSON.parse(line);
+    } catch (error) {
+      throw new Error(
+        `${label} line ${index + 1} is not valid JSON: ${error.message}`
+      );
+    }
+    assertRecord(parsed, `${label} line ${index + 1}`);
+    return parsed;
+  });
 }
 
 function requireIsoTimestamp(value, label) {

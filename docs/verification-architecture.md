@@ -37,6 +37,11 @@ desktop Lighthouse runs, and applies the unchanged thresholds to each
 category's median score. Every run remains present in the JSON report, while
 axe checks every sitemap route for serious or critical violations.
 
+The registry boundary normalizes npm 11 object and npm 12 single-item array
+responses before publication-state inspection. Post-publish polling stops only
+when the semantic action is `resume`; an absent version remains `publish`, and
+an integrity mismatch remains fail-closed as `blocked`.
+
 ## Source contract policy
 
 Repository contract tests may inspect stable identifiers, configuration

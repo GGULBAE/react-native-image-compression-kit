@@ -85,7 +85,7 @@ describe('exact-subject GitHub attestation transport', () => {
 
   it('rejects a missing subject response or exact subject bytes', () => {
     expect(() => resolve({ attestations: [] })).toThrow(
-      'Expected exactly one GitHub attestation'
+      'Expected at least one GitHub attestation'
     );
     let requested = false;
     expect(() =>
@@ -103,12 +103,42 @@ describe('exact-subject GitHub attestation transport', () => {
     ).toThrow('do not match the requested SHA-256');
   });
 
-  it('rejects multiple attestations before selecting a transport', () => {
+  it('sanitizes multiple inline attestations for downstream exact-bundle selection', () => {
     const response = rawResponse(BUNDLE);
-    response.attestations.push({ ...response.attestations[0] });
-    expect(() => resolve(response)).toThrow(
-      'Expected exactly one GitHub attestation'
-    );
+    response.attestations.push({
+      ...response.attestations[0],
+      bundle_url: SIGNED_BUNDLE_URL.replace('/456.', '/457.'),
+      bundle: { ...BUNDLE, mediaType: 'application/vnd.example.release+json' },
+    });
+
+    expect(resolve(response)).toEqual({
+      attestations: [
+        { repository_id: 123, attestation_id: 456, bundle: BUNDLE },
+        {
+          repository_id: 123,
+          attestation_id: 457,
+          bundle: { ...BUNDLE, mediaType: 'application/vnd.example.release+json' },
+        },
+      ],
+    });
+  });
+
+  it('rejects multiple URL-only attestations before running a download command', () => {
+    const response = rawResponse();
+    response.attestations.push({
+      ...response.attestations[0],
+      bundle_url: SIGNED_BUNDLE_URL.replace('/456.', '/457.'),
+    });
+    let ran = false;
+
+    expect(() =>
+      resolve(response, {
+        runCommand() {
+          ran = true;
+        },
+      })
+    ).toThrow('Cannot resolve multiple URL-only GitHub attestations');
+    expect(ran).toBe(false);
   });
 
   it('rejects multiple downloaded JSONL files and removes the temporary directory', () => {

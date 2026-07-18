@@ -145,12 +145,9 @@ jobs:
           if npm view "$package@$VERSION" version dist.integrity --json > "$release_dir/npm-view.raw.json" 2> "$release_dir/npm-view.stderr"; then
             node --input-type=module - "$release_dir/npm-view.raw.json" "$release_dir/npm-state.json" <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
-          const value = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-          writeFileSync(process.argv[3], `${JSON.stringify({
-            exists: true,
-            version: value.version,
-            integrity: value['dist.integrity'],
-          })}\n`);
+          import { normalizeNpmViewPublicationState } from './scripts/release-artifact-core.mjs';
+          const value = normalizeNpmViewPublicationState(JSON.parse(readFileSync(process.argv[2], 'utf8')));
+          writeFileSync(process.argv[3], `${JSON.stringify(value)}\n`);
           NODE
           elif grep -qE 'E404|404 Not Found' "$release_dir/npm-view.stderr"; then
             printf '{"exists":false}\n' > "$release_dir/npm-state.json"
@@ -289,15 +286,19 @@ jobs:
             if npm view "$package@$VERSION" version dist.integrity --json > "$release_dir/npm-published.raw.json" 2>/dev/null; then
               node --input-type=module - "$release_dir/npm-published.raw.json" "$release_dir/npm-published-state.json" <<'NODE'
           import { readFileSync, writeFileSync } from 'node:fs';
-          const value = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-          writeFileSync(process.argv[3], `${JSON.stringify({ exists: true, version: value.version, integrity: value['dist.integrity'] })}\n`);
+          import { normalizeNpmViewPublicationState } from './scripts/release-artifact-core.mjs';
+          const value = normalizeNpmViewPublicationState(JSON.parse(readFileSync(process.argv[2], 'utf8')));
+          writeFileSync(process.argv[3], `${JSON.stringify(value)}\n`);
           NODE
-              if pnpm verify:publication-state -- \
+              pnpm verify:publication-state -- \
                 --artifact "$release_dir/release-artifact.json" \
                 --registry "$release_dir/npm-published-state.json" \
-                --report-file "$release_dir/publication-confirmed.json"; then
+                --report-file "$release_dir/publication-confirmed.json"
+              action="$(node -p "require('$release_dir/publication-confirmed.json').action")"
+              if [[ "$action" = "resume" ]]; then
                 break
               fi
+              test "$action" = "publish"
             fi
             test "$attempt" != "8"
             sleep 10

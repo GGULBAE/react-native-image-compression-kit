@@ -364,7 +364,7 @@ describe('reviewed release evidence policy promotion', () => {
         reviewedAt: REVIEWED_AT,
         evidenceSha256:
           'e890e90e322ab6205517950466476a9b9430fa3307b2eacbc3ede0234e3f5e78',
-        setVersions: ['0.2.50', '0.2.55', '0.2.62'],
+        setVersions: ['0.2.50', '0.2.55', '0.2.62', '0.3.0'],
         checks: Object.fromEntries(
           RELEASE_EVIDENCE_POLICY_PROMOTION_CHECK_FIELDS.map((field) => [
             field,
@@ -425,7 +425,11 @@ describe('reviewed release evidence policy promotion', () => {
       });
       expect(report.status).toBe('failed');
       expect(report.error).toContain('(drift)');
-      expect(readdirSync(options.archiveRoot)).toEqual(['0.2.50', '0.2.62']);
+      expect(readdirSync(options.archiveRoot)).toEqual([
+        '0.2.50',
+        '0.2.62',
+        '0.3.0',
+      ]);
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }
@@ -509,7 +513,11 @@ describe('reviewed release evidence policy promotion', () => {
       );
       expect(report.status).toBe('failed');
       expect(report.error).toContain(error);
-      expect(readdirSync(options.archiveRoot)).toEqual(['0.2.50', '0.2.62']);
+      expect(readdirSync(options.archiveRoot)).toEqual([
+        '0.2.50',
+        '0.2.62',
+        '0.3.0',
+      ]);
       expect(
         readdirSync(options.archiveRoot).some((file) => file.includes('.tmp'))
       ).toBe(false);

@@ -10,13 +10,13 @@ and never selects a latest run.
 pnpm acquire:release-evidence -- \
   --repository GGULBAE/react-native-image-compression-kit \
   --workflow .github/workflows/registry-validation.yml \
-  --source-ref refs/tags/v0.2.62 \
-  --source-digest 43c157728ef345528053e2508e9aa9292457a55b \
-  --run-id 29558617089 \
-  --version 0.2.62 \
+  --source-ref refs/tags/v0.3.0 \
+  --source-digest f8ad71f14ac50dac9dc433a46ee4e9a6d7e1bca7 \
+  --run-id 29643434413 \
+  --version 0.3.0 \
   --expected-tag latest \
-  --output-dir /tmp/release-evidence-0.2.62 \
-  --report-file /tmp/release-evidence-0.2.62-report.json \
+  --output-dir /tmp/release-evidence-0.3.0 \
+  --report-file /tmp/release-evidence-0.3.0-report.json \
   --json
 ```
 
@@ -29,10 +29,13 @@ downloaded ZIP bytes. It never infers a run.
 GitHub's attestation response may expose either an inline bundle or a signed
 `bundle_url`. Registry and policy-review acquisition share one exact-subject
 transport boundary. Before accepting either form, it requires the requested
-SHA-256 to match the exact manifest bytes, exactly one API attestation, a
+SHA-256 to match the exact manifest bytes, at least one API attestation, a
 positive repository ID, and an HTTPS bundle URL containing one attestation ID.
-The boundary returns only `repository_id`, `attestation_id`, and the parsed
-bundle; the raw URL, its query token, and unrelated API fields are discarded.
+Multiple inline bundles are sanitized for the downstream exact retained-bundle
+match; multiple URL-only responses fail closed because they cannot be selected
+without exposing ambiguous transport. The boundary returns only
+`repository_id`, `attestation_id`, and the parsed bundle; the raw URL, its query
+token, and unrelated API fields are discarded.
 
 For a bundle-less response, the boundary runs `gh attestation download` against
 the exact manifest in a private temporary directory. It requires exactly one
@@ -40,17 +43,20 @@ regular JSONL file and exactly one non-empty JSON record, then applies the same
 JSON-object validation used for an inline bundle. Missing subjects, duplicate
 attestations, duplicate JSONL files or records, invalid JSON, and command
 failure all fail closed. The temporary subject and download directory are
-removed on success and every failure path. The acquisition core still requires
-the normalized bundle to equal the bundle retained in the attestation artifact.
+removed on success and every failure path. A retained JSONL artifact may contain
+multiple exact-subject records, such as GitHub's automatic Release attestation
+alongside Registry Validation provenance. The acquisition core selects the
+committed attestation ID and requires its normalized bundle exactly once in the
+retained JSONL bytes.
 
-Run `29558617089` selected provenance artifact `8398387031` with digest
-`sha256:f76ff92c8e142a3bb2734dc60f7b332473201ee0d7350b41acf11e1c8e78bc99`
-and attestation artifact `8398387418` with digest
-`sha256:84608ed6f02ee9681dda8006e42f243af67e1e045231392a0e1dd9af8c8ec893`.
+Run `29643434413` selected provenance artifact `8429308868` with digest
+`sha256:039964a14923ea9f51af8a9568cdea0d1c7cdbbcc3954147f6b59d8054fdb997`
+and attestation artifact `8429308948` with digest
+`sha256:1d3826a6e17c102a1ab2bb053ae24a996051e464e496bb853ca002d9e6975274`.
 The canonical acquisition SHA-256 is
-`ede6acc0c69c1d2e00cabffba73cd3b6a5133c7f88186c22cc86f1f2a1edd829`;
+`2673b6f7d755f1aff913ac0f796a1515149d3cd5a8e16acfd21759b71e3c11f0`;
 the importer handoff produced evidence SHA-256
-`e5a23c12d99362d5ec3c882de3acfb161b6644e9777b16dc036e0d675cf511a6`.
+`201d16d7845212fa115674deacb6766ea03b2d6982a43036f40f110ee652550e`.
 
 The output is exposed only after the existing offline importer accepts the
 staged canonical metadata and artifacts. Duplicate destinations and any
@@ -60,10 +66,10 @@ Import the accepted canonical bundle into the repository archive:
 
 ```bash
 pnpm import:release-evidence -- \
-  --version 0.2.62 \
-  --provenance-artifact-dir /tmp/release-evidence-0.2.62/provenance \
-  --attestation-artifact-dir /tmp/release-evidence-0.2.62/attestation \
-  --metadata-file /tmp/release-evidence-0.2.62/release-evidence-metadata.json \
+  --version 0.3.0 \
+  --provenance-artifact-dir /tmp/release-evidence-0.3.0/provenance \
+  --attestation-artifact-dir /tmp/release-evidence-0.3.0/attestation \
+  --metadata-file /tmp/release-evidence-0.3.0/release-evidence-metadata.json \
   --archive-root evidence/npm \
   --json
 ```
