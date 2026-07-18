@@ -1,6 +1,14 @@
 name: Native Demo Evidence
 
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/demo-evidence.yml"
+      - "android/**"
+      - "example/**"
+      - "ios/**"
+      - "src/**"
+      - "package.json"
   workflow_dispatch:
     inputs:
       source_sha:
@@ -12,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: native-demo-evidence-${{ inputs.source_sha }}
+  group: native-demo-evidence-${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
   cancel-in-progress: false
 
 jobs:
@@ -24,7 +32,7 @@ jobs:
       - name: Checkout exact source
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Java
         uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
@@ -116,7 +124,7 @@ jobs:
             node scripts/create-demo-evidence.mjs \
               --platform android \
               --package-version 0.3.0 \
-              --source-sha "${{ inputs.source_sha }}" \
+              --source-sha "${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}" \
               --runtime "$runtime" \
               --device "$device" \
               --source /tmp/rnick-demo-raw/source.jpg \
@@ -129,7 +137,7 @@ jobs:
       - name: Upload Android evidence
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: native-demo-android-${{ inputs.source_sha }}
+          name: native-demo-android-${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
           path: demo-evidence/android
           if-no-files-found: error
           retention-days: 30
@@ -142,7 +150,7 @@ jobs:
       - name: Checkout exact source
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
@@ -205,7 +213,7 @@ jobs:
           node scripts/create-demo-evidence.mjs \
             --platform ios \
             --package-version 0.3.0 \
-            --source-sha "${{ inputs.source_sha }}" \
+            --source-sha "${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}" \
             --runtime "$runtime" \
             --device "$device" \
             --source /tmp/rnick-demo-raw/source.jpg \
@@ -218,7 +226,7 @@ jobs:
       - name: Upload iOS evidence
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
-          name: native-demo-ios-${{ inputs.source_sha }}
+          name: native-demo-ios-${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
           path: demo-evidence/ios
           if-no-files-found: error
           retention-days: 30
