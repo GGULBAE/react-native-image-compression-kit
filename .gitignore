@@ -102,7 +102,7 @@ DerivedData/
 
 # Archives and generated packages
 *.tgz
-!evidence/npm/0.2.50/provenance/package.tgz
+!evidence/npm/*/provenance/package.tgz
 *.tar
 *.tar.gz
 *.zip
