@@ -11,14 +11,19 @@ const contract = JSON.parse(
   readFileSync(path.join(root, 'docs/repository-settings.json'), 'utf8')
 );
 const repository = contract.repository;
+const rulesetSummaries = api(`repos/${repository}/rulesets`);
+const environmentSummaries = api(`repos/${repository}/environments`).environments;
 const actual = {
   repository: api(`repos/${repository}`),
   privateVulnerability: api(`repos/${repository}/private-vulnerability-reporting`, true),
   immutableReleases: api(`repos/${repository}/immutable-releases`, true),
   actions: api(`repos/${repository}/actions/permissions`),
+  selectedActions: api(`repos/${repository}/actions/permissions/selected-actions`),
   workflowPermissions: api(`repos/${repository}/actions/permissions/workflow`),
-  rulesets: api(`repos/${repository}/rulesets`),
-  environments: api(`repos/${repository}/environments`).environments,
+  rulesets: rulesetSummaries.map(({ id }) => api(`repos/${repository}/rulesets/${id}`)),
+  environments: environmentSummaries.map(({ name }) =>
+    api(`repos/${repository}/environments/${encodeURIComponent(name)}`)
+  ),
   community: api(`repos/${repository}/community/profile`),
   pages: api(`repos/${repository}/pages`, true),
 };

@@ -68,12 +68,60 @@ describe('repository settings contract', () => {
       privateVulnerability: { enabled: true },
       immutableReleases: { enabled: true },
       actions: { allowed_actions: 'selected', sha_pinning_required: true },
-      workflowPermissions: { default_workflow_permissions: 'read' },
+      selectedActions: {
+        github_owned_allowed: true,
+        verified_allowed: false,
+        patterns_allowed: contract.actions.allowedPatterns,
+      },
+      workflowPermissions: {
+        default_workflow_permissions: 'read',
+        can_approve_pull_request_reviews: false,
+      },
       rulesets: [
-        { name: 'Protected master', target: 'branch', enforcement: 'active' },
-        { name: 'Immutable version tags', target: 'tag', enforcement: 'active' },
+        {
+          name: 'Protected master',
+          target: 'branch',
+          enforcement: 'active',
+          conditions: { ref_name: { include: ['refs/heads/master'] } },
+          rules: [
+            { type: 'deletion' },
+            { type: 'non_fast_forward' },
+            {
+              type: 'pull_request',
+              parameters: {
+                required_approving_review_count: 0,
+                required_review_thread_resolution: true,
+              },
+            },
+            {
+              type: 'required_status_checks',
+              parameters: {
+                strict_required_status_checks_policy: true,
+                required_status_checks: contract.branchRuleset.requiredStatusChecks.map((context) => ({ context })),
+              },
+            },
+          ],
+        },
+        {
+          name: 'Immutable version tags',
+          target: 'tag',
+          enforcement: 'active',
+          conditions: { ref_name: { include: ['refs/tags/v*'] } },
+          rules: [{ type: 'deletion' }, { type: 'update' }],
+        },
       ],
-      environments: [{ name: 'github-pages' }, { name: 'npm-production' }],
+      environments: [
+        {
+          name: 'github-pages',
+          deployment_branch_policy: { protected_branches: true, custom_branch_policies: false },
+          protection_rules: [],
+        },
+        {
+          name: 'npm-production',
+          deployment_branch_policy: { protected_branches: true, custom_branch_policies: false },
+          protection_rules: [{ type: 'required_reviewers', reviewers: [{ reviewer: { login: 'maintainer' } }] }],
+        },
+      ],
       community: { health_percentage: 100 },
       pages: { build_type: 'workflow' },
     };
@@ -89,6 +137,7 @@ describe('repository settings contract', () => {
       privateVulnerability: { enabled: false },
       immutableReleases: { enabled: false },
       actions: { allowed_actions: 'all', sha_pinning_required: false },
+      selectedActions: {},
       workflowPermissions: { default_workflow_permissions: 'write' },
       rulesets: [],
       environments: [],

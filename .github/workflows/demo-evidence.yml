@@ -9,6 +9,9 @@ on:
       - "ios/**"
       - "src/**"
       - "package.json"
+      - "scripts/capture-android-demo.sh"
+      - "scripts/create-demo-evidence.mjs"
+      - "scripts/demo-evidence-core.mjs"
   workflow_dispatch:
     inputs:
       source_sha:

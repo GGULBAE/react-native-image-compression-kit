@@ -80,8 +80,13 @@ done
 sleep 2
 dismiss_system_anr_dialog
 adb shell am start -n com.imagecompressionkit.example/.MainActivity >/dev/null
-if ! adb shell dumpsys activity activities | grep -q 'mResumedActivity.*com.imagecompressionkit.example'; then
+activity_state=$(adb shell dumpsys activity activities)
+window_state=$(adb shell dumpsys window windows)
+if ! printf '%s\n' "$activity_state" | grep -Eq '(mResumedActivity|topResumedActivity).*com.imagecompressionkit.example' && \
+  ! printf '%s\n' "$window_state" | grep -Eq '(mCurrentFocus|mFocusedApp).*com.imagecompressionkit.example'; then
   echo 'Example app is not the resumed activity before screenshot capture.' >&2
+  printf '%s\n' "$activity_state" | grep -E 'ResumedActivity|com.imagecompressionkit.example' >&2 || true
+  printf '%s\n' "$window_state" | grep -E 'mCurrentFocus|mFocusedApp' >&2 || true
   exit 1
 fi
 adb exec-out screencap -p > /tmp/rnick-demo-raw/screen.png

@@ -46,6 +46,7 @@ and the docs site stable for at least one observation window.
 - [English announcement](announcement-en.md)
 - [Korean announcement](announcement-ko.md)
 - [v0.3.0 release notes](v0.3.0-release-notes.md)
+- [Channel-specific copy and asset map](channel-copy.md)
 - [Public compatibility contract](../compatibility-matrix.json)
 - [Repository settings contract](../repository-settings.json)
 
