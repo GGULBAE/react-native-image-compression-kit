@@ -48,10 +48,13 @@ cd ios && pod install
 ```
 
 Android 23+ and iOS 13.4+ are supported. The package declares React Native
-`>=0.73 <1.0`; the v0.3.0 candidate currently exercises React Native 0.86 with
-the New Architecture, and the declared floor remains release-gated until the
-compatibility matrix passes. Expo requires a development build or prebuild;
-Expo Go and Snack cannot load this custom native module.
+`>=0.73 <1.0`. The v0.3.0 release matrix verifies React Native 0.73.11 Legacy,
+React Native 0.86.0 Legacy and New Architecture, and Expo 57.0.7 with React
+Native 0.86.0 New Architecture on both platforms. Versions between the tested
+endpoints are accepted by the peer range but are not individually release
+tested. Expo requires a development build or prebuild; Expo Go and Snack
+cannot load this custom native module. See the
+[exact compatibility evidence](https://ggulbae.github.io/react-native-image-compression-kit/reference/compatibility).
 
 See the [installation guide](https://ggulbae.github.io/react-native-image-compression-kit/guide/installation)
 for Bare React Native, Expo development-build, rebuild, and URI integration

@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "packageVersion": "0.3.0",
+  "sourceCommit": "e5e1e4e19d36ff719092accae82811545f166d65",
+  "cases": [
+    {
+      "schemaVersion": 1,
+      "status": "passed",
+      "packageVersion": "0.3.0",
+      "sourceCommit": "e5e1e4e19d36ff719092accae82811545f166d65",
+      "capturedAt": "2026-07-18T07:40:41.430Z",
+      "platform": "android",
+      "runtime": "Android 15 / API 35",
+      "device": "Google sdk_gphone64_x86_64",
+      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966139",
+      "sourceUriKind": "file",
+      "options": {
+        "resize": {
+          "maxWidth": 160,
+          "maxHeight": 160,
+          "mode": "contain"
+        },
+        "output": {
+          "format": "jpeg",
+          "quality": 76,
+          "maxBytes": 8000
+        },
+        "metadata": "safe"
+      },
+      "result": {
+        "format": "jpeg",
+        "width": 100,
+        "height": 160,
+        "byteSize": 2284,
+        "originalByteSize": 13543,
+        "compressionRatio": 0.16864801004208815
+      },
+      "assets": {
+        "source": {
+          "file": "android/source.jpg",
+          "byteSize": 13543,
+          "sha256": "5bd83125571f96b575b25f3172630a0a6dd61223ca310b586538c3d5b5f0a830"
+        },
+        "output": {
+          "file": "android/output.jpg",
+          "byteSize": 2284,
+          "sha256": "4a6f8facb96cadd1f89cce221d9da0ea986d253678e568931eda86e4098a12b0"
+        },
+        "screenshot": {
+          "file": "android/screen.png",
+          "byteSize": 296405,
+          "sha256": "788df778c7c9839e4268b647f0d4a9694fd29ab39f19597537a08840f27038e4"
+        }
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "status": "passed",
+      "packageVersion": "0.3.0",
+      "sourceCommit": "e5e1e4e19d36ff719092accae82811545f166d65",
+      "capturedAt": "2026-07-18T07:45:19.677Z",
+      "platform": "ios",
+      "runtime": "iOS.26.4",
+      "device": "iPhone 17 Pro",
+      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966139",
+      "sourceUriKind": "file",
+      "options": {
+        "resize": {
+          "maxWidth": 160,
+          "maxHeight": 160,
+          "mode": "contain"
+        },
+        "output": {
+          "format": "jpeg",
+          "quality": 76,
+          "maxBytes": 8000
+        },
+        "metadata": "safe"
+      },
+      "result": {
+        "format": "jpeg",
+        "width": 100,
+        "height": 160,
+        "byteSize": 2473,
+        "originalByteSize": 3317,
+        "compressionRatio": 0.7455532107325897
+      },
+      "assets": {
+        "source": {
+          "file": "ios/source.jpg",
+          "byteSize": 3317,
+          "sha256": "cf6d942c3fbf81442723bc64cab2d5133044494ad0b1e79d6dc9c280519742f2"
+        },
+        "output": {
+          "file": "ios/output.jpg",
+          "byteSize": 2473,
+          "sha256": "668914493228369301a615e7486e95f1abc31e5f9a2b4175c551fe74fa9eaf26"
+        },
+        "screenshot": {
+          "file": "ios/screen.png",
+          "byteSize": 291587,
+          "sha256": "1efe060a9fb8c3954578ae665bdf1838b5c0ff616693ab1368c179c9c58b3ade"
+        }
+      }
+    }
+  ],
+  "presentation": {
+    "video": {
+      "file": "native-demo.mp4",
+      "byteSize": 173848,
+      "sha256": "943005f0280d0477db80bf43aa2ef324431447ae4ff143c7faf1923220c6af6b",
+      "durationSeconds": 5,
+      "generator": "ffmpeg 8.1.2 crossfade of exact Android and iOS native screenshots; see website/demo/index.md"
+    }
+  }
+}

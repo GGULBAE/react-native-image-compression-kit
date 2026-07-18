@@ -24,8 +24,10 @@ and patch releases remain backward compatible within the current minor line.
 - Native compression and output behavior remain unchanged from 0.2.62.
 - Android requires API 23 or newer; iOS requires 13.4 or newer.
 - Expo requires a development build or prebuild. Expo Go is unsupported.
-- The final React Native compatibility range will match the release matrix
-  completed before publication.
+- The verified release lanes cover React Native 0.73.11 Legacy, React Native
+  0.86.0 Legacy/New, and Expo 57.0.7 development builds on Android and iOS.
+- Intermediate React Native versions accepted by the `>=0.73 <1.0` peer range
+  are not individually release tested.
 
 ## 0.2.62 - 2026-07-17
 

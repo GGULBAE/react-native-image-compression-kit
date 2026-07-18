@@ -14,6 +14,7 @@ import { inspectDemoEvidence } from './demo-evidence-core.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const websiteRoot = path.join(root, 'website');
 const canonicalSite = 'https://ggulbae.github.io/react-native-image-compression-kit/';
+const siteBasePath = '/react-native-image-compression-kit/';
 const requiredFiles = [
   'website/.vitepress/config.mts',
   'website/.vitepress/theme/index.ts',
@@ -82,6 +83,15 @@ for (const sourcePath of markdownFiles) {
       if (!anchors.has(decodeURIComponent(rawAnchor).toLowerCase())) {
         errors.push(`${relativeSource}: missing anchor ${target}`);
       }
+    }
+  }
+  for (const target of parseHtmlAssetTargets(source)) {
+    const publicRelative = target.startsWith(siteBasePath)
+      ? target.slice(siteBasePath.length)
+      : target.replace(/^\//, '');
+    const targetPath = path.join(websiteRoot, 'public', publicRelative);
+    if (!existsSync(targetPath) || !statSync(targetPath).isFile()) {
+      errors.push(`${relativeSource}: missing public asset ${target}`);
     }
   }
 }
@@ -159,4 +169,13 @@ function resolveMarkdownTarget(sourcePath, target) {
     return path.join(websiteRoot, clean.endsWith('.md') ? clean : `${clean}.md`);
   }
   return path.resolve(path.dirname(sourcePath), decodeURIComponent(target));
+}
+
+function parseHtmlAssetTargets(source) {
+  return [...source.matchAll(/\b(?:href|poster|src)=["']([^"']+)["']/g)]
+    .map(([, target]) => target)
+    .filter((target) => {
+      if (!target.startsWith('/')) return false;
+      return /\.(?:avif|gif|jpe?g|json|mp4|png|svg|webp)$/i.test(target);
+    });
 }

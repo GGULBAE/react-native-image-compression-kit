@@ -6,11 +6,16 @@
 | --- | --- |
 | Android | API 23 or newer |
 | iOS | iOS 13.4 or newer |
-| React Native | The release-gated compatibility matrix, currently validating 0.86 |
-| Expo | Development build or prebuild; Expo Go and Snack are unsupported |
+| React Native | `>=0.73 <1.0`; verified at 0.73.11 Legacy and 0.86.0 Legacy/New |
+| Expo | 57.0.7 development build verified; Expo Go and Snack are unsupported |
 
 The package contains custom Android and iOS code. Every installation or version
 change requires rebuilding the native application.
+
+The [exact compatibility matrix](../reference/compatibility.md) records the
+tested Node, React Native, Expo, architecture, and platform lanes. Intermediate
+React Native versions inside the peer range are not individually release
+tested.
 
 ## Bare React Native
 

@@ -18,8 +18,9 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 
 The candidate keeps native compression and output behavior unchanged. It adds
 the public surfaces and operational controls required for a reproducible open
-source launch. Publication remains blocked until the compatibility, website,
-package, repository-setting, and release workflow gates pass.
+source launch. The exact Android/iOS compatibility matrix is green;
+publication remains blocked until the website, package, repository-setting,
+and release workflow gates pass.
 
 ### Included
 
@@ -44,6 +45,14 @@ package, repository-setting, and release workflow gates pass.
 - Rewriting historical release-evidence policy, digests, or archives.
 
 ### Candidate validation
+
+- Exact compatibility evidence:
+  [run 29635966120](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966120)
+  passed React Native 0.73.11 Legacy, React Native 0.86.0 Legacy/New, and Expo
+  57.0.7 development-build consumers on Android and iOS.
+- Exact native demo evidence:
+  [run 29635966139](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966139)
+  produced the checked Android/iOS assets and digest manifest.
 
 ```bash
 pnpm verify

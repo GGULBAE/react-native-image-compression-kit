@@ -104,6 +104,41 @@ export function inspectDemoEvidence(root, manifest) {
     }
   }
 
+  const video = manifest?.presentation?.video;
+  if (
+    typeof video?.file !== 'string' ||
+    video.file.startsWith('/') ||
+    video.file.includes('..')
+  ) {
+    errors.push('presentation video file path is invalid');
+  } else {
+    const videoPath = path.resolve(root, video.file);
+    if (!videoPath.startsWith(`${path.resolve(root)}${path.sep}`) || !existsSync(videoPath)) {
+      errors.push('presentation video is missing');
+    } else {
+      const bytes = readFileSync(videoPath);
+      if (statSync(videoPath).size !== video.byteSize) {
+        errors.push('presentation video byte size mismatch');
+      }
+      if (sha256(bytes) !== video.sha256) {
+        errors.push('presentation video SHA-256 mismatch');
+      }
+      if (bytes.subarray(4, 8).toString('ascii') !== 'ftyp') {
+        errors.push('presentation video is not MP4');
+      }
+    }
+  }
+  if (
+    typeof video?.durationSeconds !== 'number' ||
+    video.durationSeconds <= 0 ||
+    video.durationSeconds > 30
+  ) {
+    errors.push('presentation video duration must be between 0 and 30 seconds');
+  }
+  if (typeof video?.generator !== 'string' || !video.generator.includes('ffmpeg')) {
+    errors.push('presentation video must record its ffmpeg generator');
+  }
+
   return {
     schemaVersion: 1,
     status: errors.length === 0 ? 'passed' : 'failed',

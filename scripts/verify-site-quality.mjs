@@ -52,6 +52,7 @@ try {
 
   const lighthouseResult = await lighthouse(`${origin}${basePath}`, {
     port: chrome.port,
+    preset: 'desktop',
     output: 'json',
     logLevel: 'error',
     onlyCategories: Object.keys(thresholds),
@@ -92,6 +93,7 @@ try {
   const report = {
     schemaVersion: 1,
     status: scoreFailures.length === 0 && violations.length === 0 ? 'passed' : 'failed',
+    profile: 'lighthouse-desktop-local-build',
     scores,
     thresholds,
     axe: {

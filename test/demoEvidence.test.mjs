@@ -37,6 +37,18 @@ describe('native demo evidence', () => {
       'demo output must be smaller than its source'
     );
   });
+
+  it('rejects presentation-video digest and duration drift', () => {
+    const fixture = createFixture();
+    writeFileSync(path.join(fixture.root, 'native-demo.mp4'), Buffer.from('tampered'));
+    fixture.manifest.presentation.video.durationSeconds = 31;
+    const report = inspectDemoEvidence(fixture.root, fixture.manifest);
+    expect(report.status).toBe('failed');
+    expect(report.error).toContain('presentation video byte size mismatch');
+    expect(report.error).toContain('presentation video SHA-256 mismatch');
+    expect(report.error).toContain('presentation video is not MP4');
+    expect(report.error).toContain('presentation video duration');
+  });
 });
 
 function createFixture() {
@@ -79,9 +91,26 @@ function createFixture() {
       },
     };
   });
+  const video = Buffer.from([0, 0, 0, 24, 0x66, 0x74, 0x79, 0x70, 0, 0, 0, 0]);
+  writeFileSync(path.join(root, 'native-demo.mp4'), video);
   return {
     root,
-    manifest: { schemaVersion: 1, status: 'passed', packageVersion: '0.3.0', sourceCommit: SHA, cases },
+    manifest: {
+      schemaVersion: 1,
+      status: 'passed',
+      packageVersion: '0.3.0',
+      sourceCommit: SHA,
+      cases,
+      presentation: {
+        video: {
+          file: 'native-demo.mp4',
+          byteSize: video.length,
+          sha256: createHash('sha256').update(video).digest('hex'),
+          durationSeconds: 5,
+          generator: 'ffmpeg fixture',
+        },
+      },
+    },
   };
 }
 
