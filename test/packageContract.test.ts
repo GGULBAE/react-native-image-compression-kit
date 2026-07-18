@@ -39,6 +39,7 @@ describe('npm package contract', () => {
           types: './lib/index.d.ts',
           default: './lib/index.js',
         },
+        './package.json': './package.json',
       },
       peerDependencies: { 'react-native': '>=0.73 <1.0' },
     });
