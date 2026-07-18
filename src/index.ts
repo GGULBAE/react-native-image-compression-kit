@@ -3,6 +3,7 @@ export {
   getImageCompressionCapabilities,
 } from './api';
 export { ImageCompressionKitError } from './errors';
+export type { ImageCompressionKitErrorCode } from './errors';
 export {
   IMAGE_FORMATS,
   METADATA_POLICIES,

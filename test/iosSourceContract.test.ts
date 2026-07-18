@@ -21,10 +21,21 @@ describe('iOS source contract', () => {
     expect(header).toContain(
       '@interface RCTImageCompressionKit : NSObject <NativeImageCompressionKitSpec>'
     );
+    expect(header).toContain(
+      '@interface RCTImageCompressionKit : NSObject <RCTBridgeModule>'
+    );
+    expect(header).toContain(
+      '#if __has_include(<RNImageCompressionKitSpec/RNImageCompressionKitSpec.h>)'
+    );
     expect(implementation).toContain('RCT_EXPORT_MODULE(ImageCompressionKit)');
+    expect(implementation).toContain('#if RNICK_HAS_CODEGEN_SPEC');
     expect(implementation).toContain('getTurboModule:');
     expect(implementation).toContain(
       'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options'
+    );
+    expect(implementation).toContain('RCT_REMAP_METHOD(compressImage,');
+    expect(implementation).toContain(
+      'RCT_REMAP_METHOD(getImageCompressionCapabilities,'
     );
     expect(implementation).toContain('getImageCompressionCapabilities:');
   });
@@ -805,17 +816,15 @@ describe('iOS source contract', () => {
     ).toEqual([]);
 
     const exampleApp = readProjectFile('example/src/App.tsx');
+    const exampleSmoke = readProjectFile('example/src/iosSmoke.ts');
     const exampleModule = readProjectFile(
       'example/ios/ImageCompressionKitExample/ExampleImageSource.m'
     );
-    for (const marker of [
-      'RNICK_IOS_SMOKE_START',
-      'RNICK_IOS_SMOKE_PASS',
-      'RNICK_IOS_SMOKE_FAIL',
-    ]) {
-      expect(exampleApp).toContain(marker);
-    }
+    expect(exampleSmoke).toContain('RNICK_IOS_SMOKE_START');
+    expect(exampleApp).toContain('RNICK_IOS_SMOKE_PASS');
+    expect(exampleApp).toContain('RNICK_IOS_SMOKE_FAIL');
     expect(exampleApp).toContain('runIOSHostAppSmokeValidation');
+    expect(exampleSmoke).toContain('export async function runIOSHostAppSmokeValidation');
     expect(exampleModule).toContain('@interface ExampleImageSource');
     expect(exampleModule).toContain('RCT_EXPORT_MODULE();');
   });

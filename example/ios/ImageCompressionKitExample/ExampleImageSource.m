@@ -31,6 +31,18 @@ RCT_EXPORT_METHOD(isSmokeTestEnabled:(RCTPromiseResolveBlock)resolve
   resolve(@([enabled isEqualToString:@"1"] || [simctlEnabled isEqualToString:@"1"] || hasSmokeArgument));
 }
 
+RCT_EXPORT_METHOD(isDemoCaptureEnabled:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  (void)reject;
+  NSProcessInfo *processInfo = [NSProcessInfo processInfo];
+  NSString *enabled = processInfo.environment[@"RNICK_DEMO_CAPTURE"];
+  NSString *simctlEnabled = processInfo.environment[@"SIMCTL_CHILD_RNICK_DEMO_CAPTURE"];
+  BOOL hasCaptureArgument = [processInfo.arguments containsObject:@"--rnick-demo-capture"];
+
+  resolve(@([enabled isEqualToString:@"1"] || [simctlEnabled isEqualToString:@"1"] || hasCaptureArgument));
+}
+
 RCT_EXPORT_METHOD(logSmokeEvent:(NSString *)message
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)

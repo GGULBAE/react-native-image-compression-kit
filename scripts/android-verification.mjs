@@ -369,6 +369,7 @@ function checkDocumentationSemantics() {
       'git+https://github.com/GGULBAE/react-native-image-compression-kit.git',
     packageJson.exports?.['.']?.types === './lib/index.d.ts',
     packageJson.exports?.['.']?.default === './lib/index.js',
+    packageJson.exports?.['./package.json'] === './package.json',
     packageJson.peerDependencies?.['react-native'] === '>=0.73 <1.0',
     packageJson.scripts?.['docs:check'] === 'node scripts/verify-docs.mjs',
   ];
@@ -705,7 +706,7 @@ function checkAndroidRuntimeAuthorities() {
     },
     {
       ok: packageContents.includes(
-        'class ImageCompressionKitPackage : BaseReactPackage()'
+        'class ImageCompressionKitPackage : TurboReactPackage()'
       ),
       name: 'React package registration',
     },

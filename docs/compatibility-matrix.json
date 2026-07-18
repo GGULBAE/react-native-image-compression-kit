@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "packageVersion": "0.3.0",
+  "workflow": ".github/workflows/compatibility.yml",
+  "lanes": [
+    {
+      "id": "rn-floor-legacy",
+      "kind": "bare",
+      "reactNative": "0.73.11",
+      "react": "18.2.0",
+      "cli": "12.3.7",
+      "node": "18",
+      "architecture": "legacy",
+      "platforms": ["android", "ios"],
+      "releaseRequired": true
+    },
+    {
+      "id": "rn-current-legacy",
+      "kind": "bare",
+      "reactNative": "0.86.0",
+      "react": "19.2.3",
+      "cli": "20.1.3",
+      "node": "24",
+      "architecture": "legacy",
+      "platforms": ["android", "ios"],
+      "releaseRequired": true
+    },
+    {
+      "id": "rn-current-new",
+      "kind": "bare",
+      "reactNative": "0.86.0",
+      "react": "19.2.3",
+      "cli": "20.1.3",
+      "node": "24",
+      "architecture": "new",
+      "platforms": ["android", "ios"],
+      "releaseRequired": true
+    },
+    {
+      "id": "expo-current-new",
+      "kind": "expo",
+      "expo": "57.0.7",
+      "reactNative": "0.86.0",
+      "react": "19.2.3",
+      "node": "24",
+      "architecture": "new",
+      "platforms": ["android", "ios"],
+      "releaseRequired": true
+    }
+  ]
+}

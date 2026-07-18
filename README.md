@@ -17,16 +17,17 @@ handle platform codec differences before compression.
 <!-- package-status:start -->
 ## Current status
 
-- Package version: `0.2.62`
+- Package version: `0.3.0`
 - npm latest: `0.2.62`
-- Release state: `release`
-- Registry checked at: `2026-07-17`
+- Release state: `candidate`
+- Registry checked at: `2026-07-18`
 <!-- package-status:end -->
 
-Version 0.2.62 keeps the public API and image output behavior unchanged
-while isolating iOS request, input, decode, resize/render, JPEG metadata, and
-output encoder/persistence ownership plus pipeline orchestration behind
-executable native contracts.
+Version 0.3.0 is the public-launch candidate. Native compression behavior stays
+unchanged while the project adds verified integration guidance, a native-result
+demo site, community support paths, compatibility gates, and trusted release
+automation. The published npm version remains 0.2.62 until every release gate
+passes.
 
 ## Installation
 
@@ -46,8 +47,18 @@ For iOS, install pods after adding the package:
 cd ios && pod install
 ```
 
-React Native `>=0.73 <1.0` is supported. The package is New
-Architecture/Codegen ready.
+Android 23+ and iOS 13.4+ are supported. The package declares React Native
+`>=0.73 <1.0`. The v0.3.0 release matrix verifies React Native 0.73.11 Legacy,
+React Native 0.86.0 Legacy and New Architecture, and Expo 57.0.7 with React
+Native 0.86.0 New Architecture on both platforms. Versions between the tested
+endpoints are accepted by the peer range but are not individually release
+tested. Expo requires a development build or prebuild; Expo Go and Snack
+cannot load this custom native module. See the
+[exact compatibility evidence](https://ggulbae.github.io/react-native-image-compression-kit/reference/compatibility).
+
+See the [installation guide](https://ggulbae.github.io/react-native-image-compression-kit/guide/installation)
+for Bare React Native, Expo development-build, rebuild, and URI integration
+steps.
 
 ## Quick start
 
@@ -126,6 +137,7 @@ runtimes.
 ### Other exports
 
 - `ImageCompressionKitError`
+- `ImageCompressionKitErrorCode`
 - `IMAGE_FORMATS`, `OUTPUT_FORMATS`, `METADATA_POLICIES`, `RESIZE_MODES`
 - Public TypeScript types for options, results, formats, resize, metadata, and
   capabilities
@@ -225,6 +237,9 @@ pnpm example:ios:pipeline-test
 pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm docs:check
+pnpm site:check
+pnpm site:build
+pnpm fixtures:compatibility:check
 git diff --check
 pnpm pack --dry-run
 ```
@@ -251,6 +266,8 @@ are aligned.
 Operational material is repository-only and is not included in the npm
 tarball:
 
+- [User guides and native-result demo](https://ggulbae.github.io/react-native-image-compression-kit/)
+
 - [Release evidence operations](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/README.md)
 - [Registry provenance](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/registry-provenance.md)
 - [Policy review](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/policy-review.md)
@@ -264,9 +281,18 @@ tarball:
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for supported versions, vulnerability reporting,
-package prohibitions, and links to repository-only execution procedures.
+See [SECURITY.md](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/SECURITY.md)
+for supported versions, private vulnerability reporting, package prohibitions,
+and repository-only execution procedures.
+
+## Contributing and support
+
+- [Contribution guide](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/CONTRIBUTING.md)
+- [Support policy](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/SUPPORT.md)
+- [Code of Conduct](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/CODE_OF_CONDUCT.md)
+- [Changelog](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/CHANGELOG.md)
+- [GitHub Discussions](https://github.com/GGULBAE/react-native-image-compression-kit/discussions)
 
 ## License
 
-MIT License. See [LICENSE](./LICENSE).
+MIT License. See [LICENSE](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/LICENSE).

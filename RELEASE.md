@@ -3,14 +3,79 @@
 This file keeps the current release work and the most recent release evidence.
 Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-history.md).
 
-## v0.2.62
+## v0.3.0
 
 <!-- release-status:start -->
+- Package version: `0.3.0`
+- npm latest: `0.2.62`
+- Release state: `candidate`
+- Registry checked at: `2026-07-18`
+<!-- release-status:end -->
+
+- Scope: public support contract, user documentation and native-result demo,
+  compatibility evidence, community health, protected repository settings,
+  OIDC trusted publishing, and an exact-artifact public launch
+
+The candidate keeps native compression and output behavior unchanged. It adds
+the public surfaces and operational controls required for a reproducible open
+source launch. The exact Android/iOS compatibility matrix is green;
+publication remains blocked until the website, package, repository-setting,
+and release workflow gates pass.
+
+### Included
+
+- Android 23+, iOS 13.4+, React Native architecture, Node, Bare React Native,
+  and Expo development-build compatibility contracts backed by release gates.
+- A VitePress public site, typed integration guides, an option-to-code builder,
+  and traceable Android/iOS native-result demo artifacts.
+- Targeted example-app presentation refactoring without native pipeline changes.
+- Contribution, support, governance, issue, pull request, security-reporting,
+  changelog, and discoverability surfaces.
+- Protected branch/tag and repository-setting audits.
+- One-tarball OIDC npm trusted publishing, registry verification, immutable
+  GitHub Release, and existing release-evidence handoff.
+- A launch kit that is ready for separately approved public announcements.
+
+### Not included
+
+- New codecs, native compression behavior, cancellation, progress, or browser
+  compression.
+- Expo Go, App Store/Play Store distribution, v1.0 stability, paid marketing,
+  tracking analytics, Changesets, or semantic-release.
+- Rewriting historical release-evidence policy, digests, or archives.
+
+### Candidate validation
+
+- Exact compatibility evidence:
+  [run 29635966120](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966120)
+  passed React Native 0.73.11 Legacy, React Native 0.86.0 Legacy/New, and Expo
+  57.0.7 development-build consumers on Android and iOS.
+- Exact native demo evidence:
+  [run 29635966139](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966139)
+  produced the checked Android/iOS assets and digest manifest.
+
+```bash
+pnpm verify
+pnpm example:typecheck
+pnpm docs:check
+pnpm site:check
+pnpm site:build
+pnpm fixtures:compatibility:check
+pnpm release:dry-run
+git diff --check
+pnpm pack --dry-run
+```
+
+`pnpm release:dry-run` must refuse this candidate. Publication becomes eligible
+only after a reviewed status transition aligns package, README, RELEASE,
+registry state, protected source SHA, and exact tarball identity.
+
+## v0.2.62
+
 - Package version: `0.2.62`
 - npm latest: `0.2.62`
 - Release state: `release`
 - Registry checked at: `2026-07-17`
-<!-- release-status:end -->
 
 - Scope: documentation information architecture, semantic status gates,
   repository verification contract decomposition, Android request parsing, and

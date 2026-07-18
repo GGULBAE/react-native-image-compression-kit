@@ -25,10 +25,26 @@ const STATUS_FIELDS = [
 
 export const REQUIRED_DOCUMENTATION_FILES = [
   'README.md',
+  'CHANGELOG.md',
+  'CODE_OF_CONDUCT.md',
+  'CONTRIBUTING.md',
+  'GOVERNANCE.md',
   'RELEASE.md',
   'SECURITY.md',
+  'SUPPORT.md',
+  'example/README.md',
   RELEASE_STATUS_MANIFEST_PATH,
+  'docs/compatibility-matrix.json',
+  'docs/repository-settings.json',
   'docs/verification-architecture.md',
+  'docs/maintainers/account-recovery.md',
+  'docs/maintainers/repository-settings.md',
+  'docs/maintainers/trusted-release.md',
+  'docs/launch/README.md',
+  'docs/launch/announcement-en.md',
+  'docs/launch/announcement-ko.md',
+  'docs/launch/baseline.json',
+  'docs/launch/v0.3.0-release-notes.md',
   'docs/release-evidence/README.md',
   'docs/release-evidence/registry-provenance.md',
   'docs/release-evidence/policy-review.md',
@@ -50,6 +66,7 @@ const README_HEADINGS = [
   'Development verification',
   'Repository documentation',
   'Security',
+  'Contributing and support',
   'License',
 ];
 
@@ -58,12 +75,16 @@ const README_COMMANDS = [
   'pnpm verify',
   'pnpm example:typecheck',
   'pnpm docs:check',
+  'pnpm site:check',
+  'pnpm site:build',
+  'pnpm fixtures:compatibility:check',
   'git diff --check',
   'pnpm pack --dry-run',
   'pnpm release:dry-run',
 ];
 
 const README_LINKS = [
+  'https://ggulbae.github.io/react-native-image-compression-kit/',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/README.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/registry-provenance.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/policy-review.md',
@@ -74,7 +95,11 @@ const README_LINKS = [
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/verification-architecture.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/RELEASE.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/releases/0.2-history.md',
-  'SECURITY.md',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/SECURITY.md',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/CONTRIBUTING.md',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/SUPPORT.md',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/CODE_OF_CONDUCT.md',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/CHANGELOG.md',
 ];
 
 const FORBIDDEN_PACKAGE_PREFIXES = [
@@ -83,6 +108,8 @@ const FORBIDDEN_PACKAGE_PREFIXES = [
   'scripts',
   'test',
   'tests',
+  'website',
+  'example',
 ];
 
 export function extractStatusBlock(
@@ -419,6 +446,11 @@ export function inspectDocumentation(root) {
       'pnpm verify',
       'pnpm example:typecheck',
       'pnpm docs:check',
+      'pnpm site:check',
+      'pnpm fixtures:compatibility:check',
+      'pnpm fixtures:repository-settings:check',
+      'pnpm audit:repository-settings',
+      'pnpm verify:release-artifact',
       'git diff --check',
       'pnpm pack --dry-run',
     ]) {
@@ -427,6 +459,8 @@ export function inspectDocumentation(root) {
       }
     }
   }
+
+  inspectPublicLaunchContracts(root, packageJson.version, errors);
 
   for (const entry of packageJson.files ?? []) {
     const normalized = entry.replace(/^\.\//, '');
@@ -481,6 +515,73 @@ export function inspectDocumentation(root) {
     manifest: statusReport.manifest,
     markdownFiles,
   };
+}
+
+function inspectPublicLaunchContracts(root, packageVersion, errors) {
+  const compatibilityPath = path.join(root, 'docs/compatibility-matrix.json');
+  if (existsSync(compatibilityPath)) {
+    const compatibility = JSON.parse(readFileSync(compatibilityPath, 'utf8'));
+    if (compatibility.packageVersion !== packageVersion) {
+      errors.push(
+        `compatibility matrix packageVersion expected ${packageVersion}, received ${compatibility.packageVersion}`
+      );
+    }
+    for (const lane of ['rn-floor-legacy', 'rn-current-legacy', 'rn-current-new', 'expo-current-new']) {
+      if (!compatibility.lanes?.some(({ id }) => id === lane)) {
+        errors.push(`compatibility matrix missing release lane: ${lane}`);
+      }
+    }
+  }
+
+  const baselinePath = path.join(root, 'docs/launch/baseline.json');
+  if (existsSync(baselinePath)) {
+    const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));
+    if (baseline.packageVersion !== packageVersion || baseline.schemaVersion !== 1) {
+      errors.push('launch baseline must identify the current exact package version and schema');
+    }
+    for (const field of ['capturedAt', 'npm', 'github', 'measurementWindow']) {
+      if (!Object.hasOwn(baseline, field)) {
+        errors.push(`launch baseline missing field: ${field}`);
+      }
+    }
+  }
+
+  for (const relativePath of [
+    '.github/ISSUE_TEMPLATE/bug.yml',
+    '.github/ISSUE_TEMPLATE/compatibility.yml',
+    '.github/ISSUE_TEMPLATE/feature.yml',
+    '.github/ISSUE_TEMPLATE/config.yml',
+  ]) {
+    const fullPath = path.join(root, relativePath);
+    if (!existsSync(fullPath)) {
+      errors.push(`missing community form: ${relativePath}`);
+      continue;
+    }
+    const form = readFileSync(fullPath, 'utf8');
+    if (
+      relativePath.endsWith('/config.yml')
+        ? !form.includes('blank_issues_enabled: false') || !form.includes('contact_links:')
+        : !form.includes('name:') || !form.includes('description:')
+    ) {
+      errors.push(`${relativePath}: missing semantic name or description`);
+    }
+  }
+
+  for (const [relativePath, requiredSnippets] of [
+    ['docs/maintainers/trusted-release.md', ['npm-production', '.github/workflows/release.yml', 'resume', 'deprecate']],
+    ['docs/maintainers/repository-settings.md', ['Protected master', 'Immutable version tags', 'pnpm audit:repository-settings']],
+    ['docs/maintainers/account-recovery.md', ['two-factor', 'recovery codes', 'npm']],
+    ['docs/launch/README.md', ['pre-launch', 'post-launch', 'approval']],
+  ]) {
+    const fullPath = path.join(root, relativePath);
+    if (!existsSync(fullPath)) continue;
+    const contents = readFileSync(fullPath, 'utf8');
+    for (const snippet of requiredSnippets) {
+      if (!contents.toLowerCase().includes(snippet.toLowerCase())) {
+        errors.push(`${relativePath}: missing launch contract ${snippet}`);
+      }
+    }
+  }
 }
 
 export function validateDocumentation(root) {
@@ -578,7 +679,17 @@ export function parseMarkdownLinks(markdown) {
 }
 
 function collectMarkdownFiles(root) {
-  const files = ['README.md', 'RELEASE.md', 'SECURITY.md'];
+  const files = [
+    'README.md',
+    'CHANGELOG.md',
+    'CODE_OF_CONDUCT.md',
+    'CONTRIBUTING.md',
+    'GOVERNANCE.md',
+    'RELEASE.md',
+    'SECURITY.md',
+    'SUPPORT.md',
+    'example/README.md',
+  ];
   const docsRoot = path.join(root, 'docs');
 
   if (existsSync(docsRoot)) {

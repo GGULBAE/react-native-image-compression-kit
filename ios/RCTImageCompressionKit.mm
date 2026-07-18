@@ -23,6 +23,7 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
   return dispatch_get_main_queue();
 }
 
+#if RNICK_HAS_CODEGEN_SPEC
 - (std::shared_ptr<facebook::react::TurboModule>)getTurboModule:
     (const facebook::react::ObjCTurboModule::InitParams &)params
 {
@@ -85,6 +86,15 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
 
   [self compressImageWithDictionary:optionsMap resolve:resolve reject:reject];
 }
+#else
+RCT_REMAP_METHOD(compressImage,
+                 compressImageWithLegacyOptions:(NSDictionary *)options
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+{
+  [self compressImageWithDictionary:options resolve:resolve reject:reject];
+}
+#endif
 
 - (void)compressImageWithDictionary:(NSDictionary *)options
               resolve:(RCTPromiseResolveBlock)resolve
@@ -110,8 +120,14 @@ RCT_EXPORT_MODULE(ImageCompressionKit)
   }
 }
 
+#if RNICK_HAS_CODEGEN_SPEC
 - (void)getImageCompressionCapabilities:(RCTPromiseResolveBlock)resolve
                                  reject:(RCTPromiseRejectBlock)reject
+#else
+RCT_REMAP_METHOD(getImageCompressionCapabilities,
+                 getImageCompressionCapabilitiesWithResolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+#endif
 {
   NSArray<NSDictionary *> *formats = RCTImageCompressionIOSFormatCapabilities(
     [RCTImageCompressionPipeline defaultWebPOutputAvailable],

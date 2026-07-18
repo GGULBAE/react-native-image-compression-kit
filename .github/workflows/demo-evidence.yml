@@ -1,0 +1,188 @@
+name: Native Demo Evidence
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/demo-evidence.yml"
+      - "android/**"
+      - "example/**"
+      - "ios/**"
+      - "src/**"
+      - "package.json"
+      - "scripts/capture-android-demo.sh"
+      - "scripts/create-demo-evidence.mjs"
+      - "scripts/demo-evidence-core.mjs"
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact lowercase 40-character source commit to capture
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-demo-evidence-${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  android:
+    name: Android native demo capture
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Java
+        uses: actions/setup-java@0f481fcb613427c0f801b606911222b5b6f3083a # v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4
+
+      - name: Enable KVM group permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Android SDK components
+        run: |
+          yes | sdkmanager --install "platforms;android-36" "build-tools;36.0.0" "ndk;27.1.12297006"
+          yes | sdkmanager --licenses >/dev/null
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          version: 11.7.0
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Capture Android result
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
+        env:
+          RNICK_DEMO_PACKAGE_VERSION: "0.3.0"
+          RNICK_DEMO_SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+          RNICK_DEMO_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          emulator-boot-timeout: 1200
+          disable-animations: true
+          script: bash scripts/capture-android-demo.sh
+
+      - name: Upload Android evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: native-demo-android-${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+          path: demo-evidence/android
+          if-no-files-found: error
+          retention-days: 30
+
+  ios:
+    name: iOS native demo capture
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          version: 11.7.0
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build example app
+        run: |
+          pnpm build
+          pnpm example:ios:build
+
+      - name: Capture iOS result
+        shell: bash
+        run: |
+          set -euo pipefail
+          udid=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=Object.values(JSON.parse(s).devices).flat()[0];if(!d)process.exit(1);process.stdout.write(d.udid)})")
+          app=example/ios/build/Build/Products/Debug-iphonesimulator/ImageCompressionKitExample.app
+          xcrun simctl install "$udid" "$app"
+          pnpm --filter image-compression-kit-example exec react-native start --port 8081 > /tmp/rnick-metro.log 2>&1 &
+          metro_pid=$!
+          trap 'kill "$metro_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8081/status | grep -q 'packager-status:running' && break
+            test "$attempt" != "60"
+            sleep 1
+          done
+          SIMCTL_CHILD_RNICK_DEMO_CAPTURE=1 xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example --rnick-demo-capture
+          mkdir -p /tmp/rnick-demo-raw
+          for attempt in $(seq 1 120); do
+            xcrun simctl spawn "$udid" log show --style compact --last 3m --predicate 'eventMessage CONTAINS "RNICK_DEMO_"' > /tmp/rnick-demo-raw/native.log
+            grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && break
+            test "$attempt" != "120"
+            sleep 1
+          done
+          sleep 2
+          xcrun simctl io "$udid" screenshot /tmp/rnick-demo-raw/screen.png
+          node --input-type=module - /tmp/rnick-demo-raw/native.log > /tmp/rnick-demo-raw/uris.txt <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const text = readFileSync(process.argv[2], 'utf8');
+          const match = [...text.matchAll(/RNICK_DEMO_PASS (\{.+\})/g)].at(-1);
+          if (!match) throw new Error('native demo marker missing');
+          const value = JSON.parse(match[1]);
+          console.log(new URL(value.sourceUri).pathname);
+          console.log(new URL(value.result.uri).pathname);
+          NODE
+          cp "$(sed -n '1p' /tmp/rnick-demo-raw/uris.txt)" /tmp/rnick-demo-raw/source.jpg
+          cp "$(sed -n '2p' /tmp/rnick-demo-raw/uris.txt)" /tmp/rnick-demo-raw/output.jpg
+          runtime=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const p=JSON.parse(s);const e=Object.entries(p.devices).find(([,v])=>v.length);process.stdout.write(e[0].replace('com.apple.CoreSimulator.SimRuntime.','').replaceAll('-','.'))})")
+          device=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=Object.values(JSON.parse(s).devices).flat()[0];process.stdout.write(d.name)})")
+          node scripts/create-demo-evidence.mjs \
+            --platform ios \
+            --package-version 0.3.0 \
+            --source-sha "${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}" \
+            --runtime "$runtime" \
+            --device "$device" \
+            --source /tmp/rnick-demo-raw/source.jpg \
+            --output /tmp/rnick-demo-raw/output.jpg \
+            --screenshot /tmp/rnick-demo-raw/screen.png \
+            --log /tmp/rnick-demo-raw/native.log \
+            --destination demo-evidence/ios \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Upload iOS evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: native-demo-ios-${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+          path: demo-evidence/ios
+          if-no-files-found: error
+          retention-days: 30

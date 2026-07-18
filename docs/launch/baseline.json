@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "package": "react-native-image-compression-kit",
+  "packageVersion": "0.3.0",
+  "capturedAt": "2026-07-18",
+  "measurementWindow": {
+    "start": "2026-07-11",
+    "end": "2026-07-17",
+    "timezone": "UTC"
+  },
+  "npm": {
+    "latest": "0.2.62",
+    "downloads": 555
+  },
+  "github": {
+    "stars": 1,
+    "forks": 0,
+    "watchers": 0,
+    "openIssues": 0,
+    "openPullRequests": 2
+  },
+  "notes": "Pre-launch baseline captured from the public GitHub and npm APIs. It is descriptive, not a release gate."
+}

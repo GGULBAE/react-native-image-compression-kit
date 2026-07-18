@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
   s.license = package["license"]
   s.homepage = "https://github.com/GGULBAE/react-native-image-compression-kit"
   s.authors = "react-native-image-compression-kit contributors"
-  s.source = { :git => "https://github.com/GGULBAE/react-native-image-compression-kit.git", :tag => "#{s.version}" }
+  s.source = { :git => "https://github.com/GGULBAE/react-native-image-compression-kit.git", :tag => "v#{s.version}" }
   s.platforms = { :ios => "13.4" }
   s.source_files = "ios/**/*.{h,m,mm}"
   s.private_header_files = [

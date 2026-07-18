@@ -11,6 +11,13 @@ from the npm package.
 | Package metadata, exports, Codegen, publish allowlist, and command wiring | `test/packageContract.test.ts` | `pnpm test` |
 | README, release status, required documentation, and local links | `test/docsSemantic.test.mjs` and `scripts/docs-semantic-core.mjs` | `pnpm docs:check` |
 | GitHub Actions pins and workflow supply chain | `test/workflowSupplyChain.test.mjs` and `scripts/workflow-supply-chain-core.mjs` | `pnpm verify:workflow-supply-chain -- --json` |
+| Public documentation site structure, claims, local links, and npm exclusion | `scripts/verify-site.mjs` | `pnpm site:check` and `pnpm site:build` |
+| Native demo result metrics, source/output/screenshot bytes, presentation-video bytes, digests, platform provenance, and exact source identity | `test/demoEvidence.test.mjs` and `scripts/demo-evidence-core.mjs` | Native Demo Evidence workflow and `pnpm verify:demo-evidence` |
+| Packed-consumer compatibility lane definitions | `test/compatibilityMatrix.test.mjs` and `scripts/compatibility-matrix-core.mjs` | `pnpm fixtures:compatibility:check` and the Compatibility workflow |
+| Built public-site performance, accessibility, and SEO | `scripts/verify-site-quality.mjs` | `pnpm site:build && pnpm site:quality` |
+| Repository metadata, security features, Actions policy, rulesets, environments, and Pages | `test/repositorySettings.test.mjs`, `docs/repository-settings.json`, and `scripts/repository-settings-core.mjs` | `pnpm fixtures:repository-settings:check` and `pnpm audit:repository-settings` |
+| Exact release source, publishable state, tarball identity/inventory, and registry resume policy | `test/releaseArtifact.test.mjs` and `scripts/release-artifact-core.mjs` | `pnpm verify:release-artifact`, `pnpm verify:publication-state`, and the Trusted Release workflow |
+| Protected master identity and required source checks | `test/releaseSource.test.mjs` and `scripts/release-source-core.mjs` | `pnpm verify:release-source` and the Trusted Release workflow |
 | Android registration, typed request/source/decode/transform boundaries, build wiring, fixtures, and native-test presence | `test/androidSourceContract.test.ts` | `pnpm test` and `pnpm android:doctor` |
 | Android compression behavior | Kotlin unit and instrumentation tests under `android/src/test` and `android/src/androidTest` | `pnpm example:android-unit-test` and `pnpm example:android-instrumentation` |
 | iOS bridge, immutable request/source/inspection/decoder/transform/JPEG-metadata/output-encoder/output-persistence/pipeline boundaries, pod, workflow, and native-test/smoke-runner wiring | `test/iosSourceContract.test.ts` | `pnpm test` and `pnpm android:doctor` |
@@ -24,6 +31,11 @@ from the npm package.
 | iOS request-to-output stage order, failure forwarding, runtime capability providers, and smoke observation | Foundation-only table-driven pipeline tests plus UIKit host smoke | `pnpm example:ios:pipeline-test` and `pnpm example:ios:smoke` |
 | iOS compression behavior | Host-app smoke contracts, replay fixtures, and the iOS validation workflow | `pnpm fixtures:ios-pass-replay:audit` and `pnpm example:ios:smoke` |
 | Registry and release evidence | Evidence-specific tests and semantic verifiers | `pnpm verify:release-evidence-set -- --json` and related evidence gates |
+
+The public-site quality gate warms the local preview in Chrome, records three
+desktop Lighthouse runs, and applies the unchanged thresholds to each
+category's median score. Every run remains present in the JSON report, while
+axe checks every sitemap route for serious or critical violations.
 
 ## Source contract policy
 
@@ -46,6 +58,13 @@ pnpm verify
 pnpm example:typecheck
 pnpm fixtures:release-evidence-review-acquisition:check
 pnpm docs:check
+pnpm site:check
+pnpm site:build
+pnpm site:quality
+pnpm fixtures:compatibility:check
+pnpm fixtures:repository-settings:check
+pnpm audit:repository-settings
+pnpm verify:release-artifact -- --help
 git diff --check
 pnpm pack --dry-run
 ```

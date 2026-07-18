@@ -1,0 +1,51 @@
+name: Installation or compatibility problem
+description: Report build, autolinking, Codegen, CocoaPods, Gradle, or Expo development-build failures.
+title: "[Compatibility]: "
+labels: ["compatibility", "needs-triage"]
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Package, React Native, Node, and package-manager versions
+      placeholder: react-native-image-compression-kit 0.3.0, RN 0.86, Node 24, pnpm 11.7
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Integration target
+      options: [Bare Android, Bare iOS, Expo development build, Multiple]
+    validations:
+      required: true
+  - type: dropdown
+    id: architecture
+    attributes:
+      label: React Native architecture
+      options: [New Architecture, Legacy Architecture, Unknown]
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands and configuration
+      description: Include the install, clean/rebuild, pod, prebuild, or Gradle commands you ran.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized failure output
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I rebuilt the native app after installation.
+          required: true
+        - label: I am not attempting to use Expo Go or Snack.
+          required: true
+        - label: I removed credentials and private paths from logs.
+          required: true

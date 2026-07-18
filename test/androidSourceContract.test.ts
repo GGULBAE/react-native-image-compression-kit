@@ -112,7 +112,7 @@ describe('Android source contract', () => {
     );
     expect(moduleSource).toContain('override fun getName(): String = NAME');
     expect(moduleSource).toMatch(/const val NAME\s*=\s*"ImageCompressionKit"/);
-    expect(packageSource).toContain('class ImageCompressionKitPackage : BaseReactPackage()');
+    expect(packageSource).toContain('class ImageCompressionKitPackage : TurboReactPackage()');
     expect(packageSource).toContain('ImageCompressionKitModule(reactContext)');
     expect(packageSource).toContain('ImageCompressionKitModule.NAME');
     expect(moduleSource).toContain(
