@@ -30,7 +30,7 @@ import { parseReleaseEvidenceImportArgs } from '../scripts/import-release-eviden
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(TEST_DIR, '..');
 const IMPORTER = path.join(ROOT, 'scripts', 'import-release-evidence.mjs');
-const VERSIONS = ['0.2.50', '0.2.55', '0.2.62'];
+const VERSIONS = ['0.2.50', '0.2.55', '0.2.62', '0.3.0'];
 
 function archive(version) {
   return path.join(ROOT, 'evidence', 'npm', version);

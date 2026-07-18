@@ -3,6 +3,7 @@ import {
   inspectNpmAttestations,
   inspectPublicationState,
   inspectReleaseArtifact,
+  normalizeNpmViewPublicationState,
 } from '../scripts/release-artifact-core.mjs';
 
 const validArtifact = {
@@ -83,15 +84,51 @@ describe('release artifact contract', () => {
     expect(mismatch).toMatchObject({ status: 'failed', action: 'blocked' });
   });
 
+  it('normalizes npm 11 object and npm 12 single-item array publication output', () => {
+    const publication = {
+      version: '0.3.0',
+      'dist.integrity': validArtifact.tarballIntegrity,
+    };
+    const expected = {
+      exists: true,
+      version: '0.3.0',
+      integrity: validArtifact.tarballIntegrity,
+    };
+
+    expect(normalizeNpmViewPublicationState(publication)).toEqual(expected);
+    expect(normalizeNpmViewPublicationState([publication])).toEqual(expected);
+  });
+
+  it('rejects ambiguous or incomplete npm publication output', () => {
+    const publication = {
+      version: '0.3.0',
+      'dist.integrity': validArtifact.tarballIntegrity,
+    };
+
+    expect(() => normalizeNpmViewPublicationState([])).toThrow('exactly one publication');
+    expect(() => normalizeNpmViewPublicationState([publication, publication])).toThrow(
+      'exactly one publication'
+    );
+    expect(() => normalizeNpmViewPublicationState({ version: '0.3.0' })).toThrow(
+      'SHA-512 SRI'
+    );
+  });
+
   it('requires exact npm SLSA provenance metadata', () => {
-    expect(
-      inspectNpmAttestations(
-        {
-          url: 'https://registry.npmjs.org/-/npm/v1/attestations/react-native-image-compression-kit@0.3.0',
-          provenance: { predicateType: 'https://slsa.dev/provenance/v1' },
-        },
-        { packageName: 'react-native-image-compression-kit', version: '0.3.0' }
-      )
-    ).toMatchObject({ status: 'passed' });
+    const attestation = {
+      url: 'https://registry.npmjs.org/-/npm/v1/attestations/react-native-image-compression-kit@0.3.0',
+      provenance: { predicateType: 'https://slsa.dev/provenance/v1' },
+    };
+    const identity = {
+      packageName: 'react-native-image-compression-kit',
+      version: '0.3.0',
+    };
+
+    expect(inspectNpmAttestations(attestation, identity)).toMatchObject({ status: 'passed' });
+    expect(inspectNpmAttestations([attestation], identity)).toMatchObject({ status: 'passed' });
+    expect(inspectNpmAttestations([], identity)).toMatchObject({
+      status: 'failed',
+      error: expect.stringContaining('exactly one attestation'),
+    });
   });
 });

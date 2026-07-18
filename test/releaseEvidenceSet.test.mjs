@@ -56,10 +56,16 @@ describe('multi-version release evidence regression', () => {
       '0.2.50',
       '0.2.55',
       '0.2.62',
+      '0.3.0',
     ]);
     expect(Object.keys(report)).toEqual(RELEASE_EVIDENCE_SET_FIELDS);
     expect(report.status).toBe('passed');
-    expect(report.versions).toEqual(['0.2.50', '0.2.55', '0.2.62']);
+    expect(report.versions).toEqual([
+      '0.2.50',
+      '0.2.55',
+      '0.2.62',
+      '0.3.0',
+    ]);
     expect(report.results.map((result) => result.version)).toEqual(
       report.versions
     );
@@ -110,7 +116,7 @@ describe('multi-version release evidence regression', () => {
       expect(readFileSync(reportFile, 'utf8')).toBe(result.stdout);
       expect(JSON.parse(result.stdout)).toMatchObject({
         status: 'passed',
-        versions: ['0.2.50', '0.2.55', '0.2.62'],
+        versions: ['0.2.50', '0.2.55', '0.2.62', '0.3.0'],
       });
     } finally {
       rmSync(parent, { recursive: true, force: true });
@@ -139,10 +145,11 @@ describe('multi-version release evidence regression', () => {
       );
       expect(report.status).toBe('failed');
       expect(report.error).toContain('0.2.50');
-      expect(report.results).toHaveLength(3);
+      expect(report.results).toHaveLength(4);
       expect(report.results[0].status).toBe('failed');
       expect(report.results[1].status).toBe('passed');
       expect(report.results[2].status).toBe('passed');
+      expect(report.results[3].status).toBe('passed');
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }

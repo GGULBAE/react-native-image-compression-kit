@@ -172,11 +172,39 @@ export function inspectPublicationState({
   };
 }
 
+export function normalizeNpmViewPublicationState(value) {
+  const entries = Array.isArray(value) ? value : [value];
+  if (entries.length !== 1) {
+    throw new Error(`npm view must return exactly one publication, received ${entries.length}`);
+  }
+
+  const [publication] = entries;
+  if (publication == null || typeof publication !== 'object' || Array.isArray(publication)) {
+    throw new Error('npm view publication must be an object');
+  }
+
+  const version = publication.version;
+  const integrity = publication['dist.integrity'];
+  if (typeof version !== 'string' || !/^\d+\.\d+\.\d+$/.test(version)) {
+    throw new Error('npm view publication version must be an exact semantic version');
+  }
+  if (typeof integrity !== 'string' || !/^sha512-[A-Za-z0-9+/]+={0,2}$/.test(integrity)) {
+    throw new Error('npm view publication integrity must be an SHA-512 SRI value');
+  }
+
+  return { exists: true, version, integrity };
+}
+
 export function inspectNpmAttestations(value, { packageName, version }) {
   const expectedSuffix = `${encodeURIComponent(packageName).replace('%40', '@')}@${version}`;
-  const url = value?.url;
-  const predicateType = value?.provenance?.predicateType;
+  const entries = Array.isArray(value) ? value : [value];
+  const attestation = entries.length === 1 ? entries[0] : null;
+  const url = attestation?.url;
+  const predicateType = attestation?.provenance?.predicateType;
   const errors = [];
+  if (entries.length !== 1) {
+    errors.push(`npm view must return exactly one attestation, received ${entries.length}`);
+  }
   if (
     typeof url !== 'string' ||
     !url.startsWith('https://registry.npmjs.org/-/npm/v1/attestations/') ||

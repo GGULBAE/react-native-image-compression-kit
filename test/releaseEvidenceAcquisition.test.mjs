@@ -62,7 +62,7 @@ const CORE = path.join(
   'scripts',
   'release-evidence-acquisition-core.mjs'
 );
-const VERSIONS = ['0.2.50', '0.2.55', '0.2.62'];
+const VERSIONS = ['0.2.50', '0.2.55', '0.2.62', '0.3.0'];
 const REPOSITORY_ID = 1278863793;
 
 function acquisitionOptions(parent, version = '0.2.55') {
@@ -120,21 +120,20 @@ function fixtureResponses(version) {
     provenance: readFixtureArchive(version, 'provenance'),
     attestation: readFixtureArchive(version, 'attestation'),
   };
-  const downloadedBundle = JSON.parse(
-    artifactArchives.attestation.files
-      .get('attestation.jsonl')
-      .toString('utf8')
-      .trim()
-  );
+  const downloadedBundles = artifactArchives.attestation.files
+    .get('attestation.jsonl')
+    .toString('utf8')
+    .trim()
+    .split(/\r?\n/)
+    .map((line) => JSON.parse(line));
   const attestationsResponse = {
-    attestations: [
-      {
-        repository_id: REPOSITORY_ID,
-        initiator: 'user',
-        attestation_id: policy.attestation.id,
-        bundle: downloadedBundle,
-      },
-    ],
+    attestations: downloadedBundles.map((bundle, index) => ({
+      repository_id: REPOSITORY_ID,
+      initiator: 'user',
+      attestation_id:
+        index === 0 ? policy.attestation.id : policy.attestation.id + index,
+      bundle,
+    })),
   };
   return {
     runResponse,
@@ -285,6 +284,22 @@ describe('Registry Validation release evidence acquisition', () => {
       }
     }
   );
+
+  it('selects the policy-pinned Registry attestation when GitHub returns multiple exact-subject bundles', () => {
+    const parent = mkdtempSync(
+      path.join(os.tmpdir(), 'rnick-acquisition-multiple-attestations-')
+    );
+    try {
+      const options = acquisitionOptions(parent, '0.3.0');
+      const fixture = fixtureResponses('0.3.0');
+      fixture.attestationsResponse.attestations.reverse();
+      const report = acquireReleaseEvidenceBundle({ ...options, ...fixture });
+      expect(report.status).toBe('passed');
+      expect(report.checks.attestation).toBe(true);
+    } finally {
+      rmSync(parent, { recursive: true, force: true });
+    }
+  });
 
   it.each([
     ['conclusion', (fixture) => (fixture.runResponse.conclusion = 'failure')],
@@ -713,5 +728,6 @@ describe('Registry Validation release evidence acquisition', () => {
     expect(result.stdout).toContain('0.2.50');
     expect(result.stdout).toContain('0.2.55');
     expect(result.stdout).toContain('0.2.62');
+    expect(result.stdout).toContain('0.3.0');
   });
 });

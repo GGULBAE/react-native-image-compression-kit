@@ -55,37 +55,44 @@ export function resolveExactSubjectGitHubAttestation({
     'GitHub attestations must be an array.'
   );
   assert(
-    response.attestations.length === 1,
-    `Expected exactly one GitHub attestation for sha256:${subjectSha256}.`
+    response.attestations.length > 0,
+    `Expected at least one GitHub attestation for sha256:${subjectSha256}.`
   );
 
-  const attestation = response.attestations[0];
-  assertRecord(attestation, 'GitHub attestation');
-  assert(
-    Number.isSafeInteger(attestation.repository_id) &&
-      attestation.repository_id > 0,
-    'GitHub attestation repository ID must be a positive integer.'
+  const urlOnly = response.attestations.filter(
+    (attestation) => attestation?.bundle === null
   );
-  const attestationId = attestationIdFromBundleUrl(attestation.bundle_url);
-  const bundle =
-    attestation.bundle === null
-      ? downloadExactSubjectBundle({
-          repository,
-          subjectSha256,
-          subjectBytes,
-          subjectFileName,
-          runCommand,
-        })
-      : normalizeBundle(attestation.bundle, 'Inline GitHub attestation bundle');
+  assert(
+    response.attestations.length === 1 || urlOnly.length === 0,
+    `Cannot resolve multiple URL-only GitHub attestations for sha256:${subjectSha256}.`
+  );
 
   return {
-    attestations: [
-      {
+    attestations: response.attestations.map((attestation, index) => {
+      assertRecord(attestation, `GitHub attestation ${index + 1}`);
+      assert(
+        Number.isSafeInteger(attestation.repository_id) &&
+          attestation.repository_id > 0,
+        'GitHub attestation repository ID must be a positive integer.'
+      );
+      return {
         repository_id: attestation.repository_id,
-        attestation_id: attestationId,
-        bundle,
-      },
-    ],
+        attestation_id: attestationIdFromBundleUrl(attestation.bundle_url),
+        bundle:
+          attestation.bundle === null
+            ? downloadExactSubjectBundle({
+                repository,
+                subjectSha256,
+                subjectBytes,
+                subjectFileName,
+                runCommand,
+              })
+            : normalizeBundle(
+                attestation.bundle,
+                `Inline GitHub attestation bundle ${index + 1}`
+              ),
+      };
+    }),
   };
 }
 

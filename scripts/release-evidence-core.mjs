@@ -240,6 +240,46 @@ export const RELEASE_EVIDENCE_POLICIES = Object.freeze({
       expiresAt: '2026-10-15T05:56:00Z',
     }),
   }),
+  '0.3.0': Object.freeze({
+    package: 'react-native-image-compression-kit',
+    expectedTag: 'latest',
+    publishedAt: '2026-07-18T11:25:58.408Z',
+    repository: 'GGULBAE/react-native-image-compression-kit',
+    workflow:
+      'GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml',
+    sourceRef: 'refs/tags/v0.3.0',
+    sourceDigest: 'f8ad71f14ac50dac9dc433a46ee4e9a6d7e1bca7',
+    registryValidationRun: Object.freeze({
+      id: 29643434413,
+      url: 'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29643434413',
+      event: 'workflow_dispatch',
+      createdAt: '2026-07-18T11:56:48Z',
+      completedAt: '2026-07-18T11:57:33Z',
+    }),
+    provenanceArtifact: Object.freeze({
+      id: 8429308868,
+      name: 'registry-provenance-0.3.0',
+      digest:
+        'sha256:039964a14923ea9f51af8a9568cdea0d1c7cdbbcc3954147f6b59d8054fdb997',
+      size: 60548,
+      createdAt: '2026-07-18T11:57:29Z',
+      expiresAt: '2026-10-16T11:56:50Z',
+    }),
+    attestation: Object.freeze({
+      id: 35958617,
+      url: 'https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35958617',
+      verifiedAt: '2026-07-18T11:57:21.000Z',
+    }),
+    attestationArtifact: Object.freeze({
+      id: 8429308948,
+      name: 'registry-provenance-attestation-0.3.0',
+      digest:
+        'sha256:1d3826a6e17c102a1ab2bb053ae24a996051e464e496bb853ca002d9e6975274',
+      size: 17222,
+      createdAt: '2026-07-18T11:57:30Z',
+      expiresAt: '2026-10-16T11:56:50Z',
+    }),
+  }),
 });
 
 export function sha256(value) {
