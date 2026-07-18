@@ -98,6 +98,7 @@
     "verify:release-evidence-set": "node scripts/verify-release-evidence-set.mjs",
     "verify:workflow-supply-chain": "node scripts/verify-workflow-supply-chain.mjs",
     "verify:release-artifact": "node scripts/verify-release-artifact.mjs",
+    "verify:release-source": "node scripts/verify-release-source.mjs",
     "verify:publication-state": "node scripts/verify-publication-state.mjs",
     "review:action-pin": "node scripts/review-action-pin.mjs",
     "verify:action-pin-provenance": "node scripts/verify-action-pin-provenance.mjs",

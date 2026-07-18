@@ -24,9 +24,10 @@ recovery codes in repository secrets.
 1. Merge a reviewed release-state commit on protected `master`. It must align
    `package.json`, README, RELEASE, changelog, status manifest, site, and
    compatibility matrix for the exact version.
-2. Record the full lowercase 40-character source SHA. Confirm the worktree and
-   CI are clean and `npm view react-native-image-compression-kit@<version>` is
-   absent.
+2. Record the full lowercase 40-character current `master` SHA. Confirm the
+   worktree is clean, the contract-required CI/Android/iOS checks are green on
+   that exact SHA, and `npm view react-native-image-compression-kit@<version>`
+   is absent. The workflow rejects an older ancestor even if it was once green.
 3. Dispatch `.github/workflows/release.yml` with the exact version, source SHA,
    and `confirm_publish=true`.
 4. Review the compatibility and exact-artifact preflight results. Approve the

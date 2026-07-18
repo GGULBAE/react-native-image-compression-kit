@@ -2,6 +2,11 @@ name: Compatibility
 
 on:
   workflow_call:
+    inputs:
+      source_sha:
+        description: Optional exact source SHA supplied by the trusted release caller
+        required: false
+        type: string
   workflow_dispatch:
   pull_request:
     paths:
@@ -69,6 +74,8 @@ jobs:
     steps:
       - name: Checkout exact source
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup Java
         if: matrix.platform == 'android'

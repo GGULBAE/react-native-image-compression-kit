@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  checks: read
 
 concurrency:
   group: trusted-release-${{ inputs.version }}
@@ -28,6 +29,8 @@ jobs:
   compatibility:
     name: Full compatibility release gate
     uses: ./.github/workflows/compatibility.yml
+    with:
+      source_sha: ${{ inputs.source_sha }}
     permissions:
       contents: read
 
@@ -61,7 +64,22 @@ jobs:
           test "$SOURCE_REF" = "refs/heads/master"
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
           git fetch --no-tags origin master
-          git merge-base --is-ancestor "$EXPECTED_SHA" origin/master
+          test "$(git rev-parse origin/master)" = "$EXPECTED_SHA"
+
+      - name: Verify required checks on exact source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        shell: bash
+        run: |
+          release_dir="$RUNNER_TEMP/release-source"
+          mkdir -p "$release_dir"
+          gh api "repos/${{ github.repository }}/commits/$SOURCE_SHA/check-runs?per_page=100" > "$release_dir/check-runs.json"
+          node scripts/verify-release-source.mjs \
+            --source-sha "$SOURCE_SHA" \
+            --master-sha "$(git rev-parse origin/master)" \
+            --check-runs "$release_dir/check-runs.json" \
+            --report-file "$release_dir/release-source.json"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
