@@ -67,6 +67,9 @@ jobs:
       - name: Build public documentation site
         run: pnpm site:build
 
+      - name: Audit public site quality
+        run: pnpm site:quality
+
       - name: Generate Android codegen artifacts
         run: pnpm example:codegen
 

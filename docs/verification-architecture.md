@@ -14,6 +14,7 @@ from the npm package.
 | Public documentation site structure, claims, local links, and npm exclusion | `scripts/verify-site.mjs` | `pnpm site:check` and `pnpm site:build` |
 | Native demo result metrics, source/output/screenshot bytes, digests, platform provenance, and exact source identity | `test/demoEvidence.test.mjs` and `scripts/demo-evidence-core.mjs` | Native Demo Evidence workflow and `pnpm verify:demo-evidence` |
 | Packed-consumer compatibility lane definitions | `test/compatibilityMatrix.test.mjs` and `scripts/compatibility-matrix-core.mjs` | `pnpm fixtures:compatibility:check` and the Compatibility workflow |
+| Built public-site performance, accessibility, and SEO | `scripts/verify-site-quality.mjs` | `pnpm site:build && pnpm site:quality` |
 | Repository metadata, security features, Actions policy, rulesets, environments, and Pages | `test/repositorySettings.test.mjs`, `docs/repository-settings.json`, and `scripts/repository-settings-core.mjs` | `pnpm fixtures:repository-settings:check` and `pnpm audit:repository-settings` |
 | Exact release source, publishable state, tarball identity/inventory, and registry resume policy | `test/releaseArtifact.test.mjs` and `scripts/release-artifact-core.mjs` | `pnpm verify:release-artifact`, `pnpm verify:publication-state`, and the Trusted Release workflow |
 | Android registration, typed request/source/decode/transform boundaries, build wiring, fixtures, and native-test presence | `test/androidSourceContract.test.ts` | `pnpm test` and `pnpm android:doctor` |
@@ -52,6 +53,8 @@ pnpm example:typecheck
 pnpm fixtures:release-evidence-review-acquisition:check
 pnpm docs:check
 pnpm site:check
+pnpm site:build
+pnpm site:quality
 pnpm fixtures:compatibility:check
 pnpm fixtures:repository-settings:check
 pnpm audit:repository-settings

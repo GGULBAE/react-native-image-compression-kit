@@ -13,6 +13,12 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   sitemap: { hostname: site },
+  markdown: {
+    theme: {
+      light: 'github-dark-high-contrast',
+      dark: 'github-dark-high-contrast',
+    },
+  },
   head: [
     ['meta', { name: 'theme-color', content: '#111827' }],
     ['meta', { property: 'og:type', content: 'website' }],

@@ -102,7 +102,7 @@ async function copyCode() {
             {{ copied ? 'Copied' : 'Copy code' }}
           </button>
         </div>
-        <pre aria-live="polite"><code>{{ code }}</code></pre>
+        <pre tabindex="0" aria-live="polite"><code>{{ code }}</code></pre>
       </div>
     </div>
   </section>

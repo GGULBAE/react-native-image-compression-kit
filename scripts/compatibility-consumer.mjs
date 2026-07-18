@@ -206,6 +206,9 @@ function buildNative(app, lane, platform) {
 
   const iosEnvironment = {
     RCT_NEW_ARCH_ENABLED: lane.architecture === 'new' ? '1' : '0',
+    // RN 0.73's template otherwise installs FlipperKit, which is unrelated to
+    // this package and cannot compile with current Xcode SDKs.
+    NO_FLIPPER: '1',
   };
   const gemfilePath = path.join(app.appRoot, 'Gemfile');
   if (existsSync(gemfilePath)) {
