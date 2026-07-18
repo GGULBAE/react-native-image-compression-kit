@@ -207,7 +207,22 @@ function buildNative(app, lane, platform) {
   const iosEnvironment = {
     RCT_NEW_ARCH_ENABLED: lane.architecture === 'new' ? '1' : '0',
   };
-  if (existsSync(path.join(app.appRoot, 'Gemfile'))) {
+  const gemfilePath = path.join(app.appRoot, 'Gemfile');
+  if (existsSync(gemfilePath)) {
+    const gemfile = readFileSync(gemfilePath, 'utf8');
+    // Ruby 3.4 moved these stdlib features to bundled gems; older RN CocoaPods locks require them.
+    const ruby34CompatibilityGems = [
+      ['base64', '0.3.0'],
+      ['nkf', '0.3.0'],
+    ].filter(([name]) => !new RegExp(`gem ['\"]${name}['\"]`).test(gemfile));
+    if (ruby34CompatibilityGems.length > 0) {
+      writeFileSync(
+        gemfilePath,
+        `${gemfile.trimEnd()}\n${ruby34CompatibilityGems
+          .map(([name, version]) => `gem '${name}', '${version}'`)
+          .join('\n')}\n`
+      );
+    }
     run('bundle', ['install'], app.appRoot);
     run(
       'bundle',

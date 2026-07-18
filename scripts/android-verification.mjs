@@ -705,7 +705,7 @@ function checkAndroidRuntimeAuthorities() {
     },
     {
       ok: packageContents.includes(
-        'class ImageCompressionKitPackage : BaseReactPackage()'
+        'class ImageCompressionKitPackage : TurboReactPackage()'
       ),
       name: 'React package registration',
     },

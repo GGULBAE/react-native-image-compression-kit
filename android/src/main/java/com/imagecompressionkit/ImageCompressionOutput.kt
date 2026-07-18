@@ -90,13 +90,24 @@ internal object ImageCompressionOutput {
   const val UNSUPPORTED_OUTPUT_FORMAT_MESSAGE =
     "Android MVP supports HEIC, HEIF, and AVIF input, but HEIC, HEIF, and AVIF output are not implemented. Supported output formats are JPEG, PNG, and WebP; selecting heic, heif, or avif output rejects with ERR_NOT_IMPLEMENTED. AVIF output remains disabled by the production wiring scaffold until the extracted Android AVIF output encode/decode-back helper produces a complete AVIF file and metadata preserve, output.maxBytes, and animated AVIF boundaries are explicitly validated."
 
+  // Keep compile-time constants before aggregate properties for the RN 0.73 Kotlin toolchain.
+  private const val JPEG_FORMAT = "jpeg"
+  private const val PNG_FORMAT = "png"
+  private const val WEBP_FORMAT = "webp"
+  private const val HEIC_FORMAT = "heic"
+  private const val HEIF_FORMAT = "heif"
+  private const val AVIF_FORMAT = "avif"
+  private const val GIF_FORMAT = "gif"
+  private const val OUTPUT_DIRECTORY_NAME = "image-compression-kit"
+  private const val MIN_QUALITY = 0
+
   val FORMAT_VALUES = arrayOf(
     JPEG_FORMAT,
     PNG_FORMAT,
     WEBP_FORMAT,
     HEIC_FORMAT,
     HEIF_FORMAT,
-    "avif",
+    AVIF_FORMAT,
     GIF_FORMAT
   )
 
@@ -393,13 +404,4 @@ internal object ImageCompressionOutput {
     GIF_FORMAT
   )
 
-  private const val JPEG_FORMAT = "jpeg"
-  private const val PNG_FORMAT = "png"
-  private const val WEBP_FORMAT = "webp"
-  private const val HEIC_FORMAT = "heic"
-  private const val HEIF_FORMAT = "heif"
-  private const val AVIF_FORMAT = "avif"
-  private const val GIF_FORMAT = "gif"
-  private const val OUTPUT_DIRECTORY_NAME = "image-compression-kit"
-  private const val MIN_QUALITY = 0
 }
