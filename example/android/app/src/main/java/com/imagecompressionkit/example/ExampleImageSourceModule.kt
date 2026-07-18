@@ -1,6 +1,7 @@
 package com.imagecompressionkit.example
 
 import android.net.Uri
+import android.util.Log
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -11,6 +12,20 @@ class ExampleImageSourceModule(
   private val reactContext: ReactApplicationContext
 ) : ReactContextBaseJavaModule(reactContext) {
   override fun getName(): String = "ExampleImageSource"
+
+  @ReactMethod
+  fun isDemoCaptureEnabled(promise: Promise) {
+    val enabled = currentActivity
+      ?.intent
+      ?.getBooleanExtra("rnick-demo-capture", false) == true
+    promise.resolve(enabled)
+  }
+
+  @ReactMethod
+  fun logSmokeEvent(message: String, promise: Promise) {
+    Log.i("RNICK_DEMO", message)
+    promise.resolve(null)
+  }
 
   @ReactMethod
   fun copySampleJpegToCache(promise: Promise) {

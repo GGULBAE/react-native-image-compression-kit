@@ -1,0 +1,32 @@
+name: Feature request
+description: Propose a focused public API, platform, documentation, or tooling improvement.
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the application need rather than only a preferred implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include expected Android/iOS capability and fallback behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked existing issues and the documented platform limitations.
+          required: true
+        - label: I understand new codecs and public APIs require cross-platform design and tests.
+          required: true

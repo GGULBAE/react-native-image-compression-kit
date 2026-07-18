@@ -28,6 +28,8 @@ const PODS_PROJECT_FILE = path.join(
   'Pods.xcodeproj',
   'project.pbxproj'
 );
+const PODFILE_LOCK = path.join(IOS_DIR, 'Podfile.lock');
+const PODS_MANIFEST_LOCK = path.join(IOS_DIR, 'Pods', 'Manifest.lock');
 const SCHEME = 'ImageCompressionKitExample';
 const BUNDLE_ID = 'com.imagecompressionkit.example';
 const REQUEST_PARSER_SOURCE = path.join(
@@ -505,8 +507,12 @@ function ensurePodsInstalled() {
     requiredPodSources.every((sourceFile) =>
       podProjectContents.includes(sourceFile)
     );
+  const podLocksAreCurrent =
+    pathExists(PODFILE_LOCK) &&
+    pathExists(PODS_MANIFEST_LOCK) &&
+    readFileSync(PODFILE_LOCK, 'utf8') === readFileSync(PODS_MANIFEST_LOCK, 'utf8');
 
-  if (!pathExists(WORKSPACE) || !podSourcesAreCurrent) {
+  if (!pathExists(WORKSPACE) || !podSourcesAreCurrent || !podLocksAreCurrent) {
     runPodInstall();
   }
 }

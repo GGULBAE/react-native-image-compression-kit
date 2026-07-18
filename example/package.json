@@ -11,7 +11,8 @@
   "dependencies": {
     "react": "19.2.3",
     "react-native": "0.86.0",
-    "react-native-image-compression-kit": "workspace:*"
+    "react-native-image-compression-kit": "workspace:*",
+    "react-native-image-picker": "8.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

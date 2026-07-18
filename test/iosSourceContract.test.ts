@@ -805,17 +805,15 @@ describe('iOS source contract', () => {
     ).toEqual([]);
 
     const exampleApp = readProjectFile('example/src/App.tsx');
+    const exampleSmoke = readProjectFile('example/src/iosSmoke.ts');
     const exampleModule = readProjectFile(
       'example/ios/ImageCompressionKitExample/ExampleImageSource.m'
     );
-    for (const marker of [
-      'RNICK_IOS_SMOKE_START',
-      'RNICK_IOS_SMOKE_PASS',
-      'RNICK_IOS_SMOKE_FAIL',
-    ]) {
-      expect(exampleApp).toContain(marker);
-    }
+    expect(exampleSmoke).toContain('RNICK_IOS_SMOKE_START');
+    expect(exampleApp).toContain('RNICK_IOS_SMOKE_PASS');
+    expect(exampleApp).toContain('RNICK_IOS_SMOKE_FAIL');
     expect(exampleApp).toContain('runIOSHostAppSmokeValidation');
+    expect(exampleSmoke).toContain('export async function runIOSHostAppSmokeValidation');
     expect(exampleModule).toContain('@interface ExampleImageSource');
     expect(exampleModule).toContain('RCT_EXPORT_MODULE();');
   });

@@ -1,0 +1,59 @@
+name: Runtime bug
+description: Report reproducible compression or capability behavior.
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not report security vulnerabilities or attach private images. Use the private security route instead.
+  - type: input
+    id: package-version
+    attributes:
+      label: Package version
+      placeholder: 0.3.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Android, iOS, Both]
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: React Native, OS/API level, and architecture
+      placeholder: React Native 0.86, Android API 35, New Architecture
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include source URI kind, options, capability result, and runnable code without private data.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and sanitized logs
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked runtime capabilities before selecting a format.
+          required: true
+        - label: I removed credentials, private paths, and sensitive image data.
+          required: true
+        - label: This is not a security vulnerability.
+          required: true

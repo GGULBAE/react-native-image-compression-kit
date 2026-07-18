@@ -1,0 +1,342 @@
+name: Trusted Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Exact package version from the reviewed release commit
+        required: true
+        type: string
+      source_sha:
+        description: Exact lowercase 40-character commit SHA on protected master
+        required: true
+        type: string
+      confirm_publish:
+        description: Publish this exact artifact after all gates and environment approval
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trusted-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  compatibility:
+    name: Full compatibility release gate
+    uses: ./.github/workflows/compatibility.yml
+    permissions:
+      contents: read
+
+  preflight:
+    name: Exact source and artifact preflight
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      tarball_sha256: ${{ steps.artifact.outputs.sha256 }}
+      tarball_integrity: ${{ steps.artifact.outputs.integrity }}
+      publication_action: ${{ steps.publication.outputs.action }}
+
+    steps:
+      - name: Require explicit publish confirmation
+        if: inputs.confirm_publish != true
+        run: |
+          echo "confirm_publish must be true." >&2
+          exit 1
+
+      - name: Checkout exact source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+
+      - name: Verify protected master identity
+        env:
+          EXPECTED_SHA: ${{ inputs.source_sha }}
+          SOURCE_REF: ${{ github.ref }}
+        run: |
+          test "$SOURCE_REF" = "refs/heads/master"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin master
+          git merge-base --is-ancestor "$EXPECTED_SHA" origin/master
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          version: 11.7.0
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install release npm CLI
+        run: npm install --global npm@12.0.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run all publish-readiness gates
+        run: |
+          pnpm release:dry-run
+          pnpm site:build
+          pnpm fixtures:compatibility:check
+
+      - name: Pack one release artifact
+        id: artifact
+        env:
+          VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        shell: bash
+        run: |
+          release_dir="$RUNNER_TEMP/release-package"
+          mkdir -p "$release_dir"
+          pnpm pack --pack-destination "$release_dir"
+          tgz="$(find "$release_dir" -maxdepth 1 -name '*.tgz' -print -quit)"
+          test -n "$tgz"
+          test "$(find "$release_dir" -maxdepth 1 -name '*.tgz' | wc -l | tr -d ' ')" = "1"
+          pnpm verify:release-artifact -- \
+            --version "$VERSION" \
+            --source-sha "$SOURCE_SHA" \
+            --source-branch master \
+            --tarball "$tgz" \
+            --report-file "$release_dir/release-artifact.json" \
+            | tee "$release_dir/release-artifact.stdout.json"
+          cmp "$release_dir/release-artifact.json" "$release_dir/release-artifact.stdout.json"
+          shasum -a 256 "$tgz" > "$release_dir/$(basename "$tgz").sha256"
+          cp docs/launch/v0.3.0-release-notes.md "$release_dir/release-notes.md"
+          node --input-type=module - "$release_dir/release-artifact.json" "$GITHUB_OUTPUT" <<'NODE'
+          import { appendFileSync, readFileSync } from 'node:fs';
+          const report = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          appendFileSync(process.argv[3], `sha256=${report.tarballSha256}\nintegrity=${report.tarballIntegrity}\n`);
+          NODE
+
+      - name: Inspect exact registry version state
+        id: publication
+        env:
+          VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          release_dir="$RUNNER_TEMP/release-package"
+          package="react-native-image-compression-kit"
+          if npm view "$package@$VERSION" version dist.integrity --json > "$release_dir/npm-view.raw.json" 2> "$release_dir/npm-view.stderr"; then
+            node --input-type=module - "$release_dir/npm-view.raw.json" "$release_dir/npm-state.json" <<'NODE'
+            import { readFileSync, writeFileSync } from 'node:fs';
+            const value = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+            writeFileSync(process.argv[3], `${JSON.stringify({
+              exists: true,
+              version: value.version,
+              integrity: value['dist.integrity'],
+            })}\n`);
+            NODE
+          elif grep -qE 'E404|404 Not Found' "$release_dir/npm-view.stderr"; then
+            printf '{"exists":false}\n' > "$release_dir/npm-state.json"
+          else
+            cat "$release_dir/npm-view.stderr" >&2
+            exit 1
+          fi
+          pnpm verify:publication-state -- \
+            --artifact "$release_dir/release-artifact.json" \
+            --registry "$release_dir/npm-state.json" \
+            --report-file "$release_dir/publication-state.json" \
+            | tee "$release_dir/publication-state.stdout.json"
+          cmp "$release_dir/publication-state.json" "$release_dir/publication-state.stdout.json"
+          action="$(node -p "require('$release_dir/publication-state.json').action")"
+          echo "action=$action" >> "$GITHUB_OUTPUT"
+
+      - name: Upload exact release package
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-package-${{ inputs.version }}-${{ inputs.source_sha }}
+          path: ${{ runner.temp }}/release-package
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: OIDC publish and GitHub Release
+    needs: [compatibility, preflight]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: npm-production
+      url: https://www.npmjs.com/package/react-native-image-compression-kit/v/${{ inputs.version }}
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ inputs.source_sha }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          version: 11.7.0
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install release npm CLI
+        run: npm install --global npm@12.0.1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download exact preflight package
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: release-package-${{ inputs.version }}-${{ inputs.source_sha }}
+          path: ${{ runner.temp }}/release-package
+
+      - name: Reverify artifact after transport
+        env:
+          VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          EXPECTED_SHA256: ${{ needs.preflight.outputs.tarball_sha256 }}
+          EXPECTED_INTEGRITY: ${{ needs.preflight.outputs.tarball_integrity }}
+        shell: bash
+        run: |
+          release_dir="$RUNNER_TEMP/release-package"
+          tgz="$(find "$release_dir" -maxdepth 1 -name '*.tgz' -print -quit)"
+          pnpm verify:release-artifact -- \
+            --version "$VERSION" \
+            --source-sha "$SOURCE_SHA" \
+            --source-branch master \
+            --tarball "$tgz" \
+            --report-file "$release_dir/release-artifact.transport.json"
+          node --input-type=module - "$release_dir/release-artifact.transport.json" <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const report = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          if (report.tarballSha256 !== process.env.EXPECTED_SHA256) throw new Error('transport SHA-256 mismatch');
+          if (report.tarballIntegrity !== process.env.EXPECTED_INTEGRITY) throw new Error('transport integrity mismatch');
+          NODE
+
+      - name: Create or verify draft GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        shell: bash
+        run: |
+          tag="v$VERSION"
+          release_dir="$RUNNER_TEMP/release-package"
+          tgz="$(find "$release_dir" -maxdepth 1 -name '*.tgz' -print -quit)"
+          checksum="$tgz.sha256"
+          if gh release view "$tag" --json isDraft,targetCommitish > "$release_dir/github-release.json" 2>/dev/null; then
+            target="$(node -p "require('$release_dir/github-release.json').targetCommitish")"
+            test "$target" = "$SOURCE_SHA"
+            is_draft="$(node -p "require('$release_dir/github-release.json').isDraft")"
+            if [[ "$is_draft" = "true" ]]; then
+              gh release upload "$tag" "$tgz" "$checksum" --clobber
+            fi
+          else
+            gh release create "$tag" \
+              --draft \
+              --target "$SOURCE_SHA" \
+              --title "v$VERSION" \
+              --notes-file "$release_dir/release-notes.md" \
+              "$tgz" "$checksum"
+          fi
+
+      - name: Publish exact tarball with npm Trusted Publishing
+        if: needs.preflight.outputs.publication_action == 'publish'
+        env:
+          VERSION: ${{ inputs.version }}
+        shell: bash
+        run: |
+          test -z "${NODE_AUTH_TOKEN:-}"
+          tgz="$(find "$RUNNER_TEMP/release-package" -maxdepth 1 -name '*.tgz' -print -quit)"
+          npm publish "$tgz" --access public --tag latest
+
+      - name: Wait for exact registry artifact and provenance
+        env:
+          VERSION: ${{ inputs.version }}
+          EXPECTED_INTEGRITY: ${{ needs.preflight.outputs.tarball_integrity }}
+        shell: bash
+        run: |
+          release_dir="$RUNNER_TEMP/release-package"
+          package="react-native-image-compression-kit"
+          for attempt in 1 2 3 4 5 6 7 8; do
+            if npm view "$package@$VERSION" version dist.integrity --json > "$release_dir/npm-published.raw.json" 2>/dev/null; then
+              node --input-type=module - "$release_dir/npm-published.raw.json" "$release_dir/npm-published-state.json" <<'NODE'
+              import { readFileSync, writeFileSync } from 'node:fs';
+              const value = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+              writeFileSync(process.argv[3], `${JSON.stringify({ exists: true, version: value.version, integrity: value['dist.integrity'] })}\n`);
+              NODE
+              if pnpm verify:publication-state -- \
+                --artifact "$release_dir/release-artifact.json" \
+                --registry "$release_dir/npm-published-state.json" \
+                --report-file "$release_dir/publication-confirmed.json"; then
+                break
+              fi
+            fi
+            test "$attempt" != "8"
+            sleep 10
+          done
+          test "$(node -p "require('$release_dir/publication-confirmed.json').action")" = "resume"
+          test "$(node -p "require('$release_dir/publication-confirmed.json').registryIntegrity")" = "$EXPECTED_INTEGRITY"
+
+          for attempt in 1 2 3 4 5 6; do
+            if npm view "$package@$VERSION" dist.attestations --json > "$release_dir/npm-attestations.json" 2>/dev/null && \
+              test -s "$release_dir/npm-attestations.json" && \
+              pnpm verify:publication-state -- \
+                --artifact "$release_dir/release-artifact.json" \
+                --attestations "$release_dir/npm-attestations.json" \
+                --report-file "$release_dir/npm-provenance-verification.json"; then
+              break
+            fi
+            test "$attempt" != "6"
+            sleep 10
+          done
+          test "$(node -p "require('$release_dir/npm-provenance-verification.json').status")" = "passed"
+
+      - name: Run exact registry consumer smoke
+        env:
+          VERSION: ${{ inputs.version }}
+        run: >-
+          pnpm smoke:registry --
+          --version "$VERSION"
+          --expect-tag latest
+          --json
+          --artifact-dir "$RUNNER_TEMP/release-package/registry-validation"
+
+      - name: Publish immutable GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        shell: bash
+        run: |
+          tag="v$VERSION"
+          release_dir="$RUNNER_TEMP/release-package"
+          is_draft="$(gh release view "$tag" --json isDraft --jq .isDraft)"
+          if [[ "$is_draft" = "true" ]]; then
+            gh release upload "$tag" \
+              "$release_dir/npm-attestations.json" \
+              "$release_dir/npm-provenance-verification.json" \
+              "$release_dir/registry-validation/bundle-manifest.json" \
+              --clobber
+            gh release edit "$tag" --draft=false --latest
+          fi
+          git fetch --force origin "refs/tags/$tag:refs/tags/$tag"
+          test "$(git rev-list -n 1 "$tag")" = "$SOURCE_SHA"
+          gh release view "$tag" --json url --jq .url | tee "$release_dir/github-release-url.txt"
+
+      - name: Upload post-publish handoff
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-handoff-${{ inputs.version }}-${{ inputs.source_sha }}
+          path: ${{ runner.temp }}/release-package
+          if-no-files-found: error
+          retention-days: 90

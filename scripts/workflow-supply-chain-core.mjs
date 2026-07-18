@@ -63,6 +63,21 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      development-dependencies:
+        dependency-type: "development"
+  - package-ecosystem: "bundler"
+    directory: "/example"
+    schedule:
+      interval: "monthly"
+  - package-ecosystem: "gradle"
+    directory: "/example/android"
+    schedule:
+      interval: "monthly"
 `;
 
 const FULL_COMMIT_SHA = /^[0-9a-f]{40}$/;

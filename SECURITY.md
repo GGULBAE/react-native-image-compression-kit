@@ -6,6 +6,7 @@ Security fixes are provided for the latest published minor release line.
 
 | Version | Supported |
 | --- | --- |
+| 0.3.x | Candidate; not yet published |
 | 0.2.x | Yes |
 | 0.1.x | No |
 | < 0.1.0 | No |
@@ -13,9 +14,11 @@ Security fixes are provided for the latest published minor release line.
 ## Reporting a vulnerability
 
 Do not include exploit details, secrets, private keys, credentials, or sensitive
-sample images in public issues. Use GitHub private vulnerability reporting when
-available. Otherwise open a minimal public issue requesting private
-coordination, with only the affected version and high-level impact.
+sample images in public issues. Submit reports through
+[GitHub private vulnerability reporting](https://github.com/GGULBAE/react-native-image-compression-kit/security/advisories/new).
+If that route is unavailable, open a minimal
+[support request](https://github.com/GGULBAE/react-native-image-compression-kit/issues/new/choose)
+that contains only the affected version and a request for private coordination.
 
 The maintainer should acknowledge reports within seven days and coordinate a
 fix, release, or disclosure timeline based on severity and reproducibility.
@@ -55,12 +58,12 @@ Published npm packages must not:
 
 Detailed execution steps are repository-only:
 
-- [Release evidence overview](docs/release-evidence/README.md)
-- [Registry provenance and retained evidence](docs/release-evidence/registry-provenance.md)
-- [Explicit evidence acquisition](docs/release-evidence/acquisition.md)
-- [Policy preparation, review, and promotion](docs/release-evidence/policy-review.md)
-- [Review archive import and replay](docs/release-evidence/review-archive.md)
-- [Immutable GitHub Action pins](docs/supply-chain/action-pins.md)
+- [Release evidence overview](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/README.md)
+- [Registry provenance and retained evidence](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/registry-provenance.md)
+- [Explicit evidence acquisition](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/acquisition.md)
+- [Policy preparation, review, and promotion](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/policy-review.md)
+- [Review archive import and replay](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/review-archive.md)
+- [Immutable GitHub Action pins](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/supply-chain/action-pins.md)
 
 The historical policy and dependency-triage text remains available in the
-[v0.2.61 security snapshot](docs/legacy/SECURITY-v0.2.61.md).
+[v0.2.61 security snapshot](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/legacy/SECURITY-v0.2.61.md).

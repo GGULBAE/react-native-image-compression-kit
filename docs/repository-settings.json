@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "repository": "GGULBAE/react-native-image-compression-kit",
+  "homepage": "https://ggulbae.github.io/react-native-image-compression-kit/",
+  "description": "Capability-aware native image compression, resize, and format conversion for React Native.",
+  "topics": [
+    "android",
+    "image-compression",
+    "image-processing",
+    "ios",
+    "new-architecture",
+    "react-native",
+    "typescript"
+  ],
+  "features": {
+    "discussions": true,
+    "wiki": false,
+    "privateVulnerabilityReporting": true,
+    "immutableReleases": true,
+    "deleteBranchOnMerge": true
+  },
+  "actions": {
+    "allowedActions": "selected",
+    "shaPinningRequired": true,
+    "defaultWorkflowPermissions": "read",
+    "canApprovePullRequestReviews": false,
+    "allowedPatterns": [
+      "android-actions/setup-android@*",
+      "gradle/actions/setup-gradle@*",
+      "pnpm/action-setup@*",
+      "reactivecircus/android-emulator-runner@*"
+    ]
+  },
+  "branchRuleset": {
+    "name": "Protected master",
+    "target": "branch",
+    "include": ["refs/heads/master"],
+    "requiredApprovals": 0,
+    "requiredStatusChecks": [
+      "HEIC/HEIF/AVIF emulator validation",
+      "JS, TypeScript, and Android",
+      "iOS host-app smoke"
+    ],
+    "requirePullRequest": true,
+    "requireConversationResolution": true,
+    "blockDeletion": true,
+    "blockForcePush": true
+  },
+  "tagRuleset": {
+    "name": "Immutable version tags",
+    "target": "tag",
+    "include": ["refs/tags/v*"],
+    "blockUpdate": true,
+    "blockDeletion": true
+  },
+  "environments": [
+    {
+      "name": "github-pages",
+      "protectedBranchesOnly": true
+    },
+    {
+      "name": "npm-production",
+      "protectedBranchesOnly": true,
+      "manualApproval": true
+    }
+  ],
+  "communityHealthPercentage": 100,
+  "pages": {
+    "enabled": true,
+    "buildType": "workflow"
+  }
+}

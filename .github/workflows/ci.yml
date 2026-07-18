@@ -64,6 +64,9 @@ jobs:
       - name: Typecheck example app
         run: pnpm example:typecheck
 
+      - name: Build public documentation site
+        run: pnpm site:build
+
       - name: Generate Android codegen artifacts
         run: pnpm example:codegen
 

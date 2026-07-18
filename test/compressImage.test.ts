@@ -4,6 +4,7 @@ import {
   getImageCompressionCapabilities,
   type CompressionResult,
   type ImageCompressionCapabilities,
+  type ImageCompressionKitErrorCode,
 } from '../src';
 import {
   resetNativeModuleForTesting,
@@ -45,6 +46,8 @@ const capabilities: ImageCompressionCapabilities = {
   supportsCancellation: false,
 };
 
+const publicErrorCode: ImageCompressionKitErrorCode = 'ERR_INVALID_OPTIONS';
+
 function mockNativeModule(
   overrides: Partial<NativeImageCompressionKitModule> = {}
 ): NativeImageCompressionKitModule {
@@ -61,6 +64,10 @@ afterEach(() => {
 });
 
 describe('compressImage', () => {
+  it('exports the stable public error-code union from the package root', () => {
+    expect(publicErrorCode).toBe('ERR_INVALID_OPTIONS');
+  });
+
   it('exports a Promise-based public API and returns the native result', async () => {
     const nativeModule = mockNativeModule();
     setNativeModuleForTesting(nativeModule);

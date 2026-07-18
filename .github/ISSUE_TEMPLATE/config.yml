@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Integration Q&A
+    url: https://github.com/GGULBAE/react-native-image-compression-kit/discussions
+    about: Ask setup and usage questions without opening a bug.
+  - name: Private security report
+    url: https://github.com/GGULBAE/react-native-image-compression-kit/security/advisories/new
+    about: Report vulnerabilities without disclosing details publicly.
