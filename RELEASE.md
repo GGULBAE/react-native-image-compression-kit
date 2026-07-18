@@ -7,8 +7,8 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 
 <!-- release-status:start -->
 - Package version: `0.3.0`
-- npm latest: `0.2.62`
-- Release state: `candidate`
+- npm latest: `0.3.0`
+- Release state: `release`
 - Registry checked at: `2026-07-18`
 <!-- release-status:end -->
 
@@ -16,11 +16,11 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
   compatibility evidence, community health, protected repository settings,
   OIDC trusted publishing, and an exact-artifact public launch
 
-The candidate keeps native compression and output behavior unchanged. It adds
-the public surfaces and operational controls required for a reproducible open
-source launch. The exact Android/iOS compatibility matrix is green;
-publication remains blocked until the website, package, repository-setting,
-and release workflow gates pass.
+The release keeps native compression and output behavior unchanged. It adds the
+public surfaces and operational controls required for a reproducible open
+source launch. The exact Android/iOS compatibility matrix and public Pages
+deployment are green; publication remains gated by the exact-source workflow
+and the protected `npm-production` environment approval.
 
 ### Included
 
@@ -44,15 +44,19 @@ and release workflow gates pass.
   tracking analytics, Changesets, or semantic-release.
 - Rewriting historical release-evidence policy, digests, or archives.
 
-### Candidate validation
+### Release validation
 
 - Exact compatibility evidence:
-  [run 29635966120](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966120)
+  [run 29639654333](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29639654333)
   passed React Native 0.73.11 Legacy, React Native 0.86.0 Legacy/New, and Expo
   57.0.7 development-build consumers on Android and iOS.
 - Exact native demo evidence:
-  [run 29635966139](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966139)
+  [run 29639654302](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29639654302)
   produced the checked Android/iOS assets and digest manifest.
+- Public Pages evidence:
+  [run 29640096509](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29640096509)
+  built, audited, and deployed the public documentation site from protected
+  `master`.
 
 ```bash
 pnpm verify
@@ -66,9 +70,9 @@ git diff --check
 pnpm pack --dry-run
 ```
 
-`pnpm release:dry-run` must refuse this candidate. Publication becomes eligible
-only after a reviewed status transition aligns package, README, RELEASE,
-registry state, protected source SHA, and exact tarball identity.
+`pnpm release:dry-run` must pass without publishing. The trusted release remains
+fail-closed unless package, README, RELEASE, registry state, protected source
+SHA, and exact tarball identity stay aligned.
 
 ## v0.2.62
 
