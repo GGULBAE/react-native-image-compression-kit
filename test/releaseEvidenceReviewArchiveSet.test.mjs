@@ -62,13 +62,14 @@ describe('release evidence review archive regression set', () => {
     expect(DEFAULT_RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERSIONS).toEqual([
       '0.2.55',
       '0.2.62',
+      '0.3.0',
     ]);
     expect(Object.keys(report)).toEqual(
       RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_FIELDS
     );
     expect(report.status).toBe('passed');
-    expect(report.versions).toEqual(['0.2.55', '0.2.62']);
-    expect(report.results).toHaveLength(2);
+    expect(report.versions).toEqual(['0.2.55', '0.2.62', '0.3.0']);
+    expect(report.results).toHaveLength(3);
     for (const result of report.results) {
       expect(Object.keys(result)).toEqual(
         RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_RESULT_FIELDS
@@ -120,7 +121,7 @@ describe('release evidence review archive regression set', () => {
       expect(readFileSync(reportFile, 'utf8')).toBe(result.stdout);
       expect(JSON.parse(result.stdout)).toMatchObject({
         status: 'passed',
-        versions: ['0.2.55', '0.2.62'],
+        versions: ['0.2.55', '0.2.62', '0.3.0'],
       });
     } finally {
       rmSync(parent, { recursive: true, force: true });
@@ -150,9 +151,10 @@ describe('release evidence review archive regression set', () => {
       );
       expect(report.status).toBe('failed');
       expect(report.error).toContain('0.2.55');
-      expect(report.results).toHaveLength(2);
+      expect(report.results).toHaveLength(3);
       expect(report.results[0].status).toBe('failed');
       expect(report.results[1].status).toBe('passed');
+      expect(report.results[2].status).toBe('passed');
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }

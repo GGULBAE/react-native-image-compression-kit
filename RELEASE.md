@@ -73,6 +73,12 @@ consumer-smoke manifest.
   registry consumer install from immutable tag `v0.3.0`. The matching retained
   evidence archive is replayed by `pnpm verify:release-evidence -- --version
   0.3.0`.
+- Policy-review evidence:
+  [run 29644362987](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29644362987)
+  reviewed the exact v0.3.0 candidate, rehearsed the complete four-version
+  archive set, and attested the canonical review manifest. The retained review
+  archive replays offline through `pnpm verify:release-evidence-review-archive
+  -- --version 0.3.0`.
 
 ```bash
 pnpm verify

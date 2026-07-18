@@ -87,20 +87,20 @@ pnpm acquire:release-evidence-review -- \
   --repository GGULBAE/react-native-image-compression-kit \
   --workflow .github/workflows/release-evidence-policy-review.yml \
   --source-ref refs/heads/master \
-  --source-digest dd63305e33a4a0e3f9c8eb40a0cfa3a3eb68c7d2 \
-  --run-id 29561132321 \
-  --version 0.2.62 \
-  --output-dir /tmp/review-acquisition-0.2.62 \
+  --source-digest 1c0a24601e2a59484dfa6a665a1cf09680d947d7 \
+  --run-id 29644362987 \
+  --version 0.3.0 \
+  --output-dir /tmp/review-acquisition-0.3.0 \
   --release-archive-root evidence/npm \
   --json \
-  --report-file /tmp/review-acquisition-0.2.62.json
+  --report-file /tmp/review-acquisition-0.3.0.json
 ```
 
-The selected review artifact is ID `8399292402`, 342,228 bytes, GitHub digest
-`sha256:26c2880f1ed325cbd55956b02bc8558a692a2fecd47b2502be10ca89a7d57855`.
-The attestation artifact is ID `8399292698`, 15,618 bytes, digest
-`sha256:e6e3b25ea56fe52be16f86e8d5cb7bfc65c8c673f383d03f190682e1546501ae`.
-They expire at `2026-10-15T06:49:03Z`.
+The selected review artifact is ID `8429583977`, 425,974 bytes, GitHub digest
+`sha256:77549a36e83d742306ee5f5701957d2f935169fd30aee7cd91ccc576e97a9d1e`.
+The attestation artifact is ID `8429584119`, 15,644 bytes, digest
+`sha256:1a00d909bbbad69fc1635bb14cd970fc9b0c8804f17f12ef5943b63d4f68fb2a`.
+They expire at `2026-10-16T12:27:51Z`.
 
 Policy-review acquisition uses the same exact-subject transport boundary with
 `artifact-manifest.json` as its temporary subject name. The normalized bundle
@@ -110,12 +110,12 @@ credentials never enter canonical metadata, manifests, reports, or archives.
 The canonical directory contains `review-evidence-metadata.json`, exact
 `artifacts/review.zip` and `artifacts/attestation.zip`, and
 `review-acquisition-manifest.json`. Authenticated acquisition at
-`2026-07-17T06:53:06.508Z` produced metadata SHA-256
-`67093793f6092b3f898c44c67bf6d2a71ee4c71874bd904890b8124bc596b08f`
+`2026-07-18T12:31:17.937Z` produced metadata SHA-256
+`efaf74032b7433547e0429ebdf8d7764dfa3aae638536ad57bcd59fa04edd03e`
 and acquisition SHA-256
-`6357a742bede4abf1e8274819c565ed774ac2c9d2f465b64f851c44981e19aac`.
+`cd1adb2ff31a5b803251f79f66228c879bfb7543a9a264bae3636568bcc62255`.
 Importer handoff reproduced archive SHA-256
-`49ce812d70e53a62581b2ad5dda8e67a920d815506f885afb5267c68b2bd041d`.
+`582f69b6fae5282bfe6fc758fceee24e37ffe63243cc60108c2e248261d69b72`.
 
 Verify the retained-ZIP fixture and handoff without network access:
 
