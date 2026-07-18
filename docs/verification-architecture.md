@@ -32,6 +32,11 @@ from the npm package.
 | iOS compression behavior | Host-app smoke contracts, replay fixtures, and the iOS validation workflow | `pnpm fixtures:ios-pass-replay:audit` and `pnpm example:ios:smoke` |
 | Registry and release evidence | Evidence-specific tests and semantic verifiers | `pnpm verify:release-evidence-set -- --json` and related evidence gates |
 
+The public-site quality gate warms the local preview in Chrome, records three
+desktop Lighthouse runs, and applies the unchanged thresholds to each
+category's median score. Every run remains present in the JSON report, while
+axe checks every sitemap route for serious or critical violations.
+
 ## Source contract policy
 
 Repository contract tests may inspect stable identifiers, configuration

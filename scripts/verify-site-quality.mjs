@@ -13,6 +13,7 @@ const dist = path.join(root, 'website/.vitepress/dist');
 const port = 4173;
 const origin = `http://127.0.0.1:${port}`;
 const basePath = '/react-native-image-compression-kit/';
+const lighthouseRunCount = 3;
 const thresholds = {
   performance: 90,
   accessibility: 95,
@@ -50,27 +51,42 @@ try {
     chromeFlags: ['--headless=new', '--no-sandbox', '--disable-dev-shm-usage'],
   });
 
-  const lighthouseResult = await lighthouse(`${origin}${basePath}`, {
-    port: chrome.port,
-    preset: 'desktop',
-    output: 'json',
-    logLevel: 'error',
-    onlyCategories: Object.keys(thresholds),
-  });
-  if (!lighthouseResult?.lhr) throw new Error('Lighthouse did not return a report');
+  browser = await chromium.connectOverCDP(`http://127.0.0.1:${chrome.port}`);
+  const context = browser.contexts()[0] ?? (await browser.newContext());
+  const warmupPage = await context.newPage();
+  await warmupPage.goto(`${origin}${basePath}`, { waitUntil: 'networkidle' });
+  await warmupPage.close();
+
+  const lighthouseRuns = [];
+  for (let run = 0; run < lighthouseRunCount; run += 1) {
+    const lighthouseResult = await lighthouse(`${origin}${basePath}`, {
+      port: chrome.port,
+      preset: 'desktop',
+      output: 'json',
+      logLevel: 'error',
+      onlyCategories: Object.keys(thresholds),
+    });
+    if (!lighthouseResult?.lhr) throw new Error('Lighthouse did not return a report');
+    lighthouseRuns.push(
+      Object.fromEntries(
+        Object.keys(thresholds).map((category) => [
+          category,
+          Math.round((lighthouseResult.lhr.categories[category]?.score ?? 0) * 100),
+        ])
+      )
+    );
+  }
 
   const scores = Object.fromEntries(
     Object.keys(thresholds).map((category) => [
       category,
-      Math.round((lighthouseResult.lhr.categories[category]?.score ?? 0) * 100),
+      median(lighthouseRuns.map((run) => run[category])),
     ])
   );
   const scoreFailures = Object.entries(thresholds)
     .filter(([category, minimum]) => scores[category] < minimum)
     .map(([category, minimum]) => `${category} ${scores[category]} < ${minimum}`);
 
-  browser = await chromium.connectOverCDP(`http://127.0.0.1:${chrome.port}`);
-  const context = browser.contexts()[0] ?? (await browser.newContext());
   const page = await context.newPage();
   const routes = readSitemapRoutes();
   const violations = [];
@@ -93,8 +109,9 @@ try {
   const report = {
     schemaVersion: 1,
     status: scoreFailures.length === 0 && violations.length === 0 ? 'passed' : 'failed',
-    profile: 'lighthouse-desktop-local-build',
+    profile: 'lighthouse-desktop-local-build-median-3',
     scores,
+    lighthouseRuns,
     thresholds,
     axe: {
       routes: routes.length,
@@ -157,4 +174,9 @@ function findChrome() {
     '/usr/bin/chromium-browser',
   ];
   return candidates.find((candidate) => candidate && existsSync(candidate));
+}
+
+function median(values) {
+  const sorted = [...values].sort((left, right) => left - right);
+  return sorted[Math.floor(sorted.length / 2)];
 }
