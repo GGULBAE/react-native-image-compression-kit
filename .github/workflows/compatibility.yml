@@ -3,6 +3,17 @@ name: Compatibility
 on:
   workflow_call:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/compatibility.yml"
+      - "android/**"
+      - "docs/compatibility-matrix.json"
+      - "ios/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "react-native-image-compression-kit.podspec"
+      - "scripts/compatibility-*.mjs"
+      - "src/**"
   schedule:
     - cron: "23 4 * * 1"
 
