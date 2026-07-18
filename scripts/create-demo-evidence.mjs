@@ -128,9 +128,10 @@ function isPng(bytes) {
 
 function parseArgs(args) {
   const parsed = {};
-  for (let index = 0; index < args.length; index += 2) {
-    const flag = args[index];
-    const value = args[index + 1];
+  const normalizedArgs = args.filter((value) => value !== '--');
+  for (let index = 0; index < normalizedArgs.length; index += 2) {
+    const flag = normalizedArgs[index];
+    const value = normalizedArgs[index + 1];
     if (!flag?.startsWith('--') || !value) throw new Error(`invalid argument: ${flag ?? ''}`);
     parsed[toCamel(flag.slice(2))] = value;
   }

@@ -48,9 +48,10 @@ process.stdout.write(`${JSON.stringify(manifest)}\n`);
 
 function parseArgs(values) {
   const parsed = {};
-  for (let index = 0; index < values.length; index += 2) {
-    const flag = values[index];
-    const value = values[index + 1];
+  const normalizedValues = values.filter((value) => value !== '--');
+  for (let index = 0; index < normalizedValues.length; index += 2) {
+    const flag = normalizedValues[index];
+    const value = normalizedValues[index + 1];
     if (!flag?.startsWith('--') || !value) throw new Error(`invalid argument: ${flag ?? ''}`);
     parsed[flag.slice(2).replace(/-([a-z])/g, (_, x) => x.toUpperCase())] = value;
   }

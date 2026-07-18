@@ -256,6 +256,7 @@ function parseArgs(rawArgs) {
   const parsed = {};
   for (let index = 0; index < rawArgs.length; index += 1) {
     const value = rawArgs[index];
+    if (value === '--') continue;
     if (value === '--lane') parsed.lane = rawArgs[++index];
     else if (value === '--platform') parsed.platform = rawArgs[++index];
     else if (value === '--tgz') parsed.tgz = rawArgs[++index];
