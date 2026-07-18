@@ -1,19 +1,19 @@
 # Review Evidence Archive
 
-The repository-owned archives under `evidence/reviews/0.2.55/` and
-`evidence/reviews/0.2.62/` preserve both exact GitHub artifact ZIPs and every
-extracted review/attestation byte. Replay does not reject an already retained
-archive based on the current clock.
+The repository-owned archives under `evidence/reviews/0.2.55/`,
+`evidence/reviews/0.2.62/`, and `evidence/reviews/0.3.0/` preserve both exact
+GitHub artifact ZIPs and every extracted review/attestation byte. Replay does
+not reject an already retained archive based on the current clock.
 
 ## Import
 
 ```bash
 pnpm import:release-evidence-review -- \
-  --version 0.2.62 \
+  --version 0.3.0 \
   --metadata-file /path/to/review-evidence-metadata.json \
   --review-artifact-zip /path/to/review.zip \
   --attestation-artifact-zip /path/to/attestation.zip \
-  --archive-dir evidence/reviews/0.2.62 \
+  --archive-dir evidence/reviews/0.3.0 \
   --release-archive-root evidence/npm \
   --json \
   --report-file /tmp/review-import.json
@@ -28,7 +28,7 @@ destination. Staging is fully verified before atomic rename.
 
 ```bash
 pnpm verify:release-evidence-review-archive -- \
-  --version 0.2.62 \
+  --version 0.3.0 \
   --json
 
 pnpm verify:release-evidence-review-archive-set -- --json
@@ -37,29 +37,29 @@ pnpm verify:release-evidence-review-archive-set -- --json
 The single-archive verifier proves ZIP/extracted correspondence, canonical
 index and file digests, receipt/manifest/promotion/set identity, offline GitHub
 signer verification, and byte equality between the rehearsed archive and
-`evidence/npm/0.2.62`. The set verifier checks retained review versions
-v0.2.55 and v0.2.62 in stable order and is part of `pnpm verify`.
+`evidence/npm/0.3.0`. The set verifier checks retained review versions v0.2.55,
+v0.2.62, and v0.3.0 in stable order and is part of `pnpm verify`.
 
 ## Retained identity and digests
 
-- Review run: `29561132321`, attempt 1
-- Source: `dd63305e33a4a0e3f9c8eb40a0cfa3a3eb68c7d2`
-- Reviewer/time: `GGULBAE`, `2026-07-17T06:49:02Z`
-- Review artifact: `8399292402`, digest
-  `sha256:26c2880f1ed325cbd55956b02bc8558a692a2fecd47b2502be10ca89a7d57855`
-- Attestation artifact: `8399292698`, digest
-  `sha256:e6e3b25ea56fe52be16f86e8d5cb7bfc65c8c673f383d03f190682e1546501ae`
-- Attestation: `35780183`
+- Review run: `29644362987`, attempt 1
+- Source: `1c0a24601e2a59484dfa6a665a1cf09680d947d7`
+- Reviewer/time: `GGULBAE`, `2026-07-18T12:27:50Z`
+- Review artifact: `8429583977`, digest
+  `sha256:77549a36e83d742306ee5f5701957d2f935169fd30aee7cd91ccc576e97a9d1e`
+- Attestation artifact: `8429584119`, digest
+  `sha256:1a00d909bbbad69fc1635bb14cd970fc9b0c8804f17f12ef5943b63d4f68fb2a`
+- Attestation: `35960166`
 - Candidate SHA-256:
-  `0af980676b08f73b62b2e785dd39320d9ce1c55bfac58df43ebf6b87eb102cdc`
+  `eba4fb1e1b4cdcef03bc4d109fcb1b0d3a461cc56a389fbcdb89e182b7b033d9`
 - Receipt SHA-256:
-  `4d05d0fec2ec9d43575336a1b0fd4d17059f87b4db8879afeefeacd4d5d6cd2f`
+  `d56d0b10a50ad92cc20abcdc5287fe2b74e4a024e3d268ee7a183180e33861e1`
 - Target evidence SHA-256:
-  `e5a23c12d99362d5ec3c882de3acfb161b6644e9777b16dc036e0d675cf511a6`
+  `201d16d7845212fa115674deacb6766ea03b2d6982a43036f40f110ee652550e`
 - Aggregate archive SHA-256:
-  `49ce812d70e53a62581b2ad5dda8e67a920d815506f885afb5267c68b2bd041d`
+  `582f69b6fae5282bfe6fc758fceee24e37ffe63243cc60108c2e248261d69b72`
 - Canonical index SHA-256:
-  `653f6b6e073831ffe69b09c9a86bd529bdb05d98e617d710043f7228c567be6f`
+  `f28e3b644d3ba4f6e71f546f52d92d87820ad68a190e4c21051fa2dc8274f9ed`
 
 Use [Acquisition](acquisition.md) to reproduce the exact importer inputs while
 the GitHub artifacts remain available.

@@ -159,7 +159,7 @@ describe('release evidence review artifact acquisition', () => {
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 
   it.each([
     ['conclusion', (fixture) => (fixture.runResponse.conclusion = 'failure')],

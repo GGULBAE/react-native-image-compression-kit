@@ -31,8 +31,8 @@ import { sha256 } from './release-evidence-core.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
-export const REVIEW_ACQUISITION_FIXTURE_VERSION = '0.2.62';
-export const REVIEW_ACQUISITION_FIXTURE_TIME = '2026-07-17T06:53:06.508Z';
+export const REVIEW_ACQUISITION_FIXTURE_VERSION = '0.3.0';
+export const REVIEW_ACQUISITION_FIXTURE_TIME = '2026-07-18T12:31:17.937Z';
 export const REVIEW_ACQUISITION_REPOSITORY_ID = 1278863793;
 
 export function createReleaseEvidenceReviewAcquisitionFixture(parent) {

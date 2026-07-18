@@ -288,6 +288,57 @@ export const RELEASE_EVIDENCE_REVIEW_ARCHIVE_POLICIES = Object.freeze({
     archiveSha256:
       '49ce812d70e53a62581b2ad5dda8e67a920d815506f885afb5267c68b2bd041d',
   }),
+  '0.3.0': Object.freeze({
+    package: 'react-native-image-compression-kit',
+    candidateSha256:
+      'eba4fb1e1b4cdcef03bc4d109fcb1b0d3a461cc56a389fbcdb89e182b7b033d9',
+    reviewer: 'GGULBAE',
+    reviewedAt: '2026-07-18T12:27:50Z',
+    repository: 'GGULBAE/react-native-image-compression-kit',
+    workflow:
+      'GGULBAE/react-native-image-compression-kit/.github/workflows/release-evidence-policy-review.yml',
+    sourceRef: 'refs/heads/master',
+    sourceDigest: '1c0a24601e2a59484dfa6a665a1cf09680d947d7',
+    reviewRun: Object.freeze({
+      id: 29644362987,
+      url: 'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29644362987',
+      event: 'workflow_dispatch',
+      runAttempt: 1,
+      createdAt: '2026-07-18T12:27:50Z',
+      completedAt: '2026-07-18T12:28:33Z',
+    }),
+    reviewArtifact: Object.freeze({
+      id: 8429583977,
+      name: 'release-evidence-policy-review-0.3.0-29644362987',
+      digest:
+        'sha256:77549a36e83d742306ee5f5701957d2f935169fd30aee7cd91ccc576e97a9d1e',
+      size: 425974,
+      createdAt: '2026-07-18T12:28:28Z',
+      expiresAt: '2026-10-16T12:27:51Z',
+    }),
+    attestationArtifact: Object.freeze({
+      id: 8429584119,
+      name: 'release-evidence-policy-review-attestation-0.3.0-29644362987',
+      digest:
+        'sha256:1a00d909bbbad69fc1635bb14cd970fc9b0c8804f17f12ef5943b63d4f68fb2a',
+      size: 15644,
+      createdAt: '2026-07-18T12:28:29Z',
+      expiresAt: '2026-10-16T12:27:51Z',
+    }),
+    attestation: Object.freeze({
+      id: 35960166,
+      url: 'https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35960166',
+      verifiedAt: '2026-07-18T12:28:18.000Z',
+    }),
+    receiptSha256:
+      'd56d0b10a50ad92cc20abcdc5287fe2b74e4a024e3d268ee7a183180e33861e1',
+    manifestSha256:
+      'b43ea462d90d3c67f6af5ab9f14083839d72f5d5a7cc5a972a3c2b5895111dc5',
+    evidenceSha256:
+      '201d16d7845212fa115674deacb6766ea03b2d6982a43036f40f110ee652550e',
+    archiveSha256:
+      '582f69b6fae5282bfe6fc758fceee24e37ffe63243cc60108c2e248261d69b72',
+  }),
 });
 
 export function canonicalReleaseEvidenceReviewArchiveJson(value) {

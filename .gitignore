@@ -103,9 +103,11 @@ DerivedData/
 # Archives and generated packages
 *.tgz
 !evidence/npm/*/provenance/package.tgz
+!evidence/reviews/*/review/**/package.tgz
 *.tar
 *.tar.gz
 *.zip
+!evidence/reviews/*/artifacts/*.zip
 !test/fixtures/release-evidence-acquisition/**/*.zip
 *.ipa
 *.apk
