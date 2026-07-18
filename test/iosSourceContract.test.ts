@@ -21,10 +21,21 @@ describe('iOS source contract', () => {
     expect(header).toContain(
       '@interface RCTImageCompressionKit : NSObject <NativeImageCompressionKitSpec>'
     );
+    expect(header).toContain(
+      '@interface RCTImageCompressionKit : NSObject <RCTBridgeModule>'
+    );
+    expect(header).toContain(
+      '#if __has_include(<RNImageCompressionKitSpec/RNImageCompressionKitSpec.h>)'
+    );
     expect(implementation).toContain('RCT_EXPORT_MODULE(ImageCompressionKit)');
+    expect(implementation).toContain('#if RNICK_HAS_CODEGEN_SPEC');
     expect(implementation).toContain('getTurboModule:');
     expect(implementation).toContain(
       'compressImage:(JS::NativeImageCompressionKit::NativeCompressionOptions &)options'
+    );
+    expect(implementation).toContain('RCT_REMAP_METHOD(compressImage,');
+    expect(implementation).toContain(
+      'RCT_REMAP_METHOD(getImageCompressionCapabilities,'
     );
     expect(implementation).toContain('getImageCompressionCapabilities:');
   });
