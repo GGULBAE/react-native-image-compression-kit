@@ -144,14 +144,14 @@ jobs:
           package="react-native-image-compression-kit"
           if npm view "$package@$VERSION" version dist.integrity --json > "$release_dir/npm-view.raw.json" 2> "$release_dir/npm-view.stderr"; then
             node --input-type=module - "$release_dir/npm-view.raw.json" "$release_dir/npm-state.json" <<'NODE'
-            import { readFileSync, writeFileSync } from 'node:fs';
-            const value = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-            writeFileSync(process.argv[3], `${JSON.stringify({
-              exists: true,
-              version: value.version,
-              integrity: value['dist.integrity'],
-            })}\n`);
-            NODE
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const value = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          writeFileSync(process.argv[3], `${JSON.stringify({
+            exists: true,
+            version: value.version,
+            integrity: value['dist.integrity'],
+          })}\n`);
+          NODE
           elif grep -qE 'E404|404 Not Found' "$release_dir/npm-view.stderr"; then
             printf '{"exists":false}\n' > "$release_dir/npm-state.json"
           else
@@ -288,10 +288,10 @@ jobs:
           for attempt in 1 2 3 4 5 6 7 8; do
             if npm view "$package@$VERSION" version dist.integrity --json > "$release_dir/npm-published.raw.json" 2>/dev/null; then
               node --input-type=module - "$release_dir/npm-published.raw.json" "$release_dir/npm-published-state.json" <<'NODE'
-              import { readFileSync, writeFileSync } from 'node:fs';
-              const value = JSON.parse(readFileSync(process.argv[2], 'utf8'));
-              writeFileSync(process.argv[3], `${JSON.stringify({ exists: true, version: value.version, integrity: value['dist.integrity'] })}\n`);
-              NODE
+          import { readFileSync, writeFileSync } from 'node:fs';
+          const value = JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          writeFileSync(process.argv[3], `${JSON.stringify({ exists: true, version: value.version, integrity: value['dist.integrity'] })}\n`);
+          NODE
               if pnpm verify:publication-state -- \
                 --artifact "$release_dir/release-artifact.json" \
                 --registry "$release_dir/npm-published-state.json" \
