@@ -28,6 +28,13 @@ example-only native source helper. Gallery pickers commonly return a
 `content://` URI; keep its temporary permission valid until compression
 completes.
 
+The Android sample is a repository-owned 600×960 JPEG generated from geometric
+shapes, not a user image. Its reproducible source command is:
+
+```bash
+ffmpeg -f lavfi -i "gradients=size=600x960:c0=0x0f766e:c1=0x1d4ed8:x0=0:y0=0:x1=600:y1=960,drawbox=x=90:y=130:w=420:h=280:color=0xf59e0b:t=fill,drawbox=x=150:y=340:w=300:h=430:color=0x6ee7b7:t=fill,drawbox=x=205:y=630:w=190:h=190:color=0xf8fafc@0.86:t=fill" -frames:v 1 -q:v 2 -pix_fmt yuvj420p -y example/android/app/src/main/assets/sample.jpg
+```
+
 ## iOS
 
 ```bash

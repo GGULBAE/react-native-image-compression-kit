@@ -6,6 +6,48 @@ set -euo pipefail
 : "${RNICK_DEMO_SOURCE_SHA:?RNICK_DEMO_SOURCE_SHA is required}"
 : "${RNICK_DEMO_RUN_URL:?RNICK_DEMO_RUN_URL is required}"
 
+capture_window_dump() {
+  adb shell uiautomator dump /sdcard/rnick-demo-window.xml >/dev/null
+  adb exec-out cat /sdcard/rnick-demo-window.xml > /tmp/rnick-demo-raw/window.xml
+}
+
+dismiss_system_anr_dialog() {
+  for attempt in 1 2; do
+    capture_window_dump
+    if ! grep -Eiq "isn.?t responding|not responding|android:id/aerr_wait" /tmp/rnick-demo-raw/window.xml; then
+      return
+    fi
+
+    coordinates=$(node --input-type=module - /tmp/rnick-demo-raw/window.xml <<'NODE'
+import { readFileSync } from 'node:fs';
+const source = readFileSync(process.argv[2], 'utf8');
+const nodes = [...source.matchAll(/<node\b[^>]*>/g)].map(([node]) => node);
+const read = (node, name) => node.match(new RegExp(`${name}="([^"]*)"`))?.[1] ?? '';
+const waitNode = nodes.find((node) =>
+  read(node, 'resource-id') === 'android:id/aerr_wait' || read(node, 'text') === 'Wait'
+);
+const bounds = read(waitNode ?? '', 'bounds').match(/\[(\d+),(\d+)]\[(\d+),(\d+)]/);
+if (bounds) {
+  const [, left, top, right, bottom] = bounds.map(Number);
+  process.stdout.write(`${Math.floor((left + right) / 2)} ${Math.floor((top + bottom) / 2)}`);
+}
+NODE
+    )
+    if [ -n "$coordinates" ]; then
+      adb shell input tap $coordinates
+    else
+      adb shell input keyevent 4
+    fi
+    sleep 2
+  done
+
+  capture_window_dump
+  if grep -Eiq "isn.?t responding|not responding|android:id/aerr_wait" /tmp/rnick-demo-raw/window.xml; then
+    echo 'System ANR dialog still obscures the Android demo.' >&2
+    exit 1
+  fi
+}
+
 pnpm build
 pnpm example:codegen
 pnpm --filter image-compression-kit-example exec react-native start --port 8081 > /tmp/rnick-metro.log 2>&1 &
@@ -36,6 +78,12 @@ for attempt in $(seq 1 120); do
 done
 
 sleep 2
+dismiss_system_anr_dialog
+adb shell am start -n com.imagecompressionkit.example/.MainActivity >/dev/null
+if ! adb shell dumpsys activity activities | grep -q 'mResumedActivity.*com.imagecompressionkit.example'; then
+  echo 'Example app is not the resumed activity before screenshot capture.' >&2
+  exit 1
+fi
 adb exec-out screencap -p > /tmp/rnick-demo-raw/screen.png
 node --input-type=module - /tmp/rnick-demo-raw/native.log > /tmp/rnick-demo-raw/uris.txt <<'NODE'
 import { readFileSync } from 'node:fs';

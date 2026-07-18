@@ -28,6 +28,15 @@ describe('native demo evidence', () => {
     expect(report.error).toContain('output SHA-256 mismatch');
     expect(report.error).toContain('capture workflow run');
   });
+
+  it('rejects a result that does not reduce the deterministic source', () => {
+    const fixture = createFixture();
+    fixture.manifest.cases[0].result.byteSize = fixture.manifest.cases[0].result.originalByteSize;
+    fixture.manifest.cases[0].result.compressionRatio = 1;
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest).error).toContain(
+      'demo output must be smaller than its source'
+    );
+  });
 });
 
 function createFixture() {
@@ -35,7 +44,7 @@ function createFixture() {
   const cases = ['android', 'ios'].map((platform, index) => {
     const directory = path.join(root, platform);
     mkdirSync(directory);
-    const source = Buffer.from([0xff, 0xd8, 1, index]);
+    const source = Buffer.from([0xff, 0xd8, 1, index, 3, 4]);
     const output = Buffer.from([0xff, 0xd8, 2, index]);
     const screenshot = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, index]);
     for (const [name, bytes] of [['source.jpg', source], ['output.jpg', output], ['screen.png', screenshot]]) {
@@ -59,7 +68,9 @@ function createFixture() {
       },
       result: {
         format: 'jpeg', width: 100, height: 160,
-        byteSize: output.length, originalByteSize: source.length, compressionRatio: 1,
+        byteSize: output.length,
+        originalByteSize: source.length,
+        compressionRatio: output.length / source.length,
       },
       assets: {
         source: asset(`${platform}/source.jpg`, source),

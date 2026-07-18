@@ -46,6 +46,12 @@ if (
 ) {
   throw new Error('native demo result byte metrics must be positive integers');
 }
+if (
+  payload.result.byteSize >= payload.result.originalByteSize ||
+  payload.result.compressionRatio >= 1
+) {
+  throw new Error('native demo output must be smaller than its deterministic source');
+}
 
 const destination = path.resolve(options.destination);
 mkdirSync(destination, { recursive: true });

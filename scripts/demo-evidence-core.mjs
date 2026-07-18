@@ -54,6 +54,12 @@ export function inspectDemoEvidence(root, manifest) {
     ) {
       errors.push(`${label}: native result metrics are invalid`);
     }
+    if (
+      evidence?.result?.byteSize >= evidence?.result?.originalByteSize ||
+      evidence?.result?.compressionRatio >= 1
+    ) {
+      errors.push(`${label}: demo output must be smaller than its source`);
+    }
 
     for (const [assetName, magic] of [
       ['source', 'jpeg'],
