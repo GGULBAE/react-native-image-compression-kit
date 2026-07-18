@@ -4,7 +4,7 @@ Notable user-facing changes are recorded here. The project follows Semantic
 Versioning while it is in `0.x`: minor releases may change public contracts,
 and patch releases remain backward compatible within the current minor line.
 
-## 0.3.0 - Unreleased
+## 0.3.0 - 2026-07-18
 
 ### Added
 

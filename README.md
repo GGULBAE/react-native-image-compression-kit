@@ -18,16 +18,16 @@ handle platform codec differences before compression.
 ## Current status
 
 - Package version: `0.3.0`
-- npm latest: `0.2.62`
-- Release state: `candidate`
+- npm latest: `0.3.0`
+- Release state: `release`
 - Registry checked at: `2026-07-18`
 <!-- package-status:end -->
 
-Version 0.3.0 is the public-launch candidate. Native compression behavior stays
-unchanged while the project adds verified integration guidance, a native-result
-demo site, community support paths, compatibility gates, and trusted release
-automation. The published npm version remains 0.2.62 until every release gate
-passes.
+Version 0.3.0 is the reviewed public-release source. Native compression
+behavior stays unchanged while the project adds verified integration guidance,
+a native-result demo site, community support paths, compatibility gates, and
+trusted release automation. Publication runs only from protected exact source
+and must verify the registry artifact and provenance before finalization.
 
 ## Installation
 
