@@ -95,10 +95,10 @@ jobs:
         with:
           version: 11.7.0
 
-      - name: Setup Node
+      - name: Setup repository Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: ${{ matrix.node }}
+          node-version: "24"
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
 
@@ -123,9 +123,14 @@ jobs:
           test -n "$tgz"
           echo "tgz=$tgz" >> "$GITHUB_OUTPUT"
 
+      - name: Setup consumer Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ matrix.node }}
+
       - name: Build fresh packed consumer
         run: >-
-          pnpm compatibility:consumer --
+          node scripts/compatibility-consumer.mjs
           --lane "${{ matrix.lane }}"
           --platform "${{ matrix.platform }}"
           --tgz "${{ steps.package.outputs.tgz }}"
