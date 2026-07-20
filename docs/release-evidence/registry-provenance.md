@@ -34,6 +34,26 @@ Native consumer, and atomically writes exactly:
 - `package.tgz`
 - `bundle-manifest.json`
 
+## npm-production health deployment
+
+The manual-only [Registry Validation workflow](../../.github/workflows/registry-validation.yml)
+reports the verified registry state through the protected `npm-production`
+GitHub environment. Dispatch it with the exact published version and dist-tag:
+
+```bash
+gh workflow run registry-validation.yml \
+  --ref master \
+  -f version=0.3.0 \
+  -f expected_tag=latest
+```
+
+Approve the environment only after confirming those inputs. A successful run
+adds a green deployment linked to the exact npm version. This health workflow
+does not publish, change a dist-tag, mutate a Git tag, or create a GitHub
+Release; it validates the existing registry bytes, consumer install, and
+provenance, then creates attestations and temporary evidence artifacts. The
+Trusted Release workflow remains the only npm publisher.
+
 ## Offline provenance verification
 
 ```bash

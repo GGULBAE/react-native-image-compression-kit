@@ -18,7 +18,9 @@ audit is read-only; any mutation must be reviewed against that contract first.
 - Active `Immutable version tags` ruleset blocking updates and deletion of
   `v*` tags. Creation remains available to the release workflow.
 - `github-pages` and manually approved `npm-production` environments restricted
-  to protected branches. The release job is the only npm publisher.
+  to protected branches. Trusted Release is the only npm publisher; manual
+  Registry Validation may use `npm-production` only as a read-only health
+  deployment.
 - Pages uses GitHub Actions, and immutable GitHub Releases are enabled before
   the first final release is published.
 
