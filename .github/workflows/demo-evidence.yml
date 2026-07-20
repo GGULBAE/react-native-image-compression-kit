@@ -77,7 +77,7 @@ jobs:
 
       - name: Resolve package version
         id: package
-        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+        run: node -e "process.stdout.write('version=' + require('./package.json').version + '\\n')" >> "$GITHUB_OUTPUT"
 
       - name: Capture Android result
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
@@ -129,7 +129,7 @@ jobs:
 
       - name: Resolve package version
         id: package
-        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+        run: node -e "process.stdout.write('version=' + require('./package.json').version + '\\n')" >> "$GITHUB_OUTPUT"
 
       - name: Build example app
         run: |
