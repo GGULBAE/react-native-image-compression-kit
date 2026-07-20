@@ -38,6 +38,12 @@ recovery codes in repository secrets.
 6. Run the existing registry-validation, acquisition, import, policy-review,
    and archive procedure from [release evidence](../release-evidence/README.md).
 
+Registry Validation is also the read-only health deployment for the protected
+`npm-production` environment. Run it manually for the published version and
+expected dist-tag when the Deployments view needs a fresh registry-health
+result. It never publishes or changes registry, Git tag, or GitHub Release
+state; see [registry provenance](../release-evidence/registry-provenance.md#npm-production-health-deployment).
+
 ## Resume semantics
 
 The workflow has only three publication decisions:

@@ -49,6 +49,7 @@ function copiedRepository(label) {
     path.join(ROOT, WORKFLOW_DEPENDABOT_FILE),
     path.join(rootDir, WORKFLOW_DEPENDABOT_FILE)
   );
+  cpSync(path.join(ROOT, 'package.json'), path.join(rootDir, 'package.json'));
   return { parent, rootDir };
 }
 
@@ -291,6 +292,42 @@ describe('GitHub Actions workflow supply-chain gate', () => {
         expect(result.status).toBe('failed');
         expect(result.error).toContain('Dependabot github-actions configuration');
         expect(result.checks.dependabot).toBe(false);
+      } finally {
+        rmSync(parent, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it('requires a manual, read-only npm-production health deployment contract', () => {
+    const mutations = [
+      ['automatic trigger', (source) => source.replace('  workflow_dispatch:', '  push:\n  workflow_dispatch:')],
+      ['version drift', (source) => source.replace('default: "0.3.0"', 'default: "0.2.55"')],
+      ['tag drift', (source) => source.replace('default: latest', 'default: next')],
+      ['write permission', (source) => source.replace('contents: read', 'contents: write')],
+      ['missing environment', (source) => source.replace('name: npm-production', 'name: staging')],
+      [
+        'versionless URL',
+        (source) => source.replace(
+          'https://www.npmjs.com/package/react-native-image-compression-kit/v/${{ inputs.version }}',
+          'https://www.npmjs.com/package/react-native-image-compression-kit'
+        ),
+      ],
+      [
+        'registry mutation',
+        (source) => source.replace('    steps:\n', '    steps:\n      - run: pnpm publish\n'),
+      ],
+    ];
+
+    for (const [label, mutate] of mutations) {
+      const { parent, rootDir } = copiedRepository(`registry-${label.replaceAll(' ', '-')}`);
+      try {
+        mutateWorkflow(rootDir, 'registry-validation.yml', mutate);
+        const result = verify(rootDir);
+        expect(result.status).toBe('failed');
+        expect(result.checks.workflows).toBe(false);
+        expect(result.error).toMatch(
+          /workflow_dispatch-only|default version|default dist-tag|read-only contents|npm-production|exact input version|must not contain/
+        );
       } finally {
         rmSync(parent, { recursive: true, force: true });
       }

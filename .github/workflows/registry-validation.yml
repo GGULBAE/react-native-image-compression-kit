@@ -6,7 +6,7 @@ on:
       version:
         description: Exact published npm version to validate
         required: true
-        default: "0.2.55"
+        default: "0.3.0"
         type: string
       expected_tag:
         description: Dist-tag that must resolve to the same version
@@ -24,6 +24,9 @@ jobs:
     name: npm registry provenance
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment:
+      name: npm-production
+      url: https://www.npmjs.com/package/react-native-image-compression-kit/v/${{ inputs.version }}
 
     steps:
       - name: Checkout

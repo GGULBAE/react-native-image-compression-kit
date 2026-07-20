@@ -253,6 +253,10 @@ export function verifyWorkflowSupplyChain(
       return { workflow, source: readFile(filePath, `workflow ${workflow}`) };
     });
     state.workflowCount = workflowSources.length;
+    const packageMetadata = JSON.parse(
+      readFile(path.join(root, 'package.json'), 'package metadata')
+    );
+    validateRegistryValidationWorkflow(workflowSources, packageMetadata.version);
     state.checks.workflows = true;
 
     const normalized = normalizeWorkflowSources(workflowSources);
@@ -345,6 +349,114 @@ function normalizeWorkflowSources(workflowSources) {
     'Workflow sources must not contain duplicate paths.'
   );
   return normalized;
+}
+
+export function validateRegistryValidationWorkflow(workflowSources, packageVersion) {
+  assert(
+    typeof packageVersion === 'string' && packageVersion.length > 0,
+    'Package metadata must declare a version.'
+  );
+  const workflow = workflowSources.find(
+    ({ workflow: workflowPath }) =>
+      workflowPath === '.github/workflows/registry-validation.yml'
+  );
+  assert(workflow, 'Registry Validation workflow is required.');
+
+  const eventBlock = extractYamlMappingBlock(workflow.source, 0, 'on');
+  assert(eventBlock, 'Registry Validation workflow must declare an event mapping.');
+  assert(
+    JSON.stringify(readYamlMappingKeys(eventBlock, 2)) ===
+      JSON.stringify(['workflow_dispatch']),
+    'Registry Validation workflow must be workflow_dispatch-only.'
+  );
+
+  const permissionsBlock = extractYamlMappingBlock(
+    workflow.source,
+    0,
+    'permissions'
+  );
+  assert(
+    readYamlScalar(permissionsBlock, 2, 'contents') === 'read' &&
+      !readYamlMappingKeys(permissionsBlock, 2).includes('packages'),
+    'Registry Validation must keep read-only contents and no package permission.'
+  );
+
+  const dispatchBlock = extractYamlMappingBlock(eventBlock, 2, 'workflow_dispatch');
+  const inputsBlock = extractYamlMappingBlock(dispatchBlock, 4, 'inputs');
+  const versionBlock = extractYamlMappingBlock(inputsBlock, 6, 'version');
+  const tagBlock = extractYamlMappingBlock(inputsBlock, 6, 'expected_tag');
+  assert(
+    readYamlScalar(versionBlock, 8, 'default') === packageVersion,
+    `Registry Validation default version must match package.json (${packageVersion}).`
+  );
+  assert(
+    readYamlScalar(tagBlock, 8, 'default') === 'latest',
+    'Registry Validation default dist-tag must be latest.'
+  );
+
+  const jobsBlock = extractYamlMappingBlock(workflow.source, 0, 'jobs');
+  const jobBlock = extractYamlMappingBlock(jobsBlock, 2, 'registry-provenance');
+  const environmentBlock = extractYamlMappingBlock(jobBlock, 4, 'environment');
+  assert(
+    readYamlScalar(environmentBlock, 6, 'name') === 'npm-production',
+    'Registry Validation must report health through the npm-production environment.'
+  );
+  assert(
+    readYamlScalar(environmentBlock, 6, 'url') ===
+      'https://www.npmjs.com/package/react-native-image-compression-kit/v/${{ inputs.version }}',
+    'Registry Validation npm-production URL must identify the exact input version.'
+  );
+
+  for (const forbidden of [
+    /\b(?:npm|pnpm|yarn)\s+(?:publish|unpublish|deprecate|dist-tag|access|owner|token)\b/,
+    /\bgh\s+release\b/,
+    /\bgit\s+push\b/,
+  ]) {
+    assert(
+      !forbidden.test(workflow.source),
+      'Registry Validation must not contain registry, release, or Git mutation commands.'
+    );
+  }
+}
+
+function extractYamlMappingBlock(source, indent, key) {
+  assert(typeof source === 'string', `Missing YAML source while reading ${key}.`);
+  const lines = source.split(/\r?\n/);
+  const prefix = `${' '.repeat(indent)}${key}:`;
+  const start = lines.findIndex((line) => line === prefix);
+  assert(start >= 0, `Missing YAML mapping: ${key}.`);
+  let end = lines.length;
+  for (let index = start + 1; index < lines.length; index += 1) {
+    const line = lines[index];
+    if (!line.trim() || line.trimStart().startsWith('#')) continue;
+    const leadingSpaces = line.length - line.trimStart().length;
+    if (leadingSpaces <= indent) {
+      end = index;
+      break;
+    }
+  }
+  return lines.slice(start, end).join('\n');
+}
+
+function readYamlMappingKeys(source, indent) {
+  const prefix = ' '.repeat(indent);
+  return source
+    .split(/\r?\n/)
+    .map((line) => {
+      const match = line.match(new RegExp(`^${prefix}([A-Za-z0-9_-]+):(?:\\s.*)?$`));
+      return match?.[1] ?? null;
+    })
+    .filter(Boolean);
+}
+
+function readYamlScalar(source, indent, key) {
+  assert(typeof source === 'string', `Missing YAML source while reading ${key}.`);
+  const prefix = ' '.repeat(indent);
+  const match = source.match(
+    new RegExp(`^${prefix}${key}:\\s*(?:"([^"]*)"|'([^']*)'|(\\S.*?))\\s*$`, 'm')
+  );
+  assert(match, `Missing YAML scalar: ${key}.`);
+  return match[1] ?? match[2] ?? match[3];
 }
 
 function validateActionPins(usages) {
