@@ -132,10 +132,7 @@ if (existsSync(demoManifestPath)) {
     JSON.parse(readFileSync(demoManifestPath, 'utf8'))
   );
   if (report.status !== 'passed') errors.push(`native demo evidence: ${report.error}`);
-  const evidencePackageVersion =
-    releaseStatus.releaseState === 'candidate'
-      ? releaseStatus.npmLatest
-      : packageJson.version;
+  const evidencePackageVersion = releaseStatus.publishedNpmLatest;
   if (report.packageVersion !== evidencePackageVersion) {
     errors.push(
       'native demo evidence package version does not match the latest published version'

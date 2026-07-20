@@ -19,7 +19,8 @@ const MANIFEST = JSON.parse(
 
 function readmeWithStatus({
   packageVersion = PACKAGE_VERSION,
-  npmLatest = MANIFEST.npmLatest,
+  releaseTarget = MANIFEST.releaseTarget,
+  publishedNpmLatest = MANIFEST.publishedNpmLatest,
   releaseState = MANIFEST.releaseState,
   registryCheckedAt = MANIFEST.registryCheckedAt,
   before = '',
@@ -31,7 +32,8 @@ function readmeWithStatus({
     '<!-- package-status:start -->',
     '## Current status',
     `- Package version: \`${packageVersion}\``,
-    `- npm latest: \`${npmLatest}\``,
+    `- Release target: \`${releaseTarget}\``,
+    `- Published npm latest: \`${publishedNpmLatest}\``,
     `- Release state: \`${releaseState}\``,
     `- Registry checked at: \`${registryCheckedAt}\``,
     '<!-- package-status:end -->',
@@ -74,10 +76,10 @@ describe('release dry-run packed README current-status guard', () => {
     const options = { manifest: candidateManifest };
 
     expect(getPackedReadmeStatusViolations(packedReadme, options)).toEqual([
-      `current status declares package version ${PACKAGE_VERSION} as candidate`,
+      `current status declares release target ${PACKAGE_VERSION} as candidate`,
     ]);
     expect(() => validatePackedReadmeStatus(packedReadme, options)).toThrow(
-      `current status declares package version ${PACKAGE_VERSION} as candidate`
+      `current status declares release target ${PACKAGE_VERSION} as candidate`
     );
   });
 
@@ -92,6 +94,7 @@ describe('release dry-run packed README current-status guard', () => {
 
     expect(getPackedReadmeStatusViolations(packedReadme, options)).toEqual([]);
     expect(() => validatePackedReadmeStatus(packedReadme, options)).not.toThrow();
+    expect(releaseManifest.publishedNpmLatest).not.toBe(releaseManifest.releaseTarget);
   });
 
   it('rejects package and manifest mismatches before evaluating publishability', () => {
@@ -112,8 +115,8 @@ describe('release dry-run packed README current-status guard', () => {
   it('rejects missing, duplicate, malformed, and incomplete status fields', () => {
     const missingMarker = '# Package\nHistorical candidate prose';
     const duplicateField = readmeWithStatus().replace(
-      `- npm latest: \`${MANIFEST.npmLatest}\``,
-      `- npm latest: \`${MANIFEST.npmLatest}\`\n- npm latest: \`${MANIFEST.npmLatest}\``
+      `- Published npm latest: \`${MANIFEST.publishedNpmLatest}\``,
+      `- Published npm latest: \`${MANIFEST.publishedNpmLatest}\`\n- Published npm latest: \`${MANIFEST.publishedNpmLatest}\``
     );
     const invalidState = readmeWithStatus().replace(
       `- Release state: \`${MANIFEST.releaseState}\``,
@@ -128,7 +131,7 @@ describe('release dry-run packed README current-status guard', () => {
       'README: expected exactly one ordered package-status marker block'
     );
     expect(() => validatePackedReadmeStatus(duplicateField)).toThrow(
-      'README: expected exactly one npm latest field, received 2'
+      'README: expected exactly one Published npm latest field, received 2'
     );
     expect(() => validatePackedReadmeStatus(invalidState)).toThrow(
       'README: Release state expected "candidate" or "release", received "published"'

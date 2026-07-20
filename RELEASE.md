@@ -7,8 +7,9 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 
 <!-- release-status:start -->
 - Package version: `0.4.0`
-- npm latest: `0.3.0`
-- Release state: `candidate`
+- Release target: `0.4.0`
+- Published npm latest: `0.3.0`
+- Release state: `release`
 - Registry checked at: `2026-07-20`
 <!-- release-status:end -->
 
@@ -16,12 +17,13 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
   decode-time downsampling, resource limits, cancellation, transactional
   outputs, and alpha contract validation
 
-This candidate preserves existing `compressImage(options)` usage while adding
-an optional AbortSignal-compatible control. Android and iOS now limit native
-compression to two concurrent operations, reject unsafe source/working sizes
-before full decode, and clean incomplete outputs on every failure or
-cancellation path. iOS codec work is ImageIO/CoreGraphics-based and no longer
-runs on the main queue.
+This reviewed release target preserves existing `compressImage(options)` usage
+while adding an optional AbortSignal-compatible control. Android and iOS now
+limit native compression to two concurrent operations, reject unsafe
+source/working sizes before full decode, and clean incomplete outputs on every
+failure or cancellation path. iOS codec work is ImageIO/CoreGraphics-based and
+no longer runs on the main queue. npm `latest` truthfully remains 0.3.0 until
+the approved Trusted Release completes.
 
 ### Included
 
@@ -40,7 +42,7 @@ runs on the main queue.
   preservation, remote/data inputs, publication, dist-tags, tags, or GitHub
   Releases.
 
-### Candidate validation
+### Release validation
 
 ```bash
 pnpm verify
@@ -178,9 +180,11 @@ matrix blocks `candidate` and permits `release`; Android doctor consumes the
 same semantic result instead of matching release procedure sentences.
 
 The repository-only [release status manifest](docs/release-status.json) is the
-authority for npm latest, release state, and the registry check date. Package
-version remains authoritative in `package.json`; the README and this release
-block are validated mirrors.
+authority for the release target, observed published npm latest, release state,
+and registry check date. Package version remains authoritative in
+`package.json` and must match the release target; the README and this release
+block are validated mirrors. Keeping the two version fields separate prevents
+pre-publish source from claiming that the target already exists on npm.
 
 Repository verification is split by contract instead of one Android-named
 umbrella test. Package shape, documentation, Android wiring, iOS wiring, and

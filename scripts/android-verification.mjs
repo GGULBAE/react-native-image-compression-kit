@@ -398,7 +398,7 @@ function checkDocumentationSemantics() {
     ok,
     label: 'package metadata and documentation semantics are aligned',
     detail: ok
-      ? `package ${report.status.packageVersion} ${report.status.releaseState}, npm latest ${report.status.npmLatest} checked ${report.status.registryCheckedAt}, manifest-aligned README/RELEASE, required headings/links/commands/files, local anchors, README limits, and npm exclusions passed`
+      ? `release target ${report.status.releaseTarget} ${report.status.releaseState}, published npm latest ${report.status.publishedNpmLatest} checked ${report.status.registryCheckedAt}, package/README/RELEASE aligned to the manifest, required headings/links/commands/files, local anchors, README limits, and npm exclusions passed`
       : `semantic documentation mismatch: ${[
           ...report.errors,
           ...(packageChecks.every(Boolean) ? [] : ['package metadata contract']),

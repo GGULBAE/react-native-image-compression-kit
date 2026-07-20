@@ -341,6 +341,37 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     }
   });
 
+  it('selects trusted release notes from the exact validated version', () => {
+    const mutations = [
+      (source) =>
+        source.replace(
+          'release_notes="docs/launch/v${VERSION}-release-notes.md"',
+          'release_notes="docs/launch/v0.3.0-release-notes.md"'
+        ),
+      (source) => source.replace('test -f "$release_notes"', 'test -n "$release_notes"'),
+      (source) =>
+        source.replace(
+          'cp "$release_notes" "$release_dir/release-notes.md"',
+          'cp docs/launch/v0.3.0-release-notes.md "$release_dir/release-notes.md"'
+        ),
+    ];
+
+    for (const [index, mutate] of mutations.entries()) {
+      const { parent, rootDir } = copiedRepository(`release-notes-${index}`);
+      try {
+        mutateWorkflow(rootDir, 'release.yml', mutate);
+        const result = verify(rootDir);
+        expect(result.status).toBe('failed');
+        expect(result.checks.workflows).toBe(false);
+        expect(result.error).toMatch(
+          /exact validated VERSION|must not hardcode a versioned release-notes path/
+        );
+      } finally {
+        rmSync(parent, { recursive: true, force: true });
+      }
+    }
+  });
+
   it('preserves an existing report and removes the temporary file on atomic failure', () => {
     const parent = mkdtempSync(path.join(os.tmpdir(), 'rnick-workflow-atomic-'));
     try {

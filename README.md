@@ -18,16 +18,17 @@ handle platform codec differences before compression.
 ## Current status
 
 - Package version: `0.4.0`
-- npm latest: `0.3.0`
-- Release state: `candidate`
+- Release target: `0.4.0`
+- Published npm latest: `0.3.0`
+- Release state: `release`
 - Registry checked at: `2026-07-20`
 <!-- package-status:end -->
 
-Version 0.4.0 is an unpublished candidate. It moves large image work to bounded
-background workers, downsamples resize requests during decode, rejects unsafe
-work before full decode, supports cancellation, and publishes only complete
-transactional cache files. npm `latest` remains 0.3.0; publishing, tags, and a
-GitHub Release are outside this candidate goal.
+Version 0.4.0 is the reviewed release target. It moves large image work to
+bounded background workers, downsamples resize requests during decode, rejects
+unsafe work before full decode, supports cancellation, and publishes only
+complete transactional cache files. The observed npm `latest` remains 0.3.0
+until the separately approved Trusted Release publishes and verifies 0.4.0.
 
 ## Installation
 
@@ -48,7 +49,7 @@ cd ios && pod install
 ```
 
 Android 23+ and iOS 13.4+ are supported. The package declares React Native
-`>=0.73 <1.0`. The v0.3.0 release matrix verifies React Native 0.73.11 Legacy,
+`>=0.73 <1.0`. The v0.4.0 release-target matrix verifies React Native 0.73.11 Legacy,
 React Native 0.86.0 Legacy and New Architecture, and Expo 57.0.7 with React
 Native 0.86.0 New Architecture on both platforms. Versions between the tested
 endpoints are accepted by the peer range but are not individually release
@@ -285,8 +286,9 @@ pnpm release:dry-run
 ```
 
 The release dry run never publishes. Its shared state matrix blocks a
-`candidate` and permits `release` only after the manifest and document mirrors
-are aligned.
+`candidate` and permits `release` only after package metadata, the release
+target, and document mirrors are aligned. The separately tracked published npm
+latest remains an observed registry value and is not rewritten before publish.
 
 ## Repository documentation
 

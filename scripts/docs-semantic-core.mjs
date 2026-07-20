@@ -18,7 +18,15 @@ export const RELEASE_STATE_MATRIX = Object.freeze({
 
 const STATUS_FIELDS = [
   ['packageVersion', 'Package version'],
-  ['npmLatest', 'npm latest'],
+  ['releaseTarget', 'Release target'],
+  ['publishedNpmLatest', 'Published npm latest'],
+  ['releaseState', 'Release state'],
+  ['registryCheckedAt', 'Registry checked at'],
+];
+
+const LEGACY_PUBLISHED_STATUS_FIELDS = [
+  ['packageVersion', 'Package version'],
+  ['publishedNpmLatest', 'npm latest'],
   ['releaseState', 'Release state'],
   ['registryCheckedAt', 'Registry checked at'],
 ];
@@ -44,7 +52,6 @@ export const REQUIRED_DOCUMENTATION_FILES = [
   'docs/launch/announcement-en.md',
   'docs/launch/announcement-ko.md',
   'docs/launch/baseline.json',
-  'docs/launch/v0.3.0-release-notes.md',
   'docs/release-evidence/README.md',
   'docs/release-evidence/registry-provenance.md',
   'docs/release-evidence/policy-review.md',
@@ -169,9 +176,15 @@ export function parseStatusDocument(
     );
   }
 
-  if (!isSemver(status.npmLatest)) {
+  if (!isSemver(status.releaseTarget)) {
     throw new Error(
-      `${documentName}: npm latest expected semantic version, received "${status.npmLatest}"`
+      `${documentName}: Release target expected semantic version, received "${status.releaseTarget}"`
+    );
+  }
+
+  if (!isSemver(status.publishedNpmLatest)) {
+    throw new Error(
+      `${documentName}: Published npm latest expected semantic version, received "${status.publishedNpmLatest}"`
     );
   }
 
@@ -194,6 +207,49 @@ export function parseCurrentStatus(readmeContents) {
   return parseStatusDocument(readmeContents);
 }
 
+export function parsePublishedPackageStatus(readmeContents) {
+  const block = extractCurrentStatusBlock(readmeContents);
+  if (
+    block.includes('- Release target:') ||
+    block.includes('- Published npm latest:')
+  ) {
+    return parseCurrentStatus(readmeContents);
+  }
+
+  const legacy = Object.fromEntries(
+    LEGACY_PUBLISHED_STATUS_FIELDS.map(([key, label]) => [
+      key,
+      readStatusField(block, label, 'README'),
+    ])
+  );
+  if (!isSemver(legacy.packageVersion)) {
+    throw new Error(
+      `README: Package version expected semantic version, received "${legacy.packageVersion}"`
+    );
+  }
+  if (!isSemver(legacy.publishedNpmLatest)) {
+    throw new Error(
+      `README: npm latest expected semantic version, received "${legacy.publishedNpmLatest}"`
+    );
+  }
+  if (!isReleaseState(legacy.releaseState)) {
+    throw new Error(
+      `README: Release state expected "candidate" or "release", received "${legacy.releaseState}"`
+    );
+  }
+  if (!isIsoDate(legacy.registryCheckedAt)) {
+    throw new Error(
+      `README: Registry checked at expected YYYY-MM-DD, received "${legacy.registryCheckedAt}"`
+    );
+  }
+
+  return {
+    ...legacy,
+    releaseTarget: legacy.packageVersion,
+    block,
+  };
+}
+
 export function parseReleaseStatus(releaseContents) {
   return parseStatusDocument(releaseContents, {
     documentName: 'RELEASE',
@@ -212,7 +268,8 @@ export function validateReleaseStatusManifest(value) {
 
   const expectedKeys = [
     'schemaVersion',
-    'npmLatest',
+    'releaseTarget',
+    'publishedNpmLatest',
     'releaseState',
     'registryCheckedAt',
   ];
@@ -229,14 +286,19 @@ export function validateReleaseStatusManifest(value) {
     );
   }
 
-  if (value.schemaVersion !== 1) {
+  if (value.schemaVersion !== 2) {
     throw new Error(
-      `${RELEASE_STATUS_MANIFEST_PATH}: schemaVersion expected 1, received ${describeValue(value.schemaVersion)}`
+      `${RELEASE_STATUS_MANIFEST_PATH}: schemaVersion expected 2, received ${describeValue(value.schemaVersion)}`
     );
   }
-  if (!isSemver(value.npmLatest)) {
+  if (!isSemver(value.releaseTarget)) {
     throw new Error(
-      `${RELEASE_STATUS_MANIFEST_PATH}: npmLatest expected semantic version, received ${describeValue(value.npmLatest)}`
+      `${RELEASE_STATUS_MANIFEST_PATH}: releaseTarget expected semantic version, received ${describeValue(value.releaseTarget)}`
+    );
+  }
+  if (!isSemver(value.publishedNpmLatest)) {
+    throw new Error(
+      `${RELEASE_STATUS_MANIFEST_PATH}: publishedNpmLatest expected semantic version, received ${describeValue(value.publishedNpmLatest)}`
     );
   }
   if (!isReleaseState(value.releaseState)) {
@@ -252,7 +314,8 @@ export function validateReleaseStatusManifest(value) {
 
   return {
     schemaVersion: value.schemaVersion,
-    npmLatest: value.npmLatest,
+    releaseTarget: value.releaseTarget,
+    publishedNpmLatest: value.publishedNpmLatest,
     releaseState: value.releaseState,
     registryCheckedAt: value.registryCheckedAt,
   };
@@ -291,6 +354,17 @@ export function inspectStatusContract({ packageVersion, manifest, documents }) {
     errors.push(error instanceof Error ? error.message : String(error));
   }
 
+  if (
+    normalizedManifest &&
+    isSemver(packageVersion) &&
+    normalizedManifest.releaseTarget !== packageVersion
+  ) {
+    errors.push(
+      `${RELEASE_STATUS_MANIFEST_PATH}: releaseTarget expected "${packageVersion}" from package.json, ` +
+        `received "${normalizedManifest.releaseTarget}"`
+    );
+  }
+
   const parsedDocuments = {};
   for (const document of documents) {
     try {
@@ -302,9 +376,16 @@ export function inspectStatusContract({ packageVersion, manifest, documents }) {
             `received "${status.packageVersion}"`
         );
       }
+      if (isSemver(packageVersion) && status.releaseTarget !== packageVersion) {
+        errors.push(
+          `${document.documentName}: Release target expected "${packageVersion}" from package.json, ` +
+            `received "${status.releaseTarget}"`
+        );
+      }
       if (normalizedManifest) {
         for (const [statusKey, fieldLabel, manifestKey] of [
-          ['npmLatest', 'npm latest', 'npmLatest'],
+          ['releaseTarget', 'Release target', 'releaseTarget'],
+          ['publishedNpmLatest', 'Published npm latest', 'publishedNpmLatest'],
           ['releaseState', 'Release state', 'releaseState'],
           ['registryCheckedAt', 'Registry checked at', 'registryCheckedAt'],
         ]) {
@@ -345,6 +426,10 @@ export function inspectDocumentation(root) {
   }
 
   const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
+  const releaseNotesPath = `docs/launch/v${packageJson.version}-release-notes.md`;
+  if (!existsSync(path.join(root, releaseNotesPath))) {
+    errors.push(`missing document: ${releaseNotesPath}`);
+  }
   const readmePath = path.join(root, 'README.md');
   const releasePath = path.join(root, 'RELEASE.md');
   const readme = existsSync(readmePath) ? readFileSync(readmePath, 'utf8') : null;
@@ -544,10 +629,7 @@ function inspectPublicLaunchContracts(root, packageVersion, releaseStatus, error
   const baselinePath = path.join(root, 'docs/launch/baseline.json');
   if (existsSync(baselinePath)) {
     const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));
-    const evidencePackageVersion =
-      releaseStatus?.releaseState === 'candidate'
-        ? releaseStatus.npmLatest
-        : packageVersion;
+    const evidencePackageVersion = releaseStatus?.publishedNpmLatest;
     if (
       baseline.packageVersion !== evidencePackageVersion ||
       baseline.schemaVersion !== 1

@@ -257,6 +257,7 @@ export function verifyWorkflowSupplyChain(
       readFile(path.join(root, 'package.json'), 'package metadata')
     );
     validateRegistryValidationWorkflow(workflowSources, packageMetadata.version);
+    validateTrustedReleaseWorkflow(workflowSources);
     state.checks.workflows = true;
 
     const normalized = normalizeWorkflowSources(workflowSources);
@@ -417,6 +418,29 @@ export function validateRegistryValidationWorkflow(workflowSources, packageVersi
       'Registry Validation must not contain registry, release, or Git mutation commands.'
     );
   }
+}
+
+export function validateTrustedReleaseWorkflow(workflowSources) {
+  const workflow = workflowSources.find(
+    ({ workflow: workflowPath }) =>
+      workflowPath === '.github/workflows/release.yml'
+  );
+  assert(workflow, 'Trusted Release workflow is required.');
+
+  for (const required of [
+    'release_notes="docs/launch/v${VERSION}-release-notes.md"',
+    'test -f "$release_notes"',
+    'cp "$release_notes" "$release_dir/release-notes.md"',
+  ]) {
+    assert(
+      workflow.source.includes(required),
+      'Trusted Release must select existing release notes from the exact validated VERSION.'
+    );
+  }
+  assert(
+    !/docs\/launch\/v\d+\.\d+\.\d+-release-notes\.md/.test(workflow.source),
+    'Trusted Release must not hardcode a versioned release-notes path.'
+  );
 }
 
 function extractYamlMappingBlock(source, indent, key) {

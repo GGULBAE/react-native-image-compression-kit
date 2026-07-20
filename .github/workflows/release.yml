@@ -127,7 +127,9 @@ jobs:
             | tee "$release_dir/release-artifact.stdout.json"
           cmp "$release_dir/release-artifact.json" "$release_dir/release-artifact.stdout.json"
           shasum -a 256 "$tgz" > "$release_dir/$(basename "$tgz").sha256"
-          cp docs/launch/v0.3.0-release-notes.md "$release_dir/release-notes.md"
+          release_notes="docs/launch/v${VERSION}-release-notes.md"
+          test -f "$release_notes"
+          cp "$release_notes" "$release_dir/release-notes.md"
           node --input-type=module - "$release_dir/release-artifact.json" "$GITHUB_OUTPUT" <<'NODE'
           import { appendFileSync, readFileSync } from 'node:fs';
           const report = JSON.parse(readFileSync(process.argv[2], 'utf8'));

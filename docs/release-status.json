@@ -1,6 +1,7 @@
 {
-  "schemaVersion": 1,
-  "npmLatest": "0.3.0",
-  "releaseState": "candidate",
+  "schemaVersion": 2,
+  "releaseTarget": "0.4.0",
+  "publishedNpmLatest": "0.3.0",
+  "releaseState": "release",
   "registryCheckedAt": "2026-07-20"
 }
