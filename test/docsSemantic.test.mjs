@@ -103,6 +103,12 @@ describe('documentation semantic gate', () => {
     expect(report.markdownFiles).toContain(
       'docs/release-evidence/registry-provenance.md'
     );
+    expect(report.markdownFiles).toContain(
+      'docs/supply-chain/dependency-security.md'
+    );
+    expect(report.markdownFiles).toContain(
+      'docs/supply-chain/dependabot-triage.md'
+    );
     expect(report.markdownFiles).toContain('docs/verification-architecture.md');
   });
 

@@ -6,6 +6,9 @@ Every remote `uses:` declaration under `.github/workflows/` is pinned to a
 lowercase full 40-character commit SHA with its reviewed release tag in a
 comment. `.github/actions-lock.json` is the canonical repository/version/SHA and
 usage-count lock. Weekly Dependabot `github-actions` updates are proposals only.
+Minor and patch proposals are grouped with an open-version-PR limit of two;
+major updates are intentionally deferred to dedicated reviews. Dependabot does
+not replace the tag-to-commit review or authorize a lock change.
 
 Run the network-free gate:
 
@@ -13,9 +16,9 @@ Run the network-free gate:
 pnpm verify:workflow-supply-chain -- --json
 ```
 
-The current lock covers 36 remote `uses:` declarations across six workflow
+The current lock covers 70 remote `uses:` declarations across ten workflow
 files. Lock SHA-256 is
-`b2a9cb18b067694052844d6346d0eecaf4bdb446c3f14bc7a8c694783cf76747`.
+`43122405b320062850f7ada247c0ee0d9e2f59814dc8a846445d1984e43eab68`.
 
 ## Manual networked review
 

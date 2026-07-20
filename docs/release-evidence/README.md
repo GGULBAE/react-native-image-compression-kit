@@ -27,8 +27,9 @@ networked.
   review receipt, rehearsal, and attestation.
 - [Review archive](review-archive.md) — exact ZIP retention, atomic import,
   single-archive replay, and archive-set replay.
-- [Action pins](../supply-chain/action-pins.md) — immutable workflow lock,
-  networked tag review, provenance, and attestation.
+- [Supply-chain operations](../supply-chain/README.md) — development dependency
+  security, Dependabot triage, immutable workflow pins, provenance, and
+  attestation.
 - [Complete release history](../releases/0.2-history.md) — version-by-version
   goals, runs, artifact IDs, digests, results, and non-goals.
 

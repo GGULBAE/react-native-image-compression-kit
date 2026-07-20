@@ -10,6 +10,7 @@ from the npm package.
 | --- | --- | --- |
 | Package metadata, exports, Codegen, publish allowlist, and command wiring | `test/packageContract.test.ts` | `pnpm test` |
 | README, release status, required documentation, and local links | `test/docsSemantic.test.mjs` and `scripts/docs-semantic-core.mjs` | `pnpm docs:check` |
+| Development-only Vite/VitePress/esbuild and Lighthouse/Sentry/OpenTelemetry resolution plus production dependency boundary | `test/dependencySecurity.test.mjs` and `scripts/dependency-security-core.mjs` | `pnpm verify:dependency-security -- --json` |
 | GitHub Actions pins and workflow supply chain | `test/workflowSupplyChain.test.mjs` and `scripts/workflow-supply-chain-core.mjs` | `pnpm verify:workflow-supply-chain -- --json` |
 | Public documentation site structure, claims, local links, and npm exclusion | `scripts/verify-site.mjs` | `pnpm site:check` and `pnpm site:build` |
 | Native demo result metrics, source/output/screenshot bytes, presentation-video bytes, digests, platform provenance, and exact source identity | `test/demoEvidence.test.mjs` and `scripts/demo-evidence-core.mjs` | Native Demo Evidence workflow and `pnpm verify:demo-evidence` |
@@ -69,6 +70,9 @@ pnpm site:quality
 pnpm fixtures:compatibility:check
 pnpm fixtures:repository-settings:check
 pnpm audit:repository-settings
+pnpm verify:dependency-security -- --json
+pnpm verify:workflow-supply-chain -- --json
+pnpm audit --json
 pnpm verify:release-artifact -- --help
 git diff --check
 pnpm pack --dry-run
@@ -83,6 +87,8 @@ tests plus host-app smoke test in their supported environments.
 
 - Change package shape or scripts in the package contract.
 - Change document structure or links in the documentation semantic gate.
+- Change a reviewed development-tool floor or scoped pnpm override in the
+  dependency-security verifier and its mutation tests.
 - Change native behavior in the corresponding Kotlin or iOS smoke tests.
 - Change workflow actions or pins in the workflow supply-chain verifier.
 - Change release evidence rules in the evidence-specific verifier and fixtures.

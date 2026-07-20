@@ -125,6 +125,15 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     expect(readFileSync(path.join(ROOT, WORKFLOW_DEPENDABOT_FILE), 'utf8')).toBe(
       WORKFLOW_DEPENDABOT_CONTENT
     );
+    for (const policy of [
+      'open-pull-requests-limit: 2',
+      'open-pull-requests-limit: 3',
+      'applies-to: "security-updates"',
+      '"@opentelemetry/*"',
+      'version-update:semver-major',
+    ]) {
+      expect(WORKFLOW_DEPENDABOT_CONTENT).toContain(policy);
+    }
 
     const coreSource = readFileSync(
       path.join(ROOT, 'scripts', 'workflow-supply-chain-core.mjs'),
