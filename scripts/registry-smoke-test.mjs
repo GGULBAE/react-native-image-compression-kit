@@ -78,6 +78,39 @@ export function parseRegistrySmokeArgs(args) {
   return parsed;
 }
 
+export function normalizeNpmViewResult(value, label = 'npm view') {
+  if (!Array.isArray(value)) return value;
+  if (value.length !== 1) {
+    throw new Error(
+      `Expected ${label} to return exactly one result, received ${value.length}.`
+    );
+  }
+  return value[0];
+}
+
+export function normalizeNpmPackResult(value, packageName) {
+  const entries = Array.isArray(value)
+    ? value
+    : value && typeof value === 'object'
+      ? typeof value.filename === 'string'
+        ? [value]
+        : Object.values(value)
+      : [];
+  if (
+    entries.length !== 1 ||
+    !entries[0] ||
+    typeof entries[0] !== 'object' ||
+    Array.isArray(entries[0]) ||
+    typeof entries[0].filename !== 'string' ||
+    entries[0].filename.length === 0
+  ) {
+    throw new Error(
+      `Expected npm pack to return one tarball entry for ${packageName}.`
+    );
+  }
+  return entries[0];
+}
+
 export function runRegistrySmoke(options, dependencies = {}) {
   const captureJson = dependencies.captureJson ?? captureCommandJson;
   const run = dependencies.run ?? runCommand;
@@ -115,28 +148,34 @@ export function runRegistrySmoke(options, dependencies = {}) {
     if (!selector) throw new Error('Missing registry version or tag.');
 
     mkdirSync(TEMP_PARENT, { recursive: true });
-    registryMetadata = captureJson(
-      'npm',
-      [
-        'view',
-        `${packageName}@${selector}`,
-        'version',
-        'dist.tarball',
-        'dist.integrity',
-        'dist.shasum',
-        'time',
-        '--json',
-      ],
-      ROOT
+    registryMetadata = normalizeNpmViewResult(
+      captureJson(
+        'npm',
+        [
+          'view',
+          `${packageName}@${selector}`,
+          'version',
+          'dist.tarball',
+          'dist.integrity',
+          'dist.shasum',
+          'time',
+          '--json',
+        ],
+        ROOT
+      ),
+      `npm view ${packageName}@${selector}`
     );
     const resolvedVersion = String(registryMetadata?.version ?? '');
     requestedVersion ??= resolvedVersion;
 
     if (options.expectedTag) {
-      tagVersion = captureJson(
-        'npm',
-        ['view', packageName, `dist-tags.${options.expectedTag}`, '--json'],
-        ROOT
+      tagVersion = normalizeNpmViewResult(
+        captureJson(
+          'npm',
+          ['view', packageName, `dist-tags.${options.expectedTag}`, '--json'],
+          ROOT
+        ),
+        `npm view ${packageName} dist-tags.${options.expectedTag}`
       );
       if (typeof tagVersion === 'object' && tagVersion !== null) {
         tagVersion = tagVersion[options.expectedTag] ?? null;
@@ -150,23 +189,20 @@ export function runRegistrySmoke(options, dependencies = {}) {
     mkdirSync(packDir, { recursive: true });
     mkdirSync(path.join(consumerDir, 'src'), { recursive: true });
 
-    const packed = captureJson(
-      'npm',
-      [
-        'pack',
-        `${packageName}@${resolvedVersion}`,
-        '--pack-destination',
-        packDir,
-        '--json',
-      ],
-      ROOT
+    packInfo = normalizeNpmPackResult(
+      captureJson(
+        'npm',
+        [
+          'pack',
+          `${packageName}@${resolvedVersion}`,
+          '--pack-destination',
+          packDir,
+          '--json',
+        ],
+        ROOT
+      ),
+      `${packageName}@${resolvedVersion}`
     );
-    if (!Array.isArray(packed) || packed.length !== 1) {
-      throw new Error(
-        `Expected npm pack to return one tarball entry for ${packageName}@${resolvedVersion}.`
-      );
-    }
-    packInfo = packed[0];
     const tarballPath = path.join(packDir, packInfo.filename);
     tarballBytes = readFileSync(tarballPath);
     readmeContents = extractReadme(tarballPath);

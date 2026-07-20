@@ -33,7 +33,11 @@ import {
   canonicalRegistryReport,
   createRegistryReport,
 } from '../scripts/registry-smoke-core.mjs';
-import { parseRegistrySmokeArgs } from '../scripts/registry-smoke-test.mjs';
+import {
+  normalizeNpmPackResult,
+  normalizeNpmViewResult,
+  parseRegistrySmokeArgs,
+} from '../scripts/registry-smoke-test.mjs';
 import { parseRegistryProvenanceArgs } from '../scripts/verify-registry-provenance.mjs';
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -219,6 +223,52 @@ describe('registry provenance bundle', () => {
       json: true,
       reportFile: 'verification.json',
     });
+  });
+
+  it('normalizes npm 11 and npm 12 exact-view JSON shapes', () => {
+    const metadata = { version: VERSION, 'dist.tarball': 'https://registry.example/package.tgz' };
+    expect(normalizeNpmViewResult(metadata, 'metadata')).toBe(metadata);
+    expect(normalizeNpmViewResult([metadata], 'metadata')).toBe(metadata);
+    expect(normalizeNpmViewResult(VERSION, 'dist-tag')).toBe(VERSION);
+    expect(normalizeNpmViewResult([VERSION], 'dist-tag')).toBe(VERSION);
+  });
+
+  it('rejects ambiguous npm view JSON arrays', () => {
+    expect(() => normalizeNpmViewResult([], 'metadata')).toThrow(
+      'Expected metadata to return exactly one result, received 0.'
+    );
+    expect(() => normalizeNpmViewResult([{ version: VERSION }, { version: VERSION }], 'metadata')).toThrow(
+      'Expected metadata to return exactly one result, received 2.'
+    );
+  });
+
+  it('normalizes npm 11 and npm 12 pack JSON shapes', () => {
+    const pack = { filename: `${PACKAGE_NAME}-${VERSION}.tgz`, version: VERSION };
+    expect(normalizeNpmPackResult([pack], `${PACKAGE_NAME}@${VERSION}`)).toBe(
+      pack
+    );
+    expect(
+      normalizeNpmPackResult(
+        { [PACKAGE_NAME]: pack },
+        `${PACKAGE_NAME}@${VERSION}`
+      )
+    ).toBe(pack);
+  });
+
+  it('rejects ambiguous npm pack JSON objects and arrays', () => {
+    for (const value of [
+      [],
+      [null],
+      { [PACKAGE_NAME]: {} },
+      [{ filename: 'a.tgz' }, { filename: 'b.tgz' }],
+      { first: { filename: 'a.tgz' }, second: { filename: 'b.tgz' } },
+    ]) {
+      expect(() =>
+        normalizeNpmPackResult(value, `${PACKAGE_NAME}@${VERSION}`)
+      ).toThrow(
+        `Expected npm pack to return one tarball entry for ${PACKAGE_NAME}@${VERSION}.`
+      );
+    }
   });
 
   it('emits exactly one canonical JSON object and atomically writes the same report', () => {

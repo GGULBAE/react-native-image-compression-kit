@@ -75,10 +75,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve package version
+        id: package
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
+
       - name: Capture Android result
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         env:
-          RNICK_DEMO_PACKAGE_VERSION: "0.3.0"
+          RNICK_DEMO_PACKAGE_VERSION: ${{ steps.package.outputs.version }}
           RNICK_DEMO_SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
           RNICK_DEMO_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
@@ -122,6 +126,10 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Resolve package version
+        id: package
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> "$GITHUB_OUTPUT"
 
       - name: Build example app
         run: |
@@ -168,7 +176,7 @@ jobs:
           device=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=Object.values(JSON.parse(s).devices).flat()[0];process.stdout.write(d.name)})")
           node scripts/create-demo-evidence.mjs \
             --platform ios \
-            --package-version 0.3.0 \
+            --package-version "${{ steps.package.outputs.version }}" \
             --source-sha "${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}" \
             --runtime "$runtime" \
             --device "$device" \
