@@ -15,7 +15,7 @@ const validArtifact = {
   sourceBranch: 'master',
   releaseState: 'release',
   releaseTarget: '0.4.0',
-  publishedNpmLatest: '0.3.0',
+  publishedNpmLatest: '0.4.0',
   tarballFile: 'react-native-image-compression-kit-0.4.0.tgz',
   tarballSize: 1024,
   tarballSha256: 'b'.repeat(64),
@@ -39,7 +39,7 @@ describe('release artifact contract', () => {
       status: 'passed',
       version: '0.4.0',
       releaseTarget: '0.4.0',
-      publishedNpmLatest: '0.3.0',
+      publishedNpmLatest: '0.4.0',
       sourceSha: 'a'.repeat(40),
       error: null,
     });

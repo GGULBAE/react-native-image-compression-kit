@@ -8,7 +8,7 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
 <!-- release-status:start -->
 - Package version: `0.4.0`
 - Release target: `0.4.0`
-- Published npm latest: `0.3.0`
+- Published npm latest: `0.4.0`
 - Release state: `release`
 - Registry checked at: `2026-07-20`
 <!-- release-status:end -->
@@ -17,13 +17,13 @@ Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-hi
   decode-time downsampling, resource limits, cancellation, transactional
   outputs, and alpha contract validation
 
-This reviewed release target preserves existing `compressImage(options)` usage
+This published release preserves existing `compressImage(options)` usage
 while adding an optional AbortSignal-compatible control. Android and iOS now
 limit native compression to two concurrent operations, reject unsafe
 source/working sizes before full decode, and clean incomplete outputs on every
 failure or cancellation path. iOS codec work is ImageIO/CoreGraphics-based and
-no longer runs on the main queue. npm `latest` truthfully remains 0.3.0 until
-the approved Trusted Release completes.
+no longer runs on the main queue. npm `latest`, immutable tag `v0.4.0`, and the
+GitHub Release now identify the published 0.4.0 artifact.
 
 ### Included
 
@@ -39,8 +39,43 @@ the approved Trusted Release completes.
 ### Not included
 
 - Batch compression, progress events, new output codecs, animation
-  preservation, remote/data inputs, publication, dist-tags, tags, or GitHub
-  Releases.
+  preservation, or remote/data inputs.
+
+### Publication evidence
+
+- Trusted Release runs
+  [29732117486](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29732117486)
+  and
+  [29736694994](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29736694994)
+  verified the exact source and all eight compatibility lanes. The first run
+  published the 68,633-byte tarball through npm OIDC; the resume run proved the
+  same registry SRI and skipped `npm publish`.
+- Both continuations stopped in registry smoke because npm 12 changed exact
+  `npm view --json` and `npm pack --json` from npm 11's object/array shapes to
+  single-item arrays/keyed objects. The published tarball was not changed or
+  republished; this follow-up normalizes both npm versions and rejects
+  ambiguous results.
+- Read-only Registry Validation run
+  [29737871213](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29737871213)
+  passed consumer install/typecheck, registry integrity, SLSA attestation, and
+  offline replay. Its repository-owned evidence archive has aggregate SHA-256
+  `d6ab0b806fd1c5d5605faeafe2d9809b4a665193219694a416c154f833bc2558`.
+- Release Evidence Policy Review run
+  [29738926758](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29738926758)
+  reviewed canonical candidate `7b97603d…8090`, rehearsed the complete
+  five-version evidence set, and produced
+  [attestation 36142406](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/36142406).
+  The retained review archive replays at aggregate SHA-256
+  `58a9c63441d0ec9364df1b72addd0d947152973a92aa7ec7ef08e5c01d9b3106`.
+- The immutable
+  [v0.4.0 GitHub Release](https://github.com/GGULBAE/react-native-image-compression-kit/releases/tag/v0.4.0)
+  and tag resolve to source commit
+  `6841a887b2d8b6c9e4823d2708233feeecaa77ea`.
+- Native Demo Evidence run
+  [29738858393](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29738858393)
+  captured fresh Android and iOS 0.4.0 results from that exact release source;
+  the checked manifest binds every source/output/screenshot byte and the
+  presentation video by SHA-256.
 
 ### Release validation
 

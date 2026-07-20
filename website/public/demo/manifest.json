@@ -1,19 +1,19 @@
 {
   "schemaVersion": 1,
   "status": "passed",
-  "packageVersion": "0.3.0",
-  "sourceCommit": "e5e1e4e19d36ff719092accae82811545f166d65",
+  "packageVersion": "0.4.0",
+  "sourceCommit": "6841a887b2d8b6c9e4823d2708233feeecaa77ea",
   "cases": [
     {
       "schemaVersion": 1,
       "status": "passed",
-      "packageVersion": "0.3.0",
-      "sourceCommit": "e5e1e4e19d36ff719092accae82811545f166d65",
-      "capturedAt": "2026-07-18T07:40:41.430Z",
+      "packageVersion": "0.4.0",
+      "sourceCommit": "6841a887b2d8b6c9e4823d2708233feeecaa77ea",
+      "capturedAt": "2026-07-20T11:38:47.100Z",
       "platform": "android",
       "runtime": "Android 15 / API 35",
       "device": "Google sdk_gphone64_x86_64",
-      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966139",
+      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29738858393",
       "sourceUriKind": "file",
       "options": {
         "resize": {
@@ -32,9 +32,9 @@
         "format": "jpeg",
         "width": 100,
         "height": 160,
-        "byteSize": 2284,
+        "byteSize": 2264,
         "originalByteSize": 13543,
-        "compressionRatio": 0.16864801004208815
+        "compressionRatio": 0.16717123237096654
       },
       "assets": {
         "source": {
@@ -44,26 +44,26 @@
         },
         "output": {
           "file": "android/output.jpg",
-          "byteSize": 2284,
-          "sha256": "4a6f8facb96cadd1f89cce221d9da0ea986d253678e568931eda86e4098a12b0"
+          "byteSize": 2264,
+          "sha256": "1ef3c5b545643617b0cb5449ad1589a7eb6f19b850331fd40e8f47990d9dc0b4"
         },
         "screenshot": {
           "file": "android/screen.png",
-          "byteSize": 296405,
-          "sha256": "788df778c7c9839e4268b647f0d4a9694fd29ab39f19597537a08840f27038e4"
+          "byteSize": 293673,
+          "sha256": "8481be8e201bde93bef5b4a8b415813142938bc5cce69a3829a53b488e5621d7"
         }
       }
     },
     {
       "schemaVersion": 1,
       "status": "passed",
-      "packageVersion": "0.3.0",
-      "sourceCommit": "e5e1e4e19d36ff719092accae82811545f166d65",
-      "capturedAt": "2026-07-18T07:45:19.677Z",
+      "packageVersion": "0.4.0",
+      "sourceCommit": "6841a887b2d8b6c9e4823d2708233feeecaa77ea",
+      "capturedAt": "2026-07-20T11:40:53.195Z",
       "platform": "ios",
       "runtime": "iOS.26.4",
       "device": "iPhone 17 Pro",
-      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966139",
+      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29738858393",
       "sourceUriKind": "file",
       "options": {
         "resize": {
@@ -82,9 +82,9 @@
         "format": "jpeg",
         "width": 100,
         "height": 160,
-        "byteSize": 2473,
+        "byteSize": 2353,
         "originalByteSize": 3317,
-        "compressionRatio": 0.7455532107325897
+        "compressionRatio": 0.7093759421163702
       },
       "assets": {
         "source": {
@@ -94,13 +94,13 @@
         },
         "output": {
           "file": "ios/output.jpg",
-          "byteSize": 2473,
-          "sha256": "668914493228369301a615e7486e95f1abc31e5f9a2b4175c551fe74fa9eaf26"
+          "byteSize": 2353,
+          "sha256": "2d67403a25ea1cc262805368e7b2b66e2438e605084f042b43151e3c8b0ddca1"
         },
         "screenshot": {
           "file": "ios/screen.png",
-          "byteSize": 291587,
-          "sha256": "1efe060a9fb8c3954578ae665bdf1838b5c0ff616693ab1368c179c9c58b3ade"
+          "byteSize": 284736,
+          "sha256": "49395bb269d2dafd180ebde054c79c250ec393685b6993cd55044683256b794d"
         }
       }
     }
@@ -108,10 +108,10 @@
   "presentation": {
     "video": {
       "file": "native-demo.mp4",
-      "byteSize": 173848,
-      "sha256": "943005f0280d0477db80bf43aa2ef324431447ae4ff143c7faf1923220c6af6b",
+      "byteSize": 290337,
+      "sha256": "7c5aea639efb389675e6743abad5c9bdf743fb72f3bcb269fea0f68ef79c596e",
       "durationSeconds": 5,
-      "generator": "ffmpeg 8.1.2 crossfade of exact Android and iOS native screenshots; see website/demo/index.md"
+      "generator": "ffmpeg 8.1.2 720x1280 crossfade of exact Android and iOS native screenshots; see website/demo/index.md"
     }
   }
 }

@@ -10,13 +10,13 @@ and never selects a latest run.
 pnpm acquire:release-evidence -- \
   --repository GGULBAE/react-native-image-compression-kit \
   --workflow .github/workflows/registry-validation.yml \
-  --source-ref refs/tags/v0.3.0 \
-  --source-digest f8ad71f14ac50dac9dc433a46ee4e9a6d7e1bca7 \
-  --run-id 29643434413 \
-  --version 0.3.0 \
+  --source-ref refs/heads/master \
+  --source-digest 6841a887b2d8b6c9e4823d2708233feeecaa77ea \
+  --run-id 29737871213 \
+  --version 0.4.0 \
   --expected-tag latest \
-  --output-dir /tmp/release-evidence-0.3.0 \
-  --report-file /tmp/release-evidence-0.3.0-report.json \
+  --output-dir /tmp/release-evidence-0.4.0 \
+  --report-file /tmp/release-evidence-0.4.0-report.json \
   --json
 ```
 
@@ -49,14 +49,14 @@ alongside Registry Validation provenance. The acquisition core selects the
 committed attestation ID and requires its normalized bundle exactly once in the
 retained JSONL bytes.
 
-Run `29643434413` selected provenance artifact `8429308868` with digest
-`sha256:039964a14923ea9f51af8a9568cdea0d1c7cdbbcc3954147f6b59d8054fdb997`
-and attestation artifact `8429308948` with digest
-`sha256:1d3826a6e17c102a1ab2bb053ae24a996051e464e496bb853ca002d9e6975274`.
+Run `29737871213` selected provenance artifact `8459139656` with digest
+`sha256:1a931104adbad66300fb6e5b43e8e344acbb3f5b8aee73dd07aef9ff319244cb`
+and attestation artifact `8459140075` with digest
+`sha256:4158a78f03e2fcd222ad6698d1d9379b890e3e4e301dbcb82104f0ee195e705e`.
 The canonical acquisition SHA-256 is
-`2673b6f7d755f1aff913ac0f796a1515149d3cd5a8e16acfd21759b71e3c11f0`;
+`a7a69bc2f4d51e5bd9847a026dd32f46231c63274f2a7b649240ac272a8bc569`;
 the importer handoff produced evidence SHA-256
-`201d16d7845212fa115674deacb6766ea03b2d6982a43036f40f110ee652550e`.
+`d6ab0b806fd1c5d5605faeafe2d9809b4a665193219694a416c154f833bc2558`.
 
 The output is exposed only after the existing offline importer accepts the
 staged canonical metadata and artifacts. Duplicate destinations and any
@@ -66,10 +66,10 @@ Import the accepted canonical bundle into the repository archive:
 
 ```bash
 pnpm import:release-evidence -- \
-  --version 0.3.0 \
-  --provenance-artifact-dir /tmp/release-evidence-0.3.0/provenance \
-  --attestation-artifact-dir /tmp/release-evidence-0.3.0/attestation \
-  --metadata-file /tmp/release-evidence-0.3.0/release-evidence-metadata.json \
+  --version 0.4.0 \
+  --provenance-artifact-dir /tmp/release-evidence-0.4.0/provenance \
+  --attestation-artifact-dir /tmp/release-evidence-0.4.0/attestation \
+  --metadata-file /tmp/release-evidence-0.4.0/release-evidence-metadata.json \
   --archive-root evidence/npm \
   --json
 ```
@@ -86,21 +86,21 @@ pnpm fixtures:release-evidence-acquisition:check
 pnpm acquire:release-evidence-review -- \
   --repository GGULBAE/react-native-image-compression-kit \
   --workflow .github/workflows/release-evidence-policy-review.yml \
-  --source-ref refs/heads/master \
-  --source-digest 1c0a24601e2a59484dfa6a665a1cf09680d947d7 \
-  --run-id 29644362987 \
-  --version 0.3.0 \
-  --output-dir /tmp/review-acquisition-0.3.0 \
+  --source-ref refs/heads/codex/v0.4.0-post-release-hardening \
+  --source-digest 7b0754a60a9497969fe75b4058dad0c4eb614159 \
+  --run-id 29738926758 \
+  --version 0.4.0 \
+  --output-dir /tmp/review-acquisition-0.4.0 \
   --release-archive-root evidence/npm \
   --json \
-  --report-file /tmp/review-acquisition-0.3.0.json
+  --report-file /tmp/review-acquisition-0.4.0.json
 ```
 
-The selected review artifact is ID `8429583977`, 425,974 bytes, GitHub digest
-`sha256:77549a36e83d742306ee5f5701957d2f935169fd30aee7cd91ccc576e97a9d1e`.
-The attestation artifact is ID `8429584119`, 15,644 bytes, digest
-`sha256:1a00d909bbbad69fc1635bb14cd970fc9b0c8804f17f12ef5943b63d4f68fb2a`.
-They expire at `2026-10-16T12:27:51Z`.
+The selected review artifact is ID `8459514238`, 525,825 bytes, GitHub digest
+`sha256:87387a9636844a65bdc1a8433fb0b9aada6087b287c77d8363e98c435d489203`.
+The attestation artifact is ID `8459514536`, 16,145 bytes, digest
+`sha256:f4916546d99ffb3a34269a7ff487c82088e6bb949fa0329da598e9c32c9e32f9`.
+They expire at `2026-10-18T11:32:49Z`.
 
 Policy-review acquisition uses the same exact-subject transport boundary with
 `artifact-manifest.json` as its temporary subject name. The normalized bundle
@@ -110,12 +110,12 @@ credentials never enter canonical metadata, manifests, reports, or archives.
 The canonical directory contains `review-evidence-metadata.json`, exact
 `artifacts/review.zip` and `artifacts/attestation.zip`, and
 `review-acquisition-manifest.json`. Authenticated acquisition at
-`2026-07-18T12:31:17.937Z` produced metadata SHA-256
-`efaf74032b7433547e0429ebdf8d7764dfa3aae638536ad57bcd59fa04edd03e`
+`2026-07-20T11:35:19.581Z` produced metadata SHA-256
+`3e6205c7d3c23876e84584bce758ba3e4c84c89cbe1e06dc8898a1ea3890e014`
 and acquisition SHA-256
-`cd1adb2ff31a5b803251f79f66228c879bfb7543a9a264bae3636568bcc62255`.
+`c3bf801729a34ff644361bdfd86916d0b58e37efb1c5c9388f87ebc023a0e649`.
 Importer handoff reproduced archive SHA-256
-`582f69b6fae5282bfe6fc758fceee24e37ffe63243cc60108c2e248261d69b72`.
+`58a9c63441d0ec9364df1b72addd0d947152973a92aa7ec7ef08e5c01d9b3106`.
 
 Verify the retained-ZIP fixture and handoff without network access:
 

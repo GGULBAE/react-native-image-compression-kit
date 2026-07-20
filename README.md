@@ -19,16 +19,16 @@ handle platform codec differences before compression.
 
 - Package version: `0.4.0`
 - Release target: `0.4.0`
-- Published npm latest: `0.3.0`
+- Published npm latest: `0.4.0`
 - Release state: `release`
 - Registry checked at: `2026-07-20`
 <!-- package-status:end -->
 
-Version 0.4.0 is the reviewed release target. It moves large image work to
+Version 0.4.0 is the current published release. It moves large image work to
 bounded background workers, downsamples resize requests during decode, rejects
 unsafe work before full decode, supports cancellation, and publishes only
-complete transactional cache files. The observed npm `latest` remains 0.3.0
-until the separately approved Trusted Release publishes and verifies 0.4.0.
+complete transactional cache files. npm `latest`, immutable tag `v0.4.0`, and
+the GitHub Release all resolve to the verified 0.4.0 artifact and source.
 
 ## Installation
 
