@@ -7,15 +7,16 @@ import {
 } from '../scripts/release-artifact-core.mjs';
 
 const validArtifact = {
-  expectedVersion: '0.3.0',
-  packageVersion: '0.3.0',
-  tarballPackageVersion: '0.3.0',
+  expectedVersion: '0.4.0',
+  packageVersion: '0.4.0',
+  tarballPackageVersion: '0.4.0',
   expectedSourceSha: 'a'.repeat(40),
   actualSourceSha: 'a'.repeat(40),
   sourceBranch: 'master',
   releaseState: 'release',
-  npmLatest: '0.3.0',
-  tarballFile: 'react-native-image-compression-kit-0.3.0.tgz',
+  releaseTarget: '0.4.0',
+  publishedNpmLatest: '0.3.0',
+  tarballFile: 'react-native-image-compression-kit-0.4.0.tgz',
   tarballSize: 1024,
   tarballSha256: 'b'.repeat(64),
   tarballIntegrity: `sha512-${Buffer.alloc(64).toString('base64')}`,
@@ -36,7 +37,9 @@ describe('release artifact contract', () => {
   it('accepts one exact release-state tarball from master', () => {
     expect(inspectReleaseArtifact(validArtifact)).toMatchObject({
       status: 'passed',
-      version: '0.3.0',
+      version: '0.4.0',
+      releaseTarget: '0.4.0',
+      publishedNpmLatest: '0.3.0',
       sourceSha: 'a'.repeat(40),
       error: null,
     });
@@ -46,7 +49,7 @@ describe('release artifact contract', () => {
     ['wrong version', { packageVersion: '0.3.1' }, 'package version'],
     ['wrong source', { actualSourceSha: 'c'.repeat(40) }, 'checked-out source'],
     ['candidate', { releaseState: 'candidate' }, 'release state'],
-    ['stale latest', { npmLatest: '0.2.62' }, 'release-ready npm latest'],
+    ['wrong target', { releaseTarget: '0.3.0' }, 'release target'],
     ['wrong branch', { sourceBranch: 'feature' }, 'source branch'],
     ['dirty source', { worktreeClean: false }, 'worktree must be clean'],
     [

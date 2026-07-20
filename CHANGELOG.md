@@ -4,7 +4,7 @@ Notable user-facing changes are recorded here. The project follows Semantic
 Versioning while it is in `0.x`: minor releases may change public contracts,
 and patch releases remain backward compatible within the current minor line.
 
-## 0.4.0 - 2026-07-20 (candidate)
+## 0.4.0 - 2026-07-20
 
 ### Added
 
@@ -16,6 +16,7 @@ and patch releases remain backward compatible within the current minor line.
   resource limits.
 - Large-image, cancellation-race, output-cleanup, and alpha decode-back native
   coverage.
+- Version-specific v0.4.0 GitHub Release notes.
 
 ### Changed
 
@@ -28,6 +29,9 @@ and patch releases remain backward compatible within the current minor line.
   or published output when cancellation wins before settlement.
 - JPEG transparency is flattened onto white consistently; PNG/WebP alpha
   capability now matches decode-back validation.
+- Release metadata separates the intended release target from the
+  registry-observed published npm latest, and Trusted Release selects notes
+  from its exact validated version instead of a prior-version hardcode.
 
 ### Compatibility
 

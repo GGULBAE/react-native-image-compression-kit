@@ -9,6 +9,7 @@ import {
   inspectStatusContract,
   parseCurrentStatus,
   parseHeadings,
+  parsePublishedPackageStatus,
   parseReleaseStatus,
   RELEASE_STATE_MATRIX,
   RELEASE_STATUS_END,
@@ -27,7 +28,8 @@ const REPOSITORY_MANIFEST = JSON.parse(
 
 function statusBlock({
   packageVersion = '1.2.3',
-  npmLatest = '1.2.2',
+  releaseTarget = packageVersion,
+  publishedNpmLatest = '1.2.2',
   releaseState = 'candidate',
   registryCheckedAt = '2030-01-02',
   documentName = 'README',
@@ -36,7 +38,8 @@ function statusBlock({
   return [
     releaseDocument ? RELEASE_STATUS_START : STATUS_START,
     '- Package version: `' + packageVersion + '`',
-    '- npm latest: `' + npmLatest + '`',
+    '- Release target: `' + releaseTarget + '`',
+    '- Published npm latest: `' + publishedNpmLatest + '`',
     '- Release state: `' + releaseState + '`',
     '- Registry checked at: `' + registryCheckedAt + '`',
     releaseDocument ? RELEASE_STATUS_END : STATUS_END,
@@ -46,8 +49,9 @@ function statusBlock({
 function statusContract(releaseState, overrides = {}) {
   const packageVersion = overrides.packageVersion ?? '1.2.3';
   const manifest = {
-    schemaVersion: 1,
-    npmLatest: '1.2.2',
+    schemaVersion: 2,
+    releaseTarget: packageVersion,
+    publishedNpmLatest: '1.2.2',
     releaseState,
     registryCheckedAt: '2030-01-02',
     ...overrides.manifest,
@@ -83,13 +87,15 @@ describe('documentation semantic gate', () => {
     expect(report.errors).toEqual([]);
     expect(report.status).toMatchObject({
       packageVersion: PACKAGE_JSON.version,
-      npmLatest: REPOSITORY_MANIFEST.npmLatest,
+      releaseTarget: REPOSITORY_MANIFEST.releaseTarget,
+      publishedNpmLatest: REPOSITORY_MANIFEST.publishedNpmLatest,
       releaseState: REPOSITORY_MANIFEST.releaseState,
       registryCheckedAt: REPOSITORY_MANIFEST.registryCheckedAt,
     });
     expect(report.releaseStatus).toMatchObject({
       packageVersion: report.status.packageVersion,
-      npmLatest: report.status.npmLatest,
+      releaseTarget: report.status.releaseTarget,
+      publishedNpmLatest: report.status.publishedNpmLatest,
       releaseState: report.status.releaseState,
       registryCheckedAt: report.status.registryCheckedAt,
     });
@@ -110,6 +116,9 @@ describe('documentation semantic gate', () => {
       'docs/supply-chain/dependabot-triage.md'
     );
     expect(report.markdownFiles).toContain('docs/verification-architecture.md');
+    expect(report.markdownFiles).toContain(
+      `docs/launch/v${PACKAGE_JSON.version}-release-notes.md`
+    );
   });
 
   it('parses only marked README and RELEASE status blocks', () => {
@@ -126,12 +135,34 @@ describe('documentation semantic gate', () => {
 
     expect(parseCurrentStatus(readme)).toMatchObject({
       packageVersion: '1.2.3',
-      npmLatest: '1.2.2',
+      releaseTarget: '1.2.3',
+      publishedNpmLatest: '1.2.2',
       releaseState: 'release',
       registryCheckedAt: '2030-01-02',
     });
     expect(parseReleaseStatus(release)).toMatchObject(
       parseCurrentStatus(readme)
+    );
+  });
+
+  it('normalizes immutable v1 published README status without weakening current v2 parsing', () => {
+    const legacy = [
+      STATUS_START,
+      '- Package version: `1.0.0`',
+      '- npm latest: `1.0.0`',
+      '- Release state: `release`',
+      '- Registry checked at: `2026-07-18`',
+      STATUS_END,
+    ].join('\n');
+
+    expect(parsePublishedPackageStatus(legacy)).toMatchObject({
+      packageVersion: '1.0.0',
+      releaseTarget: '1.0.0',
+      publishedNpmLatest: '1.0.0',
+      releaseState: 'release',
+    });
+    expect(() => parseCurrentStatus(legacy)).toThrow(
+      'README: expected exactly one Release target field, received 0'
     );
   });
 
@@ -142,6 +173,10 @@ describe('documentation semantic gate', () => {
     });
     expect(statusContract('candidate')).toMatchObject({ ok: true, errors: [] });
     expect(statusContract('release')).toMatchObject({ ok: true, errors: [] });
+    expect(statusContract('release').status).toMatchObject({
+      releaseTarget: '1.2.3',
+      publishedNpmLatest: '1.2.2',
+    });
   });
 
   it('accepts the release to candidate regression only when both mirrors change together', () => {
@@ -158,7 +193,7 @@ describe('documentation semantic gate', () => {
     const report = statusContract('candidate', {
       readme: { packageVersion: '1.2.4', releaseState: 'release' },
       release: {
-        npmLatest: '1.2.1',
+        publishedNpmLatest: '1.2.1',
         releaseState: 'release',
         registryCheckedAt: '2030-01-03',
       },
@@ -167,7 +202,7 @@ describe('documentation semantic gate', () => {
     expect(report.errors).toEqual([
       'README: Package version expected "1.2.3" from package.json, received "1.2.4"',
       'README: Release state expected "candidate" from docs/release-status.json, received "release"',
-      'RELEASE: npm latest expected "1.2.2" from docs/release-status.json, received "1.2.1"',
+      'RELEASE: Published npm latest expected "1.2.2" from docs/release-status.json, received "1.2.1"',
       'RELEASE: Release state expected "candidate" from docs/release-status.json, received "release"',
       'RELEASE: Registry checked at expected "2030-01-02" from docs/release-status.json, received "2030-01-03"',
     ]);
@@ -180,6 +215,18 @@ describe('documentation semantic gate', () => {
         packageVersion: PACKAGE_JSON.version,
       })
     ).toThrow('unexpected [packageVersion]');
+    expect(() =>
+      validateReleaseStatusManifest({
+        ...REPOSITORY_MANIFEST,
+        releaseTarget: 'next',
+      })
+    ).toThrow('releaseTarget expected semantic version');
+    expect(() =>
+      validateReleaseStatusManifest({
+        ...REPOSITORY_MANIFEST,
+        publishedNpmLatest: 'latest',
+      })
+    ).toThrow('publishedNpmLatest expected semantic version');
     expect(() =>
       validateReleaseStatusManifest({
         ...REPOSITORY_MANIFEST,
@@ -238,7 +285,7 @@ describe('documentation semantic gate', () => {
 
     for (const source of sources) {
       expect(source).not.toContain(forbiddenIdentifier);
-      expect(source).not.toContain(`'${REPOSITORY_MANIFEST.npmLatest}'`);
+      expect(source).not.toContain(`'${REPOSITORY_MANIFEST.publishedNpmLatest}'`);
     }
     expect(readFileSync(path.join(ROOT, 'scripts/android-verification.mjs'), 'utf8')).not.toMatch(
       /packageJson\.version\s*===\s*['"]/u

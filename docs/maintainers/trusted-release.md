@@ -23,13 +23,16 @@ recovery codes in repository secrets.
 
 1. Merge a reviewed release-state commit on protected `master`. It must align
    `package.json`, README, RELEASE, changelog, status manifest, site, and
-   compatibility matrix for the exact version.
+   compatibility matrix for the exact release target. The manifest keeps
+   `publishedNpmLatest` at the registry-observed version until publication; it
+   must not claim the target is already published.
 2. Record the full lowercase 40-character current `master` SHA. Confirm the
    worktree is clean, the contract-required CI/Android/iOS checks are green on
    that exact SHA, and `npm view react-native-image-compression-kit@<version>`
    is absent. The workflow rejects an older ancestor even if it was once green.
 3. Dispatch `.github/workflows/release.yml` with the exact version, source SHA,
-   and `confirm_publish=true`.
+   and `confirm_publish=true`. The exact version must have a matching
+   `docs/launch/v<version>-release-notes.md` file.
 4. Review the compatibility and exact-artifact preflight results. Approve the
    `npm-production` deployment only if its version, SHA, tarball SHA-256/SRI,
    inventory, release state, and registry action are correct.

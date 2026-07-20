@@ -36,8 +36,11 @@ networked.
 ## Release status contract
 
 The repository-only [release status manifest](../release-status.json) is the
-authority for `npmLatest`, `releaseState`, and `registryCheckedAt`. Package
-version is intentionally absent and remains authoritative in `package.json`.
+authority for `releaseTarget`, `publishedNpmLatest`, `releaseState`, and
+`registryCheckedAt`. Package version is intentionally absent and remains
+authoritative in `package.json`; the release target must match it while the
+published npm latest remains the last registry-observed version until a
+separately approved publication succeeds.
 
 README and RELEASE contain marked mirror blocks so npm users and repository
 operators can see the same status. `candidate` is non-publishable; `release` is

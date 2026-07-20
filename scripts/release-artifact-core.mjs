@@ -65,9 +65,9 @@ export function inspectReleaseArtifact(input) {
 
   if (input.releaseState !== 'release') {
     errors.push(`release state must be release, received ${input.releaseState}`);
-  } else if (input.npmLatest !== input.expectedVersion) {
+  } else if (input.releaseTarget !== input.expectedVersion) {
     errors.push(
-      `release-ready npm latest must be ${input.expectedVersion}, received ${input.npmLatest}`
+      `release target must be ${input.expectedVersion}, received ${input.releaseTarget}`
     );
   } else {
     checks.status = true;
@@ -112,6 +112,8 @@ export function inspectReleaseArtifact(input) {
     status: errors.length === 0 ? 'passed' : 'failed',
     package: 'react-native-image-compression-kit',
     version: input.expectedVersion ?? null,
+    releaseTarget: input.releaseTarget ?? null,
+    publishedNpmLatest: input.publishedNpmLatest ?? null,
     sourceSha: input.expectedSourceSha ?? null,
     sourceBranch: input.sourceBranch ?? null,
     tarballFile: input.tarballFile ?? null,

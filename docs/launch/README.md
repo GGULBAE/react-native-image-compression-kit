@@ -1,4 +1,4 @@
-# v0.3.0 launch kit
+# Release launch kit
 
 This directory holds release-ready copy, measurement context, and the handoff
 sequence for the public open-source launch. It does not authorize posting to an
@@ -10,7 +10,11 @@ external channel. Every announcement requires a separate maintainer approval.
 - Confirm the public site, package tarball, native demo evidence, compatibility
   matrix, repository audit, and community routes are live and internally linked.
 - Complete the release-state transition from `candidate` to `release` in a
-  reviewed commit. Record its exact full source SHA.
+  reviewed commit without changing the observed published npm latest. Record
+  its exact full source SHA.
+- Confirm the release target has a matching
+  `docs/launch/v<version>-release-notes.md`; the workflow selects that file from
+  its validated version input instead of a hardcoded prior release.
 - Configure npm Trusted Publishing for `GGULBAE/react-native-image-compression-kit`,
   workflow `.github/workflows/release.yml`, and environment `npm-production`.
 - Run the [trusted release runbook](../maintainers/trusted-release.md) once.
@@ -45,6 +49,7 @@ and the docs site stable for at least one observation window.
 
 - [English announcement](announcement-en.md)
 - [Korean announcement](announcement-ko.md)
+- [v0.4.0 release notes](v0.4.0-release-notes.md)
 - [v0.3.0 release notes](v0.3.0-release-notes.md)
 - [Channel-specific copy and asset map](channel-copy.md)
 - [Public compatibility contract](../compatibility-matrix.json)

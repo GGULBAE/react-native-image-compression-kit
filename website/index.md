@@ -38,8 +38,9 @@ features:
   <article><strong>Expo dev build</strong><span>Custom native code requires prebuild; Expo Go is unsupported.</span></article>
 </div>
 
-> Release status: **0.4.0 candidate**. The current npm `latest` release remains
-> **0.3.0** while native and compatibility validation completes.
+> Release target: **0.4.0** is ready for the separately approved Trusted
+> Release. The observed npm `latest` remains **0.3.0** until publication and
+> registry verification complete.
 
 ## Install
 

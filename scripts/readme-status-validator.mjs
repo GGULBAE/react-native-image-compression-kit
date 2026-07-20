@@ -1,6 +1,6 @@
 import {
   inspectStatusContract,
-  parseCurrentStatus,
+  parsePublishedPackageStatus,
   RELEASE_STATE_MATRIX,
   STATUS_END,
   STATUS_START,
@@ -46,7 +46,7 @@ export function getReadmeStatusViolations(
     status = report.status;
   } else {
     try {
-      status = parseCurrentStatus(readmeContents);
+      status = parsePublishedPackageStatus(readmeContents);
     } catch (error) {
       return [error instanceof Error ? error.message : String(error)];
     }
@@ -60,7 +60,7 @@ export function getReadmeStatusViolations(
 
   if (!RELEASE_STATE_MATRIX[status.releaseState].publishable) {
     return [
-      `current status declares package version ${status.packageVersion} as candidate`,
+      `current status declares release target ${status.releaseTarget} as candidate`,
     ];
   }
 
