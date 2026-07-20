@@ -46,7 +46,8 @@ static NSDictionary *RCTImageCompressionIOSFormatCapability(
       NO,
       NO,
       @[
-        @"iOS MVP supports JPEG input and JPEG output through UIKit/ImageIO.",
+        @"iOS supports JPEG input and JPEG output through background ImageIO/CoreGraphics work.",
+        @"Large resize requests use ImageIO thumbnail downsampling before transform allocation.",
         @"JPEG output supports quality-based compression and optional resize.",
         @"Target-size compression supports maxBytes by adjusting JPEG quality.",
         @"Metadata preserve copies source JPEG metadata and normalizes output orientation/dimensions for JPEG input to JPEG output.",
@@ -64,7 +65,7 @@ static NSDictionary *RCTImageCompressionIOSFormatCapability(
       YES,
       NO,
       @[
-        @"iOS MVP supports PNG input and PNG output through UIKit/ImageIO.",
+        @"iOS supports PNG input and PNG output through background ImageIO/CoreGraphics work.",
         @"PNG output preserves alpha where the processed image contains transparency.",
         @"PNG output ignores quality and does not support target-size maxBytes."
       ]

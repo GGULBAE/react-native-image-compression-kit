@@ -36,6 +36,9 @@ const WORKFLOW_DIR = path.join(ROOT, '.github', 'workflows');
 const LOCK_FILE = path.join(ROOT, WORKFLOW_ACTION_LOCK_FILE);
 const VERIFIER = path.join(ROOT, 'scripts', 'verify-workflow-supply-chain.mjs');
 const CHECKOUT_SHA = '9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0';
+const PACKAGE_VERSION = JSON.parse(
+  readFileSync(path.join(ROOT, 'package.json'), 'utf8')
+).version;
 
 function copiedRepository(label) {
   const parent = mkdtempSync(path.join(os.tmpdir(), `rnick-workflow-${label}-`));
@@ -301,7 +304,11 @@ describe('GitHub Actions workflow supply-chain gate', () => {
   it('requires a manual, read-only npm-production health deployment contract', () => {
     const mutations = [
       ['automatic trigger', (source) => source.replace('  workflow_dispatch:', '  push:\n  workflow_dispatch:')],
-      ['version drift', (source) => source.replace('default: "0.3.0"', 'default: "0.2.55"')],
+      [
+        'version drift',
+        (source) =>
+          source.replace(`default: "${PACKAGE_VERSION}"`, 'default: "0.2.55"'),
+      ],
       ['tag drift', (source) => source.replace('default: latest', 'default: next')],
       ['write permission', (source) => source.replace('contents: read', 'contents: write')],
       ['missing environment', (source) => source.replace('name: npm-production', 'name: staging')],

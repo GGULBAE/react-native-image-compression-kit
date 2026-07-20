@@ -4,6 +4,39 @@ Notable user-facing changes are recorded here. The project follows Semantic
 Versioning while it is in `0.x`: minor releases may change public contracts,
 and patch releases remain backward compatible within the current minor line.
 
+## 0.4.0 - 2026-07-20 (candidate)
+
+### Added
+
+- Optional `AbortSignal`/`CompressionControl` cancellation with stable
+  `ERR_CANCELLED` normalization across preflight, queued, and running work.
+- Decode-time downsampling for resize requests and pre-decode source/working
+  pixel limits with stable `ERR_RESOURCE_LIMIT` failures.
+- Additive capability fields for bounded concurrency, downsampling, and named
+  resource limits.
+- Large-image, cancellation-race, output-cleanup, and alpha decode-back native
+  coverage.
+
+### Changed
+
+- iOS file, decode, transform, encode, and output work runs on a bounded
+  background `NSOperationQueue` and uses ImageIO/CoreGraphics instead of
+  main-thread UIKit rendering.
+- Android compression runs on a two-worker bounded executor instead of the
+  React Native module queue.
+- Android and iOS publish only fully encoded cache files and remove temporary
+  or published output when cancellation wins before settlement.
+- JPEG transparency is flattened onto white consistently; PNG/WebP alpha
+  capability now matches decode-back validation.
+
+### Compatibility
+
+- Existing `compressImage(options)` calls and result fields remain unchanged.
+- Small-image resize, crop, metadata, format, and `maxBytes` semantics remain
+  compatible; the new control and capability fields are additive.
+- HEIC/HEIF/AVIF output, batch APIs, progress events, animation preservation,
+  remote URLs, and data URIs remain outside scope.
+
 ## 0.3.0 - 2026-07-18
 
 ### Added

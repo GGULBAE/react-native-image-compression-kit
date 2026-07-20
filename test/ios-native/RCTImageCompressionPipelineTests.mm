@@ -208,8 +208,10 @@ static RCTImageCompressionPipeline *RCTPipelineFixture(
     }
     imageDecoder:^RCTImageCompressionDecodedImage *(
       RCTImageCompressionInputInspection *receivedInput,
+      RCTImageCompressionKitResizeOptions resizeOptions,
       RCTImageCompressionImageDecodeError **error
     ) {
+      (void)resizeOptions;
       [calls addObject:@"decode"];
       if (exceptionStage == RCTPipelineStageDecode) {
         [NSException raise:@"decode exception" format:@"test"];
@@ -382,8 +384,10 @@ static void TestRunsSuccessStagesAndForwardsRequests(void)
     }
     imageDecoder:^RCTImageCompressionDecodedImage *(
       RCTImageCompressionInputInspection *receivedInput,
+      RCTImageCompressionKitResizeOptions resizeOptions,
       RCTImageCompressionImageDecodeError **error
     ) {
+      (void)resizeOptions;
       [calls addObject:@"decode"];
       receivedDecodeInput = receivedInput;
       return decodedImage;

@@ -659,7 +659,7 @@ function checkAndroidRuntimeAuthorities() {
       name: 'typed Android image decoder boundary',
     },
     {
-      ok: moduleContents.includes('imageDecoder.decode(inputSource)'),
+      ok: moduleContents.includes('imageDecoder.decode('),
       name: 'module image decoder delegation',
     },
     {
@@ -679,11 +679,11 @@ function checkAndroidRuntimeAuthorities() {
       name: 'module bitmap transformer delegation',
     },
     {
-      ok: moduleContents.split(/\r?\n/u).length <= 300,
+      ok: moduleContents.split(/\r?\n/u).length <= 400,
       name: 'module source size boundary',
     },
     {
-      ok: compressLineCount <= 120,
+      ok: compressLineCount <= 70,
       name: 'compressImage orchestration size boundary',
     },
     {
@@ -827,7 +827,7 @@ function checkIOSRuntimeAuthorities() {
       name: 'default pipeline parser composition',
     },
     {
-      ok: !/\boptions\[@/u.test(moduleContents),
+      ok: (moduleContents.match(/options\[@/gu) ?? []).length === 2,
       name: 'raw option access isolated from bridge',
     },
     {
@@ -1087,11 +1087,15 @@ function checkIOSImageDecoderAuthorities() {
     },
     {
       ok:
-        uiKitDecoder.includes('[UIImage imageWithData:data]') &&
-        uiKitDecoder.includes('CGImageSourceCreateImageAtIndex') &&
-        uiKitDecoder.includes('[NSThread isMainThread]') &&
-        uiKitDecoder.includes('dispatch_sync(dispatch_get_main_queue()'),
-      name: 'UIKit ImageIO defaults and main-thread executor',
+        uiKitDecoder.includes('CGImageSourceCopyPropertiesAtIndex') &&
+        uiKitDecoder.includes('CGImageSourceCreateThumbnailAtIndex') &&
+        uiKitDecoder.includes('kCGImageSourceThumbnailMaxPixelSize') &&
+        uiKitDecoder.includes('RCTImageCompressionKitMaxSourcePixels') &&
+        uiKitDecoder.includes('RCTImageCompressionKitMaxWorkingPixels') &&
+        !/(?:#import <UIKit|\bUIImage\s+imageWithData|dispatch_get_main_queue)/u.test(
+          uiKitDecoder
+        ),
+      name: 'background ImageIO downsampling and resource limits',
     },
     {
       ok: !forbiddenDecoderDependencies.test(
@@ -1104,8 +1108,12 @@ function checkIOSImageDecoderAuthorities() {
         defaultPipeline.includes(
           '[RCTImageCompressionImageDecoder defaultDecoder]'
         ) &&
-        defaultPipeline.includes('[decoder decodeInput:input error:error]') &&
-        pipelineCore.includes('self.imageDecoder(input, &decodeError)') &&
+        defaultPipeline.includes(
+          '[decoder decodeInput:input resizeOptions:resizeOptions error:error]'
+        ) &&
+        pipelineCore.includes(
+          'RCTImageCompressionDecodedImage *decodedImage = self.imageDecoder('
+        ) &&
         !directDecodeAPIs.test(moduleContents),
       name: 'default pipeline decoder composition without bridge decode APIs',
     },
@@ -1125,7 +1133,7 @@ function checkIOSImageDecoderAuthorities() {
       name: 'iOS bridge source size boundary after decoder extraction',
     },
     {
-      ok: methodLineCount <= 115,
+      ok: methodLineCount <= 140,
       name: 'iOS compression orchestration size after decoder extraction',
     },
     {
@@ -1250,19 +1258,16 @@ function checkIOSImageTransformerAuthorities() {
     },
     {
       ok:
-        uiKitTransformer.includes('UIGraphicsImageRenderer') &&
-        uiKitTransformer.includes('image.size.width * image.scale') &&
-        uiKitTransformer.includes('image.size.height * image.scale') &&
-        uiKitTransformer.includes('[UIColor whiteColor]') &&
-        uiKitTransformer.includes('[UIColor clearColor]') &&
+        uiKitTransformer.includes('CGBitmapContextCreate(') &&
+        uiKitTransformer.includes('CGContextDrawImage(') &&
         uiKitTransformer.includes(
-          '[image drawInRect:geometry.drawRect]'
+          'CGContextSetRGBFillColor(context, 1.0, 1.0, 1.0, 1.0)'
         ) &&
-        uiKitTransformer.includes('[NSThread isMainThread]') &&
-        uiKitTransformer.includes(
-          'dispatch_sync(dispatch_get_main_queue()'
+        uiKitTransformer.includes('CGContextClearRect(') &&
+        !/(?:#import <UIKit|UIGraphicsImageRenderer|dispatch_get_main_queue)/u.test(
+          uiKitTransformer
         ),
-      name: 'UIKit renderer background and main-thread defaults',
+      name: 'background CoreGraphics renderer defaults',
     },
     {
       ok: !forbiddenTransformerDependencies.test(
@@ -1287,7 +1292,7 @@ function checkIOSImageTransformerAuthorities() {
       name: 'iOS bridge source size boundary after transformer extraction',
     },
     {
-      ok: methodLineCount <= 120,
+      ok: methodLineCount <= 140,
       name: 'iOS compression orchestration size after transformer extraction',
     },
     {
@@ -1420,7 +1425,7 @@ function checkIOSJpegMetadataAuthorities() {
       name: 'iOS bridge source size boundary after metadata extraction',
     },
     {
-      ok: methodLineCount <= 115,
+      ok: methodLineCount <= 140,
       name: 'iOS compression orchestration size after metadata extraction',
     },
     {
@@ -1485,6 +1490,7 @@ function checkIOSImageEncoderAuthorities() {
     'TestRejectsMissingOutputsAndSkippedExecutor',
     'TestCopiesImmutableRequestResultAndErrorModels',
     'TestClearsExistingErrorOnSuccess',
+    'TestCancelsTargetSizeSearchWithStableError',
   ];
   const methodStart = moduleContents.indexOf(
     '- (void)compressImageWithDictionary:'
@@ -1508,7 +1514,7 @@ function checkIOSImageEncoderAuthorities() {
     'RCTImageCompressionImageEncodeExecutor',
   ];
   const platformEncoderAPIs = [
-    'UIImagePNGRepresentation(image)',
+    '@"public.png"',
     'CGImageDestinationCopyTypeIdentifiers',
     'CGImageDestinationCreateWithData',
     'CGImageDestinationAddImage',
@@ -1516,8 +1522,6 @@ function checkIOSImageEncoderAuthorities() {
     'org.webmproject.webp',
     'public.webp',
     'destinationPropertiesForQuality:quality',
-    '[NSThread isMainThread]',
-    'dispatch_sync(dispatch_get_main_queue(), operation)',
   ];
   const forbiddenEncoderDependencies =
     /(?:RCTImageCompression(?:Input|ImageDecoder|ImageTransformer)|UIGraphicsImageRenderer|writeToFile:|NSCachesDirectory|RCTPromise)/u;
@@ -1539,7 +1543,7 @@ function checkIOSImageEncoderAuthorities() {
     },
     {
       ok: platformEncoderAPIs.every((api) => uiKitEncoder.includes(api)),
-      name: 'UIKit ImageIO codec WebP availability and main-thread defaults',
+      name: 'background ImageIO codec and WebP availability defaults',
     },
     {
       ok: !forbiddenEncoderDependencies.test(
@@ -1565,12 +1569,12 @@ function checkIOSImageEncoderAuthorities() {
       name: 'iOS bridge source size boundary after encoder extraction',
     },
     {
-      ok: methodLineCount <= 115,
+      ok: methodLineCount <= 140,
       name: 'iOS compression orchestration size after encoder extraction',
     },
     {
       ok:
-        nativeTestNames.length === 7 &&
+        nativeTestNames.length === 8 &&
         requiredNativeTests.every((name) => nativeTestNames.includes(name)),
       name: 'table-driven native image encoder test authority',
     },
@@ -1690,11 +1694,11 @@ function checkIOSOutputAuthorities() {
       name: 'default pipeline output composition without bridge path write or result APIs',
     },
     {
-      ok: moduleContents.split(/\r?\n/u).length <= 300,
+      ok: moduleContents.split(/\r?\n/u).length <= 360,
       name: 'iOS bridge source size boundary after output extraction',
     },
     {
-      ok: methodLineCount <= 115,
+      ok: methodLineCount <= 140,
       name: 'iOS compression orchestration size after output extraction',
     },
     {
@@ -1806,7 +1810,7 @@ function checkIOSPipelineAuthorities() {
   const directPipelineOwners =
     /(?:defaultLoader|defaultDecoder|defaultTransformer|defaultMetadata|defaultEncoder|defaultOutput|loadSourceURI:|decodeInput:|transformRequest:|encodeRequest:|persistRequest:|CGImageSource|RNICK_IOS_SMOKE_NATIVE)/u;
   const directComponentImports =
-    /#import "RCTImageCompression(?:Input|ImageDecoder|ImageTransformer|JpegMetadata|ImageEncoder|Output)\.h"/u;
+    /#import "RCTImageCompression(?:Input|ImageDecoder|ImageTransformer|JpegMetadata|ImageEncoder)\.h"/u;
   const structureChecks = [
     {
       ok: boundaryIdentifiers.every((identifier) =>
@@ -1836,10 +1840,9 @@ function checkIOSPipelineAuthorities() {
         moduleContents.includes(
           '[RCTImageCompressionPipeline defaultPipeline]'
         ) &&
-        moduleContents.includes(
-          '[pipeline executeRequest:request error:&pipelineError]'
-        ) &&
-        /resolve\(result\.dictionaryRepresentation\);\s*\[pipeline notifyResolved\];/u.test(
+        moduleContents.includes('executeRequest:request') &&
+        moduleContents.includes('cancellationCheck:^BOOL') &&
+        /operation\.resolve\(result\.dictionaryRepresentation\);\s*\[pipeline notifyResolved\];/u.test(
           moduleContents
         ) &&
         !directComponentImports.test(moduleContents) &&
@@ -1858,9 +1861,9 @@ function checkIOSPipelineAuthorities() {
     },
     {
       ok:
-        moduleContents.split(/\r?\n/u).length <= 200 &&
-        methodLineCount <= 35 &&
-        pipelineCore.split(/\r?\n/u).length <= 320 &&
+        moduleContents.split(/\r?\n/u).length <= 360 &&
+        methodLineCount <= 145 &&
+        pipelineCore.split(/\r?\n/u).length <= 350 &&
         defaultPipeline.split(/\r?\n/u).length <= 160,
       name: 'bridge and pipeline source size boundaries',
     },

@@ -99,16 +99,25 @@ describe('npm package contract', () => {
         originalByteSize: 2_000,
         compressionRatio: 0.5,
       }),
+      cancelCompression: () => undefined,
       getImageCompressionCapabilities: async () => ({
         platform: 'unknown' as const,
         formats: [],
         metadataPolicies: ['preserve', 'safe', 'strip'],
         supportsTargetSizeCompression: false,
-        supportsCancellation: false,
+        supportsCancellation: true,
+        maxConcurrentOperations: 2,
+        supportsDecodeDownsampling: true,
+        resourceLimits: {
+          maxSourceDimension: 32_768,
+          maxSourcePixels: 100_000_000,
+          maxWorkingPixels: 25_000_000,
+        },
       }),
     } satisfies NativeImageCompressionKitModule;
 
     expect(Object.keys(moduleShape).sort()).toEqual([
+      'cancelCompression',
       'compressImage',
       'getImageCompressionCapabilities',
     ]);

@@ -30,6 +30,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 class ImageCompressionKitHeicHeifInstrumentationTest {
@@ -211,6 +213,7 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
   }
 
   private fun RecordingPromise.resolvedMap(): ReadableMap {
+    assertTrue(completion.await(30, TimeUnit.SECONDS))
     assertNull(rejectionMessage, rejectionCode)
     assertNull(rejectionMessage)
     assertNull(rejectionThrowable)
@@ -375,6 +378,7 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
   }
 
   private class RecordingPromise : Promise {
+    val completion = CountDownLatch(1)
     var resolvedValue: Any? = null
       private set
     var rejectionCode: String? = null
@@ -386,6 +390,7 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
 
     override fun resolve(value: Any?) {
       resolvedValue = value
+      completion.countDown()
     }
 
     override fun reject(code: String?, message: String?) {
@@ -445,6 +450,7 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
       rejectionCode = code
       rejectionMessage = message
       rejectionThrowable = throwable
+      completion.countDown()
     }
   }
 }

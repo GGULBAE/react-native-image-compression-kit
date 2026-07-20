@@ -14,6 +14,7 @@ Pod::Spec.new do |s|
   s.source_files = "ios/**/*.{h,m,mm}"
   s.private_header_files = [
     "ios/RCTImageCompressionImageDecoder.h",
+    "ios/RCTImageCompressionCGImage.h",
     "ios/RCTImageCompressionImageEncoder.h",
     "ios/RCTImageCompressionImageTransformer.h",
     "ios/RCTImageCompressionInput.h",
@@ -22,6 +23,7 @@ Pod::Spec.new do |s|
     "ios/RCTImageCompressionOutput.h",
     "ios/RCTImageCompressionPipeline.h",
     "ios/RCTImageCompressionRequest.h",
+    "ios/RCTImageCompressionResources.h",
   ]
 
   if respond_to?(:install_modules_dependencies, true)

@@ -19,6 +19,7 @@ const validResult = {
 function mockNativeModule(): NativeImageCompressionKitModule {
   return {
     compressImage: vi.fn().mockResolvedValue(validResult),
+    cancelCompression: vi.fn(),
     getImageCompressionCapabilities: vi.fn(),
   };
 }

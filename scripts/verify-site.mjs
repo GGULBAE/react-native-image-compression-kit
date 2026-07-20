@@ -132,8 +132,14 @@ if (existsSync(demoManifestPath)) {
     JSON.parse(readFileSync(demoManifestPath, 'utf8'))
   );
   if (report.status !== 'passed') errors.push(`native demo evidence: ${report.error}`);
-  if (report.packageVersion !== packageJson.version) {
-    errors.push('native demo evidence package version does not match package.json');
+  const evidencePackageVersion =
+    releaseStatus.releaseState === 'candidate'
+      ? releaseStatus.npmLatest
+      : packageJson.version;
+  if (report.packageVersion !== evidencePackageVersion) {
+    errors.push(
+      'native demo evidence package version does not match the latest published version'
+    );
   }
 } else if (releaseStatus.releaseState === 'release') {
   errors.push('release state requires passed Android and iOS native demo evidence');

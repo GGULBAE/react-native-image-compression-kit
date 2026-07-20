@@ -142,11 +142,35 @@ static id RCTImageCompressionPipelineImmutableCopy(id value)
 - (nullable RCTImageCompressionPipelineResult *)executeRequest:(RCTImageCompressionPipelineRequest *)pipelineRequest
                                                           error:(RCTImageCompressionPipelineError * _Nullable * _Nullable)error
 {
+  return [self
+    executeRequest:pipelineRequest
+    cancellationCheck:^BOOL{ return NO; }
+    error:error
+  ];
+}
+
+- (BOOL)stopIfCancelled:(RCTImageCompressionCancellationCheck)cancellationCheck
+                   error:(RCTImageCompressionPipelineError * _Nullable * _Nullable)error
+{
+  if (!cancellationCheck()) return NO;
+  [self setError:error
+    code:RCTImageCompressionKitCancelledCode
+    message:@"Image compression was cancelled."
+    underlyingError:nil
+  ];
+  return YES;
+}
+
+- (nullable RCTImageCompressionPipelineResult *)executeRequest:(RCTImageCompressionPipelineRequest *)pipelineRequest
+                                             cancellationCheck:(RCTImageCompressionCancellationCheck)cancellationCheck
+                                                          error:(RCTImageCompressionPipelineError * _Nullable * _Nullable)error
+{
   if (error != nil) {
     *error = nil;
   }
 
   @try {
+    if ([self stopIfCancelled:cancellationCheck error:error]) return nil;
     self.stageObserver(@"compress-start");
     RCTImageCompressionRequestError *requestError = nil;
     RCTImageCompressionRequest *request = self.requestParser(
@@ -160,6 +184,7 @@ static id RCTImageCompressionPipelineImmutableCopy(id value)
     }
 
     self.stageObserver(@"options-validated");
+    if ([self stopIfCancelled:cancellationCheck error:error]) return nil;
     RCTImageCompressionInputError *inputError = nil;
     RCTImageCompressionInputInspection *input = self.inputLoader(
       request.sourceURI,
@@ -171,6 +196,7 @@ static id RCTImageCompressionPipelineImmutableCopy(id value)
         underlyingError:inputError.underlyingError];
       return nil;
     }
+    if ([self stopIfCancelled:cancellationCheck error:error]) return nil;
 
     self.stageObserver(@"source-url-ready");
     self.stageObserver(@"source-read");
@@ -190,14 +216,23 @@ static id RCTImageCompressionPipelineImmutableCopy(id value)
       [self setError:error code:metadataError.code message:metadataError.message underlyingError:nil];
       return nil;
     }
+    if ([self stopIfCancelled:cancellationCheck error:error]) return nil;
 
     self.stageObserver(@"image-work-start");
     RCTImageCompressionImageDecodeError *decodeError = nil;
-    RCTImageCompressionDecodedImage *decodedImage = self.imageDecoder(input, &decodeError);
+    RCTImageCompressionDecodedImage *decodedImage = self.imageDecoder(
+      input,
+      request.resizeOptions,
+      &decodeError
+    );
     if (decodedImage == nil) {
       self.stageObserver(@"image-work-finished");
       [self setError:error code:decodeError.code message:decodeError.message
         underlyingError:decodeError.underlyingError];
+      return nil;
+    }
+    if ([self stopIfCancelled:cancellationCheck error:error]) {
+      self.stageObserver(@"image-work-finished");
       return nil;
     }
 
@@ -219,6 +254,10 @@ static id RCTImageCompressionPipelineImmutableCopy(id value)
       ];
       return nil;
     }
+    if ([self stopIfCancelled:cancellationCheck error:error]) {
+      self.stageObserver(@"image-work-finished");
+      return nil;
+    }
 
     RCTImageCompressionImageEncodeRequest *encodeRequest = [[RCTImageCompressionImageEncodeRequest alloc]
       initWithImage:transformedImage.image
@@ -227,6 +266,7 @@ static id RCTImageCompressionPipelineImmutableCopy(id value)
       hasMaxBytes:request.hasMaxBytes
       maxBytes:request.maxBytes
       jpegMetadata:jpegMetadata
+      cancellationCheck:cancellationCheck
     ];
     RCTImageCompressionImageEncodeError *encodeError = nil;
     RCTImageCompressionEncodedImage *encodedImage = self.imageEncoder(encodeRequest, &encodeError);
@@ -235,6 +275,7 @@ static id RCTImageCompressionPipelineImmutableCopy(id value)
       [self setError:error code:encodeError.code message:encodeError.message underlyingError:nil];
       return nil;
     }
+    if ([self stopIfCancelled:cancellationCheck error:error]) return nil;
 
     self.stageObserver([NSString stringWithFormat:@"%@-encoded", request.outputFormat]);
     RCTImageCompressionOutputRequest *outputRequest = [[RCTImageCompressionOutputRequest alloc]
@@ -248,6 +289,14 @@ static id RCTImageCompressionPipelineImmutableCopy(id value)
     if (outputResult == nil) {
       [self setError:error code:outputError.code message:outputError.message
         underlyingError:outputError.underlyingError];
+      return nil;
+    }
+
+    if ([self stopIfCancelled:cancellationCheck error:error]) {
+      NSURL *outputURL = [NSURL URLWithString:outputResult.uri];
+      if (outputURL.isFileURL) {
+        [[NSFileManager defaultManager] removeItemAtURL:outputURL error:nil];
+      }
       return nil;
     }
 

@@ -1,5 +1,7 @@
 #import <Foundation/Foundation.h>
 
+#import "RCTImageCompressionRequest.h"
+
 @class RCTImageCompressionInputInspection;
 @class UIImage;
 
@@ -34,6 +36,11 @@ typedef UIImage * _Nullable (^RCTImageCompressionFirstFrameImageDecoder)(NSData 
 typedef BOOL (^RCTImageCompressionDecodedImageValidator)(UIImage *image);
 typedef void (^RCTImageCompressionImageDecodeOperation)(void);
 typedef void (^RCTImageCompressionImageDecodeExecutor)(RCTImageCompressionImageDecodeOperation operation);
+typedef RCTImageCompressionDecodedImage * _Nullable (^RCTImageCompressionDownsampledImageDecoder)(
+  RCTImageCompressionInputInspection *input,
+  RCTImageCompressionKitResizeOptions resizeOptions,
+  RCTImageCompressionImageDecodeError * _Nullable * _Nullable error
+);
 
 @interface RCTImageCompressionImageDecoder : NSObject
 
@@ -43,7 +50,14 @@ typedef void (^RCTImageCompressionImageDecodeExecutor)(RCTImageCompressionImageD
                            imageWorkExecutor:(RCTImageCompressionImageDecodeExecutor)imageWorkExecutor NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
+- (instancetype)initWithDownsampledImageDecoder:(RCTImageCompressionDownsampledImageDecoder)downsampledImageDecoder
+                           imageWorkExecutor:(RCTImageCompressionImageDecodeExecutor)imageWorkExecutor NS_DESIGNATED_INITIALIZER;
+
 - (nullable RCTImageCompressionDecodedImage *)decodeInput:(RCTImageCompressionInputInspection *)input
+                                                     error:(RCTImageCompressionImageDecodeError * _Nullable * _Nullable)error;
+
+- (nullable RCTImageCompressionDecodedImage *)decodeInput:(RCTImageCompressionInputInspection *)input
+                                             resizeOptions:(RCTImageCompressionKitResizeOptions)resizeOptions
                                                      error:(RCTImageCompressionImageDecodeError * _Nullable * _Nullable)error;
 
 @end

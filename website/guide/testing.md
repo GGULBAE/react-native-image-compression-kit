@@ -21,7 +21,14 @@ vi.mock('react-native-image-compression-kit', () => ({
     ],
     metadataPolicies: ['preserve', 'safe', 'strip'],
     supportsTargetSizeCompression: true,
-    supportsCancellation: false,
+    supportsCancellation: true,
+    maxConcurrentOperations: 2,
+    supportsDecodeDownsampling: true,
+    resourceLimits: {
+      maxSourceDimension: 32_768,
+      maxSourcePixels: 100_000_000,
+      maxWorkingPixels: 25_000_000,
+    },
   }),
   compressImage: vi.fn().mockResolvedValue({
     uri: 'file:///tmp/result.jpg',

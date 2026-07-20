@@ -110,6 +110,46 @@ class ImageCompressionOutputTest {
   }
 
   @Test
+  @GraphicsMode(GraphicsMode.Mode.NATIVE)
+  fun cancelledTargetSearchCleansTemporaryAndUnpublishedOutputFiles() {
+    val bitmap = Bitmap.createBitmap(128, 96, Bitmap.Config.ARGB_8888).apply {
+      eraseColor(0xff336699.toInt())
+    }
+    val transaction = ImageCompressionOutput.createOutputTransaction(
+      temporaryFolder.root,
+      OutputFormat.JPEG,
+      "cancel-target-search"
+    )
+    var checks = 0
+
+    try {
+      ImageCompressionOutput.encodeBitmap(
+        bitmap = bitmap,
+        outputFile = transaction.temporaryFile,
+        outputFormat = OutputFormat.JPEG,
+        quality = 90,
+        maxBytes = 1,
+        cancellationCheck = {
+          checks += 1
+          if (checks >= 5) throw TestCancellation()
+        }
+      )
+      throw AssertionError("Expected target-size cancellation.")
+    } catch (_: TestCancellation) {
+      assertTrue(checks >= 5)
+    } finally {
+      transaction.cleanup(deleteCommittedOutput = true)
+      bitmap.recycle()
+    }
+
+    assertFalse(transaction.temporaryFile.exists())
+    assertFalse(transaction.outputFile.exists())
+    assertTrue(
+      transaction.outputFile.parentFile?.listFiles()?.none { it.name.endsWith(".tmp") } != false
+    )
+  }
+
+  @Test
   fun capabilitiesExposeJpegPngWebpGifHeicHeifAvifInputsAndJpegPngWebpOutputsOnly() {
     val capabilities = ImageCompressionOutput.FORMAT_VALUES.associateWith {
       ImageCompressionOutput.createFormatCapability(it)
@@ -252,7 +292,10 @@ class ImageCompressionOutputTest {
   ) {
     assertEquals(input, capability.input)
     assertEquals(output, capability.output)
-    assertFalse(capability.supportsAlpha)
+    assertEquals(
+      capability.format == "png" || capability.format == "webp" || capability.format == "gif",
+      capability.supportsAlpha
+    )
     assertFalse(capability.supportsAnimation)
     assertTrue(capability.notes.isNotEmpty())
   }
@@ -287,6 +330,8 @@ class ImageCompressionOutputTest {
       }
     )
   }
+
+  private class TestCancellation : RuntimeException()
 
   private fun assertAvifCapabilityNotes(capability: CompressionFormatCapability) {
     assertTrue(

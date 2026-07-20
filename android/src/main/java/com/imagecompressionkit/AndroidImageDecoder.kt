@@ -37,7 +37,12 @@ internal class AndroidImageDecoder(
   private val sourceAccess: AndroidImageSourceAccess,
   private val sdkInt: Int = Build.VERSION.SDK_INT
 ) {
-  fun decode(source: AndroidCompressionSource): AndroidImageDecodeResult {
+  fun decode(
+    source: AndroidCompressionSource,
+    resize: ResizeOptions? = null,
+    cancellationCheck: () -> Unit = {}
+  ): AndroidImageDecodeResult {
+    cancellationCheck()
     val originalByteSize = sourceAccess.readOriginalByteSize(source)
     val unsupportedInputMimeTypeHint = readUnsupportedInputMimeTypeHint(source)
 
@@ -62,12 +67,24 @@ internal class AndroidImageDecoder(
       }
     }
 
-    val bitmap = decodeBitmap(source, inputFormat)
-      ?: return AndroidImageDecodeResult.DecodeFailed
     val exifOrientation = if (inputFormat.supportsJpegExifMetadata) {
       readExifOrientation(source)
     } else {
       ExifInterface.ORIENTATION_NORMAL
+    }
+    val decodePlan = AndroidImageResourcePolicy.createDecodePlan(
+      bounds ?: return AndroidImageDecodeResult.DecodeFailed,
+      exifOrientation,
+      resize
+    )
+    cancellationCheck()
+    val bitmap = decodeBitmap(source, inputFormat, decodePlan)
+      ?: return AndroidImageDecodeResult.DecodeFailed
+    try {
+      cancellationCheck()
+    } catch (error: Throwable) {
+      bitmap.recycle()
+      throw error
     }
 
     return AndroidImageDecodeResult.Success(
@@ -103,39 +120,66 @@ internal class AndroidImageDecoder(
 
   private fun decodeBitmap(
     source: AndroidCompressionSource,
-    inputFormat: AndroidImageInputFormat
+    inputFormat: AndroidImageInputFormat,
+    decodePlan: AndroidDecodePlan
   ): Bitmap? =
     when {
-      inputFormat.usesAvifDecodePath -> decodeAvifBitmap(source)
-      inputFormat.usesHeifDecodePath -> decodeHeicHeifBitmap(source)
-      else -> decodeBitmapFactory(source)
+      inputFormat.usesAvifDecodePath -> decodeAvifBitmap(source, decodePlan)
+      inputFormat.usesHeifDecodePath -> decodeHeicHeifBitmap(source, decodePlan)
+      else -> decodeBitmapFactory(source, decodePlan)
     }
 
-  private fun decodeBitmapFactory(source: AndroidCompressionSource): Bitmap? =
-    sourceAccess.openInputStream(source).buffered().use { inputStream ->
-      BitmapFactory.decodeStream(inputStream)
+  private fun decodeBitmapFactory(
+    source: AndroidCompressionSource,
+    decodePlan: AndroidDecodePlan
+  ): Bitmap? {
+    AndroidImageResourcePolicy.validateBitmapFactoryDecode(decodePlan)
+    return sourceAccess.openInputStream(source).buffered().use { inputStream ->
+      BitmapFactory.decodeStream(
+        inputStream,
+        null,
+        BitmapFactory.Options().apply {
+          inSampleSize = decodePlan.inSampleSize
+        }
+      )
     }
+  }
 
-  private fun decodeHeicHeifBitmap(source: AndroidCompressionSource): Bitmap? =
+  private fun decodeHeicHeifBitmap(
+    source: AndroidCompressionSource,
+    decodePlan: AndroidDecodePlan
+  ): Bitmap? =
     when {
-      sdkInt >= Build.VERSION_CODES.P -> decodeBitmapWithImageDecoder(source)
-      sdkInt >= Build.VERSION_CODES.O -> decodeBitmapFactory(source)
+      sdkInt >= Build.VERSION_CODES.P -> decodeBitmapWithImageDecoder(source, decodePlan)
+      sdkInt >= Build.VERSION_CODES.O -> decodeBitmapFactory(source, decodePlan)
       else -> null
     }
 
   @TargetApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-  private fun decodeAvifBitmap(source: AndroidCompressionSource): Bitmap? =
+  private fun decodeAvifBitmap(
+    source: AndroidCompressionSource,
+    decodePlan: AndroidDecodePlan
+  ): Bitmap? =
     if (sdkInt >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-      decodeBitmapWithImageDecoder(source)
+      decodeBitmapWithImageDecoder(source, decodePlan)
     } else {
       null
     }
 
   @TargetApi(Build.VERSION_CODES.P)
-  private fun decodeBitmapWithImageDecoder(source: AndroidCompressionSource): Bitmap? =
+  private fun decodeBitmapWithImageDecoder(
+    source: AndroidCompressionSource,
+    decodePlan: AndroidDecodePlan
+  ): Bitmap? =
     try {
       ImageDecoder.decodeBitmap(sourceAccess.createImageDecoderSource(source)) { decoder, _, _ ->
         decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+        if (
+          decodePlan.decodeWidth < decodePlan.sourceBounds.width ||
+          decodePlan.decodeHeight < decodePlan.sourceBounds.height
+        ) {
+          decoder.setTargetSize(decodePlan.decodeWidth, decodePlan.decodeHeight)
+        }
       }
     } catch (_: Exception) {
       null

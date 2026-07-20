@@ -40,6 +40,11 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.util.Base64
+import java.util.Collections
+import java.util.concurrent.AbstractExecutorService
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 import kotlin.math.abs
 
@@ -49,6 +54,90 @@ import kotlin.math.abs
 class ImageCompressionKitModuleTest {
   @get:Rule
   val temporaryFolder = TemporaryFolder()
+
+  @Test
+  fun boundsEightConcurrentRequestsToTwoWorkers() {
+    val reactContext = createReactContext()
+    val completed = CountDownLatch(8)
+    val active = AtomicInteger(0)
+    val peak = AtomicInteger(0)
+    val module = ImageCompressionKitModule(
+      reactContext = reactContext,
+      writableMapFactory = { JavaOnlyMap() },
+      writableArrayFactory = { JavaOnlyArray() },
+      workerExecutor = ImageCompressionKitModule.createWorkerExecutor(),
+      operationObserver = { _, started ->
+        if (started) {
+          val current = active.incrementAndGet()
+          peak.updateAndGet { previous -> maxOf(previous, current) }
+          Thread.sleep(40)
+        } else {
+          active.decrementAndGet()
+        }
+      }
+    )
+    val sourceFile = createSampleJpegFile(width = 64, height = 48)
+    val promises = (0 until 8).map { index ->
+      RecordingPromise(completed).also { promise ->
+        val options = compressionOptions(
+          sourceFile,
+          JavaOnlyMap.of("format", "jpeg", "quality", 72)
+        ).apply { putString("operationId", "bounded-$index") }
+        module.compressImage(options, promise)
+      }
+    }
+
+    assertTrue(completed.await(30, TimeUnit.SECONDS))
+    assertEquals(2, peak.get())
+    assertTrue(promises.all { it.settlementCount.get() == 1 })
+    assertTrue(promises.all { it.rejectionCode == null })
+    module.invalidate()
+  }
+
+  @Test
+  fun cancelsQueuedAndRunningRequestsExactlyOnceWithoutTemporaryOutputs() {
+    val reactContext = createReactContext()
+    val workersStarted = CountDownLatch(2)
+    val releaseWorkers = CountDownLatch(1)
+    val module = ImageCompressionKitModule(
+      reactContext = reactContext,
+      writableMapFactory = { JavaOnlyMap() },
+      writableArrayFactory = { JavaOnlyArray() },
+      workerExecutor = ImageCompressionKitModule.createWorkerExecutor(),
+      operationObserver = { _, started ->
+        if (started) {
+          workersStarted.countDown()
+          releaseWorkers.await(30, TimeUnit.SECONDS)
+        }
+      }
+    )
+    val sourceFile = createSampleJpegFile(width = 64, height = 48)
+    val promises = (0 until 3).map { index ->
+      RecordingPromise().also { promise ->
+        val options = compressionOptions(
+          sourceFile,
+          JavaOnlyMap.of("format", "jpeg", "quality", 90, "maxBytes", 1)
+        ).apply { putString("operationId", "cancel-$index") }
+        module.compressImage(options, promise)
+      }
+    }
+
+    assertTrue(workersStarted.await(10, TimeUnit.SECONDS))
+    module.cancelCompression("cancel-2")
+    module.cancelCompression("cancel-0")
+    releaseWorkers.countDown()
+
+    assertEquals(ImageCompressionKitModule.ERR_CANCELLED, promises[0].rejectionCode)
+    assertEquals(ImageCompressionKitModule.ERR_CANCELLED, promises[2].rejectionCode)
+    assertEquals(1, promises[0].settlementCount.get())
+    assertEquals(1, promises[2].settlementCount.get())
+    Thread.sleep(300)
+    assertEquals(1, promises[0].settlementCount.get())
+    assertEquals(1, promises[2].settlementCount.get())
+    val outputDirectory = File(reactContext.cacheDir, "image-compression-kit")
+    assertTrue(outputDirectory.listFiles()?.none { it.name.endsWith(".tmp") } != false)
+    module.invalidate()
+  }
 
   @Test
   fun compressImageCreatesJpegPngAndWebpOutputsWithExpectedResultMetadata() {
@@ -92,6 +181,38 @@ class ImageCompressionKitModuleTest {
         result.getDouble("compressionRatio"),
         0.0001
       )
+    }
+  }
+
+  @Test
+  fun compressImagePreservesAlphaForPngAndWebpAndFlattensJpegToWhite() {
+    val module = createModule()
+    val sourceFile = createTransparentPngFile()
+
+    listOf("png", "webp", "jpeg").forEach { format ->
+      val promise = RecordingPromise()
+      module.compressImage(
+        compressionOptions(
+          sourceFile,
+          JavaOnlyMap.of("format", format, "quality", 90)
+        ),
+        promise
+      )
+      val output = promise.resolvedMap().outputFile()
+      val decoded = BitmapFactory.decodeFile(output.absolutePath)
+      assertNotNull(decoded)
+      try {
+        val pixel = decoded.getPixel(decoded.width / 2, decoded.height / 2)
+        if (format == "jpeg") {
+          assertTrue(android.graphics.Color.red(pixel) >= 245)
+          assertTrue(android.graphics.Color.green(pixel) >= 245)
+          assertTrue(android.graphics.Color.blue(pixel) >= 245)
+        } else {
+          assertEquals(0, android.graphics.Color.alpha(pixel))
+        }
+      } finally {
+        decoded.recycle()
+      }
     }
   }
 
@@ -1175,7 +1296,8 @@ class ImageCompressionKitModuleTest {
     ImageCompressionKitModule(
       reactContext = reactContext,
       writableMapFactory = { JavaOnlyMap() },
-      writableArrayFactory = { JavaOnlyArray() }
+      writableArrayFactory = { JavaOnlyArray() },
+      workerExecutor = ImmediateExecutorService()
     )
 
   private fun compressionOptions(
@@ -1270,6 +1392,17 @@ class ImageCompressionKitModuleTest {
     return temporaryFolder.newFile("source-${System.nanoTime()}.jpg").apply {
       writeBytes(bytes)
       assertTrue(length() > 0)
+    }
+  }
+
+  private fun createTransparentPngFile(): File {
+    val bitmap = Bitmap.createBitmap(16, 16, Bitmap.Config.ARGB_8888)
+    bitmap.eraseColor(0x00000000)
+    val outputStream = ByteArrayOutputStream()
+    assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream))
+    bitmap.recycle()
+    return temporaryFolder.newFile("transparent-${System.nanoTime()}.png").apply {
+      writeBytes(outputStream.toByteArray())
     }
   }
 
@@ -1585,7 +1718,7 @@ class ImageCompressionKitModuleTest {
   private fun assertDecodeFailedRejected(promise: RecordingPromise) {
     assertNull(promise.resolvedValue)
     assertEquals(ImageCompressionKitModule.ERR_DECODE_FAILED, promise.rejectionCode)
-    assertEquals("Android MVP could not decode the source image.", promise.rejectionMessage)
+    assertEquals("Android could not decode the source image.", promise.rejectionMessage)
   }
 
   private data class ResizeCase(
@@ -1723,7 +1856,10 @@ class ImageCompressionKitModuleTest {
     override fun registerSegment(segmentId: Int, path: String, callback: Callback) = Unit
   }
 
-  private class RecordingPromise : Promise {
+  private class RecordingPromise(
+    private val completionLatch: CountDownLatch? = null
+  ) : Promise {
+    val settlementCount = AtomicInteger(0)
     var resolvedValue: Any? = null
       private set
     var rejectionCode: String? = null
@@ -1735,6 +1871,8 @@ class ImageCompressionKitModuleTest {
 
     override fun resolve(value: Any?) {
       resolvedValue = value
+      settlementCount.incrementAndGet()
+      completionLatch?.countDown()
     }
 
     override fun reject(code: String?, message: String?) {
@@ -1794,6 +1932,30 @@ class ImageCompressionKitModuleTest {
       rejectionCode = code
       rejectionMessage = message
       rejectionThrowable = throwable
+      settlementCount.incrementAndGet()
+      completionLatch?.countDown()
     }
+  }
+
+  private class ImmediateExecutorService : AbstractExecutorService() {
+    private var stopped = false
+
+    override fun execute(command: Runnable) {
+      check(!stopped) { "Executor is shut down." }
+      command.run()
+    }
+
+    override fun shutdown() {
+      stopped = true
+    }
+
+    override fun shutdownNow(): MutableList<Runnable> {
+      stopped = true
+      return Collections.emptyList()
+    }
+
+    override fun isShutdown(): Boolean = stopped
+    override fun isTerminated(): Boolean = stopped
+    override fun awaitTermination(timeout: Long, unit: TimeUnit): Boolean = stopped
   }
 }

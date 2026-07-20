@@ -12,10 +12,13 @@ export {
 } from './types';
 export type {
   CompressionOptions,
+  CompressionAbortSignal,
+  CompressionControl,
   CompressionResult,
   CompressionSource,
   FormatCapability,
   ImageCompressionCapabilities,
+  ImageCompressionResourceLimits,
   ImageFormat,
   MetadataPolicy,
   NormalizedCompressionOptions,

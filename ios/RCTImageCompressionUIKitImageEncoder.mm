@@ -1,69 +1,33 @@
 #import "RCTImageCompressionImageEncoder.h"
 
+#import "RCTImageCompressionCGImage.h"
+
 #import <ImageIO/ImageIO.h>
-#import <UIKit/UIKit.h>
 
 static NSString *RCTImageCompressionWebPOutputTypeIdentifier(void)
 {
   NSArray<NSString *> *supportedTypes = CFBridgingRelease(
     CGImageDestinationCopyTypeIdentifiers()
   );
-  NSArray<NSString *> *webPTypes = @[
-    @"org.webmproject.webp",
-    @"public.webp",
-  ];
-
-  for (NSString *webPType in webPTypes) {
-    if ([supportedTypes containsObject:webPType]) {
-      return webPType;
-    }
+  for (NSString *webPType in @[@"org.webmproject.webp", @"public.webp"]) {
+    if ([supportedTypes containsObject:webPType]) return webPType;
   }
   return nil;
 }
 
-static NSData *RCTImageCompressionEncodeJpeg(
-  UIImage *image,
-  NSInteger quality,
-  RCTImageCompressionJpegMetadataResult *metadata
-) {
-  CGImageRef cgImage = image.CGImage;
-  if (cgImage == nil) {
-    return nil;
-  }
-
-  NSMutableData *outputData = [NSMutableData data];
-  CGImageDestinationRef destination = CGImageDestinationCreateWithData(
-    (__bridge CFMutableDataRef)outputData,
-    (__bridge CFStringRef)@"public.jpeg",
-    1,
-    nil
-  );
-  if (destination == nil) {
-    return nil;
-  }
-
-  NSDictionary *destinationProperties = [metadata
-    destinationPropertiesForQuality:quality
-    pixelWidth:CGImageGetWidth(cgImage)
-    pixelHeight:CGImageGetHeight(cgImage)
-  ];
-  CGImageDestinationAddImage(
-    destination,
-    cgImage,
-    (__bridge CFDictionaryRef)destinationProperties
-  );
-  BOOL finalized = CGImageDestinationFinalize(destination);
-  CFRelease(destination);
-  return finalized && outputData.length > 0 ? outputData : nil;
+static CGImageRef RCTImageCompressionEncoderCGImage(UIImage *image)
+{
+  if (![(id)image isKindOfClass:[RCTImageCompressionCGImage class]]) return nil;
+  return ((RCTImageCompressionCGImage *)(id)image).image;
 }
 
-static NSData *RCTImageCompressionEncodeWebP(UIImage *image, NSInteger quality)
-{
-  NSString *typeIdentifier = RCTImageCompressionWebPOutputTypeIdentifier();
-  CGImageRef cgImage = image.CGImage;
-  if (typeIdentifier == nil || cgImage == nil) {
-    return nil;
-  }
+static NSData *RCTImageCompressionEncodeImage(
+  UIImage *image,
+  NSString *typeIdentifier,
+  NSDictionary *properties
+) {
+  CGImageRef cgImage = RCTImageCompressionEncoderCGImage(image);
+  if (cgImage == nil || typeIdentifier.length == 0) return nil;
 
   NSMutableData *outputData = [NSMutableData data];
   CGImageDestinationRef destination = CGImageDestinationCreateWithData(
@@ -72,14 +36,7 @@ static NSData *RCTImageCompressionEncodeWebP(UIImage *image, NSInteger quality)
     1,
     nil
   );
-  if (destination == nil) {
-    return nil;
-  }
-
-  NSDictionary *properties = @{
-    (__bridge NSString *)kCGImageDestinationLossyCompressionQuality :
-      @((CGFloat)quality / 100.0),
-  };
+  if (destination == nil) return nil;
   CGImageDestinationAddImage(
     destination,
     cgImage,
@@ -88,6 +45,33 @@ static NSData *RCTImageCompressionEncodeWebP(UIImage *image, NSInteger quality)
   BOOL finalized = CGImageDestinationFinalize(destination);
   CFRelease(destination);
   return finalized && outputData.length > 0 ? outputData : nil;
+}
+
+static NSData *RCTImageCompressionEncodeJpeg(
+  UIImage *image,
+  NSInteger quality,
+  RCTImageCompressionJpegMetadataResult *metadata
+) {
+  CGImageRef cgImage = RCTImageCompressionEncoderCGImage(image);
+  if (cgImage == nil) return nil;
+  NSDictionary *properties = [metadata
+    destinationPropertiesForQuality:quality
+    pixelWidth:CGImageGetWidth(cgImage)
+    pixelHeight:CGImageGetHeight(cgImage)
+  ];
+  return RCTImageCompressionEncodeImage(image, @"public.jpeg", properties);
+}
+
+static NSData *RCTImageCompressionEncodeWebP(UIImage *image, NSInteger quality)
+{
+  return RCTImageCompressionEncodeImage(
+    image,
+    RCTImageCompressionWebPOutputTypeIdentifier(),
+    @{
+      (__bridge NSString *)kCGImageDestinationLossyCompressionQuality :
+        @((CGFloat)quality / 100.0),
+    }
+  );
 }
 
 @implementation RCTImageCompressionImageEncoder (Default)
@@ -103,17 +87,13 @@ static NSData *RCTImageCompressionEncodeWebP(UIImage *image, NSInteger quality)
       return RCTImageCompressionEncodeJpeg(image, quality, metadata);
     }
     pngEncoder:^NSData *(UIImage *image) {
-      return UIImagePNGRepresentation(image);
+      return RCTImageCompressionEncodeImage(image, @"public.png", @{});
     }
     webPEncoder:^NSData *(UIImage *image, NSInteger quality) {
       return RCTImageCompressionEncodeWebP(image, quality);
     }
     imageWorkExecutor:^(RCTImageCompressionImageEncodeOperation operation) {
-      if ([NSThread isMainThread]) {
-        operation();
-      } else {
-        dispatch_sync(dispatch_get_main_queue(), operation);
-      }
+      operation();
     }
   ];
 }

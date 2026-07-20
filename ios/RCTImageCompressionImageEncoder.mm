@@ -13,6 +13,25 @@ NSString *const RCTImageCompressionKitImageEncodeFailedCode = @"ERR_ENCODE_FAILE
                       maxBytes:(NSUInteger)maxBytes
                   jpegMetadata:(RCTImageCompressionJpegMetadataResult *)jpegMetadata
 {
+  return [self
+    initWithImage:image
+    outputFormat:outputFormat
+    quality:quality
+    hasMaxBytes:hasMaxBytes
+    maxBytes:maxBytes
+    jpegMetadata:jpegMetadata
+    cancellationCheck:^BOOL{ return NO; }
+  ];
+}
+
+- (instancetype)initWithImage:(UIImage *)image
+                  outputFormat:(NSString *)outputFormat
+                       quality:(NSInteger)quality
+                   hasMaxBytes:(BOOL)hasMaxBytes
+                      maxBytes:(NSUInteger)maxBytes
+                  jpegMetadata:(RCTImageCompressionJpegMetadataResult *)jpegMetadata
+             cancellationCheck:(RCTImageCompressionCancellationCheck)cancellationCheck
+{
   self = [super init];
   if (self != nil) {
     _image = image;
@@ -21,6 +40,7 @@ NSString *const RCTImageCompressionKitImageEncodeFailedCode = @"ERR_ENCODE_FAILE
     _hasMaxBytes = hasMaxBytes;
     _maxBytes = maxBytes;
     _jpegMetadata = jpegMetadata;
+    _cancellationCheck = [cancellationCheck copy];
   }
   return self;
 }
@@ -83,6 +103,7 @@ NSString *const RCTImageCompressionKitImageEncodeFailedCode = @"ERR_ENCODE_FAILE
 - (NSData *)encodeQualityRequest:(RCTImageCompressionImageEncodeRequest *)request
                          quality:(NSInteger)quality
 {
+  if (request.cancellationCheck()) return nil;
   if ([request.outputFormat isEqualToString:RCTImageCompressionKitWebPFormat]) {
     return self.webPEncoder(request.image, quality);
   }
@@ -103,6 +124,7 @@ NSString *const RCTImageCompressionKitImageEncodeFailedCode = @"ERR_ENCODE_FAILE
   NSInteger high = request.quality - 1;
 
   while (low <= high) {
+    if (request.cancellationCheck()) return nil;
     NSInteger currentQuality = (low + high) / 2;
     NSData *candidateData = [self encodeQualityRequest:request quality:currentQuality];
     if (candidateData == nil || candidateData.length == 0) {
@@ -132,6 +154,16 @@ NSString *const RCTImageCompressionKitImageEncodeFailedCode = @"ERR_ENCODE_FAILE
     *error = nil;
   }
 
+  if (request.cancellationCheck()) {
+    if (error != nil) {
+      *error = [[RCTImageCompressionImageEncodeError alloc]
+        initWithCode:RCTImageCompressionKitCancelledCode
+        message:@"Image compression was cancelled."
+      ];
+    }
+    return nil;
+  }
+
   __block NSData *outputData = nil;
   self.imageWorkExecutor(^{
     if ([request.outputFormat isEqualToString:RCTImageCompressionKitPngFormat]) {
@@ -142,6 +174,16 @@ NSString *const RCTImageCompressionKitImageEncodeFailedCode = @"ERR_ENCODE_FAILE
       outputData = [self encodeQualityRequest:request quality:request.quality];
     }
   });
+
+  if (request.cancellationCheck()) {
+    if (error != nil) {
+      *error = [[RCTImageCompressionImageEncodeError alloc]
+        initWithCode:RCTImageCompressionKitCancelledCode
+        message:@"Image compression was cancelled."
+      ];
+    }
+    return nil;
+  }
 
   if (outputData == nil || outputData.length == 0) {
     if (error != nil) {

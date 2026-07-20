@@ -49,6 +49,21 @@ export interface CompressionOptions {
   metadata?: MetadataPolicy;
 }
 
+export interface CompressionAbortSignal {
+  readonly aborted: boolean;
+  readonly reason?: unknown;
+  addEventListener(
+    type: 'abort',
+    listener: () => void,
+    options?: { once?: boolean }
+  ): void;
+  removeEventListener(type: 'abort', listener: () => void): void;
+}
+
+export interface CompressionControl {
+  signal: CompressionAbortSignal;
+}
+
 export interface NormalizedResizeOptions
   extends Omit<ResizeOptions, 'mode'> {
   mode: ResizeMode;
@@ -85,4 +100,13 @@ export interface ImageCompressionCapabilities {
   metadataPolicies: MetadataPolicy[];
   supportsTargetSizeCompression: boolean;
   supportsCancellation: boolean;
+  maxConcurrentOperations: number;
+  supportsDecodeDownsampling: boolean;
+  resourceLimits: ImageCompressionResourceLimits;
+}
+
+export interface ImageCompressionResourceLimits {
+  maxSourceDimension: number;
+  maxSourcePixels: number;
+  maxWorkingPixels: number;
 }

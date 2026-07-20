@@ -1,5 +1,8 @@
 #import <Foundation/Foundation.h>
 
+#import "RCTImageCompressionRequest.h"
+#import "RCTImageCompressionResources.h"
+
 @class RCTImageCompressionDecodedImage;
 @class RCTImageCompressionImageDecodeError;
 @class RCTImageCompressionImageEncodeError;
@@ -75,6 +78,7 @@ typedef RCTImageCompressionJpegMetadataResult * _Nullable (^RCTImageCompressionP
 );
 typedef RCTImageCompressionDecodedImage * _Nullable (^RCTImageCompressionPipelineImageDecoder)(
   RCTImageCompressionInputInspection *input,
+  RCTImageCompressionKitResizeOptions resizeOptions,
   RCTImageCompressionImageDecodeError * _Nullable * _Nullable error
 );
 typedef RCTImageCompressionTransformedImage * _Nullable (^RCTImageCompressionPipelineImageTransformer)(
@@ -105,6 +109,9 @@ typedef void (^RCTImageCompressionPipelineStageObserver)(NSString *stage);
 - (instancetype)init NS_UNAVAILABLE;
 
 - (nullable RCTImageCompressionPipelineResult *)executeRequest:(RCTImageCompressionPipelineRequest *)request
+                                                          error:(RCTImageCompressionPipelineError * _Nullable * _Nullable)error;
+- (nullable RCTImageCompressionPipelineResult *)executeRequest:(RCTImageCompressionPipelineRequest *)request
+                                             cancellationCheck:(RCTImageCompressionCancellationCheck)cancellationCheck
                                                           error:(RCTImageCompressionPipelineError * _Nullable * _Nullable)error;
 - (void)notifyResolved;
 

@@ -1,6 +1,7 @@
 #import <Foundation/Foundation.h>
 
 #import "RCTImageCompressionJpegMetadata.h"
+#import "RCTImageCompressionResources.h"
 
 @class UIImage;
 
@@ -16,13 +17,22 @@ FOUNDATION_EXPORT NSString *const RCTImageCompressionKitImageEncodeFailedCode;
 @property (nonatomic, readonly) BOOL hasMaxBytes;
 @property (nonatomic, readonly) NSUInteger maxBytes;
 @property (nonatomic, strong, readonly) RCTImageCompressionJpegMetadataResult *jpegMetadata;
+@property (nonatomic, copy, readonly) RCTImageCompressionCancellationCheck cancellationCheck;
 
 - (instancetype)initWithImage:(UIImage *)image
                   outputFormat:(NSString *)outputFormat
                        quality:(NSInteger)quality
                    hasMaxBytes:(BOOL)hasMaxBytes
                       maxBytes:(NSUInteger)maxBytes
-                  jpegMetadata:(RCTImageCompressionJpegMetadataResult *)jpegMetadata NS_DESIGNATED_INITIALIZER;
+                  jpegMetadata:(RCTImageCompressionJpegMetadataResult *)jpegMetadata;
+
+- (instancetype)initWithImage:(UIImage *)image
+                  outputFormat:(NSString *)outputFormat
+                       quality:(NSInteger)quality
+                   hasMaxBytes:(BOOL)hasMaxBytes
+                      maxBytes:(NSUInteger)maxBytes
+                  jpegMetadata:(RCTImageCompressionJpegMetadataResult *)jpegMetadata
+             cancellationCheck:(RCTImageCompressionCancellationCheck)cancellationCheck NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 @end

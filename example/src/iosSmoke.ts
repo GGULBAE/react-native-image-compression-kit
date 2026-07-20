@@ -110,8 +110,21 @@ export async function runIOSHostAppSmokeValidation(): Promise<IOSHostAppSmokeSum
     'Expected iOS JPEG target-size compression to be supported.'
   );
   assertIOSSmoke(
-    capabilities.supportsCancellation === false,
-    'Expected iOS cancellation to be unsupported.'
+    capabilities.supportsCancellation === true,
+    'Expected iOS cancellation to be supported.'
+  );
+  assertIOSSmoke(
+    capabilities.maxConcurrentOperations === 2,
+    `Expected iOS bounded concurrency 2, received ${capabilities.maxConcurrentOperations}.`
+  );
+  assertIOSSmoke(
+    capabilities.supportsDecodeDownsampling === true,
+    'Expected iOS decode-time downsampling to be supported.'
+  );
+  assertIOSSmoke(
+    capabilities.resourceLimits.maxSourcePixels === 100_000_000 &&
+      capabilities.resourceLimits.maxWorkingPixels === 25_000_000,
+    'Expected iOS resource limits to match the public native contract.'
   );
 
   const jpegUri = await runIOSSmokeStep('copy-jpeg-fixture', () =>
