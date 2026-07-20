@@ -62,7 +62,7 @@ const CORE = path.join(
   'scripts',
   'release-evidence-acquisition-core.mjs'
 );
-const VERSIONS = ['0.2.50', '0.2.55', '0.2.62', '0.3.0'];
+const VERSIONS = ['0.2.50', '0.2.55', '0.2.62', '0.3.0', '0.4.0'];
 const REPOSITORY_ID = 1278863793;
 
 function acquisitionOptions(parent, version = '0.2.55') {
@@ -729,5 +729,6 @@ describe('Registry Validation release evidence acquisition', () => {
     expect(result.stdout).toContain('0.2.55');
     expect(result.stdout).toContain('0.2.62');
     expect(result.stdout).toContain('0.3.0');
+    expect(result.stdout).toContain('0.4.0');
   });
 });

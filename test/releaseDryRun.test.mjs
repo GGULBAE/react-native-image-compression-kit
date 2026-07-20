@@ -94,7 +94,7 @@ describe('release dry-run packed README current-status guard', () => {
 
     expect(getPackedReadmeStatusViolations(packedReadme, options)).toEqual([]);
     expect(() => validatePackedReadmeStatus(packedReadme, options)).not.toThrow();
-    expect(releaseManifest.publishedNpmLatest).not.toBe(releaseManifest.releaseTarget);
+    expect(releaseManifest.publishedNpmLatest).toBe(releaseManifest.releaseTarget);
   });
 
   it('rejects package and manifest mismatches before evaluating publishability', () => {

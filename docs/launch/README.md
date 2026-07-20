@@ -18,7 +18,9 @@ external channel. Every announcement requires a separate maintainer approval.
 - Configure npm Trusted Publishing for `GGULBAE/react-native-image-compression-kit`,
   workflow `.github/workflows/release.yml`, and environment `npm-production`.
 - Run the [trusted release runbook](../maintainers/trusted-release.md) once.
-- Recheck the [pre-launch baseline](baseline.json); never rewrite it after launch.
+- Capture the version-qualified [launch baseline](baseline.json) once from the
+  public APIs after registry verification; do not reinterpret it as a release
+  gate or silently revise its observation window later.
 
 ## Launch order
 

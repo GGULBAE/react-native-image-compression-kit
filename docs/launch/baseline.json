@@ -1,23 +1,23 @@
 {
   "schemaVersion": 1,
   "package": "react-native-image-compression-kit",
-  "packageVersion": "0.3.0",
-  "capturedAt": "2026-07-18",
+  "packageVersion": "0.4.0",
+  "capturedAt": "2026-07-20",
   "measurementWindow": {
-    "start": "2026-07-11",
-    "end": "2026-07-17",
+    "start": "2026-07-13",
+    "end": "2026-07-19",
     "timezone": "UTC"
   },
   "npm": {
-    "latest": "0.2.62",
-    "downloads": 555
+    "latest": "0.4.0",
+    "downloads": 767
   },
   "github": {
-    "stars": 1,
+    "stars": 2,
     "forks": 0,
     "watchers": 0,
     "openIssues": 0,
-    "openPullRequests": 2
+    "openPullRequests": 0
   },
-  "notes": "Pre-launch baseline captured from the public GitHub and npm APIs. It is descriptive, not a release gate."
+  "notes": "v0.4.0 launch baseline captured from the public GitHub and npm APIs after registry verification. It is descriptive, not a release gate."
 }

@@ -1,8 +1,8 @@
 # Compatibility matrix
 
 This page distinguishes executable evidence from a broad compatibility claim.
-All v0.3.0 release-required lanes passed for the exact package source in
-[Compatibility run 29635966120](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29635966120).
+All v0.4.0 release-required lanes passed for the exact package source inside
+[Trusted Release run 29736694994](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29736694994).
 
 | Consumer lane | Architecture | Android | iOS | Status |
 | --- | --- | --- | --- | --- |

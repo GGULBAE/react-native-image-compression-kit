@@ -2,16 +2,16 @@
 
 ## Published baseline
 
-npm `version` and `dist-tags.latest` are `0.3.0`, published at
-`2026-07-18T11:25:58.408Z`. The validated 79-file registry tarball was 58,780
+npm `version` and `dist-tags.latest` are `0.4.0`, published at
+`2026-07-20T09:55:07.344Z`. The validated 83-file registry tarball was 68,633
 bytes with integrity
-`sha512-+ZxzGYC1aJz1Bdw71jDmCKpA+dBpAEiY1oOozLA43Ykgkm4LMXyzk1JH9HMci3qqIRsdNQGmsebBQNhzmSxzLQ==`
-and shasum `516f7a150d8f13bf794000f39516950370ba418d`.
+`sha512-6YayITmHw81daUVeUcJP/6lqPsyo3zliFwhYUmhWn7suOwtnw2PLJjp9oRWsFOoK6Nw1m7bfrMzOj5JMYJaE8A==`
+and shasum `05ed1b19b180c9589e1bf34358cf63a0de4472bd`.
 
 The promotion used one successful `npm publish --tag latest`; no separate
-dist-tag mutation was required. Immutable tag `v0.3.0` and the GitHub Release
+dist-tag mutation was required. Immutable tag `v0.4.0` and the GitHub Release
 both resolve to source commit
-`f8ad71f14ac50dac9dc433a46ee4e9a6d7e1bca7`.
+`6841a887b2d8b6c9e4823d2708233feeecaa77ea`.
 
 ## Networked registry smoke
 
@@ -19,7 +19,7 @@ Run only after the exact version is published:
 
 ```bash
 pnpm smoke:registry -- \
-  --version 0.3.0 \
+  --version 0.4.0 \
   --expect-tag latest \
   --json \
   --artifact-dir registry-validation
@@ -43,7 +43,7 @@ GitHub environment. Dispatch it with the exact published version and dist-tag:
 ```bash
 gh workflow run registry-validation.yml \
   --ref master \
-  -f version=0.3.0 \
+  -f version=0.4.0 \
   -f expected_tag=latest
 ```
 
@@ -60,7 +60,7 @@ Trusted Release workflow remains the only npm publisher.
 pnpm verify:registry-provenance -- \
   --artifact-dir /path/to/registry-validation \
   --expect-package react-native-image-compression-kit \
-  --expect-version 0.3.0 \
+  --expect-version 0.4.0 \
   --expect-tag latest \
   --json
 ```
@@ -70,15 +70,15 @@ or unsupported entries, validates canonical JSON and every declared digest and
 size, and performs no npm, GitHub, or other network request.
 
 Successful Registry Validation run
-[29643434413](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29643434413)
-on `refs/tags/v0.3.0` and commit
-`f8ad71f14ac50dac9dc433a46ee4e9a6d7e1bca7` attested manifest SHA-256
-`870ff069977d7bfe9193f92b00aca0e625e2c163aebf094cdb56b13ec6df3d60`
-as [attestation 35958617](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/35958617).
+[29737871213](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29737871213)
+on `refs/heads/master` and commit
+`6841a887b2d8b6c9e4823d2708233feeecaa77ea` attested manifest SHA-256
+`32ee0e70deee24801662027943457f7130a023f5ac7b84c766d48c07d258776c`
+as [attestation 36140293](https://github.com/GGULBAE/react-native-image-compression-kit/attestations/36140293).
 The provenance artifact digest is
-`sha256:039964a14923ea9f51af8a9568cdea0d1c7cdbbcc3954147f6b59d8054fdb997`;
+`sha256:1a931104adbad66300fb6e5b43e8e344acbb3f5b8aee73dd07aef9ff319244cb`;
 the attestation artifact digest is
-`sha256:1d3826a6e17c102a1ab2bb053ae24a996051e464e496bb853ca002d9e6975274`.
+`sha256:4158a78f03e2fcd222ad6698d1d9379b890e3e4e301dbcb82104f0ee195e705e`.
 
 ## Offline attestation verification
 
@@ -89,33 +89,33 @@ pnpm verify:registry-attestation -- \
   --trusted-root /path/to/registry-attestation/trusted-root.jsonl \
   --expect-repository GGULBAE/react-native-image-compression-kit \
   --expect-workflow GGULBAE/react-native-image-compression-kit/.github/workflows/registry-validation.yml \
-  --expect-ref refs/tags/v0.3.0 \
-  --expect-head-sha f8ad71f14ac50dac9dc433a46ee4e9a6d7e1bca7 \
+  --expect-ref refs/heads/master \
+  --expect-head-sha 6841a887b2d8b6c9e4823d2708233feeecaa77ea \
   --json
 ```
 
 The pinned trusted-root SHA-256 is
 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`.
 Blocked-network replay reproduced the canonical report at SHA-256
-`490a2202c4e69da356a8844803e64b067cc3992a437690b63738637c30e347ef`
+`23d9b192d7fd70307a4ac33cdade99f0d7952b4e51be6bf164f2de8946b46647`
 under UTC and Asia/Seoul.
 
 ## Repository-owned archive
 
-The v0.2.50, v0.2.55, v0.2.62, and v0.3.0 archives live under
+The v0.2.50, v0.2.55, v0.2.62, v0.3.0, and v0.4.0 archives live under
 `evidence/npm/<version>/`. Replay one version or the complete supported set:
 
 ```bash
-pnpm verify:release-evidence -- --version 0.3.0
+pnpm verify:release-evidence -- --version 0.4.0
 pnpm verify:release-evidence-set -- --json
 ```
 
-The v0.3.0 index pins Registry Validation run `29643434413`, source commit
-`f8ad71f14ac50dac9dc433a46ee4e9a6d7e1bca7`, attestation `35958617`, every
+The v0.4.0 index pins Registry Validation run `29737871213`, source commit
+`6841a887b2d8b6c9e4823d2708233feeecaa77ea`, attestation `36140293`, every
 retained file, and aggregate evidence SHA-256
-`201d16d7845212fa115674deacb6766ea03b2d6982a43036f40f110ee652550e`.
-With no selectors the set verifier checks v0.2.50, v0.2.55, v0.2.62, and
-v0.3.0 in stable order.
+`d6ab0b806fd1c5d5605faeafe2d9809b4a665193219694a416c154f833bc2558`.
+With no selectors the set verifier checks v0.2.50, v0.2.55, v0.2.62, v0.3.0,
+and v0.4.0 in stable order.
 
 See [Acquisition](acquisition.md) for authenticated artifact download and
 canonical importer handoff.

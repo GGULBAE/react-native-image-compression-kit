@@ -61,6 +61,13 @@ A failed run after npm accepted the tarball is resumed with the same version and
 source SHA. A new commit creates a different artifact and cannot resume that
 publication.
 
+The registry smoke normalizes npm 11 and npm 12 JSON transports. Exact
+`npm view --json` may be an object/scalar or a single-item array, while
+`npm pack --json` may be a one-item array or a package-name-keyed object.
+Zero, multiple, incomplete, or otherwise ambiguous results fail closed. This
+normalization is required before interpreting registry version, dist-tag, or
+tarball identity; retrying an invalid transport shape does not make it safe.
+
 ## Failure and rollback
 
 - Before npm publish: fix through a new reviewed commit; discard an incomplete
