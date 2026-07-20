@@ -195,10 +195,10 @@ RCT_REMAP_METHOD(compressImage,
   self.operations[operationID] = operation;
 
   NSDictionary *immutableOptions = [options copy];
-  __weak typeof(self) weakSelf = self;
+  __weak RCTImageCompressionKit *weakSelf = self;
   [self.compressionQueue addOperationWithBlock:^{
     @autoreleasepool {
-      typeof(self) strongSelf = weakSelf;
+      RCTImageCompressionKit *strongSelf = weakSelf;
       if (strongSelf == nil) return;
       RCTImageCompressionPipeline *pipeline = [RCTImageCompressionPipeline defaultPipeline];
       RCTImageCompressionPipelineRequest *request = [[RCTImageCompressionPipelineRequest alloc]
