@@ -63,21 +63,53 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    open-pull-requests-limit: 2
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 3
     groups:
-      development-dependencies:
+      security-tooling:
+        applies-to: "security-updates"
+        patterns:
+          - "vite"
+          - "esbuild"
+          - "lighthouse"
+          - "@sentry/*"
+          - "@opentelemetry/*"
         dependency-type: "development"
+      development-minor-and-patch:
+        applies-to: "version-updates"
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
   - package-ecosystem: "bundler"
     directory: "/example"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 1
   - package-ecosystem: "gradle"
     directory: "/example/android"
     schedule:
       interval: "monthly"
+    open-pull-requests-limit: 1
 `;
 
 const FULL_COMMIT_SHA = /^[0-9a-f]{40}$/;
