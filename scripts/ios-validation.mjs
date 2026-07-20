@@ -97,6 +97,12 @@ const PIPELINE_TEST_SOURCE = path.join(
   'ios-native',
   'RCTImageCompressionPipelineTests.mm'
 );
+const LARGE_IMAGE_TEST_SOURCE = path.join(
+  ROOT,
+  'test',
+  'ios-native',
+  'RCTImageCompressionLargeImageTests.mm'
+);
 const IMAGE_TRANSFORMER_CORE_SOURCE = path.join(
   ROOT,
   'ios',
@@ -182,6 +188,11 @@ async function main() {
     return;
   }
 
+  if (mode === 'large-image-test') {
+    runLargeImageTests();
+    return;
+  }
+
   if (mode === 'transformer-test') {
     runImageTransformerTests();
     return;
@@ -211,6 +222,7 @@ async function main() {
     runImageEncoderTests();
     runOutputTests();
     runPipelineTests();
+    runLargeImageTests();
     ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
@@ -320,6 +332,29 @@ function runPipelineTests() {
       OUTPUT_CORE_SOURCE,
       PIPELINE_CORE_SOURCE,
       PIPELINE_TEST_SOURCE,
+    ],
+    ['Foundation', 'ImageIO', 'CoreGraphics']
+  );
+}
+
+function runLargeImageTests() {
+  runNativeTests(
+    'RCTImageCompressionLargeImageTests',
+    [
+      REQUEST_PARSER_SOURCE,
+      ...INPUT_SOURCES,
+      IMAGE_DECODER_CORE_SOURCE,
+      IMAGE_TRANSFORMER_CORE_SOURCE,
+      JPEG_METADATA_CORE_SOURCE,
+      IMAGE_ENCODER_CORE_SOURCE,
+      OUTPUT_CORE_SOURCE,
+      PIPELINE_CORE_SOURCE,
+      path.join(ROOT, 'ios', 'RCTImageCompressionCGImage.mm'),
+      path.join(ROOT, 'ios', 'RCTImageCompressionUIKitImageDecoder.mm'),
+      path.join(ROOT, 'ios', 'RCTImageCompressionUIKitImageTransformer.mm'),
+      path.join(ROOT, 'ios', 'RCTImageCompressionUIKitImageEncoder.mm'),
+      path.join(ROOT, 'ios', 'RCTImageCompressionDefaultPipeline.mm'),
+      LARGE_IMAGE_TEST_SOURCE,
     ],
     ['Foundation', 'ImageIO', 'CoreGraphics']
   );
@@ -489,6 +524,7 @@ function bundlerEnv() {
 function ensurePodsInstalled() {
   const requiredPodSources = [
     'RCTImageCompressionRequest.mm',
+    'RCTImageCompressionCGImage.mm',
     'RCTImageCompressionSourceResolver.mm',
     'RCTImageCompressionInputInspector.mm',
     'RCTImageCompressionImageDecoder.mm',

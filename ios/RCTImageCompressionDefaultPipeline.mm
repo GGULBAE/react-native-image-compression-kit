@@ -64,9 +64,10 @@ static BOOL RCTImageCompressionPipelineSmokeEnabled(void)
     }
     imageDecoder:^RCTImageCompressionDecodedImage *(
       RCTImageCompressionInputInspection *input,
+      RCTImageCompressionKitResizeOptions resizeOptions,
       RCTImageCompressionImageDecodeError **error
     ) {
-      return [decoder decodeInput:input error:error];
+      return [decoder decodeInput:input resizeOptions:resizeOptions error:error];
     }
     imageTransformer:^RCTImageCompressionTransformedImage *(
       RCTImageCompressionImageTransformRequest *request

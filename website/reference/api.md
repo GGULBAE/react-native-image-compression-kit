@@ -1,6 +1,6 @@
 # Public API
 
-## `compressImage(options)`
+## `compressImage(options, control?)`
 
 Returns `Promise<CompressionResult>` and rejects with
 `ImageCompressionKitError`.
@@ -27,6 +27,18 @@ interface CompressionOptions {
 Resize dimensions are positive integers; `mode` defaults to `contain`.
 Metadata defaults to `safe`.
 
+`control` may be an `AbortSignal` directly or `{ signal }`. Cancellation before
+native dispatch, while queued, or between native stages rejects with
+`ERR_CANCELLED`. Completion removes the abort listener, so later aborts are a
+no-op.
+
+```ts
+const controller = new AbortController();
+const pending = compressImage(options, controller.signal);
+controller.abort();
+await pending;
+```
+
 ```ts
 interface CompressionResult {
   uri: string;
@@ -45,7 +57,8 @@ interface CompressionResult {
 
 Returns `Promise<ImageCompressionCapabilities>` with the current platform,
 format-specific input/output flags, alpha/animation flags, metadata policies,
-target-size support, cancellation support, and explanatory notes.
+target-size support, cancellation support, `maxConcurrentOperations`,
+`supportsDecodeDownsampling`, named `resourceLimits`, and explanatory notes.
 
 ## Errors
 
@@ -59,7 +72,8 @@ target-size support, cancellation support, and explanatory notes.
 - `OUTPUT_FORMATS`
 - `METADATA_POLICIES`
 - `RESIZE_MODES`
-- Public option, result, capability, format, resize, and metadata types
+- Public option, cancellation-control, result, capability, resource-limit,
+  format, resize, and metadata types
 
 See [errors and troubleshooting](../guide/errors.md) and
 [capabilities](../guide/capabilities.md) before building an application

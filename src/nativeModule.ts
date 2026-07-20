@@ -12,8 +12,9 @@ export type NativeImageCompressionKitModule = NativeImageCompressionKitSpec;
 
 type NativeModuleContractCheck = {
   compressImage(
-    options: NormalizedCompressionOptions
+    options: NormalizedCompressionOptions & { operationId: string }
   ): Promise<CompressionResult>;
+  cancelCompression(operationId: string): void;
   getImageCompressionCapabilities(): Promise<ImageCompressionCapabilities>;
 };
 
@@ -123,6 +124,8 @@ function isNativeModule(
     typeof value === 'object' &&
     value !== null &&
     typeof (value as NativeImageCompressionKitModule).compressImage ===
+      'function' &&
+    typeof (value as NativeImageCompressionKitModule).cancelCompression ===
       'function' &&
     typeof (value as NativeImageCompressionKitModule)
       .getImageCompressionCapabilities === 'function'

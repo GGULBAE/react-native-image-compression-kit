@@ -463,7 +463,12 @@ export function inspectDocumentation(root) {
     }
   }
 
-  inspectPublicLaunchContracts(root, packageJson.version, errors);
+  inspectPublicLaunchContracts(
+    root,
+    packageJson.version,
+    statusReport.manifest,
+    errors
+  );
 
   for (const entry of packageJson.files ?? []) {
     const normalized = entry.replace(/^\.\//, '');
@@ -520,7 +525,7 @@ export function inspectDocumentation(root) {
   };
 }
 
-function inspectPublicLaunchContracts(root, packageVersion, errors) {
+function inspectPublicLaunchContracts(root, packageVersion, releaseStatus, errors) {
   const compatibilityPath = path.join(root, 'docs/compatibility-matrix.json');
   if (existsSync(compatibilityPath)) {
     const compatibility = JSON.parse(readFileSync(compatibilityPath, 'utf8'));
@@ -539,8 +544,17 @@ function inspectPublicLaunchContracts(root, packageVersion, errors) {
   const baselinePath = path.join(root, 'docs/launch/baseline.json');
   if (existsSync(baselinePath)) {
     const baseline = JSON.parse(readFileSync(baselinePath, 'utf8'));
-    if (baseline.packageVersion !== packageVersion || baseline.schemaVersion !== 1) {
-      errors.push('launch baseline must identify the current exact package version and schema');
+    const evidencePackageVersion =
+      releaseStatus?.releaseState === 'candidate'
+        ? releaseStatus.npmLatest
+        : packageVersion;
+    if (
+      baseline.packageVersion !== evidencePackageVersion ||
+      baseline.schemaVersion !== 1
+    ) {
+      errors.push(
+        'launch baseline must identify the latest published package version and schema'
+      );
     }
     for (const field of ['capturedAt', 'npm', 'github', 'measurementWindow']) {
       if (!Object.hasOwn(baseline, field)) {

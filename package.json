@@ -1,6 +1,6 @@
 {
   "name": "react-native-image-compression-kit",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Native-first image compression and transcoding pipeline for React Native.",
   "license": "MIT",
   "repository": {
@@ -47,6 +47,7 @@
     "example:ios:encoder-test": "node scripts/ios-validation.mjs encoder-test",
     "example:ios:output-test": "node scripts/ios-validation.mjs output-test",
     "example:ios:pipeline-test": "node scripts/ios-validation.mjs pipeline-test",
+    "example:ios:large-image-test": "node scripts/ios-validation.mjs large-image-test",
     "example:ios:metadata-test": "node scripts/ios-validation.mjs metadata-test",
     "example:ios:transformer-test": "node scripts/ios-validation.mjs transformer-test",
     "example:ios:input-test": "node scripts/ios-validation.mjs input-test",

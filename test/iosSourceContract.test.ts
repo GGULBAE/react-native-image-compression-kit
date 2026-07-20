@@ -105,7 +105,7 @@ describe('iOS source contract', () => {
       /\[\s*RCTImageCompressionRequestParser\s+parseOptions:options/
     );
     expect(pipeline).toContain('self.requestParser(');
-    expect(implementation).not.toMatch(/\boptions\[@/);
+    expect(implementation.match(/options\[@/g)?.length).toBe(2);
     expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(1_100);
     expect(methodLines).toBeLessThanOrEqual(190);
     expect(parserTestNames).toEqual(
@@ -213,7 +213,7 @@ describe('iOS source contract', () => {
     );
   });
 
-  it('isolates image decoding and main-thread ownership behind native tables', () => {
+  it('isolates ImageIO downsampling from the non-blocking bridge boundary', () => {
     const header = readProjectFile('ios/RCTImageCompressionImageDecoder.h');
     const decoder = readProjectFile('ios/RCTImageCompressionImageDecoder.mm');
     const uiKitDecoder = readProjectFile(
@@ -262,18 +262,20 @@ describe('iOS source contract', () => {
     expect(decoder).toContain(
       '@"iOS MVP could not decode the source image."'
     );
-    expect(uiKitDecoder).toContain('[UIImage imageWithData:data]');
-    expect(uiKitDecoder).toContain('CGImageSourceCreateImageAtIndex');
-    expect(uiKitDecoder).toContain('[NSThread isMainThread]');
-    expect(uiKitDecoder).toContain('dispatch_sync(dispatch_get_main_queue()');
+    expect(uiKitDecoder).toContain('CGImageSourceCopyPropertiesAtIndex');
+    expect(uiKitDecoder).toContain('CGImageSourceCreateThumbnailAtIndex');
+    expect(uiKitDecoder).toContain('kCGImageSourceThumbnailMaxPixelSize');
+    expect(uiKitDecoder).toContain('RCTImageCompressionKitMaxSourcePixels');
+    expect(uiKitDecoder).toContain('RCTImageCompressionKitMaxWorkingPixels');
+    expect(uiKitDecoder).not.toMatch(/(?:#import <UIKit|\bUIImage\s+imageWithData|dispatch_get_main_queue)/);
     expect(`${decoder}\n${uiKitDecoder}`).not.toMatch(
       /(?:RCTImageCompressionKit(?:Render|Encode|SourceImageProperties)|UIGraphicsImageRenderer|CGImageDestination|maxBytes|metadataPolicy|writeToFile:)/
     );
     expect(defaultPipeline).toContain(
       '[RCTImageCompressionImageDecoder defaultDecoder]'
     );
-    expect(defaultPipeline).toContain('[decoder decodeInput:input error:error]');
-    expect(pipeline).toContain('self.imageDecoder(input, &decodeError)');
+    expect(defaultPipeline).toContain('[decoder decodeInput:input resizeOptions:resizeOptions error:error]');
+    expect(pipeline).toContain('RCTImageCompressionDecodedImage *decodedImage = self.imageDecoder(');
     expect(implementation).toContain(
       'RCTImageCompressionIOSFormatCapabilities('
     );
@@ -285,7 +287,7 @@ describe('iOS source contract', () => {
       /(?:\[UIImage\s+imageWithData:|CGImageSourceCreateImageAtIndex|RCTImageCompressionKitDecodeImage)/
     );
     expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(720);
-    expect(methodLines).toBeLessThanOrEqual(115);
+    expect(methodLines).toBeLessThanOrEqual(140);
     expect(decoderTestNames).toEqual(
       expect.arrayContaining([
         'TestRoutesStaticAndFirstFrameFormats',
@@ -306,7 +308,7 @@ describe('iOS source contract', () => {
     );
   });
 
-  it('isolates resize geometry and UIKit rendering behind native tables', () => {
+  it('isolates resize geometry and CoreGraphics rendering behind native tables', () => {
     const header = readProjectFile(
       'ios/RCTImageCompressionImageTransformer.h'
     );
@@ -358,16 +360,11 @@ describe('iOS source contract', () => {
     expect(transformer).toContain(
       'RCTImageCompressionKitImageTransformFailedCode'
     );
-    expect(uiKitTransformer).toContain('UIGraphicsImageRenderer');
-    expect(uiKitTransformer).toContain('image.size.width * image.scale');
-    expect(uiKitTransformer).toContain('image.size.height * image.scale');
-    expect(uiKitTransformer).toContain('[UIColor whiteColor]');
-    expect(uiKitTransformer).toContain('[UIColor clearColor]');
-    expect(uiKitTransformer).toContain('[image drawInRect:geometry.drawRect]');
-    expect(uiKitTransformer).toContain('[NSThread isMainThread]');
-    expect(uiKitTransformer).toContain(
-      'dispatch_sync(dispatch_get_main_queue()'
-    );
+    expect(uiKitTransformer).toContain('CGBitmapContextCreate(');
+    expect(uiKitTransformer).toContain('CGContextDrawImage(');
+    expect(uiKitTransformer).toContain('CGContextSetRGBFillColor(context, 1.0, 1.0, 1.0, 1.0)');
+    expect(uiKitTransformer).toContain('CGContextClearRect(');
+    expect(uiKitTransformer).not.toMatch(/(?:#import <UIKit|UIGraphicsImageRenderer|dispatch_get_main_queue)/);
     expect(`${transformer}\n${uiKitTransformer}`).not.toMatch(
       /(?:RCTImageCompression(?:Input|Source)|metadataPolicy|CGImageDestination|maxBytes|writeToFile:|RCTImageCompressionKitEncode)/
     );
@@ -385,7 +382,7 @@ describe('iOS source contract', () => {
       /(?:UIGraphicsImageRenderer|drawInRect:|RCTImageCompressionKit(?:ContainSize|CoverSize|StretchSize|RenderImage))/
     );
     expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(540);
-    expect(methodLines).toBeLessThanOrEqual(120);
+    expect(methodLines).toBeLessThanOrEqual(140);
     expect(transformerTestNames).toEqual(
       expect.arrayContaining([
         'TestCalculatesGeometryMatrix',
@@ -485,7 +482,7 @@ describe('iOS source contract', () => {
       /(?:RCTImageCompressionKitSourceImageProperties|RCTImageCompressionKitJpegDestinationProperties|CGImageSourceCreateWithData|CGImageSourceCopyPropertiesAtIndex|kCGImageProperty(?:PixelWidth|PixelHeight|Orientation|TIFFDictionary|ExifDictionary))/
     );
     expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(500);
-    expect(methodLines).toBeLessThanOrEqual(115);
+    expect(methodLines).toBeLessThanOrEqual(140);
     expect(metadataTestNames).toEqual(
       expect.arrayContaining([
         'TestRejectsUnsupportedPreserveCombinations',
@@ -551,7 +548,7 @@ describe('iOS source contract', () => {
     expect(encoder).not.toMatch(/#import <(?:UIKit|ImageIO|React)/);
     expect(encoder).toContain('RCTImageCompressionKitMinQuality');
     expect(encoder).toContain('while (low <= high)');
-    expect(uiKitEncoder).toContain('UIImagePNGRepresentation(image)');
+    expect(uiKitEncoder).toContain('@"public.png"');
     expect(uiKitEncoder).toContain('CGImageDestinationCopyTypeIdentifiers');
     expect(uiKitEncoder).toContain('CGImageDestinationCreateWithData');
     expect(uiKitEncoder).toContain('CGImageDestinationAddImage');
@@ -561,10 +558,7 @@ describe('iOS source contract', () => {
     expect(uiKitEncoder).toContain(
       'destinationPropertiesForQuality:quality'
     );
-    expect(uiKitEncoder).toContain('[NSThread isMainThread]');
-    expect(uiKitEncoder).toContain(
-      'dispatch_sync(dispatch_get_main_queue(), operation)'
-    );
+    expect(uiKitEncoder).not.toMatch(/(?:#import <UIKit|UIImagePNGRepresentation|dispatch_get_main_queue)/);
     expect(`${encoder}\n${uiKitEncoder}`).not.toMatch(
       /(?:RCTImageCompression(?:Input|ImageDecoder|ImageTransformer)|UIGraphicsImageRenderer|writeToFile:|NSCachesDirectory|RCTPromise)/
     );
@@ -583,7 +577,7 @@ describe('iOS source contract', () => {
       /(?:CGImageDestination|UIImagePNGRepresentation|RCTImageCompressionKitEncode(?:Jpeg|Png|WebP|QualityOutput|ToTargetSize)|while \(low <= high\))/
     );
     expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(380);
-    expect(methodLines).toBeLessThanOrEqual(115);
+    expect(methodLines).toBeLessThanOrEqual(140);
     expect(encoderTestNames).toEqual(
       expect.arrayContaining([
         'TestRoutesFormatMatrixInsideExecutor',
@@ -593,9 +587,10 @@ describe('iOS source contract', () => {
         'TestRejectsMissingOutputsAndSkippedExecutor',
         'TestCopiesImmutableRequestResultAndErrorModels',
         'TestClearsExistingErrorOnSuccess',
+        'TestCancelsTargetSizeSearchWithStableError',
       ])
     );
-    expect(encoderTestNames).toHaveLength(7);
+    expect(encoderTestNames).toHaveLength(8);
     expect(packageJson.scripts['example:ios:encoder-test']).toBe(
       'node scripts/ios-validation.mjs encoder-test'
     );
@@ -667,8 +662,8 @@ describe('iOS source contract', () => {
     expect(implementation).not.toMatch(
       /(?:NSCachesDirectory|createDirectoryAtPath|writeToFile:|RCTImageCompressionKitOutputPath|RCTImageCompressionKitResult|compressionRatio|originalByteSize\s*=)/
     );
-    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(300);
-    expect(methodLines).toBeLessThanOrEqual(115);
+    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(360);
+    expect(methodLines).toBeLessThanOrEqual(140);
     expect(outputTestNames).toEqual(
       expect.arrayContaining([
         'TestBuildsFormatPathsAndPersistsBytes',
@@ -763,21 +758,23 @@ describe('iOS source contract', () => {
     expect(implementation).toContain(
       '[RCTImageCompressionPipeline defaultPipeline]'
     );
-    expect(implementation).toContain(
-      '[pipeline executeRequest:request error:&pipelineError]'
-    );
+    expect(implementation).toContain('executeRequest:request');
+    expect(implementation).toContain('cancellationCheck:^BOOL');
     expect(implementation).toMatch(
-      /resolve\(result\.dictionaryRepresentation\);\s*\[pipeline notifyResolved\];/
+      /operation\.resolve\(result\.dictionaryRepresentation\);\s*\[pipeline notifyResolved\];/
     );
     expect(implementation).not.toMatch(
-      /#import "RCTImageCompression(?:Input|ImageDecoder|ImageTransformer|JpegMetadata|ImageEncoder|Output)\.h"/
+      /#import "RCTImageCompression(?:Input|ImageDecoder|ImageTransformer|JpegMetadata|ImageEncoder)\.h"/
     );
     expect(implementation).not.toMatch(
       /(?:defaultLoader|defaultDecoder|defaultTransformer|defaultMetadata|defaultEncoder|defaultOutput|loadSourceURI:|decodeInput:|transformRequest:|encodeRequest:|persistRequest:|CGImageSource|RNICK_IOS_SMOKE_NATIVE)/
     );
-    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(200);
-    expect(methodLines).toBeLessThanOrEqual(35);
-    expect(pipeline.split(/\r?\n/).length).toBeLessThanOrEqual(320);
+    expect(implementation).toContain('maxConcurrentOperationCount = RCTImageCompressionKitMaxConcurrentOperations');
+    expect(implementation).toContain('cancelCompression:(NSString *)operationID');
+    expect(implementation).not.toContain('dispatch_get_main_queue');
+    expect(implementation.split(/\r?\n/).length).toBeLessThanOrEqual(360);
+    expect(methodLines).toBeLessThanOrEqual(145);
+    expect(pipeline.split(/\r?\n/).length).toBeLessThanOrEqual(350);
     expect(defaultPipeline.split(/\r?\n/).length).toBeLessThanOrEqual(160);
     expect(pipelineTestNames).toEqual(
       expect.arrayContaining([

@@ -38,6 +38,7 @@ export type NativeOutputOptions = {
 };
 
 export type NativeCompressionOptions = {
+  operationId: string;
   source: NativeCompressionSource;
   resize?: NativeResizeOptions;
   output: NativeOutputOptions;
@@ -69,12 +70,20 @@ export type NativeImageCompressionCapabilities = {
   metadataPolicies: Array<NativeMetadataPolicy>;
   supportsTargetSizeCompression: boolean;
   supportsCancellation: boolean;
+  maxConcurrentOperations: number;
+  supportsDecodeDownsampling: boolean;
+  resourceLimits: {
+    maxSourceDimension: number;
+    maxSourcePixels: number;
+    maxWorkingPixels: number;
+  };
 };
 
 export interface Spec extends TurboModule {
   compressImage(
     options: NativeCompressionOptions
   ): Promise<NativeCompressionResult>;
+  cancelCompression(operationId: string): void;
   getImageCompressionCapabilities(): Promise<NativeImageCompressionCapabilities>;
 }
 

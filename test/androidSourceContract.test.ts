@@ -118,16 +118,20 @@ describe('Android source contract', () => {
     expect(moduleSource).toContain(
       'AndroidCompressionRequestParser.parse(options)'
     );
-    expect(moduleSource).toContain('imageDecoder.decode(inputSource)');
+    expect(moduleSource).toContain('imageDecoder.decode(');
     expect(moduleSource).toContain('bitmapTransformer.transform(');
-    expect(moduleSource.split(/\r?\n/).length).toBeLessThanOrEqual(300);
+    expect(moduleSource).toContain('ThreadPoolExecutor(');
+    expect(moduleSource).toContain('ANDROID_MAX_CONCURRENT_OPERATIONS');
+    expect(moduleSource).toContain('override fun cancelCompression');
+    expect(moduleSource).toContain('override fun invalidate()');
+    expect(moduleSource.split(/\r?\n/).length).toBeLessThanOrEqual(400);
     expect(
       functionLineCount(
         moduleSource,
         'override fun compressImage',
         'override fun getImageCompressionCapabilities'
       )
-    ).toBeLessThanOrEqual(120);
+    ).toBeLessThanOrEqual(70);
     expect(moduleSource).not.toMatch(
       /options\.(?:hasKey|isNull|getMap|getString|getDouble)\(/
     );
@@ -160,6 +164,8 @@ describe('Android source contract', () => {
     expect(decoderSource).toContain(
       'internal sealed class AndroidImageDecodeResult'
     );
+    expect(decoderSource).toContain('inSampleSize = decodePlan.inSampleSize');
+    expect(decoderSource).toContain('decoder.setTargetSize(');
     expect(transformerSource).toContain(
       'internal data class AndroidBitmapTransformationResult('
     );
@@ -229,6 +235,15 @@ describe('Android source contract', () => {
           'decodesJpegIntoImmutableInputInfoInStableSourceOrder',
           'rejectsUnavailablePlatformFormatsBeforeOpeningDecodeStreams',
           'treatsSupportedHeifAndAvifInputsAsDecodeCandidates',
+        ],
+      },
+      {
+        file: 'android/src/test/java/com/imagecompressionkit/AndroidImageResourcePolicyTest.kt',
+        minimum: 3,
+        required: [
+          'plans48MPContainDecodeWithoutAllocatingFullBitmap',
+          'preservesCoverResolutionAndMapsOrientedAxesBackToRawDecode',
+          'rejectsUnsafeUnboundedWorkAndSourceOverflowBeforeDecode',
         ],
       },
       {

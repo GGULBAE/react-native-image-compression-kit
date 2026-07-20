@@ -15,7 +15,28 @@ Android API/device codecs and iOS ImageIO destinations.
 | HEIC/HEIF/AVIF output | Not implemented | Not implemented |
 | Target size | JPEG, WebP | JPEG, runtime-available WebP |
 | Animation preservation | Not implemented | Not implemented |
-| Cancellation | Not implemented | Not implemented |
+| Decode-time downsampling | Yes | Yes |
+| Maximum concurrent operations | 2 | 2 |
+| Cancellation | Yes | Yes |
+
+Both platforms currently report:
+
+```ts
+{
+  maxConcurrentOperations: 2,
+  supportsDecodeDownsampling: true,
+  supportsCancellation: true,
+  resourceLimits: {
+    maxSourceDimension: 32_768,
+    maxSourcePixels: 100_000_000,
+    maxWorkingPixels: 25_000_000,
+  },
+}
+```
+
+These limits are applied before full decode. Large sources can still be
+processed when resize bounds permit decode-time downsampling below the working
+pixel limit.
 
 ## Fallback pattern
 

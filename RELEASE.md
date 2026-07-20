@@ -3,14 +3,66 @@
 This file keeps the current release work and the most recent release evidence.
 Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-history.md).
 
-## v0.3.0
+## v0.4.0
 
 <!-- release-status:start -->
+- Package version: `0.4.0`
+- npm latest: `0.3.0`
+- Release state: `candidate`
+- Registry checked at: `2026-07-20`
+<!-- release-status:end -->
+
+- Scope: large-image resilience, non-blocking native work, bounded concurrency,
+  decode-time downsampling, resource limits, cancellation, transactional
+  outputs, and alpha contract validation
+
+This candidate preserves existing `compressImage(options)` usage while adding
+an optional AbortSignal-compatible control. Android and iOS now limit native
+compression to two concurrent operations, reject unsafe source/working sizes
+before full decode, and clean incomplete outputs on every failure or
+cancellation path. iOS codec work is ImageIO/CoreGraphics-based and no longer
+runs on the main queue.
+
+### Included
+
+- Stable `ERR_CANCELLED` and `ERR_RESOURCE_LIMIT` public/native contracts.
+- `BitmapFactory.inSampleSize`, `ImageDecoder.setTargetSize`, and ImageIO
+  thumbnail downsampling sized for contain, cover, stretch, and orientation.
+- Operation-specific temporary output plus atomic publication and cleanup.
+- Additive runtime capability fields for concurrency, downsampling, and named
+  limits.
+- 48MP, dimension overflow, queued/running cancellation, settle-once,
+  target-search cancellation, cleanup, and alpha decode-back coverage.
+
+### Not included
+
+- Batch compression, progress events, new output codecs, animation
+  preservation, remote/data inputs, publication, dist-tags, tags, or GitHub
+  Releases.
+
+### Candidate validation
+
+```bash
+pnpm verify
+pnpm example:typecheck
+pnpm smoke:consumer
+pnpm docs:check
+pnpm site:check
+pnpm site:build
+pnpm fixtures:compatibility:check
+pnpm example:android-unit-test
+pnpm example:android-instrumentation
+pnpm example:ios:large-image-test
+git diff --check
+pnpm pack --dry-run
+```
+
+## v0.3.0
+
 - Package version: `0.3.0`
 - npm latest: `0.3.0`
 - Release state: `release`
 - Registry checked at: `2026-07-18`
-<!-- release-status:end -->
 
 - Scope: public support contract, user documentation and native-result demo,
   compatibility evidence, community health, protected repository settings,

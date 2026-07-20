@@ -17,17 +17,17 @@ handle platform codec differences before compression.
 <!-- package-status:start -->
 ## Current status
 
-- Package version: `0.3.0`
+- Package version: `0.4.0`
 - npm latest: `0.3.0`
-- Release state: `release`
-- Registry checked at: `2026-07-18`
+- Release state: `candidate`
+- Registry checked at: `2026-07-20`
 <!-- package-status:end -->
 
-Version 0.3.0 is the reviewed public-release source. Native compression
-behavior stays unchanged while the project adds verified integration guidance,
-a native-result demo site, community support paths, compatibility gates, and
-trusted release automation. Publication runs only from protected exact source
-and must verify the registry artifact and provenance before finalization.
+Version 0.4.0 is an unpublished candidate. It moves large image work to bounded
+background workers, downsamples resize requests during decode, rejects unsafe
+work before full decode, supports cancellation, and publishes only complete
+transactional cache files. npm `latest` remains 0.3.0; publishing, tags, and a
+GitHub Release are outside this candidate goal.
 
 ## Installation
 
@@ -96,7 +96,7 @@ Input must be a local URI accessible to the native app. Android supports
 
 ## Public API
 
-### `compressImage(options)`
+### `compressImage(options, control?)`
 
 Returns `Promise<CompressionResult>`.
 
@@ -125,14 +125,30 @@ interface CompressionResult {
   originalByteSize: number;
   compressionRatio: number;
 }
+
+interface CompressionControl {
+  signal: CompressionAbortSignal;
+}
+```
+
+The optional second argument accepts either an `AbortSignal` directly or a
+`CompressionControl` object. Aborts before dispatch, while queued, or while
+running reject with `ERR_CANCELLED`; aborting after completion is a no-op.
+
+```ts
+const controller = new AbortController();
+const compression = compressImage(options, { signal: controller.signal });
+controller.abort();
+await compression;
 ```
 
 ### `getImageCompressionCapabilities()`
 
 Returns the current platform's input/output format availability, metadata
-policies, target-size support, and cancellation support. Check it at runtime;
-codec support is not identical across Android versions, devices, and iOS
-runtimes.
+policies, target-size and cancellation support, bounded concurrency,
+decode-downsampling support, and named source/working pixel limits. Check it at
+runtime; codec support is not identical across Android versions, devices, and
+iOS runtimes.
 
 ### Other exports
 
@@ -211,7 +227,9 @@ try {
 | HEIC/HEIF/AVIF output | Not implemented | Not implemented |
 | `maxBytes` | JPEG and WebP | JPEG and runtime-available WebP |
 | Resize modes | `contain`, `cover`, `stretch` | `contain`, `cover`, `stretch` |
-| Cancellation | Not implemented | Not implemented |
+| Decode downsampling | `BitmapFactory.inSampleSize` / `ImageDecoder` target | ImageIO thumbnail |
+| Concurrent operations | Maximum 2 | Maximum 2 |
+| Cancellation | Yes | Yes |
 
 Important limitations:
 
@@ -222,6 +240,14 @@ Important limitations:
   `strip` re-encode without copying source metadata.
 - JPEG orientation is rendered into pixels before resize/encode; preserved
   output orientation and dimensions are normalized.
+- Sources above 32,768 pixels on either axis or 100,000,000 total pixels reject
+  with `ERR_RESOURCE_LIMIT`. Work requiring more than 25,000,000 decoded pixels
+  must provide smaller resize bounds.
+- JPEG output flattens transparency onto white on both platforms. PNG and WebP
+  alpha capability reflects decode-back validation.
+- Failed and cancelled operations remove temporary/partial cache files; a
+  successful returned cache file retains the existing application ownership
+  contract.
 - Capability checks should drive fallbacks for SDK-, device-, and
   runtime-dependent codecs.
 
@@ -234,6 +260,7 @@ pnpm example:ios:decoder-test
 pnpm example:ios:encoder-test
 pnpm example:ios:output-test
 pnpm example:ios:pipeline-test
+pnpm example:ios:large-image-test
 pnpm example:ios:metadata-test
 pnpm example:ios:transformer-test
 pnpm docs:check

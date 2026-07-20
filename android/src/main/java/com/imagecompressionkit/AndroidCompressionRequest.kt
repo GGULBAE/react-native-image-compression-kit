@@ -3,6 +3,7 @@ package com.imagecompressionkit
 import android.net.Uri
 import com.facebook.react.bridge.ReadableMap
 import java.io.File
+import java.util.UUID
 
 internal const val ANDROID_ERR_INVALID_OPTIONS = "ERR_INVALID_OPTIONS"
 internal const val ANDROID_ERR_UNSUPPORTED_SOURCE = "ERR_UNSUPPORTED_SOURCE"
@@ -14,6 +15,7 @@ internal const val METADATA_POLICY_SAFE = "safe"
 internal const val METADATA_POLICY_STRIP = "strip"
 
 internal data class AndroidCompressionRequest(
+  val operationId: String,
   val source: AndroidCompressionSource,
   val resize: ResizeOptions?,
   val outputFormat: OutputFormat,
@@ -134,6 +136,7 @@ internal object AndroidCompressionRequestParser {
       )
 
     return AndroidCompressionRequest(
+      operationId = readOperationId(options),
       source = inputSource,
       resize = resize,
       outputFormat = outputFormat,
@@ -141,6 +144,21 @@ internal object AndroidCompressionRequestParser {
       maxBytes = maxBytes,
       metadataPolicy = metadataPolicy
     )
+  }
+
+  private fun readOperationId(options: ReadableMap): String {
+    if (!hasValue(options, "operationId")) {
+      return "legacy-${UUID.randomUUID()}"
+    }
+    val operationId = try {
+      options.getString("operationId")
+    } catch (error: Exception) {
+      invalidOptions("Compression operationId must be a non-empty string.", error)
+    }
+    if (operationId.isNullOrBlank()) {
+      invalidOptions("Compression operationId must be a non-empty string.")
+    }
+    return operationId
   }
 
   private fun hasValue(map: ReadableMap, key: String): Boolean =

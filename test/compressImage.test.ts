@@ -43,7 +43,14 @@ const capabilities: ImageCompressionCapabilities = {
   ],
   metadataPolicies: ['preserve', 'safe', 'strip'],
   supportsTargetSizeCompression: true,
-  supportsCancellation: false,
+  supportsCancellation: true,
+  maxConcurrentOperations: 2,
+  supportsDecodeDownsampling: true,
+  resourceLimits: {
+    maxSourceDimension: 32_768,
+    maxSourcePixels: 100_000_000,
+    maxWorkingPixels: 25_000_000,
+  },
 };
 
 const publicErrorCode: ImageCompressionKitErrorCode = 'ERR_INVALID_OPTIONS';
@@ -53,6 +60,7 @@ function mockNativeModule(
 ): NativeImageCompressionKitModule {
   return {
     compressImage: vi.fn().mockResolvedValue(result),
+    cancelCompression: vi.fn(),
     getImageCompressionCapabilities: vi.fn().mockResolvedValue(capabilities),
     ...overrides,
   };
@@ -98,19 +106,22 @@ describe('compressImage', () => {
       },
     });
 
-    expect(nativeModule.compressImage).toHaveBeenCalledWith({
-      source: { uri: 'file:///tmp/input.jpg' },
-      resize: {
-        maxWidth: 2048,
-        mode: 'contain',
-      },
-      output: {
-        format: 'webp',
-        quality: 80,
-        maxBytes: 500_000,
-      },
-      metadata: 'safe',
-    });
+    expect(nativeModule.compressImage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operationId: expect.stringMatching(/^rnick-/),
+        source: { uri: 'file:///tmp/input.jpg' },
+        resize: {
+          maxWidth: 2048,
+          mode: 'contain',
+        },
+        output: {
+          format: 'webp',
+          quality: 80,
+          maxBytes: 500_000,
+        },
+        metadata: 'safe',
+      })
+    );
   });
 
   it('passes explicit resize mode and metadata policy to native code', async () => {
@@ -131,19 +142,68 @@ describe('compressImage', () => {
       metadata: 'strip',
     });
 
-    expect(nativeModule.compressImage).toHaveBeenCalledWith({
-      source: { uri: 'content://media/external/images/1' },
-      resize: {
-        maxWidth: 1200,
-        maxHeight: 800,
-        mode: 'cover',
-      },
-      output: {
-        format: 'jpeg',
-        quality: 76,
-      },
-      metadata: 'strip',
+    expect(nativeModule.compressImage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        operationId: expect.stringMatching(/^rnick-/),
+        source: { uri: 'content://media/external/images/1' },
+        resize: {
+          maxWidth: 1200,
+          maxHeight: 800,
+          mode: 'cover',
+        },
+        output: {
+          format: 'jpeg',
+          quality: 76,
+        },
+        metadata: 'strip',
+      })
+    );
+  });
+
+  it('normalizes preflight, queued, and running aborts to ERR_CANCELLED', async () => {
+    const preflight = new AbortController();
+    const nativeModule = mockNativeModule();
+    setNativeModuleForTesting(nativeModule);
+    preflight.abort();
+
+    await expect(
+      compressImage(
+        {
+          source: { uri: 'file:///tmp/input.jpg' },
+          output: { format: 'jpeg' },
+        },
+        preflight.signal
+      )
+    ).rejects.toMatchObject({ code: 'ERR_CANCELLED' });
+    expect(nativeModule.compressImage).not.toHaveBeenCalled();
+
+    let resolveNative: ((value: CompressionResult) => void) | undefined;
+    const runningModule = mockNativeModule({
+      compressImage: vi.fn(
+        () =>
+          new Promise<CompressionResult>((resolve) => {
+            resolveNative = resolve;
+          })
+      ),
     });
+    setNativeModuleForTesting(runningModule);
+    const running = new AbortController();
+    const compression = compressImage(
+      {
+        source: { uri: 'file:///tmp/input.jpg' },
+        output: { format: 'jpeg' },
+      },
+      { signal: running.signal }
+    );
+    const operationId = (runningModule.compressImage as ReturnType<typeof vi.fn>)
+      .mock.calls[0][0].operationId;
+    running.abort();
+
+    await expect(compression).rejects.toMatchObject({ code: 'ERR_CANCELLED' });
+    expect(runningModule.cancelCompression).toHaveBeenCalledWith(operationId);
+    resolveNative?.(result);
+    running.abort();
+    expect(runningModule.cancelCompression).toHaveBeenCalledTimes(1);
   });
 
   it('surfaces unavailable native module errors clearly', async () => {

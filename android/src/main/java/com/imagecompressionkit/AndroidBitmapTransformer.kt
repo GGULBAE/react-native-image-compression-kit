@@ -1,6 +1,8 @@
 package com.imagecompressionkit
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
 import java.io.Closeable
@@ -33,14 +35,24 @@ internal class AndroidBitmapTransformer(
   fun transform(
     source: Bitmap,
     exifOrientation: Int,
-    resize: ResizeOptions?
+    resize: ResizeOptions?,
+    opaque: Boolean = false
   ): AndroidOwnedBitmapTransformation {
     val ownership = AndroidBitmapOwnership(recycleBitmap)
     ownership.own(source)
 
     try {
       val oriented = applyExifOrientation(source, exifOrientation, ownership)
-      val output = resizeBitmap(oriented, resize, ownership)
+      val resized = resizeBitmap(oriented, resize, ownership)
+      val output = if (opaque && resized.hasAlpha()) {
+        ownership.own(Bitmap.createBitmap(resized.width, resized.height, Bitmap.Config.ARGB_8888)).also {
+          val canvas = Canvas(it)
+          canvas.drawColor(Color.WHITE)
+          canvas.drawBitmap(resized, 0f, 0f, null)
+        }
+      } else {
+        resized
+      }
 
       return AndroidOwnedBitmapTransformation(
         result = AndroidBitmapTransformationResult(

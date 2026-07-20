@@ -391,6 +391,39 @@ static void TestClearsExistingErrorOnSuccess(void)
   RCTEncoderAssert(error == nil, @"successful encode clears previous error");
 }
 
+static void TestCancelsTargetSizeSearchWithStableError(void)
+{
+  __block NSUInteger cancellationChecks = 0;
+  __block NSUInteger jpegCalls = 0;
+  RCTImageCompressionImageEncoder *encoder = RCTEncoder(
+    ^NSData *(UIImage *image, NSInteger quality, RCTImageCompressionJpegMetadataResult *metadata) {
+      jpegCalls += 1;
+      return RCTEncoderData((NSUInteger)quality + 100);
+    },
+    ^NSData *(UIImage *image) { return nil; },
+    ^NSData *(UIImage *image, NSInteger quality) { return nil; },
+    RCTImmediateEncoderExecutor()
+  );
+  RCTImageCompressionImageEncodeRequest *request = [[RCTImageCompressionImageEncodeRequest alloc]
+    initWithImage:(UIImage *)[NSObject new]
+    outputFormat:RCTImageCompressionKitJpegFormat
+    quality:90
+    hasMaxBytes:YES
+    maxBytes:1
+    jpegMetadata:(RCTImageCompressionJpegMetadataResult *)[NSObject new]
+    cancellationCheck:^BOOL{
+      cancellationChecks += 1;
+      return cancellationChecks >= 3;
+    }
+  ];
+  RCTImageCompressionImageEncodeError *error = nil;
+  RCTImageCompressionEncodedImage *result = [encoder encodeRequest:request error:&error];
+
+  RCTEncoderAssert(result == nil, @"cancelled quality search returns no result");
+  RCTEncoderAssert(jpegCalls == 1, @"cancellation stops later quality probes");
+  RCTEncoderAssertEqualObjects(error.code, RCTImageCompressionKitCancelledCode, @"cancellation uses ERR_CANCELLED");
+}
+
 int main(void)
 {
   @autoreleasepool {
@@ -401,6 +434,7 @@ int main(void)
     TestRejectsMissingOutputsAndSkippedExecutor();
     TestCopiesImmutableRequestResultAndErrorModels();
     TestClearsExistingErrorOnSuccess();
+    TestCancelsTargetSizeSearchWithStableError();
 
     if (RCTImageEncoderFailureCount > 0) {
       fprintf(
@@ -413,7 +447,7 @@ int main(void)
     }
 
     printf(
-      "iOS image encoder native tests passed: %lu assertions across 7 table-driven groups.\n",
+      "iOS image encoder native tests passed: %lu assertions across 8 table-driven groups.\n",
       (unsigned long)RCTImageEncoderAssertionCount
     );
   }

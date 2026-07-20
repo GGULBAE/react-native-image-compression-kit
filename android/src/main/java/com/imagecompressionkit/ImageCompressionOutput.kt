@@ -31,6 +31,28 @@ internal data class CompressionFormatCapability(
   val notes: List<String>
 )
 
+internal class CompressionOutputTransaction(
+  val temporaryFile: File,
+  val outputFile: File
+) {
+  private var committed = false
+
+  fun commit(): File {
+    if (!temporaryFile.renameTo(outputFile)) {
+      throw IllegalStateException("Android could not publish the completed output file atomically.")
+    }
+    committed = true
+    return outputFile
+  }
+
+  fun cleanup(deleteCommittedOutput: Boolean = false) {
+    temporaryFile.delete()
+    if (deleteCommittedOutput || !committed) {
+      outputFile.delete()
+    }
+  }
+}
+
 internal enum class OutputFormat(
   val value: String,
   val fileExtension: String,
@@ -139,13 +161,29 @@ internal object ImageCompressionOutput {
     )
   }
 
+  fun createOutputTransaction(
+    cacheDir: File,
+    outputFormat: OutputFormat,
+    operationId: String
+  ): CompressionOutputTransaction {
+    val outputFile = createOutputFile(cacheDir, outputFormat)
+    val safeOperationId = operationId.replace(Regex("[^A-Za-z0-9._-]"), "_")
+    val temporaryFile = File(
+      outputFile.parentFile,
+      ".${outputFile.name}.$safeOperationId.tmp"
+    )
+    temporaryFile.delete()
+    return CompressionOutputTransaction(temporaryFile, outputFile)
+  }
+
   fun encodeBitmap(
     bitmap: Bitmap,
     outputFile: File,
     outputFormat: OutputFormat,
     quality: Int,
     maxBytes: Long?,
-    copiedExifMetadata: CopiedExifMetadata? = null
+    copiedExifMetadata: CopiedExifMetadata? = null,
+    cancellationCheck: () -> Unit = {}
   ): Boolean =
     if (maxBytes == null) {
       encodeBitmapAtQuality(
@@ -153,7 +191,8 @@ internal object ImageCompressionOutput {
         outputFile,
         outputFormat,
         quality,
-        copiedExifMetadata
+        copiedExifMetadata,
+        cancellationCheck
       )
     } else {
       encodeBitmapToTargetSize(
@@ -162,7 +201,8 @@ internal object ImageCompressionOutput {
         outputFormat,
         quality,
         maxBytes,
-        copiedExifMetadata
+        copiedExifMetadata,
+        cancellationCheck
       )
     }
 
@@ -197,7 +237,7 @@ internal object ImageCompressionOutput {
       format = format,
       input = isSupportedInput,
       output = outputFormat != null,
-      supportsAlpha = false,
+      supportsAlpha = format == PNG_FORMAT || format == WEBP_FORMAT || format == GIF_FORMAT,
       supportsAnimation = false,
       notes = when (outputFormat) {
         OutputFormat.JPEG -> jpegFormatNotes()
@@ -245,17 +285,20 @@ internal object ImageCompressionOutput {
     outputFormat: OutputFormat,
     qualityCap: Int,
     maxBytes: Long,
-    copiedExifMetadata: CopiedExifMetadata?
+    copiedExifMetadata: CopiedExifMetadata?,
+    cancellationCheck: () -> Unit
   ): Boolean {
     var currentQuality = qualityCap
 
+    cancellationCheck()
     if (
       !encodeBitmapAtQuality(
         bitmap,
         outputFile,
         outputFormat,
         currentQuality,
-        copiedExifMetadata
+        copiedExifMetadata,
+        cancellationCheck
       )
     ) {
       return false
@@ -272,6 +315,7 @@ internal object ImageCompressionOutput {
     var high = qualityCap - 1
 
     while (low <= high) {
+      cancellationCheck()
       currentQuality = (low + high) / 2
 
       if (
@@ -280,7 +324,8 @@ internal object ImageCompressionOutput {
           outputFile,
           outputFormat,
           currentQuality,
-          copiedExifMetadata
+          copiedExifMetadata,
+          cancellationCheck
         )
       ) {
         return false
@@ -301,6 +346,7 @@ internal object ImageCompressionOutput {
     }
 
     val finalQuality = bestWithinTargetQuality ?: lowestAboveTargetQuality
+    cancellationCheck()
 
     return if (currentQuality == finalQuality) {
       true
@@ -310,7 +356,8 @@ internal object ImageCompressionOutput {
         outputFile,
         outputFormat,
         finalQuality,
-        copiedExifMetadata
+        copiedExifMetadata,
+        cancellationCheck
       )
     }
   }
@@ -320,8 +367,10 @@ internal object ImageCompressionOutput {
     outputFile: File,
     outputFormat: OutputFormat,
     quality: Int,
-    copiedExifMetadata: CopiedExifMetadata?
+    copiedExifMetadata: CopiedExifMetadata?,
+    cancellationCheck: () -> Unit
   ): Boolean {
+    cancellationCheck()
     val encoded = FileOutputStream(outputFile).use { outputStream ->
       bitmap.compress(
         outputFormat.compressFormat,
@@ -333,10 +382,13 @@ internal object ImageCompressionOutput {
     if (!encoded) {
       return false
     }
+    cancellationCheck()
 
     if (outputFormat.supportsJpegExifMetadata) {
       writeCopiedExifMetadata(copiedExifMetadata, outputFile)
     }
+
+    cancellationCheck()
 
     return true
   }

@@ -7,6 +7,8 @@ export type ImageCompressionKitErrorCode =
   | 'ERR_FILE_ACCESS'
   | 'ERR_DECODE_FAILED'
   | 'ERR_ENCODE_FAILED'
+  | 'ERR_RESOURCE_LIMIT'
+  | 'ERR_CANCELLED'
   | 'ERR_NATIVE_OPERATION_FAILED';
 
 export class ImageCompressionKitError extends Error {
@@ -86,6 +88,8 @@ function isImageCompressionKitErrorCode(
     code === 'ERR_FILE_ACCESS' ||
     code === 'ERR_DECODE_FAILED' ||
     code === 'ERR_ENCODE_FAILED' ||
+    code === 'ERR_RESOURCE_LIMIT' ||
+    code === 'ERR_CANCELLED' ||
     code === 'ERR_NATIVE_OPERATION_FAILED'
   );
 }
