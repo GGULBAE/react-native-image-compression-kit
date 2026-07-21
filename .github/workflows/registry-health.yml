@@ -1,0 +1,160 @@
+name: Registry Health
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/registry-health.yml"
+      - ".github/workflows/registry-validation.yml"
+      - ".github/actions-lock.json"
+      - "scripts/registry-health-*.mjs"
+      - "scripts/verify-registry-health.mjs"
+      - "scripts/registry-smoke-*.mjs"
+      - "scripts/registry-provenance-core.mjs"
+      - "scripts/workflow-supply-chain-core.mjs"
+      - "scripts/verify-workflow-supply-chain.mjs"
+      - "test/registryHealth.test.mjs"
+      - "test/registrySmoke.test.mjs"
+      - "test/workflowSupplyChain.test.mjs"
+      - "docs/release-status.json"
+      - "evidence/npm/*/release-evidence-index.json"
+      - "evidence/npm/*/provenance/registry-provenance.json"
+      - "evidence/npm/*/provenance/bundle-manifest.json"
+      - "evidence/npm/*/provenance/package.tgz"
+      - "package.json"
+      - "pnpm-lock.yaml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: registry-health-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  registry-health:
+    name: Read-only npm registry health
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+        with:
+          version: 11.7.0
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install npm registry transport
+        run: |
+          npm install --global npm@12.0.1
+          test "$(npm --version)" = "12.0.1"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Read published release handoff
+        id: release
+        shell: bash
+        run: |
+          version="$(node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const status = JSON.parse(readFileSync('docs/release-status.json', 'utf8'));
+          const version = status.publishedNpmLatest;
+          if (typeof version !== 'string' || version.length === 0) {
+            throw new Error('docs/release-status.json publishedNpmLatest is missing.');
+          }
+          process.stdout.write(version);
+          NODE
+          )"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Run live registry smoke
+        id: smoke
+        continue-on-error: true
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm smoke:registry -- \
+            --version "$VERSION" \
+            --expect-tag latest \
+            --json \
+            --artifact-dir "$RUNNER_TEMP/registry-health-live" \
+            | tee "$RUNNER_TEMP/registry-smoke.stdout.json"
+
+      - name: Compare live registry with committed evidence
+        id: verify
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm verify:registry-health -- \
+            --live-artifact-dir "$RUNNER_TEMP/registry-health-live" \
+            --json \
+            --report-file "$RUNNER_TEMP/registry-health.json" \
+            | tee "$RUNNER_TEMP/registry-health.stdout.json"
+          cmp "$RUNNER_TEMP/registry-health.json" "$RUNNER_TEMP/registry-health.stdout.json"
+
+      - name: Write Registry Health summary
+        if: always()
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync, existsSync, readFileSync } from 'node:fs';
+          const reportPath = `${process.env.RUNNER_TEMP}/registry-health.json`;
+          let markdown = '## Registry Health\n\n';
+          if (!existsSync(reportPath)) {
+            markdown += `- Version: \`${process.env.VERSION || 'unresolved'}\`\n`;
+            markdown += '- Status: **failed before canonical report creation**\n';
+          } else {
+            const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+            markdown += `- Status: **${report.status}**\n`;
+            markdown += `- Package: \`${report.package}@${report.resolvedVersion}\`\n`;
+            markdown += `- Requested version: \`${report.requestedVersion}\`\n`;
+            markdown += `- Dist-tag: \`${report.expectedTag}\` → \`${report.tagVersion}\`\n`;
+            markdown += `- Published at: \`${report.publishedAt}\`\n`;
+            markdown += `- SRI: \`${report.integrity}\`\n`;
+            markdown += `- Shasum: \`${report.shasum}\`\n`;
+            markdown += `- Tarball SHA-256: \`${report.tarballSha256}\`\n`;
+            markdown += `- Package shape: ${report.fileCount} files, ${report.packageSize} packed bytes, ${report.unpackedSize} unpacked bytes\n`;
+            markdown += `- README: \`${report.readmeStatus}\`\n`;
+            markdown += `- Forbidden files: \`${JSON.stringify(report.forbiddenFiles)}\`\n`;
+            markdown += `- Consumer install/typecheck: \`${report.registryInstallSmoke}\`\n`;
+            if (report.drift.length > 0) {
+              markdown += `- Drift fields: ${report.drift.map(({ field }) => `\`${field}\``).join(', ')}\n`;
+            }
+            if (report.error) markdown += `- Error: ${report.error}\n`;
+          }
+          appendFileSync(process.env.GITHUB_STEP_SUMMARY, markdown, 'utf8');
+          NODE
+
+      - name: Upload canonical Registry Health report
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: registry-health-${{ steps.release.outputs.version || 'unresolved' }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/registry-health.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce Registry Health result
+        if: >-
+          always() &&
+          (steps.smoke.outcome != 'success' || steps.verify.outcome != 'success')
+        run: exit 1

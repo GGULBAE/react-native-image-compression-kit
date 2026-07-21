@@ -14,6 +14,29 @@ import path from 'node:path';
 export const WORKFLOW_SUPPLY_CHAIN_SCHEMA_VERSION = 1;
 export const WORKFLOW_ACTION_LOCK_FILE = '.github/actions-lock.json';
 export const WORKFLOW_DEPENDABOT_FILE = '.github/dependabot.yml';
+export const REGISTRY_HEALTH_WORKFLOW_FILE = '.github/workflows/registry-health.yml';
+
+export const REGISTRY_HEALTH_PULL_REQUEST_PATHS = Object.freeze([
+  '.github/workflows/registry-health.yml',
+  '.github/workflows/registry-validation.yml',
+  '.github/actions-lock.json',
+  'scripts/registry-health-*.mjs',
+  'scripts/verify-registry-health.mjs',
+  'scripts/registry-smoke-*.mjs',
+  'scripts/registry-provenance-core.mjs',
+  'scripts/workflow-supply-chain-core.mjs',
+  'scripts/verify-workflow-supply-chain.mjs',
+  'test/registryHealth.test.mjs',
+  'test/registrySmoke.test.mjs',
+  'test/workflowSupplyChain.test.mjs',
+  'docs/release-status.json',
+  'evidence/npm/*/release-evidence-index.json',
+  'evidence/npm/*/provenance/registry-provenance.json',
+  'evidence/npm/*/provenance/bundle-manifest.json',
+  'evidence/npm/*/provenance/package.tgz',
+  'package.json',
+  'pnpm-lock.yaml',
+]);
 
 export const WORKFLOW_ACTION_LOCK_FIELDS = Object.freeze([
   'schemaVersion',
@@ -256,7 +279,14 @@ export function verifyWorkflowSupplyChain(
     const packageMetadata = JSON.parse(
       readFile(path.join(root, 'package.json'), 'package metadata')
     );
+    const releaseStatus = JSON.parse(
+      readFile(path.join(root, 'docs', 'release-status.json'), 'release status')
+    );
     validateRegistryValidationWorkflow(workflowSources, packageMetadata.version);
+    validateRegistryHealthWorkflow(
+      workflowSources,
+      releaseStatus.publishedNpmLatest
+    );
     validateTrustedReleaseWorkflow(workflowSources);
     state.checks.workflows = true;
 
@@ -420,6 +450,120 @@ export function validateRegistryValidationWorkflow(workflowSources, packageVersi
   }
 }
 
+export function validateRegistryHealthWorkflow(workflowSources, publishedVersion) {
+  assert(
+    typeof publishedVersion === 'string' && publishedVersion.length > 0,
+    'Release status must declare publishedNpmLatest.'
+  );
+  const workflow = workflowSources.find(
+    ({ workflow: workflowPath }) => workflowPath === REGISTRY_HEALTH_WORKFLOW_FILE
+  );
+  assert(workflow, 'Registry Health workflow is required.');
+
+  const eventBlock = extractYamlMappingBlock(workflow.source, 0, 'on');
+  assert(eventBlock, 'Registry Health workflow must declare an event mapping.');
+  assert(
+    JSON.stringify(readYamlMappingKeys(eventBlock, 2)) ===
+      JSON.stringify(['schedule', 'workflow_dispatch', 'pull_request']),
+    'Registry Health workflow must use only schedule, workflow_dispatch, and pull_request triggers.'
+  );
+
+  const scheduleBlock = extractYamlMappingBlock(eventBlock, 2, 'schedule');
+  const cronValues = [...scheduleBlock.matchAll(/^    - cron:\s*["']([^"']+)["']\s*$/gm)]
+    .map((match) => match[1]);
+  assert(
+    cronValues.length === 1 && /^\d{1,2} \d{1,2} \* \* \*$/.test(cronValues[0]),
+    'Registry Health workflow must declare exactly one daily schedule.'
+  );
+  const [minute, hour] = cronValues[0].split(' ').map(Number);
+  assert(
+    minute >= 0 && minute <= 59 && hour >= 0 && hour <= 23,
+    'Registry Health workflow daily schedule is invalid.'
+  );
+
+  extractYamlMappingBlock(eventBlock, 2, 'workflow_dispatch');
+  const pullRequestBlock = extractYamlMappingBlock(eventBlock, 2, 'pull_request');
+  const pathsBlock = extractYamlMappingBlock(pullRequestBlock, 4, 'paths');
+  const pullRequestPaths = [...pathsBlock.matchAll(/^      -\s*["']([^"']+)["']\s*$/gm)]
+    .map((match) => match[1]);
+  assert(
+    JSON.stringify(pullRequestPaths) ===
+      JSON.stringify(REGISTRY_HEALTH_PULL_REQUEST_PATHS),
+    'Registry Health pull_request paths must use the limited canonical contract set.'
+  );
+
+  const permissionsBlock = extractYamlMappingBlock(
+    workflow.source,
+    0,
+    'permissions'
+  );
+  assert(
+    JSON.stringify(readYamlMappingKeys(permissionsBlock, 2)) ===
+      JSON.stringify(['contents']) &&
+      readYamlScalar(permissionsBlock, 2, 'contents') === 'read',
+    'Registry Health must use only top-level contents: read permission.'
+  );
+
+  const concurrencyBlock = extractYamlMappingBlock(
+    workflow.source,
+    0,
+    'concurrency'
+  );
+  assertNonempty(
+    readYamlScalar(concurrencyBlock, 2, 'group'),
+    'Registry Health concurrency group'
+  );
+  assert(
+    readYamlScalar(concurrencyBlock, 2, 'cancel-in-progress') === 'true',
+    'Registry Health must cancel duplicate in-progress runs.'
+  );
+
+  for (const [forbidden, message] of [
+    [
+      /\b(?:npm|pnpm|yarn)\s+(?:publish|unpublish|deprecate|dist-tag|access|owner|token)\b/,
+      'registry mutation command',
+    ],
+    [/\bgh\s+release\b/, 'GitHub Release mutation command'],
+    [/\bgit\s+(?:push|tag)\b/, 'Git mutation command'],
+    [/\bgh\s+attestation\b|actions\/attest@/, 'attestation command'],
+    [/^\s+environment:\s*$/m, 'protected environment'],
+    [/\bnpm-production\b/, 'npm-production environment'],
+    [/(?:packages|contents|id-token|attestations|issues):\s*write\b/, 'write permission'],
+    [/\bgh\s+issue\b/, 'automatic issue command'],
+    [
+      /\b(?:slack|sendgrid|mailx|send-mail)\b|hooks\.slack\.com/,
+      'external messaging command',
+    ],
+  ]) {
+    assert(
+      !forbidden.test(workflow.source),
+      `Registry Health must not contain a ${message}.`
+    );
+  }
+
+  assert(
+    !workflow.source.includes(publishedVersion),
+    'Registry Health must not hardcode publishedNpmLatest in workflow YAML.'
+  );
+  for (const required of [
+    "readFileSync('docs/release-status.json', 'utf8')",
+    'status.publishedNpmLatest',
+    '--version "$VERSION"',
+    '--expect-tag latest',
+    'npm install --global npm@12.0.1',
+    'test "$(npm --version)" = "12.0.1"',
+    'pnpm verify:registry-health',
+    '--report-file "$RUNNER_TEMP/registry-health.json"',
+    'GITHUB_STEP_SUMMARY',
+    'actions/upload-artifact@',
+  ]) {
+    assert(
+      workflow.source.includes(required),
+      `Registry Health workflow is missing required read-only contract: ${required}`
+    );
+  }
+}
+
 export function validateTrustedReleaseWorkflow(workflowSources) {
   const workflow = workflowSources.find(
     ({ workflow: workflowPath }) =>
@@ -481,6 +625,13 @@ function readYamlScalar(source, indent, key) {
   );
   assert(match, `Missing YAML scalar: ${key}.`);
   return match[1] ?? match[2] ?? match[3];
+}
+
+function assertNonempty(value, label) {
+  assert(
+    typeof value === 'string' && value.length > 0,
+    `${label} must be non-empty.`
+  );
 }
 
 function validateActionPins(usages) {

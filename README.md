@@ -290,6 +290,44 @@ The release dry run never publishes. Its shared state matrix blocks a
 target, and document mirrors are aligned. The separately tracked published npm
 latest remains an observed registry value and is not rewritten before publish.
 
+## Registry monitoring
+
+The daily [Registry Health workflow](https://github.com/GGULBAE/react-native-image-compression-kit/actions/workflows/registry-health.yml)
+reads `publishedNpmLatest` from `docs/release-status.json`, runs the real npm
+registry smoke with npm 12.0.1, and compares npm `latest`, exact-version
+metadata, the downloaded tarball, README/package inventory, and clean consumer
+install/typecheck with `evidence/npm/<version>`. It has only `contents: read`,
+uses no protected environment, and creates no provenance or attestation. The
+manual Registry Validation workflow is separate: maintainers dispatch it
+through `npm-production` when fresh provenance and attestation evidence is
+required.
+
+Run the same read-only monitor locally without hardcoding the release version:
+
+```bash
+health_version="$(node -p "require('./docs/release-status.json').publishedNpmLatest")"
+health_dir="$(mktemp -d)"
+pnpm smoke:registry -- \
+  --version "$health_version" \
+  --expect-tag latest \
+  --json \
+  --artifact-dir "$health_dir/live"
+pnpm verify:registry-health -- \
+  --live-artifact-dir "$health_dir/live" \
+  --json \
+  --report-file "$health_dir/registry-health.json"
+```
+
+The canonical report compares package name, requested/resolved/tagged version,
+publish timestamp, tarball URL, SRI, shasum, SHA-256, packed bytes, file count,
+unpacked bytes, README status, forbidden files, and consumer smoke result. A
+failure is an investigation signal only: it grants no authority to republish,
+change a dist-tag, move a Git tag, or edit a GitHub Release. Inspect the report
+drift first, then the release-status handoff and matching evidence archive,
+then exact npm metadata and a fresh smoke. A release handoff is complete only
+when `docs/release-status.json` and `evidence/npm/<version>` identify the same
+published version.
+
 ## Repository documentation
 
 Operational material is repository-only and is not included in the npm

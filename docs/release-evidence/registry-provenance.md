@@ -34,6 +34,66 @@ Native consumer, and atomically writes exactly:
 - `package.tgz`
 - `bundle-manifest.json`
 
+## Automatic Registry Health
+
+The [Registry Health workflow](../../.github/workflows/registry-health.yml)
+runs once per day, on explicit dispatch, and for pull requests that change its
+workflow, verifier, smoke, release-status, or evidence contracts. It reads the
+version from `docs/release-status.json`, uses npm 12.0.1 for the same registry
+transport as Trusted Release, runs the networked smoke, and passes the live
+four-file bundle to `pnpm verify:registry-health`.
+
+The canonical health report compares live and committed package name,
+requested/resolved version, `latest`, publish timestamp, tarball URL, SRI,
+shasum, tarball SHA-256, packed byte size, file count, unpacked size, README
+status, forbidden package files, and consumer install/typecheck. It also
+cross-checks `release-evidence-index.json`, `registry-provenance.json`,
+`bundle-manifest.json`, and `package.tgz` so matching live metadata and live
+bytes still fail when the committed release evidence differs.
+
+This automatic workflow has top-level `contents: read` only. It does not use
+`npm-production`, request OIDC, publish or mutate npm, change Git state or a
+GitHub Release, create provenance/attestations, open issues, or send messages.
+It uploads only the canonical health report and fails closed on empty,
+multiple, incomplete, noncanonical, or drifted results.
+
+Dispatch it manually with no version input:
+
+```bash
+gh workflow run registry-health.yml --ref master
+```
+
+For a local replay, let the status manifest choose the version:
+
+```bash
+health_version="$(node -p "require('./docs/release-status.json').publishedNpmLatest")"
+health_dir="$(mktemp -d)"
+pnpm smoke:registry -- \
+  --version "$health_version" \
+  --expect-tag latest \
+  --json \
+  --artifact-dir "$health_dir/live"
+pnpm verify:registry-health -- \
+  --live-artifact-dir "$health_dir/live" \
+  --json \
+  --report-file "$health_dir/registry-health.json"
+```
+
+Investigate a failure in this order:
+
+1. Read `registry-health.json`, including `checks`, `drift`, and `error`.
+2. Confirm `publishedNpmLatest` and `evidence/npm/<version>` form the intended
+   release handoff and that all four required evidence files exist.
+3. Inspect exact-version npm metadata and `latest`; rerun the npm 12.0.1 smoke
+   to separate a transport failure from persistent drift.
+4. Compare the live tarball hashes/inventory with the committed index, report,
+   manifest, and tarball before escalating a registry or repository incident.
+
+A failed monitor never authorizes npm republish/unpublish, dist-tag changes,
+tag movement, GitHub Release edits, or evidence rewriting. Preserve the
+observed bytes and fix forward only through the separately reviewed release
+process.
+
 ## npm-production health deployment
 
 The manual-only [Registry Validation workflow](../../.github/workflows/registry-validation.yml)
@@ -52,7 +112,10 @@ adds a green deployment linked to the exact npm version. This health workflow
 does not publish, change a dist-tag, mutate a Git tag, or create a GitHub
 Release; it validates the existing registry bytes, consumer install, and
 provenance, then creates attestations and temporary evidence artifacts. The
-Trusted Release workflow remains the only npm publisher.
+Trusted Release workflow remains the only npm publisher. Unlike automatic
+Registry Health, this manual path uses protected `npm-production`, OIDC
+attestation permissions, and maintainer approval specifically to create new
+verification evidence; it remains `workflow_dispatch`-only.
 
 ## Offline provenance verification
 
