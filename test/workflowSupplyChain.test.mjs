@@ -44,6 +44,7 @@ function copiedRepository(label) {
   const parent = mkdtempSync(path.join(os.tmpdir(), `rnick-workflow-${label}-`));
   const rootDir = path.join(parent, 'repository');
   mkdirSync(path.join(rootDir, '.github'), { recursive: true });
+  mkdirSync(path.join(rootDir, 'docs'), { recursive: true });
   cpSync(WORKFLOW_DIR, path.join(rootDir, '.github', 'workflows'), {
     recursive: true,
   });
@@ -53,6 +54,10 @@ function copiedRepository(label) {
     path.join(rootDir, WORKFLOW_DEPENDABOT_FILE)
   );
   cpSync(path.join(ROOT, 'package.json'), path.join(rootDir, 'package.json'));
+  cpSync(
+    path.join(ROOT, 'docs', 'release-status.json'),
+    path.join(rootDir, 'docs', 'release-status.json')
+  );
   return { parent, rootDir };
 }
 
@@ -97,7 +102,8 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     const result = verify(ROOT);
 
     expect(Object.keys(lock)).toEqual(WORKFLOW_ACTION_LOCK_FIELDS);
-    expect(lock.workflows).toHaveLength(10);
+    expect(lock.workflows).toHaveLength(11);
+    expect(lock.workflows).toContain('.github/workflows/registry-health.yml');
     expect(lock.workflows).toContain(
       '.github/workflows/release-evidence-policy-review.yml'
     );
@@ -116,11 +122,11 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     expect(Object.keys(result.checks)).toEqual(WORKFLOW_SUPPLY_CHAIN_CHECK_FIELDS);
     expect(result).toMatchObject({
       status: 'passed',
-      workflowCount: 10,
+      workflowCount: 11,
       actionCount: 13,
-      usageCount: 70,
+      usageCount: 74,
       lockSha256:
-        '43122405b320062850f7ada247c0ee0d9e2f59814dc8a846445d1984e43eab68',
+        '21a881a93c2d355f58fdff6b0bd6fc18243d861daa29171ad49bb484458e949d',
       checks: Object.fromEntries(
         WORKFLOW_SUPPLY_CHAIN_CHECK_FIELDS.map((field) => [field, true])
       ),
@@ -334,6 +340,84 @@ describe('GitHub Actions workflow supply-chain gate', () => {
         expect(result.checks.workflows).toBe(false);
         expect(result.error).toMatch(
           /workflow_dispatch-only|default version|default dist-tag|read-only contents|npm-production|exact input version|must not contain/
+        );
+      } finally {
+        rmSync(parent, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it('requires the scheduled Registry Health workflow to remain read-only and fail-closed', () => {
+    const mutations = [
+      [
+        'write permission',
+        (source) => source.replace('contents: read', 'contents: write'),
+      ],
+      [
+        'protected environment',
+        (source) =>
+          source.replace(
+            '    timeout-minutes: 25',
+            '    timeout-minutes: 25\n    environment:\n      name: npm-production'
+          ),
+      ],
+      [
+        'publish command',
+        (source) => source.replace('    steps:\n', '    steps:\n      - run: npm publish\n'),
+      ],
+      [
+        'dist-tag command',
+        (source) =>
+          source.replace(
+            '    steps:\n',
+            '    steps:\n      - run: npm dist-tag add package@version latest\n'
+          ),
+      ],
+      [
+        'Git mutation command',
+        (source) => source.replace('    steps:\n', '    steps:\n      - run: git push origin HEAD\n'),
+      ],
+      [
+        'attestation command',
+        (source) =>
+          source.replace(
+            '    steps:\n',
+            '    steps:\n      - run: gh attestation verify bundle-manifest.json\n'
+          ),
+      ],
+      [
+        'missing schedule',
+        (source) => source.replace('  schedule:\n    - cron: "17 3 * * *"\n', ''),
+      ],
+      [
+        'missing dispatch',
+        (source) => source.replace('  workflow_dispatch:\n', ''),
+      ],
+      [
+        'broad pull request paths',
+        (source) =>
+          source.replace(
+            '      - ".github/workflows/registry-health.yml"',
+            '      - "**"'
+          ),
+      ],
+      [
+        'hardcoded release version',
+        (source) => source.replace('--version "$VERSION"', '--version "0.4.0"'),
+      ],
+    ];
+
+    for (const [label, mutate] of mutations) {
+      const { parent, rootDir } = copiedRepository(
+        `health-${label.replaceAll(' ', '-')}`
+      );
+      try {
+        mutateWorkflow(rootDir, 'registry-health.yml', mutate);
+        const result = verify(rootDir);
+        expect(result.status).toBe('failed');
+        expect(result.checks.workflows).toBe(false);
+        expect(result.error).toMatch(
+          /Registry Health.*(?:trigger|schedule|paths|permission|environment|command|hardcode)|missing required read-only contract/
         );
       } finally {
         rmSync(parent, { recursive: true, force: true });

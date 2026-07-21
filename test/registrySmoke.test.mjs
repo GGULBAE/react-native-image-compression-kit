@@ -8,7 +8,10 @@ import {
   validateRegistryEvidence,
   writeRegistryReportAtomic,
 } from '../scripts/registry-smoke-core.mjs';
-import { parseRegistrySmokeArgs } from '../scripts/registry-smoke-test.mjs';
+import {
+  normalizeNpmViewResult,
+  parseRegistrySmokeArgs,
+} from '../scripts/registry-smoke-test.mjs';
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE_DIR = path.join(TEST_DIR, 'fixtures', 'registry-smoke');
@@ -80,6 +83,15 @@ describe('registry provenance report', () => {
     expect(report.status).toBe('failed');
     expect(report.error).toContain('dist-tag latest');
     expect(report.tagVersion).toBe('0.2.46');
+  });
+
+  it('rejects empty and multiple npm JSON results', () => {
+    expect(() => normalizeNpmViewResult([], 'fixture npm view')).toThrow(
+      'exactly one result, received 0'
+    );
+    expect(() =>
+      normalizeNpmViewResult([{ version: '0.4.0' }, { version: '0.3.0' }], 'fixture npm view')
+    ).toThrow('exactly one result, received 2');
   });
 
   it('rejects stale candidate, unpublished, and no-publish README status', () => {

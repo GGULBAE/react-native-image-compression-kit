@@ -77,6 +77,7 @@
     "release:dry-run": "node scripts/release-dry-run.mjs",
     "smoke:consumer": "pnpm build && node scripts/consumer-smoke-test.mjs",
     "smoke:registry": "node scripts/registry-smoke-test.mjs",
+    "verify:registry-health": "node scripts/verify-registry-health.mjs",
     "verify:registry-provenance": "node scripts/verify-registry-provenance.mjs",
     "verify:registry-attestation": "node scripts/verify-registry-attestation.mjs",
     "verify:release-evidence": "node scripts/verify-release-evidence.mjs",

@@ -41,11 +41,15 @@ recovery codes in repository secrets.
 6. Run the existing registry-validation, acquisition, import, policy-review,
    and archive procedure from [release evidence](../release-evidence/README.md).
 
-Registry Validation is also the read-only health deployment for the protected
-`npm-production` environment. Run it manually for the published version and
-expected dist-tag when the Deployments view needs a fresh registry-health
-result. It never publishes or changes registry, Git tag, or GitHub Release
-state; see [registry provenance](../release-evidence/registry-provenance.md#npm-production-health-deployment).
+Automatic Registry Health is the daily drift monitor. It reads
+`publishedNpmLatest`, compares the live npm metadata/tarball/consumer result to
+the matching committed archive, has `contents: read` only, uses no environment,
+and creates no provenance or attestation. Registry Validation is the separate
+manual, `workflow_dispatch`-only path through protected `npm-production`; run
+it for the published version and expected dist-tag only when fresh provenance,
+attestation, and deployment evidence is required. Neither path publishes or
+changes registry, Git tag, or GitHub Release state; see
+[registry provenance](../release-evidence/registry-provenance.md#automatic-registry-health).
 
 ## Resume semantics
 
@@ -69,6 +73,12 @@ normalization is required before interpreting registry version, dist-tag, or
 tarball identity; retrying an invalid transport shape does not make it safe.
 
 ## Failure and rollback
+
+For a Registry Health failure, inspect the canonical report first, confirm the
+`docs/release-status.json` and `evidence/npm/<version>` handoff, then compare
+exact npm metadata and tarball identity with npm 12.0.1. The failure grants no
+mutation authority: do not republish, change `latest`, move a tag, edit a
+GitHub Release, or rewrite evidence to make the monitor green.
 
 - Before npm publish: fix through a new reviewed commit; discard an incomplete
   draft release only if it contains no public evidence that must be retained.

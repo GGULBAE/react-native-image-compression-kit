@@ -7,15 +7,18 @@ networked.
 
 ## Trust boundaries
 
-1. Registry Validation creates provenance and attestation artifacts from an
-   already published npm version.
-2. Explicit acquisition downloads artifacts from one reviewed immutable run.
-3. Offline import verifies bytes and exposes an immutable repository archive by
+1. Registry Health reads the live npm package daily and compares it with the
+   committed archive. It has read-only contents permission and creates no
+   provenance, attestation, deployment, issue, or external notification.
+2. Manual Registry Validation creates provenance and attestation artifacts
+   from an already published npm version.
+3. Explicit acquisition downloads artifacts from one reviewed immutable run.
+4. Offline import verifies bytes and exposes an immutable repository archive by
    atomic rename.
-4. Policy preparation derives a canonical candidate and diff without editing
+5. Policy preparation derives a canonical candidate and diff without editing
    policy.
-5. Manual review binds approval and execution identity to the candidate digest.
-6. Review/archive verifiers replay retained bytes after GitHub artifact expiry.
+6. Manual review binds approval and execution identity to the candidate digest.
+7. Review/archive verifiers replay retained bytes after GitHub artifact expiry.
 
 ## Procedure index
 
@@ -41,6 +44,11 @@ authority for `releaseTarget`, `publishedNpmLatest`, `releaseState`, and
 authoritative in `package.json`; the release target must match it while the
 published npm latest remains the last registry-observed version until a
 separately approved publication succeeds.
+
+For a newly published release, the handoff is incomplete until
+`publishedNpmLatest` and the matching complete `evidence/npm/<version>` archive
+agree. Registry Health derives its version only from that pair; workflow YAML
+does not contain a package release version.
 
 README and RELEASE contain marked mirror blocks so npm users and repository
 operators can see the same status. `candidate` is non-publishable; `release` is
