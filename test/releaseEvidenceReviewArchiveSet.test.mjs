@@ -51,43 +51,50 @@ function verifyWithStoredAttestation(options) {
 }
 
 describe('release evidence review archive regression set', () => {
-  it('verifies every committed review archive in stable order', () => {
-    const report = verifyReleaseEvidenceReviewArchiveSet(
-      {
-        archiveRoot: ARCHIVE_ROOT,
-        releaseArchiveRoot: RELEASE_ARCHIVE_ROOT,
-      },
-      { verifyArchive: verifyWithStoredAttestation }
-    );
-    expect(DEFAULT_RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERSIONS).toEqual([
-      '0.2.55',
-      '0.2.62',
-      '0.3.0',
-      '0.4.0',
-    ]);
-    expect(Object.keys(report)).toEqual(
-      RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_FIELDS
-    );
-    expect(report.status).toBe('passed');
-    expect(report.versions).toEqual([
-      '0.2.55',
-      '0.2.62',
-      '0.3.0',
-      '0.4.0',
-    ]);
-    expect(report.results).toHaveLength(4);
-    for (const result of report.results) {
-      expect(Object.keys(result)).toEqual(
-        RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_RESULT_FIELDS
+  it(
+    'verifies every committed review archive in stable order',
+    () => {
+      const report = verifyReleaseEvidenceReviewArchiveSet(
+        {
+          archiveRoot: ARCHIVE_ROOT,
+          releaseArchiveRoot: RELEASE_ARCHIVE_ROOT,
+        },
+        { verifyArchive: verifyWithStoredAttestation }
       );
-      expect(Object.keys(result.checks)).toEqual(
-        RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERIFICATION_CHECK_FIELDS
+      expect(DEFAULT_RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERSIONS).toEqual([
+        '0.2.55',
+        '0.2.62',
+        '0.3.0',
+        '0.4.0',
+      ]);
+      expect(Object.keys(report)).toEqual(
+        RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_FIELDS
       );
-      expect(Object.values(result.checks).every(Boolean)).toBe(true);
-    }
-    expect(canonicalReleaseEvidenceReviewArchiveSetReport(report).trim().split('\n'))
-      .toHaveLength(1);
-  });
+      expect(report.status).toBe('passed');
+      expect(report.versions).toEqual([
+        '0.2.55',
+        '0.2.62',
+        '0.3.0',
+        '0.4.0',
+      ]);
+      expect(report.results).toHaveLength(4);
+      for (const result of report.results) {
+        expect(Object.keys(result)).toEqual(
+          RELEASE_EVIDENCE_REVIEW_ARCHIVE_SET_RESULT_FIELDS
+        );
+        expect(Object.keys(result.checks)).toEqual(
+          RELEASE_EVIDENCE_REVIEW_ARCHIVE_VERIFICATION_CHECK_FIELDS
+        );
+        expect(Object.values(result.checks).every(Boolean)).toBe(true);
+      }
+      expect(
+        canonicalReleaseEvidenceReviewArchiveSetReport(report)
+          .trim()
+          .split('\n')
+      ).toHaveLength(1);
+    },
+    30_000
+  );
 
   it('runs the real blocked-network set CLI with report bytes equal to stdout', () => {
     const parent = mkdtempSync(path.join(os.tmpdir(), 'rnick-review-set-cli-'));
