@@ -41,6 +41,31 @@ recovery codes in repository secrets.
 6. Run the existing registry-validation, acquisition, import, policy-review,
    and archive procedure from [release evidence](../release-evidence/README.md).
 
+## Non-publishing maintenance rehearsal
+
+On 2026-07-23, protected `master` commit
+`ffeeab2e43ed11558ff1921fb4cde9ffac29f889` completed
+`pnpm release:dry-run` without publishing. The command ran the full repository
+gate (39 test files and 392 tests), example typecheck, build and documentation
+checks, package inventory and packed-README checks, a fresh React Native 0.86
+consumer install/typecheck, and `pnpm publish --dry-run`. The final npm step
+reported that `react-native-image-compression-kit@0.4.0` was skipped in dry-run
+mode. The worktree remained clean.
+
+This rehearsal proves the current preflight, packaging, and consumer mechanics;
+it is not a release authorization or an end-to-end OIDC publish rehearsal.
+Version `0.4.0` is already immutable in npm, so do not dispatch Trusted Release
+to test it again. The next new version must repeat `pnpm release:dry-run` on its
+exact reviewed candidate, pass the protected-master CI/Android/iOS checks, and
+then use the normal `confirm_publish=true` workflow and `npm-production`
+approval. Only that new-version run can prove the live trusted-publisher,
+deployment, publish/resume, provenance, and GitHub Release path.
+
+The local rehearsal host had no Java runtime or Android SDK. Repository contract
+checks still passed locally, while PR #28's GitHub-hosted Android
+instrumentation, iOS validation, compatibility matrix, CI, and Registry Health
+checks all passed on the same source tree.
+
 Automatic Registry Health is the daily drift monitor. It reads
 `publishedNpmLatest`, compares the live npm metadata/tarball/consumer result to
 the matching committed archive, has `contents: read` only, uses no environment,
