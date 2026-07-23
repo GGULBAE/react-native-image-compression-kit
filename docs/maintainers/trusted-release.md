@@ -51,6 +51,90 @@ attestation, and deployment evidence is required. Neither path publishes or
 changes registry, Git tag, or GitHub Release state; see
 [registry provenance](../release-evidence/registry-provenance.md#automatic-registry-health).
 
+## Registry Health operational acceptance
+
+Registry Health first reached `master` through
+[PR #24](https://github.com/GGULBAE/react-native-image-compression-kit/pull/24)
+at `ad63a6139f85e74d1e0d563e0ae0eb5822c724ad`. The manual acceptance run was
+[29811124837](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29811124837),
+triggered by `workflow_dispatch` on that exact commit. The first daily run was
+[29895649740](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29895649740),
+triggered by `schedule` on the same commit. GitHub created it at
+`2026-07-22T06:05:03Z`, after the `03:17Z` cron target. Both runs completed
+successfully with npm 12.0.1 and resolved `publishedNpmLatest`, requested
+version, resolved version, and `latest` to `0.4.0`.
+
+Each run uploaded exactly one artifact containing only `registry-health.json`:
+
+- manual: `registry-health-0.4.0-29811124837`, artifact ID `8487459150`, ZIP
+  SHA-256 `e7581ce957adc720fc0d81386f5be5fd35729c77b1bd29351b98650247a0d2f5`
+- scheduled: `registry-health-0.4.0-29895649740`, artifact ID `8519872681`, ZIP
+  SHA-256 `2f439ff1fe35348baf4d91a716e35f7224dbae18b816aecde82a56cc8aa6bd9c`
+
+The ZIP transport digests differ, but the downloaded canonical reports are
+byte-identical. Their shared report SHA-256 is
+`0c396eddb2bd7e72f9edb553b35ace2d4d963ac86d6401b095ca582bc6ff0c47`;
+each report's `status` is `passed`, every check is `true`, `drift` is empty, and
+`error` is `null`. In both jobs the successful Step Summary step read that same
+run's canonical report and reported the same package/version/tag, publish
+timestamp, SRI, shasum, tarball SHA-256, package shape, README, forbidden-file,
+and consumer-smoke identity.
+
+Both job logs record only `Contents: read` plus GitHub's implicit
+`Metadata: read`; the workflow declares no environment and neither run created
+a deployment. A `github-pages` deployment exists on the same commit because
+the independent Pages run `29811112682` ran after the merge; its deployment
+status links to the Pages job, predates the scheduled run, and is not Registry
+Health output. Post-run deployment, issue, issue-comment, and commit-comment
+queries were empty. Attestation lookups for the canonical report and scheduled
+artifact ZIP digests returned no subjects. The workflow steps and permissions
+also provide no provenance, attestation, issue, or external-message path.
+
+Replay a downloaded canonical report without registry or GitHub access after
+the explicit `gh run download` acquisition step:
+
+```bash
+health_run_id=29895649740 # use 29811124837 to replay the manual run
+health_version="$(node -p "require('./docs/release-status.json').publishedNpmLatest")"
+acceptance_dir="$(mktemp -d)"
+
+gh run download "$health_run_id" \
+  --name "registry-health-${health_version}-${health_run_id}" \
+  --dir "$acceptance_dir/download"
+mkdir "$acceptance_dir/live"
+cp "evidence/npm/${health_version}/provenance/registry-provenance.json" \
+  "$acceptance_dir/live/registry-provenance.json"
+cp "evidence/npm/${health_version}/provenance/package.tgz" \
+  "$acceptance_dir/live/package.tgz"
+pnpm verify:registry-health -- \
+  --live-artifact-dir "$acceptance_dir/live" \
+  --json \
+  --report-file "$acceptance_dir/replayed-registry-health.json" \
+  > "$acceptance_dir/stdout.json"
+cmp "$acceptance_dir/download/registry-health.json" \
+  "$acceptance_dir/replayed-registry-health.json"
+cmp "$acceptance_dir/replayed-registry-health.json" \
+  "$acceptance_dir/stdout.json"
+shasum -a 256 "$acceptance_dir/download/registry-health.json"
+```
+
+For each manual or scheduled run, investigate in this order:
+
+1. Confirm event, conclusion, `master` head SHA, and the `0.4.0` release handoff
+   before trusting any artifact.
+2. Read the npm-version assertion and `GITHUB_TOKEN Permissions` log group;
+   reject extra token scopes, an environment, or a Registry Health deployment.
+3. Require exactly one run artifact and exactly one `registry-health.json`, then
+   hash it before replay.
+4. Compare every Step Summary identity value to the report and require all
+   checks to be `true`, empty `drift`, and a null error.
+5. Perform the offline replay above. If it differs, preserve both byte streams
+   and determine whether the report, release handoff, or committed evidence is
+   inconsistent.
+6. Attribute any same-SHA deployment through its deployment-status `log_url`,
+   and audit newly created issues/comments. Registry Health has no authority to
+   create provenance, attestations, deployments, issues, or messages.
+
 ## Resume semantics
 
 The workflow has only three publication decisions:
