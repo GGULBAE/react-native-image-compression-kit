@@ -44,6 +44,7 @@ describe('npm package contract', () => {
       peerDependencies: { 'react-native': '>=0.73 <1.0' },
     });
     expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(packageJson.packageManager).toBe('pnpm@11.8.0');
   });
 
   it('keeps the publish allowlist runtime-only', () => {
@@ -179,7 +180,7 @@ describe('npm package contract', () => {
   it('keeps the reproducible Android container toolchain explicit', () => {
     expect(parseDockerArgs(readProjectFile('Dockerfile'))).toEqual({
       NODE_VERSION: '24.11.1',
-      PNPM_VERSION: '11.7.0',
+      PNPM_VERSION: '11.8.0',
       ANDROID_CMDLINE_TOOLS_VERSION: '12266719',
       ANDROID_PLATFORM: 'android-36',
       ANDROID_BUILD_TOOLS_VERSION: '36.0.0',
@@ -212,5 +213,29 @@ describe('npm package contract', () => {
       'docker:android:ci': 'node scripts/docker-android.mjs ci',
       'docker:android:shell': 'node scripts/docker-android.mjs shell',
     });
+  });
+
+  it('bootstraps the reviewed pnpm CLI without a vulnerable setup action', () => {
+    const actionLock = JSON.parse(
+      readProjectFile('.github/actions-lock.json')
+    ) as { workflows: string[] };
+    for (const workflow of actionLock.workflows) {
+      const source = readProjectFile(workflow);
+      expect(source, workflow).not.toContain('pnpm/action-setup@');
+      const setupCount = (
+        source.match(/^\s*-\s*name:\s*Setup pnpm\s*$/gm) ?? []
+      ).length;
+      const reviewedVersionCount = (
+        source.match(/^\s*PNPM_VERSION:\s*"11\.8\.0"\s*$/gm) ?? []
+      ).length;
+      const reviewedInstallCount = (
+        source.match(
+          /^\s*npm install --global --ignore-scripts --prefix "\$RUNNER_TEMP\/pnpm" "pnpm@\$PNPM_VERSION"\s*$/gm
+        ) ?? []
+      ).length;
+      expect(setupCount, workflow).toBeGreaterThan(0);
+      expect(reviewedVersionCount, workflow).toBe(setupCount);
+      expect(reviewedInstallCount, workflow).toBe(setupCount);
+    }
   });
 });

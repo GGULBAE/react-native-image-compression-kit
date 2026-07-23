@@ -6,7 +6,7 @@ deterministic CI and can also accept an app-readable local URI.
 
 ## Requirements
 
-- Node.js 18 or newer and pnpm 11.7.0
+- Node.js 22.13 or newer and pnpm 11.8.0
 - Android Studio/SDK 36, Java 21, and an API 23+ device or emulator
 - Xcode, CocoaPods, and an iOS 13.4+ simulator or device
 

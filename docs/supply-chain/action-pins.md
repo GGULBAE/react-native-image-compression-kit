@@ -16,9 +16,9 @@ Run the network-free gate:
 pnpm verify:workflow-supply-chain -- --json
 ```
 
-The current lock covers 74 remote `uses:` declarations across 11 workflow
+The current lock covers 61 remote `uses:` declarations across 11 workflow
 files. Lock SHA-256 is
-`e2ce24d41d13feb828f75f7e6abef2a14dfdb8ca8ff9a16e8f211182234af40c`.
+`6826a25eef7dadc6e3759338dbc238828bc1eabe9c2e157ae6b2102a33e14926`.
 
 ## Manual networked review
 
@@ -101,8 +101,46 @@ and workflow definition SHA-256
   `1c4c87063d6053dc000e7e12a5bc6d3b282adc8c81b618ae2cc7c1f1eaeea559`.
 
 Both offline verifiers reproduced every downloaded run's stored provenance and
-attestation report byte-for-byte. The committed review and attestation fixtures
-now come from run `29982355928`; their pinned trusted-root SHA-256 remains
+attestation report byte-for-byte.
+
+### 2026-07-23 pnpm security refresh
+
+[Run 29984647874](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29984647874)
+rebound the committed fixture to source commit
+`51d1068ce3759fc869f1963282fbfb383599908d` after the reviewed pnpm CLI moved
+from 11.7.0 to 11.8.0. The lock and reviewed lightweight
+`actions/checkout@v7` commit were unchanged. Review artifact ID `8554522936`
+has transport digest
+`sha256:b948756263716a25e09e6fbd651ddbaaa7b9eea013a742358a468a472a1a6501`;
+attestation artifact ID `8554523133` has transport digest
+`sha256:c1d9e716f66d7cce7cdc0f8b3fa2a893a523e4d38df2091f22f235328546ad95`.
+The workflow definition SHA-256 is
+`da029fda42252d2b4ab45b522d316f6a22ac59a6a298898f4abfb0e73b317528`,
+and the attested manifest SHA-256 is
+`381c721bdff291c22131a502b3ac34b725d1caca9e8c8b3fc2d6a739277cda51`.
+
+That run proved the requested pnpm version was active, but its setup log also
+proved `pnpm/action-setup@v6` bootstrapped the vulnerable 11.7.0 package before
+switching to 11.8.0. The final change therefore removed that remote Action and
+regenerated the canonical lock with 12 Actions and 61 usages.
+
+[Run 29985152321](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29985152321)
+reviewed the same lightweight `actions/checkout@v7` commit from source
+`518a7d389a274cc7e7e79bbbb46706a31b0322d0`, using the direct reviewed pnpm
+bootstrap and candidate lock SHA-256
+`6826a25eef7dadc6e3759338dbc238828bc1eabe9c2e157ae6b2102a33e14926`.
+Review artifact ID `8554711609` has transport digest
+`sha256:b9d8e133eca741806b3e8de8dc13ca9da904e5a9b3ee43287d60d9fa8e312a8c`;
+attestation artifact ID `8554712012` has transport digest
+`sha256:9c5bdbba5fb2c4f4c205fe26125f484b93227b091127ee65a68ddc4a9f6fe5e4`.
+The workflow definition SHA-256 is
+`2ff14479589b2f5b51b533b4bb8d4b661d1a4f3cdd9a54461b4c95037448a369`,
+and the attested manifest SHA-256 is
+`6e06d92803a02422821704c545c400b619507732ece7b11db4d890e3cef1c5b8`.
+
+The committed review and attestation fixtures now come from run
+`29985152321`. Both offline verifiers reproduced the downloaded reports
+byte-for-byte, and the pinned trusted-root SHA-256 remains
 `65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`.
 
 ## Offline signer verification

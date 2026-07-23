@@ -16,6 +16,16 @@ dependency. The published library still exposes React Native only as a peer and
 does not include the example or lockfile, but the repository lock is patched
 rather than dismissing that boundary.
 
+The same-day Registry Health runner audit exposed a separate high-severity
+warning while `pnpm/action-setup` installed the repository's pinned pnpm
+11.7.0 CLI. GitHub Advisory
+[GHSA-qrv3-253h-g69c](https://github.com/advisories/GHSA-qrv3-253h-g69c)
+allows a crafted env-lockfile `configDependencies` name to create a symlink
+outside `node_modules/.pnpm-config`, even with lifecycle scripts disabled.
+This is a repository and CI toolchain boundary rather than a dependency shipped
+in the library tarball, so the pinned CLI is upgraded instead of dismissing the
+runner warning.
+
 The vulnerable behavior required a development server, with the Vite findings
 further depending on Windows UNC handling or a network-exposed development
 server. The library runtime does not start such a server. The npm tarball also
@@ -33,6 +43,7 @@ retaining a vulnerable repository lock resolution.
 | [GHSA-67mh-4wv8-2f99](https://github.com/advisories/GHSA-67mh-4wv8-2f99) | Medium | esbuild 0.21.5 | 0.25.0 | esbuild serve-mode cross-origin source access | Resolved by esbuild 0.25.12 |
 | [GHSA-8988-4f7v-96qf](https://github.com/advisories/GHSA-8988-4f7v-96qf) / CVE-2026-54285 | Medium | `@opentelemetry/core` 1.30.1 | 2.8.0 | Oversized inbound W3C Baggage allocation | Resolved by 2.9.0 through Sentry 10.66.0 |
 | [GHSA-395f-4hp3-45gv](https://github.com/advisories/GHSA-395f-4hp3-45gv) / CVE-2026-13311 | High | `shell-quote` 1.8.4 | 1.9.0 | Quadratic-complexity denial of service in `parse()` | Resolved by scoped 1.10.0 override |
+| [GHSA-qrv3-253h-g69c](https://github.com/advisories/GHSA-qrv3-253h-g69c) | High | pnpm CLI 11.7.0 | 11.8.0 | Crafted env lockfile can escape the config-dependency symlink directory | Resolved by pinning pnpm 11.8.0 |
 
 This table records the repository state that triggered the maintenance work; it
 does not change the advisory policy or dismiss alerts without a patched lock.
@@ -53,7 +64,15 @@ overrides:
   "vitepress@1.6.4>vite": "6.4.3"
 ```
 
-The resulting graphs are VitePress 1.6.4 to Vite 6.4.3 to esbuild 0.25.12,
+The repository, Docker image, contributor setup, and example setup pin pnpm
+11.8.0. Every active workflow installs that exact package with npm into a
+runner-temporary prefix, disables package lifecycle scripts, adds only its
+`bin` directory to the job path, and asserts the resulting version. This avoids
+the vulnerable pnpm 11.7.0 bootstrap embedded in `pnpm/action-setup@v6`.
+Historical release evidence, legacy snapshots, and signed action-review
+fixtures retain the pnpm version captured when they were produced. The
+resulting dependency graphs are VitePress 1.6.4 to Vite
+6.4.3 to esbuild 0.25.12,
 Lighthouse 13.4.0 to Sentry 10.66.0 to `@opentelemetry/core` 2.9.0, and
 React DevTools Core 6.1.5 to `shell-quote` 1.10.0. Vitest keeps its independent
 Vite 8.0.16 resolution. This avoids adopting a VitePress/Lighthouse prerelease,
@@ -79,12 +98,16 @@ pnpm site:build
 pnpm site:quality
 ```
 
-The offline verifier checks the exact reviewed VitePress/Lighthouse manifest
-versions and scoped overrides, every Vite, esbuild, and OpenTelemetry Core lock
+The offline verifier checks the exact reviewed pnpm, VitePress, and Lighthouse
+manifest versions and scoped overrides, every Vite, esbuild, and OpenTelemetry Core lock
 resolution plus every `shell-quote` lock resolution against the minimum safe
 versions, presence of the reviewed Vite and shell-quote resolutions, and
 absence of these tools from production dependency fields. Mutation tests prove
-that a missing override, vulnerable resolution, or production exposure fails.
+that a vulnerable pnpm pin, missing override, vulnerable resolution, or
+production exposure fails. The package contract additionally rejects
+`pnpm/action-setup`, requires every active workflow to use the reviewed direct
+bootstrap, and requires the reproducible Android container to use the same CLI
+version.
 `pnpm audit` is the separate networked registry cross-check and must report zero
 advisories before merge.
 

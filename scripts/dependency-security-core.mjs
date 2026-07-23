@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-export const DEPENDENCY_SECURITY_SCHEMA_VERSION = 1;
+export const DEPENDENCY_SECURITY_SCHEMA_VERSION = 2;
+export const PNPM_REVIEWED_VERSION = '11.8.0';
 export const VITE_MINIMUM_SAFE_VERSION = '6.4.3';
 export const ESBUILD_MINIMUM_SAFE_VERSION = '0.25.0';
 export const OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION = '2.8.0';
@@ -26,6 +27,7 @@ export const DEPENDENCY_SECURITY_REPORT_FIELDS = Object.freeze([
   'schemaVersion',
   'status',
   'package',
+  'pnpmVersion',
   'vitepress',
   'viteOverride',
   'lighthouse',
@@ -62,6 +64,7 @@ export function verifyDependencySecurity(
 ) {
   const state = {
     package: null,
+    pnpmVersion: null,
     vitepress: null,
     viteOverride: null,
     lighthouse: null,
@@ -88,6 +91,18 @@ export function verifyDependencySecurity(
       'package.json name is required.'
     );
     state.package = packageJson.name;
+    const packageManagerMatch = String(packageJson.packageManager ?? '').match(
+      /^pnpm@(.+)$/
+    );
+    state.pnpmVersion = packageManagerMatch?.[1] ?? null;
+    assert(
+      state.pnpmVersion === PNPM_REVIEWED_VERSION,
+      'Expected packageManager pnpm@' +
+        PNPM_REVIEWED_VERSION +
+        ', received ' +
+        describe(packageJson.packageManager ?? null) +
+        '.'
+    );
     state.vitepress = packageJson.devDependencies?.vitepress ?? null;
     assert(
       state.vitepress === '1.6.4',
@@ -230,6 +245,7 @@ export function verifyDependencySecurity(
 
 export function createDependencySecurityReport({
   package: packageName = null,
+  pnpmVersion = null,
   vitepress = null,
   viteOverride = null,
   lighthouse = null,
@@ -248,6 +264,7 @@ export function createDependencySecurityReport({
     schemaVersion: DEPENDENCY_SECURITY_SCHEMA_VERSION,
     status,
     package: packageName,
+    pnpmVersion,
     vitepress,
     viteOverride,
     lighthouse,

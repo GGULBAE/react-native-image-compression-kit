@@ -107,7 +107,7 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     expect(lock.workflows).toContain(
       '.github/workflows/release-evidence-policy-review.yml'
     );
-    expect(lock.actions).toHaveLength(13);
+    expect(lock.actions).toHaveLength(12);
     for (const action of lock.actions) {
       expect(Object.keys(action)).toEqual(WORKFLOW_ACTION_FIELDS);
       expect(action.sha).toMatch(/^[0-9a-f]{40}$/);
@@ -123,10 +123,10 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     expect(result).toMatchObject({
       status: 'passed',
       workflowCount: 11,
-      actionCount: 13,
-      usageCount: 74,
+      actionCount: 12,
+      usageCount: 61,
       lockSha256:
-        'e2ce24d41d13feb828f75f7e6abef2a14dfdb8ca8ff9a16e8f211182234af40c',
+        '6826a25eef7dadc6e3759338dbc238828bc1eabe9c2e157ae6b2102a33e14926',
       checks: Object.fromEntries(
         WORKFLOW_SUPPLY_CHAIN_CHECK_FIELDS.map((field) => [field, true])
       ),
