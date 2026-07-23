@@ -57,6 +57,8 @@ function main() {
     console.log(
       'Dependency security verification passed: Vite ' +
         report.viteVersions.join(', ') +
+        ', pnpm ' +
+        report.pnpmVersion +
         ', esbuild ' +
         report.esbuildVersions.join(', ') +
         ', @opentelemetry/core ' +

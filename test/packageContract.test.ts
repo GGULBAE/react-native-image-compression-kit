@@ -44,6 +44,7 @@ describe('npm package contract', () => {
       peerDependencies: { 'react-native': '>=0.73 <1.0' },
     });
     expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(packageJson.packageManager).toBe('pnpm@11.8.0');
   });
 
   it('keeps the publish allowlist runtime-only', () => {
@@ -179,7 +180,7 @@ describe('npm package contract', () => {
   it('keeps the reproducible Android container toolchain explicit', () => {
     expect(parseDockerArgs(readProjectFile('Dockerfile'))).toEqual({
       NODE_VERSION: '24.11.1',
-      PNPM_VERSION: '11.7.0',
+      PNPM_VERSION: '11.8.0',
       ANDROID_CMDLINE_TOOLS_VERSION: '12266719',
       ANDROID_PLATFORM: 'android-36',
       ANDROID_BUILD_TOOLS_VERSION: '36.0.0',
@@ -212,5 +213,23 @@ describe('npm package contract', () => {
       'docker:android:ci': 'node scripts/docker-android.mjs ci',
       'docker:android:shell': 'node scripts/docker-android.mjs shell',
     });
+  });
+
+  it('pins the reviewed pnpm CLI in every active workflow', () => {
+    const actionLock = JSON.parse(
+      readProjectFile('.github/actions-lock.json')
+    ) as { workflows: string[] };
+    for (const workflow of actionLock.workflows) {
+      const source = readProjectFile(workflow);
+      const setupCount = (
+        source.match(/^\s*uses:\s*pnpm\/action-setup@/gm) ?? []
+      ).length;
+      const reviewedSetupCount = (
+        source.match(
+          /^\s*uses:\s*pnpm\/action-setup@[^\n]+\n\s*with:\n\s*version:\s*11\.8\.0\s*$/gm
+        ) ?? []
+      ).length;
+      expect(reviewedSetupCount, workflow).toBe(setupCount);
+    }
   });
 });

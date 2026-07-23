@@ -15,8 +15,8 @@ fail-closed release evidence.
 
 Requirements:
 
-- Node.js 18 or newer
-- pnpm 11.7.0 through Corepack
+- Node.js 22.13 or newer
+- pnpm 11.8.0 through Corepack
 - Ruby/CocoaPods and Xcode for iOS validation
 - Java 21 and Android SDK 36 for Android executable validation
 

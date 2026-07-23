@@ -8,6 +8,7 @@ import {
   DEPENDENCY_SECURITY_REPORT_FIELDS,
   ESBUILD_MINIMUM_SAFE_VERSION,
   OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION,
+  PNPM_REVIEWED_VERSION,
   SENTRY_NODE_REVIEWED_VERSION,
   SHELL_QUOTE_MINIMUM_SAFE_VERSION,
   SHELL_QUOTE_REVIEWED_VERSION,
@@ -41,6 +42,7 @@ describe('dependency security gate', () => {
     );
     expect(report).toMatchObject({
       status: 'passed',
+      pnpmVersion: PNPM_REVIEWED_VERSION,
       vitepress: '1.6.4',
       viteOverride: VITE_MINIMUM_SAFE_VERSION,
       lighthouse: '13.4.0',
@@ -62,6 +64,13 @@ describe('dependency security gate', () => {
   });
 
   it.each([
+    [
+      'vulnerable pnpm',
+      (inputs) => {
+        inputs.packageJson.packageManager = 'pnpm@11.7.0';
+      },
+      'Expected packageManager pnpm@' + PNPM_REVIEWED_VERSION,
+    ],
     [
       'missing override',
       (inputs) => {
@@ -170,6 +179,7 @@ describe('dependency security gate', () => {
     expect(result.stdout.trim().split('\n')).toHaveLength(1);
     expect(JSON.parse(result.stdout)).toMatchObject({
       status: 'passed',
+      pnpmVersion: PNPM_REVIEWED_VERSION,
       viteOverride: VITE_MINIMUM_SAFE_VERSION,
       sentryNodeOverride: SENTRY_NODE_REVIEWED_VERSION,
       shellQuoteOverride: SHELL_QUOTE_REVIEWED_VERSION,
