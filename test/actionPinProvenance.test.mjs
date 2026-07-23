@@ -13,7 +13,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
-  ACTION_PIN_ANNOTATED_TAG_FIELDS,
   ACTION_PIN_ARTIFACT_MANIFEST_ENTRY_FIELDS,
   ACTION_PIN_ARTIFACT_MANIFEST_FIELDS,
   ACTION_PIN_EXECUTION_FIELDS,
@@ -70,8 +69,10 @@ describe('Action pin provenance', () => {
       readFileSync(path.join(FIXTURE_DIR, 'artifact-manifest.json'), 'utf8')
     );
     expect(report.status).toBe('passed');
-    expect(report.resolution).toBe('annotated');
-    expect(report.resolvedCommitSha).toBe(GRADLE_SHA);
+    expect(report.action).toBe('actions/checkout');
+    expect(report.resolution).toBe('lightweight');
+    expect(report.tagObjectType).toBe('commit');
+    expect(report.resolvedCommitSha).toBe(CHECKOUT_SHA);
     expect(report.sourceRepository).toBe(
       'GGULBAE/react-native-image-compression-kit'
     );
@@ -114,12 +115,6 @@ describe('Action pin provenance', () => {
         JSON.parse(readFileSync(path.join(FIXTURE_DIR, 'tag-reference.json'), 'utf8'))
       )
     ).toEqual(ACTION_PIN_TAG_REFERENCE_FIELDS);
-    expect(
-      Object.keys(
-        JSON.parse(readFileSync(path.join(FIXTURE_DIR, 'annotated-tag.json'), 'utf8'))
-      )
-    ).toEqual(ACTION_PIN_ANNOTATED_TAG_FIELDS);
-
     const offlineSources = [
       'scripts/action-pin-provenance-core.mjs',
       'scripts/verify-action-pin-provenance.mjs',

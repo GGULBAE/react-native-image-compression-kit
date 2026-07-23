@@ -62,6 +62,49 @@ on commit `594ae37169f324cd1e886942385b0b488e07b82d` reviewed annotated
 `9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0`, and produced aggregate evidence
 SHA-256 `5591fd319f1cc35b30286bf317ce7f524405364c04d3374ed357c40cc1ad529b`.
 
+### 2026-07-23 grouped update review
+
+Candidate commit `7551b905d113adb7f29e222688a3e2f500f337fe` replaced the
+failing Dependabot proposal with a lock-aligned review of three grouped
+updates. All runs used candidate lock SHA-256
+`e2ce24d41d13feb828f75f7e6abef2a14dfdb8ca8ff9a16e8f211182234af40c`
+and workflow definition SHA-256
+`18eddbf323d63e7f297d7840d25c3d0219aa58d96fdd27f6b0e630bf43fb3452`.
+
+- [Run 29982355928](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29982355928)
+  reviewed lightweight `actions/checkout@v7` at
+  `3d3c42e5aac5ba805825da76410c181273ba90b1`. Review artifact ID
+  `8553670914` has transport digest
+  `sha256:91ef486eba2264830a5b4679bcf9029d8515233114a3d4be11871d6277ab4095`;
+  attestation artifact ID `8553671118` has transport digest
+  `sha256:44371ededd203f090d482b9a2025000d11ebf0faf150777c37ecae19646796cb`.
+  The attested manifest SHA-256 is
+  `9cbf07421dc4abb6931cfd44adacc63a4c8244c51fa1c077aa2c8f4bda03fdbc`.
+- [Run 29982364265](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29982364265)
+  reviewed annotated `actions/attest@v4` at
+  `f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6`, through tag object
+  `36051bcae73b7c2a8a6945a48cbf80953c6baa35`. Review artifact ID
+  `8553674268` has transport digest
+  `sha256:70323296846c81c6cb3bff6b484e32dd65292fea9bfe845cdf2e1e54da480bbe`;
+  attestation artifact ID `8553674460` has transport digest
+  `sha256:00f579637d018fd0631d58052bde277cc78411bde7c93b5b6c1be3d41842df35`.
+  The attested manifest SHA-256 is
+  `93517833659709fc24ff349f470d1b9d3d3582b581c020b4999edd0f1ddc1059`.
+- [Run 29982365319](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29982365319)
+  reviewed lightweight `actions/setup-java@v5` at
+  `03ad4de0992f5dab5e18fcb136590ce7c4a0ac95`. Review artifact ID
+  `8553677889` has transport digest
+  `sha256:4c67a63e2310cc0cb68664a6f3a57d748783cb5f10a95db9c32e763ffe9cb56a`;
+  attestation artifact ID `8553678074` has transport digest
+  `sha256:b020c96ffc1e6db8f948b326d65232705f3d0e74dbcea2b1cc22d4da113f29c4`.
+  The attested manifest SHA-256 is
+  `1c4c87063d6053dc000e7e12a5bc6d3b282adc8c81b618ae2cc7c1f1eaeea559`.
+
+Both offline verifiers reproduced every downloaded run's stored provenance and
+attestation report byte-for-byte. The committed review and attestation fixtures
+now come from run `29982355928`; their pinned trusted-root SHA-256 remains
+`65ca537f6ed8a47fd0e560c421baa1f6c1efb8b25fc200d8c5c02c0e92eb2b9c`.
+
 ## Offline signer verification
 
 ```bash

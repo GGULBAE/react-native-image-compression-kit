@@ -165,7 +165,6 @@ const REQUIRED_FILES = [
   'test/fixtures/action-pin-review/action-pin-review-workflow.yml',
   'test/fixtures/action-pin-review/github-execution.json',
   'test/fixtures/action-pin-review/workflow-dispatch-event.json',
-  'test/fixtures/action-pin-review/annotated-tag.json',
   'test/fixtures/action-pin-review/baseline-actions-lock.json',
   'test/fixtures/action-pin-review/candidate-actions-lock.json',
   'test/fixtures/action-pin-review/tag-reference.json',
