@@ -64,10 +64,14 @@ overrides:
   "vitepress@1.6.4>vite": "6.4.3"
 ```
 
-The repository, Docker image, contributor setup, example setup, and every
-active workflow pin pnpm 11.8.0. Historical release evidence, legacy snapshots,
-and signed action-review fixtures retain the pnpm version captured when they
-were produced. The resulting dependency graphs are VitePress 1.6.4 to Vite
+The repository, Docker image, contributor setup, and example setup pin pnpm
+11.8.0. Every active workflow installs that exact package with npm into a
+runner-temporary prefix, disables package lifecycle scripts, adds only its
+`bin` directory to the job path, and asserts the resulting version. This avoids
+the vulnerable pnpm 11.7.0 bootstrap embedded in `pnpm/action-setup@v6`.
+Historical release evidence, legacy snapshots, and signed action-review
+fixtures retain the pnpm version captured when they were produced. The
+resulting dependency graphs are VitePress 1.6.4 to Vite
 6.4.3 to esbuild 0.25.12,
 Lighthouse 13.4.0 to Sentry 10.66.0 to `@opentelemetry/core` 2.9.0, and
 React DevTools Core 6.1.5 to `shell-quote` 1.10.0. Vitest keeps its independent
@@ -100,9 +104,10 @@ resolution plus every `shell-quote` lock resolution against the minimum safe
 versions, presence of the reviewed Vite and shell-quote resolutions, and
 absence of these tools from production dependency fields. Mutation tests prove
 that a vulnerable pnpm pin, missing override, vulnerable resolution, or
-production exposure fails. The package contract additionally requires every
-active `pnpm/action-setup` use and the reproducible Android container to use the
-same reviewed CLI version.
+production exposure fails. The package contract additionally rejects
+`pnpm/action-setup`, requires every active workflow to use the reviewed direct
+bootstrap, and requires the reproducible Android container to use the same CLI
+version.
 `pnpm audit` is the separate networked registry cross-check and must report zero
 advisories before merge.
 

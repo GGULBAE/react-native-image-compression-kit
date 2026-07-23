@@ -16,9 +16,9 @@ Run the network-free gate:
 pnpm verify:workflow-supply-chain -- --json
 ```
 
-The current lock covers 74 remote `uses:` declarations across 11 workflow
+The current lock covers 61 remote `uses:` declarations across 11 workflow
 files. Lock SHA-256 is
-`e2ce24d41d13feb828f75f7e6abef2a14dfdb8ca8ff9a16e8f211182234af40c`.
+`6826a25eef7dadc6e3759338dbc238828bc1eabe9c2e157ae6b2102a33e14926`.
 
 ## Manual networked review
 

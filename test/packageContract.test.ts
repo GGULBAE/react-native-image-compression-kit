@@ -215,21 +215,27 @@ describe('npm package contract', () => {
     });
   });
 
-  it('pins the reviewed pnpm CLI in every active workflow', () => {
+  it('bootstraps the reviewed pnpm CLI without a vulnerable setup action', () => {
     const actionLock = JSON.parse(
       readProjectFile('.github/actions-lock.json')
     ) as { workflows: string[] };
     for (const workflow of actionLock.workflows) {
       const source = readProjectFile(workflow);
+      expect(source, workflow).not.toContain('pnpm/action-setup@');
       const setupCount = (
-        source.match(/^\s*uses:\s*pnpm\/action-setup@/gm) ?? []
+        source.match(/^\s*-\s*name:\s*Setup pnpm\s*$/gm) ?? []
       ).length;
-      const reviewedSetupCount = (
+      const reviewedVersionCount = (
+        source.match(/^\s*PNPM_VERSION:\s*"11\.8\.0"\s*$/gm) ?? []
+      ).length;
+      const reviewedInstallCount = (
         source.match(
-          /^\s*uses:\s*pnpm\/action-setup@[^\n]+\n\s*with:\n\s*version:\s*11\.8\.0\s*$/gm
+          /^\s*npm install --global --ignore-scripts --prefix "\$RUNNER_TEMP\/pnpm" "pnpm@\$PNPM_VERSION"\s*$/gm
         ) ?? []
       ).length;
-      expect(reviewedSetupCount, workflow).toBe(setupCount);
+      expect(setupCount, workflow).toBeGreaterThan(0);
+      expect(reviewedVersionCount, workflow).toBe(setupCount);
+      expect(reviewedInstallCount, workflow).toBe(setupCount);
     }
   });
 });
