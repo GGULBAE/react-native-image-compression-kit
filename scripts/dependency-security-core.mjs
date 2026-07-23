@@ -6,9 +6,13 @@ export const VITE_MINIMUM_SAFE_VERSION = '6.4.3';
 export const ESBUILD_MINIMUM_SAFE_VERSION = '0.25.0';
 export const OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION = '2.8.0';
 export const SENTRY_NODE_REVIEWED_VERSION = '10.66.0';
+export const SHELL_QUOTE_MINIMUM_SAFE_VERSION = '1.9.0';
+export const SHELL_QUOTE_REVIEWED_VERSION = '1.10.0';
 export const VITEPRESS_OVERRIDE_SELECTOR = 'vitepress@1.6.4>vite';
 export const SENTRY_NODE_OVERRIDE_SELECTOR =
   'lighthouse@13.4.0>@sentry/node';
+export const SHELL_QUOTE_OVERRIDE_SELECTOR =
+  'react-devtools-core@6.1.5>shell-quote';
 
 export const DEPENDENCY_SECURITY_CHECK_FIELDS = Object.freeze([
   'manifest',
@@ -26,9 +30,11 @@ export const DEPENDENCY_SECURITY_REPORT_FIELDS = Object.freeze([
   'viteOverride',
   'lighthouse',
   'sentryNodeOverride',
+  'shellQuoteOverride',
   'viteVersions',
   'esbuildVersions',
   'opentelemetryCoreVersions',
+  'shellQuoteVersions',
   'productionExposure',
   'checks',
   'error',
@@ -47,6 +53,8 @@ const TOOLING_PACKAGES = new Set([
   'lighthouse',
   '@sentry/node',
   '@opentelemetry/core',
+  'react-devtools-core',
+  'shell-quote',
 ]);
 
 export function verifyDependencySecurity(
@@ -58,9 +66,11 @@ export function verifyDependencySecurity(
     viteOverride: null,
     lighthouse: null,
     sentryNodeOverride: null,
+    shellQuoteOverride: null,
     viteVersions: [],
     esbuildVersions: [],
     opentelemetryCoreVersions: [],
+    shellQuoteVersions: [],
     productionExposure: [],
     checks: {},
   };
@@ -120,6 +130,20 @@ export function verifyDependencySecurity(
         describe(state.sentryNodeOverride) +
         '.'
     );
+    state.shellQuoteOverride = readWorkspaceOverride(
+      workspaceContents,
+      SHELL_QUOTE_OVERRIDE_SELECTOR
+    );
+    assert(
+      state.shellQuoteOverride === SHELL_QUOTE_REVIEWED_VERSION,
+      'Expected pnpm override ' +
+        SHELL_QUOTE_OVERRIDE_SELECTOR +
+        '=' +
+        SHELL_QUOTE_REVIEWED_VERSION +
+        ', received ' +
+        describe(state.shellQuoteOverride) +
+        '.'
+    );
     state.checks.override = true;
 
     state.viteVersions = extractLockedVersions(lockfileContents, 'vite');
@@ -127,6 +151,10 @@ export function verifyDependencySecurity(
     state.opentelemetryCoreVersions = extractLockedVersions(
       lockfileContents,
       '@opentelemetry/core'
+    );
+    state.shellQuoteVersions = extractLockedVersions(
+      lockfileContents,
+      'shell-quote'
     );
     assert(state.viteVersions.length > 0, 'pnpm-lock.yaml does not resolve vite.');
     assert(
@@ -136,6 +164,10 @@ export function verifyDependencySecurity(
     assert(
       state.opentelemetryCoreVersions.length > 0,
       'pnpm-lock.yaml does not resolve @opentelemetry/core.'
+    );
+    assert(
+      state.shellQuoteVersions.length > 0,
+      'pnpm-lock.yaml does not resolve shell-quote.'
     );
     state.checks.lockfile = true;
 
@@ -154,10 +186,21 @@ export function verifyDependencySecurity(
       state.opentelemetryCoreVersions,
       OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION
     );
+    assertMinimumVersions(
+      'shell-quote',
+      state.shellQuoteVersions,
+      SHELL_QUOTE_MINIMUM_SAFE_VERSION
+    );
     assert(
       state.viteVersions.includes(VITE_MINIMUM_SAFE_VERSION),
       'pnpm-lock.yaml must resolve the reviewed Vite override ' +
         VITE_MINIMUM_SAFE_VERSION +
+        '.'
+    );
+    assert(
+      state.shellQuoteVersions.includes(SHELL_QUOTE_REVIEWED_VERSION),
+      'pnpm-lock.yaml must resolve the reviewed shell-quote override ' +
+        SHELL_QUOTE_REVIEWED_VERSION +
         '.'
     );
     state.checks.ranges = true;
@@ -191,9 +234,11 @@ export function createDependencySecurityReport({
   viteOverride = null,
   lighthouse = null,
   sentryNodeOverride = null,
+  shellQuoteOverride = null,
   viteVersions = [],
   esbuildVersions = [],
   opentelemetryCoreVersions = [],
+  shellQuoteVersions = [],
   productionExposure = [],
   checks = {},
   status = 'failed',
@@ -207,9 +252,11 @@ export function createDependencySecurityReport({
     viteOverride,
     lighthouse,
     sentryNodeOverride,
+    shellQuoteOverride,
     viteVersions: [...viteVersions],
     esbuildVersions: [...esbuildVersions],
     opentelemetryCoreVersions: [...opentelemetryCoreVersions],
+    shellQuoteVersions: [...shellQuoteVersions],
     productionExposure: [...productionExposure],
     checks: Object.fromEntries(
       DEPENDENCY_SECURITY_CHECK_FIELDS.map((field) => [

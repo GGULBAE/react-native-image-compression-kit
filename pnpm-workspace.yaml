@@ -9,4 +9,5 @@ autoInstallPeers: false
 
 overrides:
   "lighthouse@13.4.0>@sentry/node": "10.66.0"
+  "react-devtools-core@6.1.5>shell-quote": "1.10.0"
   "vitepress@1.6.4>vite": "6.4.3"
