@@ -61,6 +61,8 @@ function main() {
         report.esbuildVersions.join(', ') +
         ', @opentelemetry/core ' +
         report.opentelemetryCoreVersions.join(', ') +
+        ', shell-quote ' +
+        report.shellQuoteVersions.join(', ') +
         ', production exposure none.'
     );
   } else {

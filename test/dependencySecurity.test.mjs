@@ -9,6 +9,8 @@ import {
   ESBUILD_MINIMUM_SAFE_VERSION,
   OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION,
   SENTRY_NODE_REVIEWED_VERSION,
+  SHELL_QUOTE_MINIMUM_SAFE_VERSION,
+  SHELL_QUOTE_REVIEWED_VERSION,
   VITE_MINIMUM_SAFE_VERSION,
   canonicalDependencySecurityReport,
   verifyDependencySecurity,
@@ -43,6 +45,7 @@ describe('dependency security gate', () => {
       viteOverride: VITE_MINIMUM_SAFE_VERSION,
       lighthouse: '13.4.0',
       sentryNodeOverride: SENTRY_NODE_REVIEWED_VERSION,
+      shellQuoteOverride: SHELL_QUOTE_REVIEWED_VERSION,
       productionExposure: [],
       checks: Object.fromEntries(
         DEPENDENCY_SECURITY_CHECK_FIELDS.map((field) => [field, true])
@@ -52,6 +55,7 @@ describe('dependency security gate', () => {
     expect(report.viteVersions).toContain(VITE_MINIMUM_SAFE_VERSION);
     expect(report.esbuildVersions).toContain('0.25.12');
     expect(report.opentelemetryCoreVersions).toContain('2.9.0');
+    expect(report.shellQuoteVersions).toEqual([SHELL_QUOTE_REVIEWED_VERSION]);
     expect(canonicalDependencySecurityReport(report)).toBe(
       JSON.stringify(report) + '\n'
     );
@@ -77,6 +81,16 @@ describe('dependency security gate', () => {
         );
       },
       'lighthouse@13.4.0>@sentry/node',
+    ],
+    [
+      'missing shell-quote override',
+      (inputs) => {
+        inputs.workspaceContents = inputs.workspaceContents.replace(
+          /^  "react-devtools-core@6\.1\.5>shell-quote": "1\.10\.0"\n/m,
+          ''
+        );
+      },
+      'react-devtools-core@6.1.5>shell-quote',
     ],
     [
       'vulnerable vite',
@@ -107,6 +121,16 @@ describe('dependency security gate', () => {
         );
       },
       'minimum is ' + OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION,
+    ],
+    [
+      'vulnerable shell-quote',
+      (inputs) => {
+        inputs.lockfileContents = inputs.lockfileContents.replaceAll(
+          'shell-quote@1.10.0',
+          'shell-quote@1.8.4'
+        );
+      },
+      'minimum is ' + SHELL_QUOTE_MINIMUM_SAFE_VERSION,
     ],
     [
       'production exposure',
@@ -148,6 +172,7 @@ describe('dependency security gate', () => {
       status: 'passed',
       viteOverride: VITE_MINIMUM_SAFE_VERSION,
       sentryNodeOverride: SENTRY_NODE_REVIEWED_VERSION,
+      shellQuoteOverride: SHELL_QUOTE_REVIEWED_VERSION,
       productionExposure: [],
     });
   });

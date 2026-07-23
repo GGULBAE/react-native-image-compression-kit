@@ -6,6 +6,7 @@ settings:
 
 overrides:
   lighthouse@13.4.0>@sentry/node: 10.66.0
+  react-devtools-core@6.1.5>shell-quote: 1.10.0
   vitepress@1.6.4>vite: 6.4.3
 
 importers:
@@ -3231,10 +3232,6 @@ packages:
 
   shell-quote@1.10.0:
     resolution: {integrity: sha512-w1aiOKwKuRgtwAReIIj89puqg+I7GvX4IbLrvmhXbzQsj1+Zwi4VO3+fa6ZF91TWSjIxoEkKnMeHcLEODK5ZXA==}
-    engines: {node: '>= 0.4'}
-
-  shell-quote@1.8.4:
-    resolution: {integrity: sha512-VsC6n6vz1ihYYyZZwX7YZSF5l5x36ca17OC+a69h94YqB7X6XLwf+5MOgynYir2SLFUbl8gIYvBo8K8RoNQ6bQ==}
     engines: {node: '>= 0.4'}
 
   shiki@2.5.0:
@@ -7108,7 +7105,7 @@ snapshots:
 
   react-devtools-core@6.1.5:
     dependencies:
-      shell-quote: 1.8.4
+      shell-quote: 1.10.0
       ws: 7.5.11
     transitivePeerDependencies:
       - bufferutil
@@ -7348,8 +7345,6 @@ snapshots:
   shebang-regex@3.0.0: {}
 
   shell-quote@1.10.0: {}
-
-  shell-quote@1.8.4: {}
 
   shiki@2.5.0:
     dependencies:
