@@ -13,7 +13,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
-  ACTION_PIN_ANNOTATED_TAG_FIELDS,
   ACTION_PIN_ARTIFACT_MANIFEST_ENTRY_FIELDS,
   ACTION_PIN_ARTIFACT_MANIFEST_FIELDS,
   ACTION_PIN_EXECUTION_FIELDS,
@@ -52,7 +51,7 @@ const EVENT_FIXTURE = path.join(
 );
 const WORKFLOW_FILE = path.join(ROOT, ACTION_PIN_WORKFLOW_PATH);
 const WORKFLOW_BYTES = readFileSync(WORKFLOW_FILE);
-const CHECKOUT_SHA = '9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0';
+const CHECKOUT_SHA = '3d3c42e5aac5ba805825da76410c181273ba90b1';
 const GRADLE_SHA = '3f131e8634966bd73d06cc69884922b02e6faf92';
 const GRADLE_TAG_SHA = '90ddb51e90a5fd9ba75f40cf85156b7b41bf76a3';
 const OTHER_SHA = '1111111111111111111111111111111111111111';
@@ -70,8 +69,10 @@ describe('Action pin provenance', () => {
       readFileSync(path.join(FIXTURE_DIR, 'artifact-manifest.json'), 'utf8')
     );
     expect(report.status).toBe('passed');
-    expect(report.resolution).toBe('annotated');
-    expect(report.resolvedCommitSha).toBe(GRADLE_SHA);
+    expect(report.action).toBe('actions/checkout');
+    expect(report.resolution).toBe('lightweight');
+    expect(report.tagObjectType).toBe('commit');
+    expect(report.resolvedCommitSha).toBe(CHECKOUT_SHA);
     expect(report.sourceRepository).toBe(
       'GGULBAE/react-native-image-compression-kit'
     );
@@ -114,12 +115,6 @@ describe('Action pin provenance', () => {
         JSON.parse(readFileSync(path.join(FIXTURE_DIR, 'tag-reference.json'), 'utf8'))
       )
     ).toEqual(ACTION_PIN_TAG_REFERENCE_FIELDS);
-    expect(
-      Object.keys(
-        JSON.parse(readFileSync(path.join(FIXTURE_DIR, 'annotated-tag.json'), 'utf8'))
-      )
-    ).toEqual(ACTION_PIN_ANNOTATED_TAG_FIELDS);
-
     const offlineSources = [
       'scripts/action-pin-provenance-core.mjs',
       'scripts/verify-action-pin-provenance.mjs',

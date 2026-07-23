@@ -35,7 +35,7 @@ const ROOT = path.resolve(TEST_DIR, '..');
 const WORKFLOW_DIR = path.join(ROOT, '.github', 'workflows');
 const LOCK_FILE = path.join(ROOT, WORKFLOW_ACTION_LOCK_FILE);
 const VERIFIER = path.join(ROOT, 'scripts', 'verify-workflow-supply-chain.mjs');
-const CHECKOUT_SHA = '9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0';
+const CHECKOUT_SHA = '3d3c42e5aac5ba805825da76410c181273ba90b1';
 const PACKAGE_VERSION = JSON.parse(
   readFileSync(path.join(ROOT, 'package.json'), 'utf8')
 ).version;
@@ -126,7 +126,7 @@ describe('GitHub Actions workflow supply-chain gate', () => {
       actionCount: 13,
       usageCount: 74,
       lockSha256:
-        '21a881a93c2d355f58fdff6b0bd6fc18243d861daa29171ad49bb484458e949d',
+        'e2ce24d41d13feb828f75f7e6abef2a14dfdb8ca8ff9a16e8f211182234af40c',
       checks: Object.fromEntries(
         WORKFLOW_SUPPLY_CHAIN_CHECK_FIELDS.map((field) => [field, true])
       ),

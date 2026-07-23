@@ -42,10 +42,10 @@ jobs:
 
     steps:
       - name: Checkout candidate
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Checkout baseline lock
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ inputs.baseline_ref }}
           path: action-pin-baseline
@@ -129,7 +129,7 @@ jobs:
         id: attest
         if: steps.review.outcome == 'success'
         continue-on-error: true
-        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4
         with:
           subject-path: action-pin-review/artifact-manifest.json
 
