@@ -9,6 +9,7 @@ from the npm package.
 | Contract | Authority | Repository gate |
 | --- | --- | --- |
 | Package metadata, exports, Codegen, publish allowlist, and command wiring | `test/packageContract.test.ts` | `pnpm test` |
+| Executable TypeScript runtime and directly tested pure core module coverage | `vitest.config.ts`, `coverage.config.ts`, and `test/coverageContract.test.ts` | `pnpm test:coverage` through `pnpm verify` |
 | README, release status, required documentation, and local links | `test/docsSemantic.test.mjs` and `scripts/docs-semantic-core.mjs` | `pnpm docs:check` |
 | Reviewed pnpm CLI plus development-only Vite/VitePress/esbuild and Lighthouse/Sentry/OpenTelemetry resolution and production dependency boundary | `test/dependencySecurity.test.mjs` and `scripts/dependency-security-core.mjs` | `pnpm verify:dependency-security -- --json` |
 | GitHub Actions pins and workflow supply chain | `test/workflowSupplyChain.test.mjs` and `scripts/workflow-supply-chain-core.mjs` | `pnpm verify:workflow-supply-chain -- --json` |
@@ -61,6 +62,7 @@ Run the complete repository gate before merging:
 
 ```sh
 pnpm verify
+pnpm test:coverage
 pnpm example:typecheck
 pnpm fixtures:release-evidence-review-acquisition:check
 pnpm docs:check

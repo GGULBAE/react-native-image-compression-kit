@@ -206,6 +206,32 @@ describe('compressImage', () => {
     expect(runningModule.cancelCompression).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps cancellation deterministic when the native cancel signal throws', async () => {
+    const nativeModule = mockNativeModule({
+      compressImage: vi.fn(() => new Promise<CompressionResult>(() => undefined)),
+      cancelCompression: vi.fn(() => {
+        throw new Error('bridge invalidating');
+      }),
+    });
+    setNativeModuleForTesting(nativeModule);
+    const controller = new AbortController();
+    const compression = compressImage(
+      {
+        source: { uri: 'file:///tmp/input.jpg' },
+        output: { format: 'jpeg' },
+      },
+      controller.signal
+    );
+
+    controller.abort(new Error('user navigated away'));
+
+    await expect(compression).rejects.toMatchObject({
+      code: 'ERR_CANCELLED',
+      message: 'Image compression was cancelled: user navigated away',
+    });
+    expect(nativeModule.cancelCompression).toHaveBeenCalledTimes(1);
+  });
+
   it('surfaces unavailable native module errors clearly', async () => {
     setNativeModuleForTesting(null);
 
@@ -295,5 +321,21 @@ describe('getImageCompressionCapabilities', () => {
     expect(nativeModule.getImageCompressionCapabilities).toHaveBeenCalledTimes(
       1
     );
+  });
+
+  it('normalizes native capability failures through the public error contract', async () => {
+    const nativeModule = mockNativeModule({
+      getImageCompressionCapabilities: vi.fn().mockRejectedValue(
+        Object.assign(new Error('capability probe failed'), {
+          code: 'ERR_NATIVE_OPERATION_FAILED',
+        })
+      ),
+    });
+    setNativeModuleForTesting(nativeModule);
+
+    await expect(getImageCompressionCapabilities()).rejects.toMatchObject({
+      code: 'ERR_NATIVE_OPERATION_FAILED',
+      message: 'capability probe failed',
+    });
   });
 });

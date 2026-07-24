@@ -127,6 +127,7 @@ describe('npm package contract', () => {
   it('maps public verification commands to their executable owners', () => {
     expect(packageJson.scripts).toMatchObject({
       test: 'vitest run',
+      'test:coverage': 'vitest run --coverage',
       'docs:check': 'node scripts/verify-docs.mjs',
       'release:dry-run': 'node scripts/release-dry-run.mjs',
       'android:doctor': 'node scripts/android-verification.mjs doctor',
@@ -163,7 +164,7 @@ describe('npm package contract', () => {
     expect(verifyCommands).toEqual(
       expect.arrayContaining([
         'pnpm typecheck',
-        'pnpm test',
+        'pnpm test:coverage',
         'pnpm build',
         'pnpm docs:check',
         'pnpm fixtures:ios-pass-replay:audit',
@@ -172,6 +173,7 @@ describe('npm package contract', () => {
       ])
     );
     expect(verifyCommands[0]).toBe('pnpm typecheck');
+    expect(verifyCommands).not.toContain('pnpm test');
     expect(verifyCommands[verifyCommands.length - 1]).toBe(
       'pnpm android:doctor'
     );
@@ -215,27 +217,8 @@ describe('npm package contract', () => {
     });
   });
 
-  it('bootstraps the reviewed pnpm CLI without a vulnerable setup action', () => {
-    const actionLock = JSON.parse(
-      readProjectFile('.github/actions-lock.json')
-    ) as { workflows: string[] };
-    for (const workflow of actionLock.workflows) {
-      const source = readProjectFile(workflow);
-      expect(source, workflow).not.toContain('pnpm/action-setup@');
-      const setupCount = (
-        source.match(/^\s*-\s*name:\s*Setup pnpm\s*$/gm) ?? []
-      ).length;
-      const reviewedVersionCount = (
-        source.match(/^\s*PNPM_VERSION:\s*"11\.8\.0"\s*$/gm) ?? []
-      ).length;
-      const reviewedInstallCount = (
-        source.match(
-          /^\s*npm install --global --ignore-scripts --prefix "\$RUNNER_TEMP\/pnpm" "pnpm@\$PNPM_VERSION"\s*$/gm
-        ) ?? []
-      ).length;
-      expect(setupCount, workflow).toBeGreaterThan(0);
-      expect(reviewedVersionCount, workflow).toBe(setupCount);
-      expect(reviewedInstallCount, workflow).toBe(setupCount);
-    }
+  it('keeps Vitest and its V8 coverage provider on one exact version', () => {
+    expect(packageJson.devDependencies.vitest).toBe('4.1.10');
+    expect(packageJson.devDependencies['@vitest/coverage-v8']).toBe('4.1.10');
   });
 });

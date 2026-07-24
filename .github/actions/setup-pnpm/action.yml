@@ -1,0 +1,44 @@
+name: Setup repository pnpm
+description: Install the exact pnpm version declared by package.json
+
+runs:
+  using: composite
+  steps:
+    - name: Install reviewed pnpm
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        pnpm_version="$(
+          node --input-type=module <<'NODE'
+        import { readFileSync } from 'node:fs';
+
+        const packageMetadata = JSON.parse(readFileSync('package.json', 'utf8'));
+        const packageManager = packageMetadata.packageManager;
+        const match =
+          typeof packageManager === 'string'
+            ? packageManager.match(
+                /^pnpm@((?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?)$/
+              )
+            : null;
+
+        if (!match) {
+          console.error(
+            `::error file=package.json::packageManager must match pnpm@<semver>; received ${JSON.stringify(packageManager)}.`
+          );
+          process.exit(1);
+        }
+
+        process.stdout.write(match[1]);
+        NODE
+        )"
+
+        pnpm_prefix="$RUNNER_TEMP/setup-pnpm"
+        npm install --global --ignore-scripts --prefix "$pnpm_prefix" "pnpm@$pnpm_version"
+        echo "$pnpm_prefix/bin" >> "$GITHUB_PATH"
+
+        actual_version="$("$pnpm_prefix/bin/pnpm" --version)"
+        if [[ "$actual_version" != "$pnpm_version" ]]; then
+          echo "::error::Installed pnpm version $actual_version does not match package.json version $pnpm_version."
+          exit 1
+        fi

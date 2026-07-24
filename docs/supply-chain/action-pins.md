@@ -19,6 +19,14 @@ pnpm verify:workflow-supply-chain -- --json
 The current lock covers 61 remote `uses:` declarations across 11 workflow
 files. Lock SHA-256 is
 `6826a25eef7dadc6e3759338dbc238828bc1eabe9c2e157ae6b2102a33e14926`.
+Local `uses:` declarations are intentionally outside that remote-action lock.
+Every pnpm-consuming workflow job checks out the repository and then uses
+`.github/actions/setup-pnpm`. The composite Action accepts no version input:
+it requires `package.json#packageManager` to match `pnpm@<semver>`, installs
+that exact version with `npm install --global --ignore-scripts` under
+`$RUNNER_TEMP`, adds only that prefix to `$GITHUB_PATH`, and rejects an
+installed-version mismatch. The supply-chain gate rejects direct workflow
+install blocks, hardcoded workflow pnpm versions, or local Action drift.
 
 ## Manual networked review
 

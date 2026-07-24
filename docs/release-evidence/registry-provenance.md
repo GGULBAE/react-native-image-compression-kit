@@ -37,11 +37,12 @@ Native consumer, and atomically writes exactly:
 ## Automatic Registry Health
 
 The [Registry Health workflow](../../.github/workflows/registry-health.yml)
-runs once per day, on explicit dispatch, and for pull requests that change its
-workflow, verifier, smoke, release-status, or evidence contracts. It reads the
-version from `docs/release-status.json`, uses npm 12.0.1 for the same registry
-transport as Trusted Release, runs the networked smoke, and passes the live
-four-file bundle to `pnpm verify:registry-health`.
+runs every Monday at 03:17 UTC, on explicit dispatch, and for pull requests
+that change its workflow, local pnpm setup, verifier, smoke, release-status, or
+evidence contracts. It reads the version from `docs/release-status.json`, uses
+npm 12.0.1 for the same registry transport as Trusted Release, runs the
+networked smoke, and passes the live four-file bundle to
+`pnpm verify:registry-health`.
 
 The canonical health report compares live and committed package name,
 requested/resolved version, `latest`, publish timestamp, tarball URL, SRI,
