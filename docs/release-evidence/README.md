@@ -7,9 +7,11 @@ networked.
 
 ## Trust boundaries
 
-1. Registry Health reads the live npm package daily and compares it with the
-   committed archive. It has read-only contents permission and creates no
-   provenance, attestation, deployment, issue, or external notification.
+1. Registry Health reads the live npm package every Monday at 03:17 UTC and
+   compares it with the committed archive. It also supports explicit dispatch
+   and limited pull-request validation, has read-only contents permission, and
+   creates no provenance, attestation, deployment, issue, or external
+   notification.
 2. Manual Registry Validation creates provenance and attestation artifacts
    from an already published npm version.
 3. Explicit acquisition downloads artifacts from one reviewed immutable run.

@@ -14,11 +14,14 @@ import path from 'node:path';
 export const WORKFLOW_SUPPLY_CHAIN_SCHEMA_VERSION = 1;
 export const WORKFLOW_ACTION_LOCK_FILE = '.github/actions-lock.json';
 export const WORKFLOW_DEPENDABOT_FILE = '.github/dependabot.yml';
+export const WORKFLOW_SETUP_PNPM_ACTION_FILE =
+  '.github/actions/setup-pnpm/action.yml';
 export const REGISTRY_HEALTH_WORKFLOW_FILE = '.github/workflows/registry-health.yml';
 
 export const REGISTRY_HEALTH_PULL_REQUEST_PATHS = Object.freeze([
   '.github/workflows/registry-health.yml',
   '.github/workflows/registry-validation.yml',
+  WORKFLOW_SETUP_PNPM_ACTION_FILE,
   '.github/actions-lock.json',
   'scripts/registry-health-*.mjs',
   'scripts/verify-registry-health.mjs',
@@ -279,9 +282,15 @@ export function verifyWorkflowSupplyChain(
     const packageMetadata = JSON.parse(
       readFile(path.join(root, 'package.json'), 'package metadata')
     );
+    const setupPnpmActionSource = readFile(
+      path.join(root, WORKFLOW_SETUP_PNPM_ACTION_FILE),
+      'local pnpm setup Action'
+    );
     const releaseStatus = JSON.parse(
       readFile(path.join(root, 'docs', 'release-status.json'), 'release status')
     );
+    validatePnpmSetupAction(setupPnpmActionSource, packageMetadata);
+    validateWorkflowPnpmSetup(workflowSources);
     validateRegistryValidationWorkflow(workflowSources, packageMetadata.version);
     validateRegistryHealthWorkflow(
       workflowSources,
@@ -382,6 +391,98 @@ function normalizeWorkflowSources(workflowSources) {
   return normalized;
 }
 
+export function validatePnpmSetupAction(source, packageMetadata) {
+  assert(
+    typeof source === 'string' && source.length > 0,
+    'Local pnpm setup Action must be non-empty text.'
+  );
+  assertRecord(packageMetadata, 'package metadata');
+  const packageManager = packageMetadata.packageManager;
+  assert(
+    typeof packageManager === 'string' &&
+      /^pnpm@(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(
+        packageManager
+      ),
+    `package.json packageManager must match pnpm@<semver>; received ${JSON.stringify(
+      packageManager
+    )}.`
+  );
+  assert(
+    /^\s*using:\s*composite\s*$/m.test(source),
+    'Local pnpm setup Action must use the composite runtime.'
+  );
+  for (const required of [
+    "readFileSync('package.json', 'utf8')",
+    'const packageManager = packageMetadata.packageManager;',
+    'packageManager must match pnpm@<semver>',
+    'pnpm_prefix="$RUNNER_TEMP/setup-pnpm"',
+    'npm install --global --ignore-scripts --prefix "$pnpm_prefix" "pnpm@$pnpm_version"',
+    'echo "$pnpm_prefix/bin" >> "$GITHUB_PATH"',
+    'actual_version="$("$pnpm_prefix/bin/pnpm" --version)"',
+    'if [[ "$actual_version" != "$pnpm_version" ]]; then',
+  ]) {
+    assert(
+      source.includes(required),
+      `Local pnpm setup Action is missing required contract: ${required}`
+    );
+  }
+  assert(
+    (source.match(/\bnpm install --global\b/g) ?? []).length === 1,
+    'Local pnpm setup Action must contain exactly one global npm install.'
+  );
+  assert(
+    !/\bpnpm@\d/.test(source) &&
+      !/^\s*inputs:\s*$/m.test(source) &&
+      !/\bpnpm\/action-setup@/.test(source),
+    'Local pnpm setup Action must use package.json as the only pnpm version source.'
+  );
+}
+
+export function validateWorkflowPnpmSetup(workflowSources) {
+  for (const workflow of normalizeWorkflowSources(workflowSources)) {
+    assert(
+      !/\bpnpm\/action-setup@/.test(workflow.source),
+      `${workflow.workflow} must not use pnpm/action-setup.`
+    );
+    assert(
+      !/\bPNPM_VERSION\b/.test(workflow.source) &&
+        !/\bnpm install --global[^\n]*\bpnpm@/.test(workflow.source) &&
+        !/\bpnpm@\d/.test(workflow.source),
+      `${workflow.workflow} contains a duplicate direct pnpm installation or version.`
+    );
+
+    const jobsBlock = extractYamlMappingBlock(workflow.source, 0, 'jobs');
+    const jobNames = readYamlMappingKeys(jobsBlock, 2);
+    let workflowSetupCount = 0;
+    for (const jobName of jobNames) {
+      const jobBlock = extractYamlMappingBlock(jobsBlock, 2, jobName);
+      if (!/\bpnpm\b/.test(jobBlock)) continue;
+      const setupCount = (
+        jobBlock.match(
+          /^\s*uses:\s*\.\/\.github\/actions\/setup-pnpm\s*$/gm
+        ) ?? []
+      ).length;
+      assert(
+        setupCount === 1,
+        `${workflow.workflow} job ${jobName} must use the local pnpm setup Action exactly once.`
+      );
+      const checkoutIndex = jobBlock.indexOf('actions/checkout@');
+      const setupIndex = jobBlock.indexOf(
+        'uses: ./.github/actions/setup-pnpm'
+      );
+      assert(
+        checkoutIndex >= 0 && checkoutIndex < setupIndex,
+        `${workflow.workflow} job ${jobName} must checkout before using the local pnpm setup Action.`
+      );
+      workflowSetupCount += setupCount;
+    }
+    assert(
+      workflowSetupCount > 0,
+      `${workflow.workflow} must use the local pnpm setup Action after checkout.`
+    );
+  }
+}
+
 export function validateRegistryValidationWorkflow(workflowSources, packageVersion) {
   assert(
     typeof packageVersion === 'string' && packageVersion.length > 0,
@@ -472,13 +573,8 @@ export function validateRegistryHealthWorkflow(workflowSources, publishedVersion
   const cronValues = [...scheduleBlock.matchAll(/^    - cron:\s*["']([^"']+)["']\s*$/gm)]
     .map((match) => match[1]);
   assert(
-    cronValues.length === 1 && /^\d{1,2} \d{1,2} \* \* \*$/.test(cronValues[0]),
-    'Registry Health workflow must declare exactly one daily schedule.'
-  );
-  const [minute, hour] = cronValues[0].split(' ').map(Number);
-  assert(
-    minute >= 0 && minute <= 59 && hour >= 0 && hour <= 23,
-    'Registry Health workflow daily schedule is invalid.'
+    cronValues.length === 1 && cronValues[0] === '17 3 * * 1',
+    'Registry Health workflow schedule must run weekly on Monday at 03:17 UTC (17 3 * * 1).'
   );
 
   extractYamlMappingBlock(eventBlock, 2, 'workflow_dispatch');

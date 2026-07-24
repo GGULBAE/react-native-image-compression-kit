@@ -19,6 +19,7 @@ import {
   WORKFLOW_ACTION_USAGE_FIELDS,
   WORKFLOW_DEPENDABOT_CONTENT,
   WORKFLOW_DEPENDABOT_FILE,
+  WORKFLOW_SETUP_PNPM_ACTION_FILE,
   WORKFLOW_SUPPLY_CHAIN_CHECK_FIELDS,
   WORKFLOW_SUPPLY_CHAIN_REPORT_FIELDS,
   canonicalWorkflowActionLock,
@@ -53,6 +54,13 @@ function copiedRepository(label) {
     path.join(ROOT, WORKFLOW_DEPENDABOT_FILE),
     path.join(rootDir, WORKFLOW_DEPENDABOT_FILE)
   );
+  mkdirSync(path.join(rootDir, path.dirname(WORKFLOW_SETUP_PNPM_ACTION_FILE)), {
+    recursive: true,
+  });
+  cpSync(
+    path.join(ROOT, WORKFLOW_SETUP_PNPM_ACTION_FILE),
+    path.join(rootDir, WORKFLOW_SETUP_PNPM_ACTION_FILE)
+  );
   cpSync(path.join(ROOT, 'package.json'), path.join(rootDir, 'package.json'));
   cpSync(
     path.join(ROOT, 'docs', 'release-status.json'),
@@ -81,6 +89,19 @@ function mutateLock(rootDir, mutate) {
   const lock = JSON.parse(readFileSync(filePath, 'utf8'));
   mutate(lock);
   writeFileSync(filePath, canonicalWorkflowActionLock(lock), 'utf8');
+}
+
+function mutateSetupPnpmAction(rootDir, mutate) {
+  const filePath = path.join(rootDir, WORKFLOW_SETUP_PNPM_ACTION_FILE);
+  const source = readFileSync(filePath, 'utf8');
+  writeFileSync(filePath, mutate(source), 'utf8');
+}
+
+function mutatePackageMetadata(rootDir, mutate) {
+  const filePath = path.join(rootDir, 'package.json');
+  const packageMetadata = JSON.parse(readFileSync(filePath, 'utf8'));
+  mutate(packageMetadata);
+  writeFileSync(filePath, `${JSON.stringify(packageMetadata, null, 2)}\n`, 'utf8');
 }
 
 function repositoryWorkflowSources(rootDir = ROOT) {
@@ -307,6 +328,106 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     }
   });
 
+  it('enforces the local composite pnpm setup security and version contract', () => {
+    const mutations = [
+      [
+        'ignore scripts',
+        (source) => source.replace('--ignore-scripts ', ''),
+      ],
+      [
+        'runner temp prefix',
+        (source) =>
+          source.replace(
+            'pnpm_prefix="$RUNNER_TEMP/setup-pnpm"',
+            'pnpm_prefix="/tmp/setup-pnpm"'
+          ),
+      ],
+      [
+        'GitHub path',
+        (source) =>
+          source.replace('echo "$pnpm_prefix/bin" >> "$GITHUB_PATH"', 'true'),
+      ],
+      [
+        'exact installed version',
+        (source) =>
+          source.replace(
+            'if [[ "$actual_version" != "$pnpm_version" ]]; then',
+            'if [[ "$actual_version" == "$pnpm_version" ]]; then'
+          ),
+      ],
+      [
+        'hardcoded version',
+        (source) => source.replace('"pnpm@$pnpm_version"', '"pnpm@11.8.0"'),
+      ],
+    ];
+
+    for (const [label, mutate] of mutations) {
+      const { parent, rootDir } = copiedRepository(
+        `pnpm-action-${label.replaceAll(' ', '-')}`
+      );
+      try {
+        mutateSetupPnpmAction(rootDir, mutate);
+        const result = verify(rootDir);
+        expect(result.status).toBe('failed');
+        expect(result.checks.workflows).toBe(false);
+        expect(result.error).toMatch(
+          /Local pnpm setup Action.*(?:required contract|version source|global npm install)/
+        );
+      } finally {
+        rmSync(parent, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it('rejects invalid packageManager versions and duplicate workflow installers', () => {
+    const invalidPackageManagers = [
+      'pnpm',
+      'pnpm@11',
+      'pnpm@11.8',
+      'pnpm@11.08.0',
+      'npm@11.8.0',
+    ];
+    for (const packageManager of invalidPackageManagers) {
+      const { parent, rootDir } = copiedRepository('pnpm-package-manager');
+      try {
+        mutatePackageMetadata(rootDir, (metadata) => {
+          metadata.packageManager = packageManager;
+        });
+        const result = verify(rootDir);
+        expect(result.status).toBe('failed');
+        expect(result.error).toContain(
+          'package.json packageManager must match pnpm@<semver>'
+        );
+      } finally {
+        rmSync(parent, { recursive: true, force: true });
+      }
+    }
+
+    for (const [label, replacement] of [
+      [
+        'direct installer',
+        'run: npm install --global --ignore-scripts --prefix "$RUNNER_TEMP/pnpm" "pnpm@11.8.0"',
+      ],
+      ['missing local action', 'run: pnpm --version'],
+    ]) {
+      const { parent, rootDir } = copiedRepository(
+        `pnpm-workflow-${label.replaceAll(' ', '-')}`
+      );
+      try {
+        mutateWorkflow(rootDir, 'ci.yml', (source) =>
+          source.replace('uses: ./.github/actions/setup-pnpm', replacement)
+        );
+        const result = verify(rootDir);
+        expect(result.status).toBe('failed');
+        expect(result.error).toMatch(
+          /duplicate direct pnpm installation|local pnpm setup Action exactly once/
+        );
+      } finally {
+        rmSync(parent, { recursive: true, force: true });
+      }
+    }
+  });
+
   it('requires a manual, read-only npm-production health deployment contract', () => {
     const mutations = [
       ['automatic trigger', (source) => source.replace('  workflow_dispatch:', '  push:\n  workflow_dispatch:')],
@@ -387,7 +508,11 @@ describe('GitHub Actions workflow supply-chain gate', () => {
       ],
       [
         'missing schedule',
-        (source) => source.replace('  schedule:\n    - cron: "17 3 * * *"\n', ''),
+        (source) => source.replace('  schedule:\n    - cron: "17 3 * * 1"\n', ''),
+      ],
+      [
+        'daily schedule drift',
+        (source) => source.replace('17 3 * * 1', '17 3 * * *'),
       ],
       [
         'missing dispatch',

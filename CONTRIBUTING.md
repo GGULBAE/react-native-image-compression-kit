@@ -23,6 +23,7 @@ Requirements:
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
+pnpm test:coverage
 pnpm verify
 pnpm example:typecheck
 ```
@@ -45,6 +46,7 @@ sample instructions.
 ## Required verification
 
 ```bash
+pnpm test:coverage
 pnpm verify
 pnpm example:typecheck
 pnpm site:check
@@ -52,6 +54,11 @@ pnpm site:build
 git diff --check
 pnpm pack --dry-run
 ```
+
+`pnpm verify` already runs the coverage-enabled Vitest suite once, so running
+both commands is useful when inspecting the coverage report but is not required
+for a single complete local gate. Coverage regression thresholds apply to
+statements, branches, functions, and lines.
 
 Native or release changes require the relevant Android, iOS, consumer, and
 release dry-run lanes documented in the pull request template. A pull request

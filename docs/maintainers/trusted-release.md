@@ -66,12 +66,13 @@ checks still passed locally, while PR #28's GitHub-hosted Android
 instrumentation, iOS validation, compatibility matrix, CI, and Registry Health
 checks all passed on the same source tree.
 
-Automatic Registry Health is the daily drift monitor. It reads
-`publishedNpmLatest`, compares the live npm metadata/tarball/consumer result to
-the matching committed archive, has `contents: read` only, uses no environment,
-and creates no provenance or attestation. Registry Validation is the separate
-manual, `workflow_dispatch`-only path through protected `npm-production`; run
-it for the published version and expected dist-tag only when fresh provenance,
+Automatic Registry Health is the weekly drift monitor, scheduled every Monday
+at 03:17 UTC. It reads `publishedNpmLatest`, compares the live npm
+metadata/tarball/consumer result to the matching committed archive, has
+`contents: read` only, uses no environment, and creates no provenance or
+attestation. Registry Validation is the separate manual,
+`workflow_dispatch`-only path through protected `npm-production`; run it for
+the published version and expected dist-tag only when fresh provenance,
 attestation, and deployment evidence is required. Neither path publishes or
 changes registry, Git tag, or GitHub Release state; see
 [registry provenance](../release-evidence/registry-provenance.md#automatic-registry-health).

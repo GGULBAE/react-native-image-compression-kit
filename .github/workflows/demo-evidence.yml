@@ -58,13 +58,7 @@ jobs:
           yes | sdkmanager --licenses >/dev/null
 
       - name: Setup pnpm
-        shell: bash
-        env:
-          PNPM_VERSION: "11.8.0"
-        run: |
-          npm install --global --ignore-scripts --prefix "$RUNNER_TEMP/pnpm" "pnpm@$PNPM_VERSION"
-          echo "$RUNNER_TEMP/pnpm/bin" >> "$GITHUB_PATH"
-          test "$("$RUNNER_TEMP/pnpm/bin/pnpm" --version)" = "$PNPM_VERSION"
+        uses: ./.github/actions/setup-pnpm
 
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
@@ -117,13 +111,7 @@ jobs:
           ref: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup pnpm
-        shell: bash
-        env:
-          PNPM_VERSION: "11.8.0"
-        run: |
-          npm install --global --ignore-scripts --prefix "$RUNNER_TEMP/pnpm" "pnpm@$PNPM_VERSION"
-          echo "$RUNNER_TEMP/pnpm/bin" >> "$GITHUB_PATH"
-          test "$("$RUNNER_TEMP/pnpm/bin/pnpm" --version)" = "$PNPM_VERSION"
+        uses: ./.github/actions/setup-pnpm
 
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6

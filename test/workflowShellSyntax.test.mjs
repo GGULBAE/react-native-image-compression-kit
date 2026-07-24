@@ -7,6 +7,13 @@ import { describe, expect, it } from 'vitest';
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(TEST_DIR, '..');
 const WORKFLOW_DIR = path.join(ROOT, '.github', 'workflows');
+const SETUP_PNPM_ACTION = path.join(
+  ROOT,
+  '.github',
+  'actions',
+  'setup-pnpm',
+  'action.yml'
+);
 
 function literalRunBlocks(source) {
   const lines = source.split('\n');
@@ -46,16 +53,20 @@ function bashSyntax(block) {
 }
 
 describe('GitHub Actions shell syntax', () => {
-  it('parses every literal workflow run block with bash', () => {
-    const workflows = readdirSync(WORKFLOW_DIR)
+  it('parses every literal workflow and local Action run block with bash', () => {
+    const actionFiles = readdirSync(WORKFLOW_DIR)
       .filter((entry) => /\.ya?ml$/.test(entry))
-      .sort();
+      .sort()
+      .map((entry) => path.join(WORKFLOW_DIR, entry));
+    actionFiles.push(SETUP_PNPM_ACTION);
 
-    for (const workflow of workflows) {
-      const source = readFileSync(path.join(WORKFLOW_DIR, workflow), 'utf8');
+    for (const actionFile of actionFiles) {
+      const source = readFileSync(actionFile, 'utf8');
       for (const [index, block] of literalRunBlocks(source).entries()) {
         const result = bashSyntax(block);
-        const context = `${workflow} run block ${index + 1}: ${result.stderr}`;
+        const context = `${path.relative(ROOT, actionFile)} run block ${
+          index + 1
+        }: ${result.stderr}`;
         expect(result.status, context).toBe(0);
         expect(result.stderr, context).toBe('');
       }

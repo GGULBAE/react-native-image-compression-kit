@@ -2,12 +2,13 @@ name: Registry Health
 
 on:
   schedule:
-    - cron: "17 3 * * *"
+    - cron: "17 3 * * 1"
   workflow_dispatch:
   pull_request:
     paths:
       - ".github/workflows/registry-health.yml"
       - ".github/workflows/registry-validation.yml"
+      - ".github/actions/setup-pnpm/action.yml"
       - ".github/actions-lock.json"
       - "scripts/registry-health-*.mjs"
       - "scripts/verify-registry-health.mjs"
@@ -44,13 +45,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup pnpm
-        shell: bash
-        env:
-          PNPM_VERSION: "11.8.0"
-        run: |
-          npm install --global --ignore-scripts --prefix "$RUNNER_TEMP/pnpm" "pnpm@$PNPM_VERSION"
-          echo "$RUNNER_TEMP/pnpm/bin" >> "$GITHUB_PATH"
-          test "$("$RUNNER_TEMP/pnpm/bin/pnpm" --version)" = "$PNPM_VERSION"
+        uses: ./.github/actions/setup-pnpm
 
       - name: Setup Node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6

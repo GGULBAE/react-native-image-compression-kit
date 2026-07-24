@@ -255,6 +255,7 @@ Important limitations:
 ## Development verification
 
 ```bash
+pnpm test:coverage
 pnpm verify
 pnpm example:typecheck
 pnpm example:ios:decoder-test
@@ -272,11 +273,19 @@ git diff --check
 pnpm pack --dry-run
 ```
 
-`pnpm verify` runs TypeScript checks, Vitest, the build, offline fixture and
-release-evidence replay gates, workflow pin checks, and the Android repository
-doctor. `pnpm docs:check` is network-free and validates the repository status
-manifest, aligned README/RELEASE blocks, required documentation structure,
-local links/anchors, and npm package exclusions.
+`pnpm test:coverage` runs the Vitest suite once with V8 coverage. The gate
+includes executable TypeScript runtime modules and directly tested pure
+`scripts/*-core.mjs` helpers, with rounded measured-baseline thresholds of 94%
+statements, 83% branches, 98% functions, and 94% lines. React Native Codegen
+and barrel entry wrappers, generated trees, fixtures, retained evidence, and
+CLI entry wrappers stay outside that unit-coverage boundary because native,
+package, fixture, or subprocess contract tests own them. `pnpm verify` runs
+that coverage gate instead of running the same Vitest suite twice, then runs
+the build, offline fixture and release-evidence replay gates, workflow supply
+chain checks, and the Android repository doctor. `pnpm docs:check` is
+network-free and validates the repository status manifest, aligned
+README/RELEASE blocks, required documentation structure, local links/anchors,
+and npm package exclusions.
 
 For release-oriented changes, also run:
 
@@ -292,15 +301,16 @@ latest remains an observed registry value and is not rewritten before publish.
 
 ## Registry monitoring
 
-The daily [Registry Health workflow](https://github.com/GGULBAE/react-native-image-compression-kit/actions/workflows/registry-health.yml)
-reads `publishedNpmLatest` from `docs/release-status.json`, runs the real npm
-registry smoke with npm 12.0.1, and compares npm `latest`, exact-version
-metadata, the downloaded tarball, README/package inventory, and clean consumer
-install/typecheck with `evidence/npm/<version>`. It has only `contents: read`,
-uses no protected environment, and creates no provenance or attestation. The
-manual Registry Validation workflow is separate: maintainers dispatch it
-through `npm-production` when fresh provenance and attestation evidence is
-required.
+The weekly [Registry Health workflow](https://github.com/GGULBAE/react-native-image-compression-kit/actions/workflows/registry-health.yml)
+runs every Monday at 03:17 UTC, reads `publishedNpmLatest` from
+`docs/release-status.json`, runs the real npm registry smoke with npm 12.0.1,
+and compares npm `latest`, exact-version metadata, the downloaded tarball,
+README/package inventory, and clean consumer install/typecheck with
+`evidence/npm/<version>`. It retains manual dispatch and limited pull-request
+validation, has only `contents: read`, uses no protected environment, and
+creates no provenance or attestation. The manual Registry Validation workflow
+is separate: maintainers dispatch it through `npm-production` when fresh
+provenance and attestation evidence is required.
 
 Run the same read-only monitor locally without hardcoding the release version:
 

@@ -108,7 +108,7 @@
     "verify:action-pin-attestation": "node scripts/verify-action-pin-attestation.mjs",
     "verify:action-pin-fixture": "pnpm verify:action-pin-provenance -- --artifact-dir test/fixtures/action-pin-review --json",
     "verify:action-pin-attestation-fixture": "pnpm verify:action-pin-attestation -- --artifact-dir test/fixtures/action-pin-review --attestation-bundle test/fixtures/action-pin-attestation/attestation.jsonl --trusted-root test/fixtures/action-pin-attestation/trusted-root.jsonl --json",
-    "verify": "pnpm typecheck && pnpm test && pnpm build && pnpm docs:check && pnpm site:check && pnpm fixtures:compatibility:check && pnpm fixtures:ios-pass-replay:audit && pnpm fixtures:release-evidence-acquisition:check && pnpm fixtures:release-evidence-review-acquisition:check && pnpm verify:release-evidence-set -- --json && pnpm verify:release-evidence-review-archive-set -- --json && pnpm verify:dependency-security -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor",
+    "verify": "pnpm typecheck && pnpm test:coverage && pnpm build && pnpm docs:check && pnpm site:check && pnpm fixtures:compatibility:check && pnpm fixtures:ios-pass-replay:audit && pnpm fixtures:release-evidence-acquisition:check && pnpm fixtures:release-evidence-review-acquisition:check && pnpm verify:release-evidence-set -- --json && pnpm verify:release-evidence-review-archive-set -- --json && pnpm verify:dependency-security -- --json && pnpm verify:workflow-supply-chain -- --json && pnpm verify:action-pin-fixture && pnpm verify:action-pin-attestation-fixture && pnpm android:doctor",
     "android:doctor": "node scripts/android-verification.mjs doctor",
     "android:codegen": "node scripts/android-verification.mjs codegen",
     "android:build": "node scripts/android-verification.mjs build",
@@ -122,6 +122,7 @@
     "docker:android:shell": "node scripts/docker-android.mjs shell",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
   },
   "keywords": [
@@ -160,13 +161,14 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.12.1",
+    "@vitest/coverage-v8": "4.1.10",
     "chrome-launcher": "1.2.1",
     "lighthouse": "13.4.0",
     "playwright-core": "1.61.1",
     "tslib": "^2.8.1",
     "typescript": "^5.9.3",
     "vitepress": "1.6.4",
-    "vitest": "^4.0.16",
+    "vitest": "4.1.10",
     "vue": "3.5.40"
   },
   "packageManager": "pnpm@11.8.0",
