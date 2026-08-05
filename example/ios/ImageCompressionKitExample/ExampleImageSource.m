@@ -43,6 +43,17 @@ RCT_EXPORT_METHOD(isDemoCaptureEnabled:(RCTPromiseResolveBlock)resolve
   resolve(@([enabled isEqualToString:@"1"] || [simctlEnabled isEqualToString:@"1"] || hasCaptureArgument));
 }
 
+RCT_EXPORT_METHOD(getReactNativeArchitecture:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  (void)reject;
+#if RCT_NEW_ARCH_ENABLED
+  resolve(@"new");
+#else
+  resolve(@"legacy");
+#endif
+}
+
 RCT_EXPORT_METHOD(logSmokeEvent:(NSString *)message
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)

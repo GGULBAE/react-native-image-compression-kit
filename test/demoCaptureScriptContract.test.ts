@@ -13,4 +13,9 @@ describe('Android demo screenshot capture', () => {
       source.indexOf('adb exec-out screencap -p')
     );
   });
+
+  it('waits for schema-valid benchmark output before collecting evidence', () => {
+    expect(source).toContain('RNICK_BENCHMARK_PASS');
+    expect(source).toContain('create-benchmark-evidence.mjs');
+  });
 });

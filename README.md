@@ -273,6 +273,11 @@ git diff --check
 pnpm pack --dry-run
 ```
 
+Native demo captures also emit versioned benchmark evidence with raw samples,
+fixture digests, environment identity, and median/p95 summaries. See the
+[benchmark methodology](docs/benchmarks/README.md) for its measurement boundary,
+reproduction commands, and comparison policy.
+
 `pnpm test:coverage` runs the Vitest suite once with V8 coverage. The gate
 includes executable TypeScript runtime modules and directly tested pure
 `scripts/*-core.mjs` helpers, with rounded measured-baseline thresholds of 94%
@@ -344,6 +349,7 @@ Operational material is repository-only and is not included in the npm
 tarball:
 
 - [User guides and native-result demo](https://ggulbae.github.io/react-native-image-compression-kit/)
+- [Native benchmark evidence](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/benchmarks/README.md)
 
 - [Release evidence operations](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/README.md)
 - [Registry provenance](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/registry-provenance.md)
