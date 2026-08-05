@@ -175,7 +175,9 @@ export default function App(): React.JSX.Element {
             SAMPLE_MODULE,
             Platform.OS === 'ios' ? 'ios' : 'android'
           );
-          await emitIOSSmokeLog(benchmark.log);
+          for (const message of benchmark.logs) {
+            await emitIOSSmokeLog(message);
+          }
           setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: false }), 500);
         } catch (captureError) {
           const errorState = toErrorState(captureError);

@@ -26,6 +26,10 @@ run, fixture digest, runtime, device, and React Native architecture. The
 summary contains minimum, median, p95, and maximum elapsed time; minimum,
 median, and maximum output bytes; and the observed output dimensions.
 
+Raw payloads travel through bounded, indexed native-log messages so the sample
+set does not depend on platform log-entry length limits. The evidence builder
+rejects missing, duplicated, inconsistent, or malformed message sequences.
+
 Do not compare Android measurements with iOS measurements. Native codecs,
 device classes, simulator behavior, filesystem caches, thermals, and runner
 load differ. A result describes only its captured environment.

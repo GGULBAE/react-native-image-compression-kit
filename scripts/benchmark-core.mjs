@@ -3,17 +3,61 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 export const NATIVE_BENCHMARK_MARKER = 'RNICK_BENCHMARK_PASS';
+export const NATIVE_BENCHMARK_CHUNK_MARKER = 'RNICK_BENCHMARK_CHUNK';
 
 export function parseNativeBenchmarkPayload(contents) {
-  const matches = [
-    ...contents.matchAll(new RegExp(`${NATIVE_BENCHMARK_MARKER} (\\{.+\\})`, 'g')),
+  const completions = [
+    ...contents.matchAll(
+      new RegExp(`${NATIVE_BENCHMARK_MARKER} ([a-z0-9]+(?:-[a-z0-9]+)*) (\\d+)`, 'g')
+    ),
   ];
-  if (matches.length === 0) {
+  if (completions.length === 0) {
     throw new Error(`${NATIVE_BENCHMARK_MARKER} payload is missing`);
   }
 
+  const completion = completions.at(-1);
+  const captureId = completion[1];
+  const expectedChunks = Number(completion[2]);
+  if (!positiveInteger(expectedChunks) || expectedChunks > 100) {
+    throw new Error(`${NATIVE_BENCHMARK_MARKER} chunk count is invalid`);
+  }
+
+  const precedingContents = contents.slice(0, completion.index);
+  const escapedCaptureId = captureId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const chunks = [
+    ...precedingContents.matchAll(
+      new RegExp(
+        `${NATIVE_BENCHMARK_CHUNK_MARKER} ${escapedCaptureId} (\\d+)\\/(\\d+) (.+)$`,
+        'gm'
+      )
+    ),
+  ];
+  const fragments = new Map();
+  for (const chunk of chunks) {
+    const index = Number(chunk[1]);
+    const total = Number(chunk[2]);
+    if (
+      total !== expectedChunks ||
+      !positiveInteger(index) ||
+      index > expectedChunks ||
+      fragments.has(index)
+    ) {
+      throw new Error(`${NATIVE_BENCHMARK_MARKER} chunk sequence is invalid`);
+    }
+    fragments.set(index, chunk[3]);
+  }
+  if (fragments.size !== expectedChunks) {
+    throw new Error(
+      `${NATIVE_BENCHMARK_MARKER} payload is incomplete: expected ${expectedChunks} chunks, received ${fragments.size}`
+    );
+  }
+
   try {
-    return JSON.parse(matches.at(-1)[1]);
+    return JSON.parse(
+      Array.from({ length: expectedChunks }, (_, index) => fragments.get(index + 1)).join(
+        ''
+      )
+    );
   } catch (error) {
     throw new Error(`${NATIVE_BENCHMARK_MARKER} payload is invalid: ${error.message}`);
   }

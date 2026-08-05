@@ -4,6 +4,7 @@ import {
   type CompressionResult,
 } from 'react-native-image-compression-kit';
 import type { ExampleImageSourceModule } from './exampleNative';
+import { createNativeBenchmarkLogMessages } from './nativeBenchmarkLog';
 
 export const NATIVE_BENCHMARK_ID = 'jpeg-resize-q80';
 export const NATIVE_BENCHMARK_WARMUP_ITERATIONS = 2;
@@ -36,6 +37,7 @@ type NativeBenchmarkPayload = {
 type BenchmarkDependencies = {
   compress: typeof compressImage;
   now: () => number;
+  createCaptureId: () => string;
 };
 
 export async function runNativeBenchmark(
@@ -44,8 +46,9 @@ export async function runNativeBenchmark(
   dependencies: BenchmarkDependencies = {
     compress: compressImage,
     now: defaultClock,
+    createCaptureId: defaultCaptureId,
   }
-): Promise<{ payload: NativeBenchmarkPayload; log: string }> {
+): Promise<{ payload: NativeBenchmarkPayload; logs: string[] }> {
   const [sourceUri, architecture] = await Promise.all([
     sampleModule.copySampleJpegToCache(),
     sampleModule.getReactNativeArchitecture(),
@@ -93,7 +96,7 @@ export async function runNativeBenchmark(
 
   return {
     payload,
-    log: `RNICK_BENCHMARK_PASS ${JSON.stringify(payload)}`,
+    logs: createNativeBenchmarkLogMessages(payload, dependencies.createCaptureId()),
   };
 }
 
@@ -102,4 +105,8 @@ function defaultClock(): number {
     performance?: { now: () => number };
   };
   return runtime.performance?.now() ?? Date.now();
+}
+
+function defaultCaptureId(): string {
+  return `capture-${Date.now().toString(36)}`;
 }

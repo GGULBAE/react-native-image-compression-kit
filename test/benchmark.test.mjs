@@ -19,8 +19,14 @@ describe('native benchmark evidence', () => {
     expect(() => parseNativeBenchmarkPayload('unrelated log')).toThrow(
       'RNICK_BENCHMARK_PASS payload is missing'
     );
+    expect(() => parseNativeBenchmarkPayload('RNICK_BENCHMARK_PASS capture-a 0')).toThrow(
+      'RNICK_BENCHMARK_PASS chunk count is invalid'
+    );
     expect(() =>
-      parseNativeBenchmarkPayload('RNICK_BENCHMARK_PASS {not-json}')
+      parseNativeBenchmarkPayload(
+        'RNICK_BENCHMARK_CHUNK capture-a 1/1 {not-json}\n' +
+          'RNICK_BENCHMARK_PASS capture-a 1\n'
+      )
     ).toThrow('RNICK_BENCHMARK_PASS payload is invalid');
   });
 
@@ -28,8 +34,8 @@ describe('native benchmark evidence', () => {
     const payload = createPayload();
     const older = { ...payload, platform: 'ios' };
     const parsed = parseNativeBenchmarkPayload(
-      `RNICK_BENCHMARK_PASS ${JSON.stringify(older)}\n` +
-        `RNICK_BENCHMARK_PASS ${JSON.stringify(payload)}\n`
+      createChunkedLog(older, 'capture-old') +
+        createChunkedLog(payload, 'capture-current')
     );
 
     expect(parsed.platform).toBe('android');
@@ -38,6 +44,34 @@ describe('native benchmark evidence', () => {
       outputBytes: { min: 101, median: 105.5, max: 110 },
       dimensions: [{ width: 200, height: 320, count: 10 }],
     });
+  });
+
+  it('fails closed when chunked native output is incomplete, duplicated, or inconsistent', () => {
+    const serialized = JSON.stringify(createPayload());
+    const middle = Math.ceil(serialized.length / 2);
+    const first = serialized.slice(0, middle);
+    const second = serialized.slice(middle);
+
+    expect(() =>
+      parseNativeBenchmarkPayload(
+        `RNICK_BENCHMARK_CHUNK capture-a 1/2 ${first}\n` +
+          'RNICK_BENCHMARK_PASS capture-a 2\n'
+      )
+    ).toThrow('payload is incomplete');
+    expect(() =>
+      parseNativeBenchmarkPayload(
+        `RNICK_BENCHMARK_CHUNK capture-a 1/2 ${first}\n` +
+          `RNICK_BENCHMARK_CHUNK capture-a 1/2 ${second}\n` +
+          'RNICK_BENCHMARK_PASS capture-a 2\n'
+      )
+    ).toThrow('chunk sequence is invalid');
+    expect(() =>
+      parseNativeBenchmarkPayload(
+        `RNICK_BENCHMARK_CHUNK capture-a 1/3 ${first}\n` +
+          `RNICK_BENCHMARK_CHUNK capture-a 2/3 ${second}\n` +
+          'RNICK_BENCHMARK_PASS capture-a 2\n'
+      )
+    ).toThrow('chunk sequence is invalid');
   });
 
   it('summarizes odd sample counts and multiple output dimensions', () => {
@@ -188,7 +222,7 @@ describe('native benchmark evidence', () => {
     writeFileSync(source, Buffer.concat([Buffer.from([0xff, 0xd8]), Buffer.alloc(998, 1)]));
     writeFileSync(
       log,
-      `RNICK_BENCHMARK_PASS ${JSON.stringify(createPayload())}\n`
+      createChunkedLog(createPayload(), 'capture-cli')
     );
 
     const create = spawnSync(
@@ -307,5 +341,22 @@ function runVerifier(artifact) {
       artifact,
     ],
     { cwd: process.cwd(), encoding: 'utf8' }
+  );
+}
+
+function createChunkedLog(payload, captureId) {
+  const serialized = JSON.stringify(payload);
+  const chunkSize = 480;
+  const chunks = Array.from(
+    { length: Math.ceil(serialized.length / chunkSize) },
+    (_, index) => serialized.slice(index * chunkSize, (index + 1) * chunkSize)
+  );
+  return (
+    chunks
+      .map(
+        (chunk, index) =>
+          `RNICK_BENCHMARK_CHUNK ${captureId} ${index + 1}/${chunks.length} ${chunk}\n`
+      )
+      .join('') + `RNICK_BENCHMARK_PASS ${captureId} ${chunks.length}\n`
   );
 }
