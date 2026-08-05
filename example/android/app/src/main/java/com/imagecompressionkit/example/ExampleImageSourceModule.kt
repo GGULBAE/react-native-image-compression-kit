@@ -22,6 +22,11 @@ class ExampleImageSourceModule(
   }
 
   @ReactMethod
+  fun getReactNativeArchitecture(promise: Promise) {
+    promise.resolve(if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) "new" else "legacy")
+  }
+
+  @ReactMethod
   fun logSmokeEvent(message: String, promise: Promise) {
     Log.i("RNICK_DEMO", message)
     promise.resolve(null)

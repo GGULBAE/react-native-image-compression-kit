@@ -12,6 +12,7 @@ export type IOSJpegMetadataSummary = {
 
 export type ExampleImageSourceModule = {
   copySampleJpegToCache: () => Promise<string>;
+  getReactNativeArchitecture: () => Promise<'legacy' | 'new'>;
   copySamplePngToCache?: () => Promise<string>;
   copySampleHeicToCache?: () => Promise<string>;
   copySampleHeifToCache?: () => Promise<string>;

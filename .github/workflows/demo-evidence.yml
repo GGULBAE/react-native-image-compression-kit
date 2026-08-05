@@ -10,6 +10,8 @@ on:
       - "src/**"
       - "package.json"
       - "scripts/capture-android-demo.sh"
+      - "scripts/benchmark-core.mjs"
+      - "scripts/create-benchmark-evidence.mjs"
       - "scripts/create-demo-evidence.mjs"
       - "scripts/demo-evidence-core.mjs"
   workflow_dispatch:
@@ -150,8 +152,10 @@ jobs:
           SIMCTL_CHILD_RNICK_DEMO_CAPTURE=1 xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example --rnick-demo-capture
           mkdir -p /tmp/rnick-demo-raw
           for attempt in $(seq 1 120); do
-            xcrun simctl spawn "$udid" log show --style compact --last 3m --predicate 'eventMessage CONTAINS "RNICK_DEMO_"' > /tmp/rnick-demo-raw/native.log
-            grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && break
+            xcrun simctl spawn "$udid" log show --style compact --last 3m --predicate 'eventMessage CONTAINS "RNICK_DEMO_" OR eventMessage CONTAINS "RNICK_BENCHMARK_"' > /tmp/rnick-demo-raw/native.log
+            if grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && grep -q 'RNICK_BENCHMARK_PASS' /tmp/rnick-demo-raw/native.log; then
+              break
+            fi
             test "$attempt" != "120"
             sleep 1
           done
@@ -179,6 +183,16 @@ jobs:
             --source /tmp/rnick-demo-raw/source.jpg \
             --output /tmp/rnick-demo-raw/output.jpg \
             --screenshot /tmp/rnick-demo-raw/screen.png \
+            --log /tmp/rnick-demo-raw/native.log \
+            --destination demo-evidence/ios \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          node scripts/create-benchmark-evidence.mjs \
+            --platform ios \
+            --package-version "${{ steps.package.outputs.version }}" \
+            --source-sha "${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}" \
+            --runtime "$runtime" \
+            --device "$device" \
+            --source /tmp/rnick-demo-raw/source.jpg \
             --log /tmp/rnick-demo-raw/native.log \
             --destination demo-evidence/ios \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
