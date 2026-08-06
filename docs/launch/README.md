@@ -47,6 +47,44 @@ and the docs site stable for at least one observation window.
 - For a serious defect, prefer deprecation and a forward hotfix. npm versions,
   signed evidence, immutable releases, and protected tags are never rewritten.
 
+## Refresh the native walkthrough
+
+Run the existing Native Demo Evidence workflow with an exact full source SHA.
+It records the deterministic walkthrough on the hosted Android emulator and
+iOS simulator, then uploads separate evidence fragments. Download both
+artifacts and assemble a candidate directory without overwriting the current
+site evidence:
+
+```bash
+pnpm merge:demo-evidence -- \
+  --android-dir path/to/native-demo-android-SHA \
+  --ios-dir path/to/native-demo-ios-SHA \
+  --destination path/to/reviewed-demo-candidate
+```
+
+Review both recordings, verify their manifest and file digests independently,
+then replace `website/public/demo` in a focused pull request. Run
+`pnpm verify:demo-evidence`, `pnpm site:check`, and `pnpm site:build` before
+publishing. Never synthesize a missing platform recording or relabel a local
+capture as hosted evidence.
+
+The hosted screen recorders can omit repeated frames during static stages. The
+workflow therefore rescales the real captured frames to the independently
+logged walkthrough duration, caps or pads that moving timeline to the logged
+length, and appends a six-second hold of the exact final native screenshot
+before evidence creation. Review the raw-to-normalized
+duration report in the job log, the final-frame provenance, and the final
+video-track duration; the movie-header duration alone is not sufficient
+evidence.
+
+The iOS job first launches the normal app for 20 seconds to prime the Metro
+bundle, then terminates it without collecting evidence. The recorder starts two
+seconds before the subsequent capture-only launch so unified-log polling cannot
+miss the Source or Options screens, and it stops just after the real Result
+stage begins. Normalization trims a three-second recorder/startup lead before
+rescaling the real recorded frames; the appended six-second frame is the exact
+native screenshot collected after the walkthrough finishes.
+
 ## Materials
 
 - [English announcement](announcement-en.md)
