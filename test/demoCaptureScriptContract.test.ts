@@ -26,7 +26,12 @@ describe('Android demo screenshot capture', () => {
   });
 
   it('records the complete guided walkthrough on both native platforms', () => {
-    expect(guidedDemo).toContain('const SOURCE_STAGE_MS = 12_000');
+    expect(guidedDemo).toContain('const ANDROID_SOURCE_STAGE_MS = 12_000');
+    expect(guidedDemo).toContain('const IOS_SOURCE_STAGE_MS = 9_000');
+    expect(guidedDemo).toContain(
+      "platform === 'android' ? ANDROID_SOURCE_STAGE_MS : IOS_SOURCE_STAGE_MS"
+    );
+    expect(guidedScreen).toContain('<ActivityIndicator color="#0d5f59" size="small" />');
     expect(guidedScreen).toContain('contentInsetAdjustmentBehavior="never"');
     expect(guidedScreen).toContain("(StatusBar.currentHeight ?? 24) + 12 : 64");
     expect(source).toContain('adb shell screenrecord');

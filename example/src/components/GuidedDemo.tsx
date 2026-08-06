@@ -235,6 +235,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 function Pill({ text }: { text: string }) {
   return (
     <View style={styles.pill}>
+      <ActivityIndicator color="#0d5f59" size="small" />
       <Text style={styles.pillText}>{text}</Text>
     </View>
   );
@@ -277,7 +278,8 @@ const styles = StyleSheet.create({
   stageTitle: { color: '#102a2a', fontSize: 23, fontWeight: '800' },
   heroImage: { backgroundColor: '#eef3f2', borderRadius: 16, flex: 1, width: '100%' },
   pill: {
-    alignSelf: 'center', backgroundColor: '#e7f6f2', borderRadius: 99,
+    alignItems: 'center', alignSelf: 'center', backgroundColor: '#e7f6f2',
+    borderRadius: 99, flexDirection: 'row', gap: 7,
     paddingHorizontal: 14, paddingVertical: 8,
   },
   pillText: { color: '#0d5f59', fontSize: 13, fontWeight: '700' },
