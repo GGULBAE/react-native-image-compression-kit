@@ -11,10 +11,11 @@ from the npm package.
 | Package metadata, exports, Codegen, publish allowlist, and command wiring | `test/packageContract.test.ts` | `pnpm test` |
 | Executable TypeScript runtime and directly tested pure core module coverage | `vitest.config.ts`, `coverage.config.ts`, and `test/coverageContract.test.ts` | `pnpm test:coverage` through `pnpm verify` |
 | README, release status, required documentation, and local links | `test/docsSemantic.test.mjs` and `scripts/docs-semantic-core.mjs` | `pnpm docs:check` |
-| Reviewed pnpm CLI plus development-only Vite/VitePress/esbuild and Lighthouse/Sentry/OpenTelemetry resolution and production dependency boundary | `test/dependencySecurity.test.mjs` and `scripts/dependency-security-core.mjs` | `pnpm verify:dependency-security -- --json` |
+| Reviewed pnpm CLI plus development-only Vite/VitePress/esbuild, PostCSS, and Lighthouse/Sentry/OpenTelemetry resolution and production dependency boundary | `test/dependencySecurity.test.mjs` and `scripts/dependency-security-core.mjs` | `pnpm verify:dependency-security -- --json` |
 | GitHub Actions pins and workflow supply chain | `test/workflowSupplyChain.test.mjs` and `scripts/workflow-supply-chain-core.mjs` | `pnpm verify:workflow-supply-chain -- --json` |
 | Public documentation site structure, claims, local links, and npm exclusion | `scripts/verify-site.mjs` | `pnpm site:check` and `pnpm site:build` |
 | Native demo result metrics, source/output/screenshot bytes, presentation-video bytes, digests, platform provenance, and exact source identity | `test/demoEvidence.test.mjs` and `scripts/demo-evidence-core.mjs` | Native Demo Evidence workflow and `pnpm verify:demo-evidence` |
+| Native baseline and exact-plan implementation comparison metrics, balanced sample positions, comparator identity, fixture/plan bytes, digests, and platform provenance | `test/benchmark.test.mjs`, `test/benchmarkComparison.test.mjs`, `scripts/benchmark-core.mjs`, and `scripts/benchmark-comparison-core.mjs` | Native Demo Evidence workflow, `pnpm verify:benchmark-evidence`, and `pnpm verify:benchmark-comparison-evidence` |
 | Packed-consumer compatibility lane definitions | `test/compatibilityMatrix.test.mjs` and `scripts/compatibility-matrix-core.mjs` | `pnpm fixtures:compatibility:check` and the Compatibility workflow |
 | Built public-site performance, accessibility, and SEO | `scripts/verify-site-quality.mjs` | `pnpm site:build && pnpm site:quality` |
 | Repository metadata, security features, Actions policy, rulesets, environments, and Pages | `test/repositorySettings.test.mjs`, `docs/repository-settings.json`, and `scripts/repository-settings-core.mjs` | `pnpm fixtures:repository-settings:check` and `pnpm audit:repository-settings` |
@@ -92,6 +93,9 @@ tests plus host-app smoke test in their supported environments.
 - Change the reviewed pnpm CLI, a development-tool floor, or scoped pnpm override in the
   dependency-security verifier and its mutation tests.
 - Change native behavior in the corresponding Kotlin or iOS smoke tests.
+- Change benchmark comparators, versions, or measurement boundaries in the
+  exact comparison plan, comparison verifier, mutation tests, and benchmark
+  methodology documentation together.
 - Change workflow actions or pins in the workflow supply-chain verifier.
 - Change release evidence rules in the evidence-specific verifier and fixtures.
 

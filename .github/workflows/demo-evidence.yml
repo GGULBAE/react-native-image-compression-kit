@@ -6,14 +6,18 @@ on:
       - ".github/workflows/demo-evidence.yml"
       - "android/**"
       - "example/**"
+      - "benchmarks/native-comparison/**"
       - "ios/**"
       - "src/**"
       - "package.json"
       - "scripts/capture-android-demo.sh"
       - "scripts/benchmark-core.mjs"
+      - "scripts/benchmark-comparison-core.mjs"
+      - "scripts/create-benchmark-comparison-evidence.mjs"
       - "scripts/create-benchmark-evidence.mjs"
       - "scripts/create-demo-evidence.mjs"
       - "scripts/demo-evidence-core.mjs"
+      - "scripts/verify-benchmark-comparison-evidence.mjs"
   workflow_dispatch:
     inputs:
       source_sha:
@@ -153,7 +157,9 @@ jobs:
           mkdir -p /tmp/rnick-demo-raw
           for attempt in $(seq 1 120); do
             xcrun simctl spawn "$udid" log show --style compact --last 3m --predicate 'eventMessage CONTAINS "RNICK_DEMO_" OR eventMessage CONTAINS "RNICK_BENCHMARK_"' > /tmp/rnick-demo-raw/native.log
-            if grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && grep -q 'RNICK_BENCHMARK_PASS' /tmp/rnick-demo-raw/native.log; then
+            if grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && \
+              grep -q 'RNICK_BENCHMARK_PASS' /tmp/rnick-demo-raw/native.log && \
+              grep -q 'RNICK_BENCHMARK_COMPARISON_PASS' /tmp/rnick-demo-raw/native.log; then
               break
             fi
             test "$attempt" != "120"
@@ -196,6 +202,17 @@ jobs:
             --log /tmp/rnick-demo-raw/native.log \
             --destination demo-evidence/ios \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          node scripts/create-benchmark-comparison-evidence.mjs \
+            --platform ios \
+            --source-sha "${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}" \
+            --runtime "$runtime" \
+            --device "$device" \
+            --source /tmp/rnick-demo-raw/source.jpg \
+            --log /tmp/rnick-demo-raw/native.log \
+            --plan benchmarks/native-comparison/implementations.json \
+            --destination demo-evidence/ios \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          node scripts/verify-benchmark-comparison-evidence.mjs demo-evidence/ios
 
       - name: Upload iOS evidence
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

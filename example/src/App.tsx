@@ -37,6 +37,7 @@ import { SourcePanel } from './components/SourcePanel';
 import { useCompressionForm } from './useCompressionForm';
 import { runNativeDemoCapture } from './demoCapture';
 import { runNativeBenchmark } from './nativeBenchmark';
+import { runNativeComparisonBenchmark } from './nativeComparisonBenchmark';
 
 const EXAMPLE_OUTPUT_FORMATS: OutputFormat[] = ['jpeg', 'png', 'webp'];
 const RESIZE_MODES: ResizeMode[] = ['contain', 'cover', 'stretch'];
@@ -176,6 +177,13 @@ export default function App(): React.JSX.Element {
             Platform.OS === 'ios' ? 'ios' : 'android'
           );
           for (const message of benchmark.logs) {
+            await emitIOSSmokeLog(message);
+          }
+          const comparison = await runNativeComparisonBenchmark(
+            SAMPLE_MODULE,
+            Platform.OS === 'ios' ? 'ios' : 'android'
+          );
+          for (const message of comparison.logs) {
             await emitIOSSmokeLog(message);
           }
           setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: false }), 500);

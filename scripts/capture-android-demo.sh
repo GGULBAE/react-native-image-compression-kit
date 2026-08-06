@@ -71,7 +71,8 @@ mkdir -p /tmp/rnick-demo-raw
 for attempt in $(seq 1 120); do
   adb logcat -d -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log
   if grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && \
-    grep -q 'RNICK_BENCHMARK_PASS' /tmp/rnick-demo-raw/native.log; then
+    grep -q 'RNICK_BENCHMARK_PASS' /tmp/rnick-demo-raw/native.log && \
+    grep -q 'RNICK_BENCHMARK_COMPARISON_PASS' /tmp/rnick-demo-raw/native.log; then
     break
   fi
   test "$attempt" != "120"
@@ -131,3 +132,16 @@ node scripts/create-benchmark-evidence.mjs \
   --log /tmp/rnick-demo-raw/native.log \
   --destination demo-evidence/android \
   --run-url "$RNICK_DEMO_RUN_URL"
+
+node scripts/create-benchmark-comparison-evidence.mjs \
+  --platform android \
+  --source-sha "$RNICK_DEMO_SOURCE_SHA" \
+  --runtime "$runtime" \
+  --device "$device" \
+  --source /tmp/rnick-demo-raw/source.jpg \
+  --log /tmp/rnick-demo-raw/native.log \
+  --plan benchmarks/native-comparison/implementations.json \
+  --destination demo-evidence/android \
+  --run-url "$RNICK_DEMO_RUN_URL"
+
+node scripts/verify-benchmark-comparison-evidence.mjs demo-evidence/android

@@ -5,15 +5,19 @@ import {
 } from 'react-native-image-compression-kit';
 import type { ExampleImageSourceModule } from './exampleNative';
 import { createNativeBenchmarkLogMessages } from './nativeBenchmarkLog';
+import {
+  NATIVE_BENCHMARK_ID,
+  NATIVE_BENCHMARK_MEASURED_ITERATIONS,
+  NATIVE_BENCHMARK_OPERATION,
+  NATIVE_BENCHMARK_WARMUP_ITERATIONS,
+} from './nativeBenchmarkConstants';
 
-export const NATIVE_BENCHMARK_ID = 'jpeg-resize-q80';
-export const NATIVE_BENCHMARK_WARMUP_ITERATIONS = 2;
-export const NATIVE_BENCHMARK_MEASURED_ITERATIONS = 10;
-export const NATIVE_BENCHMARK_OPERATION = {
-  resize: { maxWidth: 320, maxHeight: 320, mode: 'contain' },
-  output: { format: 'jpeg', quality: 80 },
-  metadata: 'strip',
-} satisfies Omit<CompressionOptions, 'source'>;
+export {
+  NATIVE_BENCHMARK_ID,
+  NATIVE_BENCHMARK_MEASURED_ITERATIONS,
+  NATIVE_BENCHMARK_OPERATION,
+  NATIVE_BENCHMARK_WARMUP_ITERATIONS,
+} from './nativeBenchmarkConstants';
 
 type BenchmarkSample = {
   iteration: number;
@@ -55,7 +59,9 @@ export async function runNativeBenchmark(
   ]);
   const options: CompressionOptions = {
     source: { uri: sourceUri },
-    ...NATIVE_BENCHMARK_OPERATION,
+    resize: NATIVE_BENCHMARK_OPERATION.resize,
+    output: NATIVE_BENCHMARK_OPERATION.output,
+    metadata: NATIVE_BENCHMARK_OPERATION.metadata,
   };
 
   for (let iteration = 0; iteration < NATIVE_BENCHMARK_WARMUP_ITERATIONS; iteration += 1) {

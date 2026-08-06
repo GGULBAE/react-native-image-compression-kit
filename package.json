@@ -75,6 +75,8 @@
     "verify:demo-evidence": "node scripts/verify-demo-evidence.mjs",
     "benchmark:evidence": "node scripts/create-benchmark-evidence.mjs",
     "verify:benchmark-evidence": "node scripts/verify-benchmark-evidence.mjs",
+    "benchmark:comparison:evidence": "node scripts/create-benchmark-comparison-evidence.mjs",
+    "verify:benchmark-comparison-evidence": "node scripts/verify-benchmark-comparison-evidence.mjs",
     "merge:demo-evidence": "node scripts/merge-demo-evidence.mjs",
     "release:dry-run": "node scripts/release-dry-run.mjs",
     "smoke:consumer": "pnpm build && node scripts/consumer-smoke-test.mjs",

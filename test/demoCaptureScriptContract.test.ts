@@ -17,5 +17,8 @@ describe('Android demo screenshot capture', () => {
   it('waits for schema-valid benchmark output before collecting evidence', () => {
     expect(source).toContain('RNICK_BENCHMARK_PASS');
     expect(source).toContain('create-benchmark-evidence.mjs');
+    expect(source).toContain('RNICK_BENCHMARK_COMPARISON_PASS');
+    expect(source).toContain('create-benchmark-comparison-evidence.mjs');
+    expect(source).toContain('verify-benchmark-comparison-evidence.mjs');
   });
 });

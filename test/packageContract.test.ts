@@ -132,6 +132,10 @@ describe('npm package contract', () => {
       'benchmark:evidence': 'node scripts/create-benchmark-evidence.mjs',
       'verify:benchmark-evidence':
         'node scripts/verify-benchmark-evidence.mjs',
+      'benchmark:comparison:evidence':
+        'node scripts/create-benchmark-comparison-evidence.mjs',
+      'verify:benchmark-comparison-evidence':
+        'node scripts/verify-benchmark-comparison-evidence.mjs',
       'release:dry-run': 'node scripts/release-dry-run.mjs',
       'android:doctor': 'node scripts/android-verification.mjs doctor',
       'android:codegen': 'node scripts/android-verification.mjs codegen',
