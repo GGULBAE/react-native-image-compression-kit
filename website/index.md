@@ -75,7 +75,8 @@ URIs are intentionally outside the package scope.
 ## What this site demonstrates
 
 The [native result explorer](./demo/index.md) presents artifacts produced by
-the Android and iOS example apps, including options, byte counts, dimensions,
+the Android and iOS example apps, including an ordered source → options →
+capability → compression → result walkthrough, byte counts, dimensions,
 platform information, and digests. It does not substitute a browser codec for
 the package's native pipeline.
 
