@@ -42,6 +42,29 @@ The Vite/esbuild alerts are resolved in the focused dependency-security change,
 not by merging the mixed PR #11. Babel 8 and TypeScript 7 remain explicitly out
 of scope and must never be smuggled into a routine maintenance group.
 
+## 2026-08-06 backlog disposition
+
+The next queue was reviewed as four separate risk decisions. A grouped proposal
+was not treated as safe merely because some of its members were routine patch
+updates, and workflow SHA proposals did not bypass the Action Pin Review
+contract.
+
+| PR | Proposal | Classification | Disposition |
+| --- | --- | --- | --- |
+| [#33](https://github.com/GGULBAE/react-native-image-compression-kit/pull/33) | Lighthouse 13.4.1, Playwright 1.62.1, and React Native 0.86.2 toolchain packages | Invalid review unit spanning the audited Lighthouse security baseline, browser tooling, and native toolchain | Closed; keep Lighthouse 13.4.0 until its audited baseline is deliberately revised, and recreate unrelated updates as focused proposals |
+| [#36](https://github.com/GGULBAE/react-native-image-compression-kit/pull/36) | `actions/attest`, `actions/setup-java`, and `gradle/actions/setup-gradle` | Workflow SHA changes without matching canonical lock and manual review evidence | Closed; recreate only through Action Pin Review with an updated `.github/actions-lock.json` |
+| [#39](https://github.com/GGULBAE/react-native-image-compression-kit/pull/39) | React 19.2.3 to 19.2.8 and the compatible `@types/react` lock resolution | Focused example compatibility patch | Squash-merged as `cd55a5b87b8978f6416d2cff46a41574ae114284` after all 18 current-head checks passed |
+| [#35](https://github.com/GGULBAE/react-native-image-compression-kit/pull/35) | React Native 0.86.0 to 0.86.2 | Focused example runtime compatibility patch | Squash-merged as `f2a6119070bb0c93d67730539d6e41d61582c994` after all 18 current-head checks passed |
+
+The first RN-floor Android verification of #35 exposed a repeatable Gradle
+Jetifier heap failure in the disposable compatibility consumer. Focused
+prerequisite [#43](https://github.com/GGULBAE/react-native-image-compression-kit/pull/43)
+raised only that generated consumer's Gradle heap and metaspace limits, added a
+source contract test, and was squash-merged as
+`48a53398cc0a5666f0c1a44aeda356a957f2537b`. The refreshed #35 matrix then passed
+all eight Android/iOS compatibility lanes, including the RN-floor Android lane;
+no protected check or dependency-security baseline was weakened.
+
 ## Review checklist
 
 For every future proposal:
