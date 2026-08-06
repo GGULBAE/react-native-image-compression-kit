@@ -69,6 +69,9 @@ describe('Android demo screenshot capture', () => {
     expect(workflow).toContain('recording-raw.mp4');
     expect(workflow).toContain('normalize-demo-recording.mjs');
     expect(workflow).toContain('--trim-start-seconds 2');
+    expect(readFileSync('scripts/normalize-demo-recording.mjs', 'utf8')).toContain(
+      'tpad=stop_mode=clone:stop_duration=${movingDurationSeconds}'
+    );
     expect(workflow).toContain('--result-frame /tmp/rnick-demo-raw/screen.png');
     expect(workflow.indexOf('node scripts/normalize-demo-recording.mjs')).toBeLessThan(
       workflow.indexOf('node scripts/create-demo-evidence.mjs')

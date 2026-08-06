@@ -70,8 +70,9 @@ capture as hosted evidence.
 
 The hosted screen recorders can omit repeated frames during static stages. The
 workflow therefore rescales the real captured frames to the independently
-logged walkthrough duration and appends a six-second hold of the exact final
-native screenshot before evidence creation. Review the raw-to-normalized
+logged walkthrough duration, caps or pads that moving timeline to the logged
+length, and appends a six-second hold of the exact final native screenshot
+before evidence creation. Review the raw-to-normalized
 duration report in the job log, the final-frame provenance, and the final
 video-track duration; the movie-header duration alone is not sufficient
 evidence.

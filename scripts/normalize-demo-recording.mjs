@@ -61,7 +61,9 @@ const result = spawnSync(
     '-i', resultFrame,
     '-filter_complex',
     `[0:v]trim=start=${trimStartSeconds},setpts=${timestampScale.toFixed(9)}*(PTS-STARTPTS),` +
-      'fps=15,format=yuv420p,setsar=1[walkthrough];' +
+      `fps=15,tpad=stop_mode=clone:stop_duration=${movingDurationSeconds},` +
+      `trim=duration=${movingDurationSeconds},setpts=PTS-STARTPTS,` +
+      'format=yuv420p,setsar=1[walkthrough];' +
       `[1:v]scale=${rawReport.width}:${rawReport.height}:flags=lanczos,` +
       'fps=15,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[result];' +
       '[walkthrough][result]concat=n=2:v=1:a=0[video]',
@@ -93,7 +95,10 @@ if (
   normalizedReport.durationSeconds > 30 ||
   Math.abs(normalizedReport.durationSeconds - targetDurationSeconds) > 0.5
 ) {
-  throw new Error('normalized recording duration does not match the guided walkthrough');
+  throw new Error(
+    `normalized recording duration ${normalizedReport.durationSeconds} does not match ` +
+      `the guided walkthrough ${targetDurationSeconds}`
+  );
 }
 
 process.stdout.write(`${JSON.stringify({
