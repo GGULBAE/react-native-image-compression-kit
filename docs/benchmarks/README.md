@@ -92,6 +92,11 @@ pod target required by the exact published image-resizer podspec. This keeps the
 comparator package unpatched and places every adapter in the same built
 application; it is an application build constraint, not part of the timed call.
 
+The pinned compressor's Android audio dependency declares
+`allowBackup=true`. The example app explicitly preserves
+`android:allowBackup="false"` with a manifest-merger override, so adding the
+comparison dependency does not weaken the host application's backup boundary.
+
 After downloading one platform artifact, verify the comparison without network
 access:
 

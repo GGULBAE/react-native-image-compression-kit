@@ -67,6 +67,16 @@ describe('native comparison benchmark evidence', () => {
     const podfile = readFileSync('example/ios/Podfile', 'utf8');
     expect(podfile).toContain("ENV['RCT_USE_RN_DEP'] = '0'");
     expect(podfile).toContain("ENV['RCT_USE_PREBUILT_RNCORE'] = '0'");
+
+    const androidManifest = readFileSync(
+      'example/android/app/src/main/AndroidManifest.xml',
+      'utf8'
+    );
+    expect(androidManifest).toContain(
+      'xmlns:tools="http://schemas.android.com/tools"'
+    );
+    expect(androidManifest).toContain('android:allowBackup="false"');
+    expect(androidManifest).toContain('tools:replace="android:allowBackup"');
   });
 
   it('round-trips the final bounded comparison marker and summarizes samples', () => {

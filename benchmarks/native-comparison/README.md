@@ -41,6 +41,12 @@ example pods from source preserves the unpatched upstream comparator and gives
 all three adapters the same application environment; metric inspection remains
 outside the timed operation.
 
+On Android, `react-native-compressor@2.0.3` brings in `TAndroidLame`, whose
+library manifest declares `allowBackup=true`. The example application keeps
+its existing `allowBackup=false` security boundary and resolves the manifest
+merge explicitly with `tools:replace="android:allowBackup"`; the comparator
+and its transitive dependency remain unpatched.
+
 ## Updating an implementation
 
 1. Confirm the upstream repository, tag commit, package license, peer
