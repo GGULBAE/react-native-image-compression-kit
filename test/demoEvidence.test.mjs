@@ -3,7 +3,10 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { inspectDemoEvidence } from '../scripts/demo-evidence-core.mjs';
+import {
+  inspectDemoEvidence,
+  inspectMp4,
+} from '../scripts/demo-evidence-core.mjs';
 
 const SHA = 'a'.repeat(40);
 
@@ -48,6 +51,100 @@ describe('native demo evidence', () => {
     expect(report.error).toContain('presentation video SHA-256 mismatch');
     expect(report.error).toContain('presentation video is not MP4');
     expect(report.error).toContain('presentation video duration');
+  });
+
+  it('accepts timed native recordings and the exact guided walkthrough', () => {
+    const fixture = createGuidedFixture();
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest)).toMatchObject({
+      status: 'passed',
+      platforms: ['android', 'ios'],
+      error: null,
+    });
+    expect(inspectMp4(fixture.recording)).toMatchObject({
+      status: 'passed',
+      durationSeconds: 24,
+    });
+  });
+
+  it('rejects recording metadata and guided stage mutation', () => {
+    const fixture = createGuidedFixture();
+    const android = fixture.manifest.cases[0];
+    android.assets.recording.durationSeconds = 17;
+    android.walkthrough.stages[2].id = 'result';
+    android.walkthrough.durationMs = 31_000;
+    android.walkthrough.result.byteSize += 1;
+    const report = inspectDemoEvidence(fixture.root, fixture.manifest);
+    expect(report.status).toBe('failed');
+    expect(report.error).toContain('recording duration does not match MP4 metadata');
+    expect(report.error).toContain('recording duration must be between 18 and 30 seconds');
+    expect(report.error).toContain('walkthrough stage order or ordinal drifted');
+    expect(report.error).toContain('walkthrough duration must be between 18 and 30 seconds');
+    expect(report.error).toContain('walkthrough result does not match the native result');
+  });
+
+  it('rejects truncated and untimed MP4 containers', () => {
+    expect(inspectMp4(Buffer.from('not an mp4'))).toMatchObject({
+      status: 'failed',
+      durationSeconds: null,
+    });
+    expect(inspectMp4(box('ftyp', Buffer.from('isom'))).error).toContain(
+      'moov box is missing'
+    );
+    expect(
+      inspectMp4(
+        Buffer.concat([
+          box('ftyp', Buffer.from('isom')),
+          box('moov', box('free', Buffer.alloc(0))),
+        ])
+      ).error
+    ).toContain('mvhd box is missing');
+    const invalidDuration = Buffer.alloc(20);
+    expect(
+      inspectMp4(
+        Buffer.concat([
+          box('ftyp', Buffer.from('isom')),
+          box('moov', box('mvhd', invalidDuration)),
+        ])
+      ).error
+    ).toContain('mvhd duration is invalid');
+  });
+
+  it('rejects malformed native case metadata and asset bytes', () => {
+    const fixture = createFixture();
+    const android = fixture.manifest.cases[0];
+    fixture.manifest.status = 'failed';
+    fixture.manifest.packageVersion = 'latest';
+    fixture.manifest.sourceCommit = 'short';
+    android.schemaVersion = 2;
+    android.status = 'failed';
+    android.capturedAt = 'not-a-date';
+    android.runtime = '';
+    android.device = '';
+    android.options.output.format = 'png';
+    android.result.format = 'png';
+    android.result.width = 0;
+    android.assets.source.file = '/absolute.jpg';
+    android.assets.output.byteSize += 1;
+    android.assets.output.sha256 = '0'.repeat(64);
+    writeFileSync(path.join(fixture.root, 'android', 'output.jpg'), Buffer.from('bad'));
+    writeFileSync(path.join(fixture.root, 'android', 'screen.png'), Buffer.from('bad'));
+    fixture.manifest.cases[1].assets.source.file = 'ios/missing.jpg';
+    const report = inspectDemoEvidence(fixture.root, fixture.manifest);
+    expect(report.status).toBe('failed');
+    expect(report.error).toContain('status must be passed');
+    expect(report.error).toContain('packageVersion must be an exact semantic version');
+    expect(report.error).toContain('sourceCommit must be a lowercase full commit SHA');
+    expect(report.error).toContain('schemaVersion does not match the manifest');
+    expect(report.error).toContain('capturedAt must be an ISO timestamp');
+    expect(report.error).toContain('runtime and device are required');
+    expect(report.error).toContain('deterministic JPEG options drifted');
+    expect(report.error).toContain('native result metrics are invalid');
+    expect(report.error).toContain('source file path is invalid');
+    expect(report.error).toContain('output byte size mismatch');
+    expect(report.error).toContain('output SHA-256 mismatch');
+    expect(report.error).toContain('output is not JPEG');
+    expect(report.error).toContain('screenshot is not PNG');
+    expect(report.error).toContain('source file is missing');
   });
 });
 
@@ -116,4 +213,52 @@ function createFixture() {
 
 function asset(file, bytes) {
   return { file, byteSize: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+}
+
+function createGuidedFixture() {
+  const fixture = createFixture();
+  const recording = timedMp4(24);
+  fixture.manifest.schemaVersion = 2;
+  delete fixture.manifest.presentation;
+  for (const evidence of fixture.manifest.cases) {
+    evidence.schemaVersion = 2;
+    const recordingPath = path.join(fixture.root, evidence.platform, 'recording.mp4');
+    writeFileSync(recordingPath, recording);
+    evidence.assets.recording = {
+      ...asset(`${evidence.platform}/recording.mp4`, recording),
+      durationSeconds: 24,
+      captureMethod: `${evidence.platform} native fixture capture`,
+    };
+    evidence.walkthrough = {
+      schemaVersion: 1,
+      platform: evidence.platform,
+      status: 'passed',
+      stages: [
+        { id: 'source', ordinal: 0, elapsedMs: 0 },
+        { id: 'options', ordinal: 1, elapsedMs: 5_000 },
+        { id: 'capabilities', ordinal: 2, elapsedMs: 9_000 },
+        { id: 'compressing', ordinal: 3, elapsedMs: 13_000 },
+        { id: 'result', ordinal: 4, elapsedMs: 15_000 },
+      ],
+      durationMs: 22_000,
+      options: structuredClone(evidence.options),
+      result: structuredClone(evidence.result),
+    };
+  }
+  return { ...fixture, recording };
+}
+
+function timedMp4(durationSeconds) {
+  const ftyp = box('ftyp', Buffer.from('isom\0\0\0\0isom'));
+  const mvhdPayload = Buffer.alloc(20);
+  mvhdPayload.writeUInt32BE(1_000, 12);
+  mvhdPayload.writeUInt32BE(durationSeconds * 1_000, 16);
+  return Buffer.concat([ftyp, box('moov', box('mvhd', mvhdPayload))]);
+}
+
+function box(type, payload) {
+  const header = Buffer.alloc(8);
+  header.writeUInt32BE(payload.length + 8, 0);
+  header.write(type, 4, 4, 'ascii');
+  return Buffer.concat([header, payload]);
 }

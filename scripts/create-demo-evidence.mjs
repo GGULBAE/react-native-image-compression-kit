@@ -3,6 +3,11 @@
 import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { inspectMp4 } from './demo-evidence-core.mjs';
+import {
+  inspectGuidedDemoPayload,
+  parseGuidedDemoPayload,
+} from './guided-demo-core.mjs';
 
 const options = parseArgs(process.argv.slice(2));
 for (const field of [
@@ -14,6 +19,8 @@ for (const field of [
   'source',
   'output',
   'screenshot',
+  'recording',
+  'captureMethod',
   'log',
   'destination',
   'runUrl',
@@ -32,6 +39,7 @@ if (!/^[0-9a-f]{40}$/.test(options.sourceSha)) {
 
 const log = readFileSync(path.resolve(options.log), 'utf8');
 const payload = parseDemoPayload(log);
+const guidedPayload = parseGuidedDemoPayload(log);
 if (payload.platform !== options.platform || payload.schemaVersion !== 1) {
   throw new Error('native demo payload platform or schema does not match the request');
 }
@@ -52,6 +60,14 @@ if (
 ) {
   throw new Error('native demo output must be smaller than its deterministic source');
 }
+const guidedReport = inspectGuidedDemoPayload(guidedPayload, {
+  platform: options.platform,
+  options: payload.options,
+  result: nativeResultMetrics(payload.result),
+});
+if (guidedReport.status !== 'passed') {
+  throw new Error(guidedReport.error);
+}
 
 const destination = path.resolve(options.destination);
 mkdirSync(destination, { recursive: true });
@@ -59,10 +75,12 @@ const assetPaths = {
   source: path.join(destination, 'source.jpg'),
   output: path.join(destination, 'output.jpg'),
   screenshot: path.join(destination, 'screen.png'),
+  recording: path.join(destination, 'recording.mp4'),
 };
 cpSync(path.resolve(options.source), assetPaths.source);
 cpSync(path.resolve(options.output), assetPaths.output);
 cpSync(path.resolve(options.screenshot), assetPaths.screenshot);
+cpSync(path.resolve(options.recording), assetPaths.recording);
 
 const assets = Object.fromEntries(
   Object.entries(assetPaths).map(([name, filePath]) => [
@@ -83,9 +101,15 @@ if (assets.output.byteSize !== payload.result.byteSize) {
 if (!isPng(readFileSync(assetPaths.screenshot))) {
   throw new Error('captured screen is not a PNG file');
 }
+const recordingReport = inspectMp4(readFileSync(assetPaths.recording));
+if (recordingReport.status !== 'passed') {
+  throw new Error(`captured walkthrough is not a valid timed MP4: ${recordingReport.error}`);
+}
+assets.recording.durationSeconds = roundMilliseconds(recordingReport.durationSeconds);
+assets.recording.captureMethod = options.captureMethod;
 
 const evidence = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   status: 'passed',
   packageVersion: options.packageVersion,
   sourceCommit: options.sourceSha,
@@ -104,6 +128,7 @@ const evidence = {
     originalByteSize: payload.result.originalByteSize,
     compressionRatio: payload.result.compressionRatio,
   },
+  walkthrough: guidedPayload,
   assets,
 };
 writeFileSync(
@@ -130,6 +155,21 @@ function isPng(bytes) {
   return bytes.subarray(0, 8).equals(
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
   );
+}
+
+function nativeResultMetrics(result) {
+  return {
+    format: result.format,
+    width: result.width,
+    height: result.height,
+    byteSize: result.byteSize,
+    originalByteSize: result.originalByteSize,
+    compressionRatio: result.compressionRatio,
+  };
+}
+
+function roundMilliseconds(value) {
+  return Math.round(value * 1_000) / 1_000;
 }
 
 function parseArgs(args) {

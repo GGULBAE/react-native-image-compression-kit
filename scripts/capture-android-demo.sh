@@ -6,6 +6,21 @@ set -euo pipefail
 : "${RNICK_DEMO_SOURCE_SHA:?RNICK_DEMO_SOURCE_SHA is required}"
 : "${RNICK_DEMO_RUN_URL:?RNICK_DEMO_RUN_URL is required}"
 
+metro_pid=""
+screenrecord_pid=""
+
+cleanup() {
+  if [ -n "$screenrecord_pid" ]; then
+    kill "$screenrecord_pid" 2>/dev/null || true
+    wait "$screenrecord_pid" 2>/dev/null || true
+  fi
+  if [ -n "$metro_pid" ]; then
+    kill "$metro_pid" 2>/dev/null || true
+  fi
+}
+
+trap cleanup EXIT
+
 capture_window_dump() {
   adb shell uiautomator dump /sdcard/rnick-demo-window.xml >/dev/null
   adb exec-out cat /sdcard/rnick-demo-window.xml > /tmp/rnick-demo-raw/window.xml
@@ -52,7 +67,6 @@ pnpm build
 pnpm example:codegen
 pnpm --filter image-compression-kit-example exec react-native start --port 8081 > /tmp/rnick-metro.log 2>&1 &
 metro_pid=$!
-trap 'kill "$metro_pid" 2>/dev/null || true' EXIT
 
 for attempt in $(seq 1 60); do
   if curl -fsS http://127.0.0.1:8081/status | grep -q 'packager-status:running'; then
@@ -67,6 +81,37 @@ adb logcat -c
 adb shell am force-stop com.imagecompressionkit.example
 adb shell am start -n com.imagecompressionkit.example/.MainActivity --ez rnick-demo-capture true
 mkdir -p /tmp/rnick-demo-raw
+
+for attempt in $(seq 1 60); do
+  adb logcat -d -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log
+  if grep -q 'RNICK_GUIDED_DEMO_READY' /tmp/rnick-demo-raw/native.log; then
+    break
+  fi
+  test "$attempt" != "60"
+  sleep 1
+done
+
+adb shell rm -f /sdcard/rnick-guided-demo.mp4
+adb shell screenrecord \
+  --size 720x1600 \
+  --bit-rate 2000000 \
+  --time-limit 24 \
+  /sdcard/rnick-guided-demo.mp4 \
+  > /tmp/rnick-demo-raw/screenrecord.log 2>&1 &
+screenrecord_pid=$!
+
+for attempt in $(seq 1 60); do
+  adb logcat -d -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log
+  if grep -q 'RNICK_GUIDED_DEMO_PASS' /tmp/rnick-demo-raw/native.log; then
+    break
+  fi
+  test "$attempt" != "60"
+  sleep 1
+done
+
+wait "$screenrecord_pid"
+screenrecord_pid=""
+adb pull /sdcard/rnick-guided-demo.mp4 /tmp/rnick-demo-raw/recording.mp4 >/dev/null
 
 for attempt in $(seq 1 120); do
   adb logcat -d -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log
@@ -118,6 +163,8 @@ node scripts/create-demo-evidence.mjs \
   --source /tmp/rnick-demo-raw/source.jpg \
   --output /tmp/rnick-demo-raw/output.jpg \
   --screenshot /tmp/rnick-demo-raw/screen.png \
+  --recording /tmp/rnick-demo-raw/recording.mp4 \
+  --capture-method "android adb screenrecord H.264" \
   --log /tmp/rnick-demo-raw/native.log \
   --destination demo-evidence/android \
   --run-url "$RNICK_DEMO_RUN_URL"

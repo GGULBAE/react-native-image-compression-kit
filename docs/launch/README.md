@@ -47,6 +47,27 @@ and the docs site stable for at least one observation window.
 - For a serious defect, prefer deprecation and a forward hotfix. npm versions,
   signed evidence, immutable releases, and protected tags are never rewritten.
 
+## Refresh the native walkthrough
+
+Run the existing Native Demo Evidence workflow with an exact full source SHA.
+It records the deterministic walkthrough on the hosted Android emulator and
+iOS simulator, then uploads separate evidence fragments. Download both
+artifacts and assemble a candidate directory without overwriting the current
+site evidence:
+
+```bash
+pnpm merge:demo-evidence -- \
+  --android-dir path/to/native-demo-android-SHA \
+  --ios-dir path/to/native-demo-ios-SHA \
+  --destination path/to/reviewed-demo-candidate
+```
+
+Review both recordings, verify their manifest and file digests independently,
+then replace `website/public/demo` in a focused pull request. Run
+`pnpm verify:demo-evidence`, `pnpm site:check`, and `pnpm site:build` before
+publishing. Never synthesize a missing platform recording or relabel a local
+capture as hosted evidence.
+
 ## Materials
 
 - [English announcement](announcement-en.md)
