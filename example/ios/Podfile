@@ -6,6 +6,13 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 require_relative './cocoapods_pathname_workaround'
 
+# React Native 0.86 prebuilt dependencies do not publish the RCT-Folly pod
+# target required by the exact react-native-image-resizer 3.0.11 podspec. Keep
+# the comparator unpatched and build the example's React Native iOS pods from
+# source so CocoaPods resolves the upstream dependency normally.
+ENV['RCT_USE_RN_DEP'] = '0'
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 

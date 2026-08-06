@@ -34,6 +34,13 @@ artifact and binds it by SHA-256.
   raw samples, and fail-closed evidence validation.
 - Record unsupported behavior explicitly instead of fabricating a timing value.
 
+The React Native 0.86 iOS example disables the prebuilt React Native core and
+dependency pods. That version's prebuilt mode does not expose the `RCT-Folly`
+pod target required by the exact published image-resizer podspec. Building the
+example pods from source preserves the unpatched upstream comparator and gives
+all three adapters the same application environment; metric inspection remains
+outside the timed operation.
+
 ## Updating an implementation
 
 1. Confirm the upstream repository, tag commit, package license, peer

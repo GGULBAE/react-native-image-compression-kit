@@ -86,6 +86,12 @@ Target-size compression, cancellation, runtime capability reporting, source
 limits, and transactional output also remain feature boundaries rather than
 timing cases.
 
+On iOS, the React Native 0.86 example builds React Native core and dependency
+pods from source. Its prebuilt dependency mode does not expose the `RCT-Folly`
+pod target required by the exact published image-resizer podspec. This keeps the
+comparator package unpatched and places every adapter in the same built
+application; it is an application build constraint, not part of the timed call.
+
 After downloading one platform artifact, verify the comparison without network
 access:
 

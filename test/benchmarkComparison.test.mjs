@@ -63,6 +63,10 @@ describe('native comparison benchmark evidence', () => {
     for (const dependency of plan.supportDependencies) {
       expect(examplePackage.dependencies[dependency.package]).toBe(dependency.version);
     }
+
+    const podfile = readFileSync('example/ios/Podfile', 'utf8');
+    expect(podfile).toContain("ENV['RCT_USE_RN_DEP'] = '0'");
+    expect(podfile).toContain("ENV['RCT_USE_PREBUILT_RNCORE'] = '0'");
   });
 
   it('round-trips the final bounded comparison marker and summarizes samples', () => {
