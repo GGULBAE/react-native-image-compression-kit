@@ -42,6 +42,10 @@ sample instructions.
 - Pin every remote GitHub Action to a reviewed full commit SHA.
 - Do not rewrite committed release-evidence or review archives.
 - Keep native format claims capability-driven and backed by executable tests.
+- Keep native comparison adapters exact-versioned and confined to the private
+  example application. Follow the
+  [comparison maintenance guide](benchmarks/native-comparison/README.md) and do
+  not turn a single runner capture into a universal performance claim.
 
 ## Required verification
 

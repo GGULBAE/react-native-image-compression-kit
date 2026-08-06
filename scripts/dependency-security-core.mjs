@@ -1,17 +1,19 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-export const DEPENDENCY_SECURITY_SCHEMA_VERSION = 2;
+export const DEPENDENCY_SECURITY_SCHEMA_VERSION = 3;
 export const PNPM_REVIEWED_VERSION = '11.8.0';
 export const VITE_MINIMUM_SAFE_VERSION = '6.4.3';
 export const ESBUILD_MINIMUM_SAFE_VERSION = '0.25.0';
 export const OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION = '2.8.0';
+export const POSTCSS_MINIMUM_SAFE_VERSION = '8.5.23';
 export const SENTRY_NODE_REVIEWED_VERSION = '10.66.0';
 export const SHELL_QUOTE_MINIMUM_SAFE_VERSION = '1.9.0';
 export const SHELL_QUOTE_REVIEWED_VERSION = '1.10.0';
 export const VITEPRESS_OVERRIDE_SELECTOR = 'vitepress@1.6.4>vite';
 export const SENTRY_NODE_OVERRIDE_SELECTOR =
   'lighthouse@13.4.0>@sentry/node';
+export const POSTCSS_OVERRIDE_SELECTOR = 'postcss';
 export const SHELL_QUOTE_OVERRIDE_SELECTOR =
   'react-devtools-core@6.1.5>shell-quote';
 
@@ -33,10 +35,12 @@ export const DEPENDENCY_SECURITY_REPORT_FIELDS = Object.freeze([
   'lighthouse',
   'sentryNodeOverride',
   'shellQuoteOverride',
+  'postcssOverride',
   'viteVersions',
   'esbuildVersions',
   'opentelemetryCoreVersions',
   'shellQuoteVersions',
+  'postcssVersions',
   'productionExposure',
   'checks',
   'error',
@@ -57,6 +61,7 @@ const TOOLING_PACKAGES = new Set([
   '@opentelemetry/core',
   'react-devtools-core',
   'shell-quote',
+  'postcss',
 ]);
 
 export function verifyDependencySecurity(
@@ -70,10 +75,12 @@ export function verifyDependencySecurity(
     lighthouse: null,
     sentryNodeOverride: null,
     shellQuoteOverride: null,
+    postcssOverride: null,
     viteVersions: [],
     esbuildVersions: [],
     opentelemetryCoreVersions: [],
     shellQuoteVersions: [],
+    postcssVersions: [],
     productionExposure: [],
     checks: {},
   };
@@ -159,6 +166,20 @@ export function verifyDependencySecurity(
         describe(state.shellQuoteOverride) +
         '.'
     );
+    state.postcssOverride = readWorkspaceOverride(
+      workspaceContents,
+      POSTCSS_OVERRIDE_SELECTOR
+    );
+    assert(
+      state.postcssOverride === POSTCSS_MINIMUM_SAFE_VERSION,
+      'Expected pnpm override ' +
+        POSTCSS_OVERRIDE_SELECTOR +
+        '=' +
+        POSTCSS_MINIMUM_SAFE_VERSION +
+        ', received ' +
+        describe(state.postcssOverride) +
+        '.'
+    );
     state.checks.override = true;
 
     state.viteVersions = extractLockedVersions(lockfileContents, 'vite');
@@ -171,6 +192,7 @@ export function verifyDependencySecurity(
       lockfileContents,
       'shell-quote'
     );
+    state.postcssVersions = extractLockedVersions(lockfileContents, 'postcss');
     assert(state.viteVersions.length > 0, 'pnpm-lock.yaml does not resolve vite.');
     assert(
       state.esbuildVersions.length > 0,
@@ -183,6 +205,10 @@ export function verifyDependencySecurity(
     assert(
       state.shellQuoteVersions.length > 0,
       'pnpm-lock.yaml does not resolve shell-quote.'
+    );
+    assert(
+      state.postcssVersions.length > 0,
+      'pnpm-lock.yaml does not resolve postcss.'
     );
     state.checks.lockfile = true;
 
@@ -206,6 +232,11 @@ export function verifyDependencySecurity(
       state.shellQuoteVersions,
       SHELL_QUOTE_MINIMUM_SAFE_VERSION
     );
+    assertMinimumVersions(
+      'postcss',
+      state.postcssVersions,
+      POSTCSS_MINIMUM_SAFE_VERSION
+    );
     assert(
       state.viteVersions.includes(VITE_MINIMUM_SAFE_VERSION),
       'pnpm-lock.yaml must resolve the reviewed Vite override ' +
@@ -216,6 +247,12 @@ export function verifyDependencySecurity(
       state.shellQuoteVersions.includes(SHELL_QUOTE_REVIEWED_VERSION),
       'pnpm-lock.yaml must resolve the reviewed shell-quote override ' +
         SHELL_QUOTE_REVIEWED_VERSION +
+        '.'
+    );
+    assert(
+      state.postcssVersions.includes(POSTCSS_MINIMUM_SAFE_VERSION),
+      'pnpm-lock.yaml must resolve the reviewed PostCSS override ' +
+        POSTCSS_MINIMUM_SAFE_VERSION +
         '.'
     );
     state.checks.ranges = true;
@@ -251,10 +288,12 @@ export function createDependencySecurityReport({
   lighthouse = null,
   sentryNodeOverride = null,
   shellQuoteOverride = null,
+  postcssOverride = null,
   viteVersions = [],
   esbuildVersions = [],
   opentelemetryCoreVersions = [],
   shellQuoteVersions = [],
+  postcssVersions = [],
   productionExposure = [],
   checks = {},
   status = 'failed',
@@ -270,10 +309,12 @@ export function createDependencySecurityReport({
     lighthouse,
     sentryNodeOverride,
     shellQuoteOverride,
+    postcssOverride,
     viteVersions: [...viteVersions],
     esbuildVersions: [...esbuildVersions],
     opentelemetryCoreVersions: [...opentelemetryCoreVersions],
     shellQuoteVersions: [...shellQuoteVersions],
+    postcssVersions: [...postcssVersions],
     productionExposure: [...productionExposure],
     checks: Object.fromEntries(
       DEPENDENCY_SECURITY_CHECK_FIELDS.map((field) => [

@@ -9,6 +9,7 @@ import {
   ESBUILD_MINIMUM_SAFE_VERSION,
   OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION,
   PNPM_REVIEWED_VERSION,
+  POSTCSS_MINIMUM_SAFE_VERSION,
   SENTRY_NODE_REVIEWED_VERSION,
   SHELL_QUOTE_MINIMUM_SAFE_VERSION,
   SHELL_QUOTE_REVIEWED_VERSION,
@@ -48,6 +49,7 @@ describe('dependency security gate', () => {
       lighthouse: '13.4.0',
       sentryNodeOverride: SENTRY_NODE_REVIEWED_VERSION,
       shellQuoteOverride: SHELL_QUOTE_REVIEWED_VERSION,
+      postcssOverride: POSTCSS_MINIMUM_SAFE_VERSION,
       productionExposure: [],
       checks: Object.fromEntries(
         DEPENDENCY_SECURITY_CHECK_FIELDS.map((field) => [field, true])
@@ -58,6 +60,7 @@ describe('dependency security gate', () => {
     expect(report.esbuildVersions).toContain('0.25.12');
     expect(report.opentelemetryCoreVersions).toContain('2.9.0');
     expect(report.shellQuoteVersions).toEqual([SHELL_QUOTE_REVIEWED_VERSION]);
+    expect(report.postcssVersions).toEqual([POSTCSS_MINIMUM_SAFE_VERSION]);
     expect(canonicalDependencySecurityReport(report)).toBe(
       JSON.stringify(report) + '\n'
     );
@@ -102,6 +105,16 @@ describe('dependency security gate', () => {
       'react-devtools-core@6.1.5>shell-quote',
     ],
     [
+      'missing postcss override',
+      (inputs) => {
+        inputs.workspaceContents = inputs.workspaceContents.replace(
+          /^  "postcss": "8\.5\.23"\n/m,
+          ''
+        );
+      },
+      'Expected pnpm override postcss=' + POSTCSS_MINIMUM_SAFE_VERSION,
+    ],
+    [
       'vulnerable vite',
       (inputs) => {
         inputs.lockfileContents = inputs.lockfileContents.replaceAll(
@@ -140,6 +153,16 @@ describe('dependency security gate', () => {
         );
       },
       'minimum is ' + SHELL_QUOTE_MINIMUM_SAFE_VERSION,
+    ],
+    [
+      'vulnerable postcss',
+      (inputs) => {
+        inputs.lockfileContents = inputs.lockfileContents.replaceAll(
+          'postcss@8.5.23',
+          'postcss@8.5.19'
+        );
+      },
+      'minimum is ' + POSTCSS_MINIMUM_SAFE_VERSION,
     ],
     [
       'production exposure',
@@ -183,6 +206,7 @@ describe('dependency security gate', () => {
       viteOverride: VITE_MINIMUM_SAFE_VERSION,
       sentryNodeOverride: SENTRY_NODE_REVIEWED_VERSION,
       shellQuoteOverride: SHELL_QUOTE_REVIEWED_VERSION,
+      postcssOverride: POSTCSS_MINIMUM_SAFE_VERSION,
       productionExposure: [],
     });
   });

@@ -273,10 +273,12 @@ git diff --check
 pnpm pack --dry-run
 ```
 
-Native demo captures also emit versioned benchmark evidence with raw samples,
-fixture digests, environment identity, and median/p95 summaries. See the
-[benchmark methodology](docs/benchmarks/README.md) for its measurement boundary,
-reproduction commands, and comparison policy.
+Native demo captures emit versioned baseline and exact-plan comparison evidence
+with raw samples, fixture and plan digests, environment identity, balanced
+execution positions, and median/p95 summaries. Comparison dependencies remain
+inside the private example application and outside the published package. See
+the [benchmark methodology](docs/benchmarks/README.md) for its timing boundary,
+reproduction commands, adapter caveats, and comparison policy.
 
 `pnpm test:coverage` runs the Vitest suite once with V8 coverage. The gate
 includes executable TypeScript runtime modules and directly tested pure

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "planId": "native-image-libraries-v1",
+  "benchmarkId": "jpeg-resize-q80",
+  "operation": {
+    "resize": {
+      "maxWidth": 320,
+      "maxHeight": 320,
+      "mode": "contain"
+    },
+    "output": {
+      "format": "jpeg",
+      "quality": 80
+    }
+  },
+  "implementations": [
+    {
+      "id": "react-native-image-compression-kit",
+      "package": "react-native-image-compression-kit",
+      "version": "0.4.0",
+      "repository": "https://github.com/GGULBAE/react-native-image-compression-kit",
+      "sourceCommit": "workspace",
+      "license": "MIT",
+      "registryIntegrity": null
+    },
+    {
+      "id": "react-native-compressor",
+      "package": "react-native-compressor",
+      "version": "2.0.3",
+      "repository": "https://github.com/numandev1/react-native-compressor",
+      "sourceCommit": "fd17fc7b8b585a23536319d624272a8739f2030d",
+      "license": "MIT",
+      "registryIntegrity": "sha512-T+wEEFpPkS4ewd4LLRmxBOro2e5TztDy2lmsC+8ThwzSnIguR98fHUEay3UYOKOKDB+zuFWRq7DO4JWjqKqWNg=="
+    },
+    {
+      "id": "bam-image-resizer",
+      "package": "@bam.tech/react-native-image-resizer",
+      "version": "3.0.11",
+      "repository": "https://github.com/bamlab/react-native-image-resizer",
+      "sourceCommit": "d085f0652257d780b643da5e99369451d6a48330",
+      "license": "MIT",
+      "registryIntegrity": "sha512-J/vAe51uPhJafT0uAIQI3gziqVs4Tnw32bHau/+I7AukSs4YxLXIaOVF6EChZ9ZFu+fLxvVrRTbHKDf+1YoXag=="
+    }
+  ],
+  "supportDependencies": [
+    {
+      "package": "react-native-nitro-modules",
+      "version": "0.36.5",
+      "repository": "https://github.com/mrousavy/nitro",
+      "license": "MIT",
+      "registryIntegrity": "sha512-SJby84+hovD70JmQ1fq+56tw3oapJeChehUqXA4Gqjm+ktJhMAcj8LGwoAjStSOUwRaK7czbzBPB0Widj+EDoQ=="
+    }
+  ]
+}

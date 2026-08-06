@@ -6,20 +6,33 @@ export const NATIVE_BENCHMARK_MARKER = 'RNICK_BENCHMARK_PASS';
 export const NATIVE_BENCHMARK_CHUNK_MARKER = 'RNICK_BENCHMARK_CHUNK';
 
 export function parseNativeBenchmarkPayload(contents) {
+  return parseChunkedNativePayload(contents, {
+    passMarker: NATIVE_BENCHMARK_MARKER,
+    chunkMarker: NATIVE_BENCHMARK_CHUNK_MARKER,
+  });
+}
+
+export function parseChunkedNativePayload(
+  contents,
+  { passMarker, chunkMarker }
+) {
+  if (!/^[A-Z0-9_]+$/.test(passMarker) || !/^[A-Z0-9_]+$/.test(chunkMarker)) {
+    throw new Error('native log markers must be uppercase identifiers');
+  }
   const completions = [
     ...contents.matchAll(
-      new RegExp(`${NATIVE_BENCHMARK_MARKER} ([a-z0-9]+(?:-[a-z0-9]+)*) (\\d+)`, 'g')
+      new RegExp(`${passMarker} ([a-z0-9]+(?:-[a-z0-9]+)*) (\\d+)`, 'g')
     ),
   ];
   if (completions.length === 0) {
-    throw new Error(`${NATIVE_BENCHMARK_MARKER} payload is missing`);
+    throw new Error(`${passMarker} payload is missing`);
   }
 
   const completion = completions.at(-1);
   const captureId = completion[1];
   const expectedChunks = Number(completion[2]);
   if (!positiveInteger(expectedChunks) || expectedChunks > 100) {
-    throw new Error(`${NATIVE_BENCHMARK_MARKER} chunk count is invalid`);
+    throw new Error(`${passMarker} chunk count is invalid`);
   }
 
   const precedingContents = contents.slice(0, completion.index);
@@ -27,7 +40,7 @@ export function parseNativeBenchmarkPayload(contents) {
   const chunks = [
     ...precedingContents.matchAll(
       new RegExp(
-        `${NATIVE_BENCHMARK_CHUNK_MARKER} ${escapedCaptureId} (\\d+)\\/(\\d+) (.+)$`,
+        `${chunkMarker} ${escapedCaptureId} (\\d+)\\/(\\d+) (.+)$`,
         'gm'
       )
     ),
@@ -42,13 +55,13 @@ export function parseNativeBenchmarkPayload(contents) {
       index > expectedChunks ||
       fragments.has(index)
     ) {
-      throw new Error(`${NATIVE_BENCHMARK_MARKER} chunk sequence is invalid`);
+      throw new Error(`${passMarker} chunk sequence is invalid`);
     }
     fragments.set(index, chunk[3]);
   }
   if (fragments.size !== expectedChunks) {
     throw new Error(
-      `${NATIVE_BENCHMARK_MARKER} payload is incomplete: expected ${expectedChunks} chunks, received ${fragments.size}`
+      `${passMarker} payload is incomplete: expected ${expectedChunks} chunks, received ${fragments.size}`
     );
   }
 
@@ -59,7 +72,7 @@ export function parseNativeBenchmarkPayload(contents) {
       )
     );
   } catch (error) {
-    throw new Error(`${NATIVE_BENCHMARK_MARKER} payload is invalid: ${error.message}`);
+    throw new Error(`${passMarker} payload is invalid: ${error.message}`);
   }
 }
 

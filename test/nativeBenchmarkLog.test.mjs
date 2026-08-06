@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createChunkedNativeLogMessages,
   createNativeBenchmarkLogMessages,
   NATIVE_BENCHMARK_LOG_CHUNK_SIZE,
 } from '../example/src/nativeBenchmarkLog.ts';
@@ -31,5 +32,11 @@ describe('native benchmark log transport', () => {
     expect(() => createNativeBenchmarkLogMessages({}, 'Invalid ID')).toThrow(
       'capture ID must be a lowercase identifier'
     );
+    expect(() =>
+      createChunkedNativeLogMessages({}, 'valid-id', {
+        chunk: 'invalid marker',
+        pass: 'VALID_PASS',
+      })
+    ).toThrow('markers must be uppercase identifiers');
   });
 });
