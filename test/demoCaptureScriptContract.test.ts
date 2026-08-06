@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 describe('Android demo screenshot capture', () => {
   const source = readFileSync('scripts/capture-android-demo.sh', 'utf8');
   const workflow = readFileSync('.github/workflows/demo-evidence.yml', 'utf8');
+  const guidedDemo = readFileSync('example/src/guidedDemo.ts', 'utf8');
+  const guidedScreen = readFileSync('example/src/components/GuidedDemo.tsx', 'utf8');
 
   it('rejects system ANR overlays and requires the example app in front', () => {
     expect(source).toContain('dismiss_system_anr_dialog');
@@ -24,6 +26,9 @@ describe('Android demo screenshot capture', () => {
   });
 
   it('records the complete guided walkthrough on both native platforms', () => {
+    expect(guidedDemo).toContain('const SOURCE_STAGE_MS = 12_000');
+    expect(guidedScreen).toContain('contentInsetAdjustmentBehavior="never"');
+    expect(guidedScreen).toContain("(StatusBar.currentHeight ?? 24) + 12 : 64");
     expect(source).toContain('adb shell screenrecord');
     expect(source).toContain('--time-limit 30');
     expect(source.indexOf('RNICK_GUIDED_DEMO_READY')).toBeLessThan(

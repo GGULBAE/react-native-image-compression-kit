@@ -29,7 +29,7 @@ export function GuidedDemo({ state }: GuidedDemoProps) {
       <StatusBar barStyle="dark-content" />
       <ScrollView
         contentContainerStyle={styles.container}
-        contentInsetAdjustmentBehavior="automatic"
+        contentInsetAdjustmentBehavior="never"
         scrollEnabled={false}
       >
         <View>
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     gap: 20,
     paddingBottom: 20,
     paddingHorizontal: 24,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + 12 : 20,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + 12 : 64,
   },
   eyebrow: {
     color: '#0f766e', fontSize: 12, fontWeight: '800', letterSpacing: 1.4,
