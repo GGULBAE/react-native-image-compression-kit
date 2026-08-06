@@ -54,6 +54,7 @@ export function inspectComparisonPlan(plan) {
   if (!validIdentifier(plan?.benchmarkId)) {
     errors.push('plan benchmarkId must be a lowercase identifier');
   }
+  errors.push(...inspectFixture(plan?.fixture).map((error) => `plan ${error}`));
   errors.push(...inspectOperation(plan?.operation).map((error) => `plan ${error}`));
   if (!Array.isArray(plan?.implementations) || plan.implementations.length < 2) {
     errors.push('plan must contain at least two implementations');
@@ -127,6 +128,9 @@ export function inspectNativeComparisonPayload(payload, plan) {
   }
   if (!validIdentifier(payload?.fixture?.id) || !nonEmpty(payload?.fixture?.sourceUri)) {
     errors.push('native fixture id and sourceUri are required');
+  }
+  if (payload?.fixture?.id !== plan?.fixture?.id) {
+    errors.push('native fixture id does not match plan');
   }
   if (JSON.stringify(payload?.operation) !== JSON.stringify(plan?.operation)) {
     errors.push('native operation does not match plan');
@@ -330,6 +334,17 @@ function inspectImplementations(payload, plan) {
     ) {
       errors.push(`${implementation?.id ?? 'unknown'} sample count is invalid`);
     }
+    if (
+      samples.some(
+        ({ result }) =>
+          result.width !== plan?.fixture?.expectedOutput?.width ||
+          result.height !== plan?.fixture?.expectedOutput?.height
+      )
+    ) {
+      errors.push(
+        `${implementation?.id ?? 'unknown'} sample dimensions do not match plan`
+      );
+    }
     samples.forEach((sample, sampleIndex) => {
       if (sample.iteration !== sampleIndex + 1) {
         errors.push(`${implementation.id} sample iterations must be sequential`);
@@ -419,6 +434,26 @@ function inspectOperation(operation) {
     operation.output.quality > 100
   ) {
     errors.push('operation output must be JPEG with quality from 0 to 100');
+  }
+  return errors;
+}
+
+function inspectFixture(fixture) {
+  const errors = [];
+  if (
+    !validIdentifier(fixture?.id) ||
+    !positiveInteger(fixture?.width) ||
+    !positiveInteger(fixture?.height)
+  ) {
+    errors.push('fixture identity and source dimensions are invalid');
+  }
+  if (
+    !positiveInteger(fixture?.expectedOutput?.width) ||
+    !positiveInteger(fixture?.expectedOutput?.height) ||
+    fixture.expectedOutput.width > fixture?.width ||
+    fixture.expectedOutput.height > fixture?.height
+  ) {
+    errors.push('fixture expected output dimensions are invalid');
   }
   return errors;
 }

@@ -105,5 +105,21 @@ describe('native comparison benchmark runner', () => {
         createCaptureId: () => 'result-test',
       })
     ).rejects.toThrow('returned invalid JPEG metrics');
+
+    const wrongDimensions = valid('two');
+    wrongDimensions.inspect = vi.fn(async () => ({
+      uri: 'file:///tmp/two.jpg',
+      format: 'jpeg',
+      width: 800,
+      height: 1280,
+      byteSize: 32_496,
+    }));
+    clock = 0;
+    await expect(
+      runNativeComparisonBenchmarkCore(input, [valid('one'), wrongDimensions], {
+        now: () => ++clock,
+        createCaptureId: () => 'dimensions-test',
+      })
+    ).rejects.toThrow('returned 800x1280; expected 200x320');
   });
 });

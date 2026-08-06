@@ -11,8 +11,9 @@ The plan includes two external MIT-licensed libraries with Android and iOS
 support and a public JPEG resize API:
 
 - [`react-native-compressor`](https://github.com/numandev1/react-native-compressor)
-  represents a broader media-compression API and uses
-  `react-native-nitro-modules` in the pinned major version.
+  represents a broader media-compression API. Version 1.19.4 is the final
+  pre-Nitro release and keeps the documented resize bounds working through its
+  public API on both captured platforms without a local patch.
 - [`@bam.tech/react-native-image-resizer`](https://github.com/bamlab/react-native-image-resizer)
   represents a focused image-resize API.
 
@@ -28,6 +29,8 @@ artifact and binds it by SHA-256.
 - Pin exact versions. Do not use ranges, tags, Git branches, or unreviewed local
   patches.
 - Map only the common 320 by 320 contain resize and JPEG quality-80 operation.
+- Require the bundled 800 by 1280 fixture to produce the planned 200 by 320
+  output on every measured sample; fail before publishing evidence on drift.
 - Time the compression API call and perform adapter-specific metric inspection
   after the timer.
 - Preserve the rotating round-robin schedule, two warmups, ten measured rounds,
@@ -41,7 +44,7 @@ example pods from source preserves the unpatched upstream comparator and gives
 all three adapters the same application environment; metric inspection remains
 outside the timed operation.
 
-On Android, `react-native-compressor@2.0.3` brings in `TAndroidLame`, whose
+On Android, `react-native-compressor@1.19.4` brings in `TAndroidLame`, whose
 library manifest declares `allowBackup=true`. The example application keeps
 its existing `allowBackup=false` security boundary and resolves the manifest
 merge explicitly with `tools:replace="android:allowBackup"`; the comparator

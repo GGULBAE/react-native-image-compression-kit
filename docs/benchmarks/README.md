@@ -59,10 +59,12 @@ provide the authoritative invocation used by CI.
 
 The repository-private example application also runs the exact-version plan in
 [`benchmarks/native-comparison/implementations.json`](../../benchmarks/native-comparison/implementations.json).
-The plan currently contains this package, `react-native-compressor@2.0.3`, and
+The plan currently contains this package, `react-native-compressor@1.19.4`, and
 `@bam.tech/react-native-image-resizer@3.0.11`. The external packages and their
-native support dependency are exact dependencies of the private example only;
-they are not runtime or development dependencies of the published package.
+exact native dependencies remain private to the example; they are not runtime
+or development dependencies of the published package. Compressor 1.19.4 is the
+final pre-Nitro release and is used unpatched because its documented resize
+bounds execute consistently through the public API on both captured platforms.
 
 The shared timing boundary is a local JPEG URI resized inside a 320 by 320
 contain box and encoded as JPEG quality 80. Each implementation receives two
@@ -71,6 +73,9 @@ contains one sample from every adapter and execution position is balanced over
 time. `benchmark-comparison.json` records the raw elapsed times, positions,
 output bytes, dimensions, exact versions, source-tag commits, registry
 integrities, fixture digest, environment, and a digest of the captured plan.
+Every measured result must match the planned 200 by 320 contain geometry for
+the bundled 800 by 1280 fixture; any larger, smaller, or rotated output rejects
+the native payload and the downloaded artifact.
 
 Only the public compression call is timed. Normalizing an adapter's returned
 URI into byte size and dimensions happens after the timer. This matters because

@@ -36,8 +36,8 @@ describe('native comparison benchmark evidence', () => {
       },
       {
         id: 'react-native-compressor',
-        version: '2.0.3',
-        sourceCommit: 'fd17fc7b8b585a23536319d624272a8739f2030d',
+        version: '1.19.4',
+        sourceCommit: 'fdda5a45e43113b9d615a876a46a90bae0e153e3',
         license: 'MIT',
       },
       {
@@ -164,6 +164,8 @@ describe('native comparison benchmark evidence', () => {
     payload.schedule.baseOrder.reverse();
     payload.implementations[0].version = '0.4.1';
     payload.implementations[1].samples[0].position = 1;
+    payload.implementations[1].samples[0].result.width = 800;
+    payload.implementations[1].samples[0].result.height = 1280;
     payload.implementations[2].samples.pop();
     const error = inspectNativeComparisonPayload(payload, plan).join(' | ');
     expect(error).toContain('planId does not match plan');
@@ -172,6 +174,7 @@ describe('native comparison benchmark evidence', () => {
     expect(error).toContain('baseOrder does not match plan');
     expect(error).toContain('does not match plan');
     expect(error).toContain('sample count is invalid');
+    expect(error).toContain('sample dimensions do not match plan');
     expect(error).toContain('positions must form one permutation');
 
     const fixture = createEvidenceFixture();
@@ -191,6 +194,7 @@ describe('native comparison benchmark evidence', () => {
       schemaVersion: 2,
       planId: 'Invalid Plan',
       benchmarkId: 'Invalid Benchmark',
+      fixture: { id: 'Invalid Fixture', width: 0, height: 0, expectedOutput: {} },
       operation: { resize: {}, output: {} },
       supportDependencies: [{}],
     });
@@ -207,6 +211,7 @@ describe('native comparison benchmark evidence', () => {
     const planErrors = inspectComparisonPlan(plan).join(' | ');
     expect(planErrors).toContain('schemaVersion');
     expect(planErrors).toContain('planId');
+    expect(planErrors).toContain('fixture identity');
     expect(planErrors).toContain('operation resize');
     expect(planErrors).toContain('implementation ID is duplicated');
     expect(planErrors).toContain('support dependency is invalid');

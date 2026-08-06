@@ -14,6 +14,10 @@ export const NATIVE_COMPARISON_OPERATION = {
   resize: { maxWidth: 320, maxHeight: 320, mode: 'contain' },
   output: { format: 'jpeg', quality: 80 },
 } as const;
+export const NATIVE_COMPARISON_EXPECTED_DIMENSIONS = {
+  width: 200,
+  height: 320,
+} as const;
 
 export type NativeComparisonResult = {
   uri: string;
@@ -179,6 +183,15 @@ function validateResult(id: string, result: NativeComparisonResult): void {
     result.uri.length === 0
   ) {
     throw new Error(`Comparison adapter ${id} returned invalid JPEG metrics.`);
+  }
+  if (
+    result.width !== NATIVE_COMPARISON_EXPECTED_DIMENSIONS.width ||
+    result.height !== NATIVE_COMPARISON_EXPECTED_DIMENSIONS.height
+  ) {
+    throw new Error(
+      `Comparison adapter ${id} returned ${result.width}x${result.height}; expected ` +
+        `${NATIVE_COMPARISON_EXPECTED_DIMENSIONS.width}x${NATIVE_COMPARISON_EXPECTED_DIMENSIONS.height}.`
+    );
   }
 }
 
