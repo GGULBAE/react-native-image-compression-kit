@@ -277,7 +277,15 @@ Native demo captures run a deterministic, capture-only walkthrough in the real
 Android and iOS example apps: bundled source, selected options, runtime
 capabilities, active compression, and the native before/after result. The
 evidence contract records the ordered stage timeline, MP4 duration and digest,
-exact source SHA, workflow run, runtime, and device. The same runs emit
+exact source SHA, workflow run, runtime, and device.
+
+The hosted recorders may omit repeated frames while a stage is static, so the
+workflow preserves the captured H.264 frames and normalizes only their
+timestamps to the separately logged walkthrough duration with `ffmpeg`. The
+manifest records that capture method, while validation reads the actual video
+track duration rather than trusting the container's movie header.
+
+The same runs emit
 versioned baseline and exact-plan comparison evidence with raw samples, fixture
 and plan digests, balanced execution positions, and median/p95 summaries.
 Comparison dependencies remain inside the private example application and

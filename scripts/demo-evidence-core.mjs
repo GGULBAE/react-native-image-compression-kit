@@ -208,23 +208,28 @@ export function inspectMp4(bytes) {
       ({ type }) => type === 'mvhd'
     );
     if (!mvhd) throw new Error('mvhd box is missing');
-    const version = bytes[mvhd.payloadStart];
-    if (version !== 0 && version !== 1) throw new Error('mvhd version is unsupported');
-    const timescaleOffset = mvhd.payloadStart + (version === 1 ? 20 : 12);
-    const durationOffset = mvhd.payloadStart + (version === 1 ? 24 : 16);
-    if (durationOffset + (version === 1 ? 8 : 4) > mvhd.end) {
-      throw new Error('mvhd box is truncated');
-    }
-    const timescale = bytes.readUInt32BE(timescaleOffset);
-    const duration = version === 1
-      ? Number(bytes.readBigUInt64BE(durationOffset))
-      : bytes.readUInt32BE(durationOffset);
-    if (timescale <= 0 || duration <= 0) {
-      throw new Error('mvhd duration is invalid');
+    readFullBoxDuration(bytes, mvhd, 'mvhd');
+
+    const videoDurations = readBoxes(bytes, moov.payloadStart, moov.end)
+      .filter(({ type }) => type === 'trak')
+      .flatMap((trak) => {
+        const mdia = readBoxes(bytes, trak.payloadStart, trak.end).find(
+          ({ type }) => type === 'mdia'
+        );
+        if (!mdia) return [];
+        const mediaBoxes = readBoxes(bytes, mdia.payloadStart, mdia.end);
+        const handler = mediaBoxes.find(({ type }) => type === 'hdlr');
+        if (!handler || readHandlerType(bytes, handler) !== 'vide') return [];
+        const mdhd = mediaBoxes.find(({ type }) => type === 'mdhd');
+        if (!mdhd) throw new Error('video mdhd box is missing');
+        return [readFullBoxDuration(bytes, mdhd, 'video mdhd')];
+      });
+    if (videoDurations.length !== 1) {
+      throw new Error('MP4 must contain exactly one timed video track');
     }
     return {
       status: 'passed',
-      durationSeconds: duration / timescale,
+      durationSeconds: videoDurations[0],
       error: null,
     };
   } catch (error) {
@@ -234,6 +239,35 @@ export function inspectMp4(bytes) {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+function readFullBoxDuration(bytes, box, label) {
+  const version = bytes[box.payloadStart];
+  if (version !== 0 && version !== 1) {
+    throw new Error(`${label} version is unsupported`);
+  }
+  const timescaleOffset = box.payloadStart + (version === 1 ? 20 : 12);
+  const durationOffset = box.payloadStart + (version === 1 ? 24 : 16);
+  const durationSize = version === 1 ? 8 : 4;
+  if (durationOffset + durationSize > box.end) {
+    throw new Error(`${label} box is truncated`);
+  }
+  const timescale = bytes.readUInt32BE(timescaleOffset);
+  const duration = version === 1
+    ? Number(bytes.readBigUInt64BE(durationOffset))
+    : bytes.readUInt32BE(durationOffset);
+  if (timescale <= 0 || duration <= 0) {
+    throw new Error(`${label} duration is invalid`);
+  }
+  return duration / timescale;
+}
+
+function readHandlerType(bytes, box) {
+  const handlerTypeOffset = box.payloadStart + 8;
+  if (handlerTypeOffset + 4 > box.end) {
+    throw new Error('hdlr box is truncated');
+  }
+  return bytes.subarray(handlerTypeOffset, handlerTypeOffset + 4).toString('ascii');
 }
 
 function positiveInteger(value) {

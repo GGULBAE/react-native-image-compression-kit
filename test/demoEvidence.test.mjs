@@ -66,6 +66,13 @@ describe('native demo evidence', () => {
     });
   });
 
+  it('uses video-track duration instead of a misleading movie duration', () => {
+    expect(inspectMp4(timedMp4(5, 24))).toMatchObject({
+      status: 'passed',
+      durationSeconds: 5,
+    });
+  });
+
   it('rejects recording metadata and guided stage mutation', () => {
     const fixture = createGuidedFixture();
     const android = fixture.manifest.cases[0];
@@ -90,14 +97,9 @@ describe('native demo evidence', () => {
     expect(inspectMp4(box('ftyp', Buffer.from('isom'))).error).toContain(
       'moov box is missing'
     );
-    expect(
-      inspectMp4(
-        Buffer.concat([
-          box('ftyp', Buffer.from('isom')),
-          box('moov', box('free', Buffer.alloc(0))),
-        ])
-      ).error
-    ).toContain('mvhd box is missing');
+    expect(inspectMp4(mp4WithMoov(box('free', Buffer.alloc(0)))).error).toContain(
+      'mvhd box is missing'
+    );
     const invalidDuration = Buffer.alloc(20);
     expect(
       inspectMp4(
@@ -248,12 +250,25 @@ function createGuidedFixture() {
   return { ...fixture, recording };
 }
 
-function timedMp4(durationSeconds) {
+function timedMp4(durationSeconds, movieDurationSeconds = durationSeconds) {
   const ftyp = box('ftyp', Buffer.from('isom\0\0\0\0isom'));
   const mvhdPayload = Buffer.alloc(20);
   mvhdPayload.writeUInt32BE(1_000, 12);
-  mvhdPayload.writeUInt32BE(durationSeconds * 1_000, 16);
-  return Buffer.concat([ftyp, box('moov', box('mvhd', mvhdPayload))]);
+  mvhdPayload.writeUInt32BE(movieDurationSeconds * 1_000, 16);
+  const mdhdPayload = Buffer.alloc(20);
+  mdhdPayload.writeUInt32BE(1_000, 12);
+  mdhdPayload.writeUInt32BE(durationSeconds * 1_000, 16);
+  const hdlrPayload = Buffer.alloc(12);
+  hdlrPayload.write('vide', 8, 4, 'ascii');
+  const trak = box(
+    'trak',
+    box('mdia', Buffer.concat([box('mdhd', mdhdPayload), box('hdlr', hdlrPayload)]))
+  );
+  return Buffer.concat([ftyp, box('moov', Buffer.concat([box('mvhd', mvhdPayload), trak]))]);
+}
+
+function mp4WithMoov(payload) {
+  return Buffer.concat([box('ftyp', Buffer.from('isom')), box('moov', payload)]);
 }
 
 function box(type, payload) {

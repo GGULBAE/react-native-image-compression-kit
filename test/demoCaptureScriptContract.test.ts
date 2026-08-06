@@ -33,9 +33,18 @@ describe('Android demo screenshot capture', () => {
       source.indexOf('RNICK_GUIDED_DEMO_PASS')
     );
     expect(source).toContain('--recording /tmp/rnick-demo-raw/recording.mp4');
-    expect(source).toContain('--capture-method "android adb screenrecord H.264"');
+    expect(source).toContain('recording-raw.mp4');
+    expect(source).toContain('normalize-demo-recording.mjs');
+    expect(source.indexOf('normalize-demo-recording.mjs')).toBeLessThan(
+      source.indexOf('create-demo-evidence.mjs')
+    );
+    expect(source).toContain(
+      '--capture-method "android adb screenrecord H.264; timestamps normalized with ffmpeg"'
+    );
 
     expect(workflow).toContain('permissions:\n  contents: read');
+    expect(workflow).toContain('sudo apt-get install --yes --no-install-recommends ffmpeg');
+    expect(workflow).toContain('brew list ffmpeg');
     expect(workflow).toContain('simctl io "$udid" recordVideo --codec=h264');
     expect(workflow.indexOf("grep -q 'RNICK_GUIDED_DEMO_READY'")).toBeLessThan(
       workflow.indexOf('simctl io "$udid" recordVideo')
@@ -43,6 +52,13 @@ describe('Android demo screenshot capture', () => {
     expect(workflow.indexOf('simctl io "$udid" recordVideo')).toBeLessThan(
       workflow.indexOf("grep -q 'RNICK_GUIDED_DEMO_PASS'")
     );
-    expect(workflow).toContain('--capture-method "ios simctl recordVideo H.264"');
+    expect(workflow).toContain('recording-raw.mp4');
+    expect(workflow).toContain('normalize-demo-recording.mjs');
+    expect(workflow.indexOf('node scripts/normalize-demo-recording.mjs')).toBeLessThan(
+      workflow.indexOf('node scripts/create-demo-evidence.mjs')
+    );
+    expect(workflow).toContain(
+      '--capture-method "ios simctl recordVideo H.264; timestamps normalized with ffmpeg"'
+    );
   });
 });

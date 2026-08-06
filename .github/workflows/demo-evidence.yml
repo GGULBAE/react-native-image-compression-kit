@@ -18,6 +18,7 @@ on:
       - "scripts/create-demo-evidence.mjs"
       - "scripts/demo-evidence-core.mjs"
       - "scripts/guided-demo-core.mjs"
+      - "scripts/normalize-demo-recording.mjs"
       - "scripts/verify-benchmark-comparison-evidence.mjs"
   workflow_dispatch:
     inputs:
@@ -80,6 +81,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install recording tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+          ffmpeg -version | head -n 1
+
       - name: Resolve package version
         id: package
         run: node -e "process.stdout.write('version=' + require('./package.json').version + '\\n')" >> "$GITHUB_OUTPUT"
@@ -130,6 +137,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install recording tools
+        run: |
+          brew list ffmpeg >/dev/null 2>&1 || brew install ffmpeg
+          ffmpeg -version | head -n 1
+
       - name: Resolve package version
         id: package
         run: node -e "process.stdout.write('version=' + require('./package.json').version + '\\n')" >> "$GITHUB_OUTPUT"
@@ -175,7 +187,7 @@ jobs:
             test "$attempt" != "60"
             sleep 1
           done
-          xcrun simctl io "$udid" recordVideo --codec=h264 --force /tmp/rnick-demo-raw/recording.mp4 > /tmp/rnick-demo-raw/record-video.log 2>&1 &
+          xcrun simctl io "$udid" recordVideo --codec=h264 --force /tmp/rnick-demo-raw/recording-raw.mp4 > /tmp/rnick-demo-raw/record-video.log 2>&1 &
           video_pid=$!
           for attempt in $(seq 1 60); do
             capture_native_log
@@ -214,6 +226,10 @@ jobs:
           cp "$(sed -n '2p' /tmp/rnick-demo-raw/uris.txt)" /tmp/rnick-demo-raw/output.jpg
           runtime=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const p=JSON.parse(s);const e=Object.entries(p.devices).find(([,v])=>v.length);process.stdout.write(e[0].replace('com.apple.CoreSimulator.SimRuntime.','').replaceAll('-','.'))})")
           device=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=Object.values(JSON.parse(s).devices).flat()[0];process.stdout.write(d.name)})")
+          node scripts/normalize-demo-recording.mjs \
+            --input /tmp/rnick-demo-raw/recording-raw.mp4 \
+            --output /tmp/rnick-demo-raw/recording.mp4 \
+            --log /tmp/rnick-demo-raw/native.log
           node scripts/create-demo-evidence.mjs \
             --platform ios \
             --package-version "${{ steps.package.outputs.version }}" \
@@ -224,7 +240,7 @@ jobs:
             --output /tmp/rnick-demo-raw/output.jpg \
             --screenshot /tmp/rnick-demo-raw/screen.png \
             --recording /tmp/rnick-demo-raw/recording.mp4 \
-            --capture-method "ios simctl recordVideo H.264" \
+            --capture-method "ios simctl recordVideo H.264; timestamps normalized with ffmpeg" \
             --log /tmp/rnick-demo-raw/native.log \
             --destination demo-evidence/ios \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

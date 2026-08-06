@@ -111,7 +111,7 @@ done
 
 wait "$screenrecord_pid"
 screenrecord_pid=""
-adb pull /sdcard/rnick-guided-demo.mp4 /tmp/rnick-demo-raw/recording.mp4 >/dev/null
+adb pull /sdcard/rnick-guided-demo.mp4 /tmp/rnick-demo-raw/recording-raw.mp4 >/dev/null
 
 for attempt in $(seq 1 120); do
   adb logcat -d -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log
@@ -154,6 +154,11 @@ adb exec-out run-as com.imagecompressionkit.example cat "$output_path" > /tmp/rn
 runtime="Android $(adb shell getprop ro.build.version.release | tr -d '\r') / API $(adb shell getprop ro.build.version.sdk | tr -d '\r')"
 device="$(adb shell getprop ro.product.manufacturer | tr -d '\r') $(adb shell getprop ro.product.model | tr -d '\r')"
 
+node scripts/normalize-demo-recording.mjs \
+  --input /tmp/rnick-demo-raw/recording-raw.mp4 \
+  --output /tmp/rnick-demo-raw/recording.mp4 \
+  --log /tmp/rnick-demo-raw/native.log
+
 node scripts/create-demo-evidence.mjs \
   --platform android \
   --package-version "$RNICK_DEMO_PACKAGE_VERSION" \
@@ -164,7 +169,7 @@ node scripts/create-demo-evidence.mjs \
   --output /tmp/rnick-demo-raw/output.jpg \
   --screenshot /tmp/rnick-demo-raw/screen.png \
   --recording /tmp/rnick-demo-raw/recording.mp4 \
-  --capture-method "android adb screenrecord H.264" \
+  --capture-method "android adb screenrecord H.264; timestamps normalized with ffmpeg" \
   --log /tmp/rnick-demo-raw/native.log \
   --destination demo-evidence/android \
   --run-url "$RNICK_DEMO_RUN_URL"

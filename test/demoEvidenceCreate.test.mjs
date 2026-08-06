@@ -32,6 +32,12 @@ describe('native demo evidence creation', () => {
     expect(rejected.result.stderr).toContain(
       'captured walkthrough duration must be between 18 and 30 seconds'
     );
+
+    const misleading = runCreate(fixture, timedMp4(5, 24), 'misleading');
+    expect(misleading.result.status).toBe(1);
+    expect(misleading.result.stderr).toContain(
+      'captured walkthrough duration must be between 18 and 30 seconds'
+    );
   });
 });
 
@@ -117,12 +123,21 @@ function runCreate(root, recording, label) {
   return { destination, result };
 }
 
-function timedMp4(durationSeconds) {
+function timedMp4(durationSeconds, movieDurationSeconds = durationSeconds) {
   const ftyp = box('ftyp', Buffer.from('isom\0\0\0\0isom'));
   const mvhdPayload = Buffer.alloc(20);
   mvhdPayload.writeUInt32BE(1_000, 12);
-  mvhdPayload.writeUInt32BE(durationSeconds * 1_000, 16);
-  return Buffer.concat([ftyp, box('moov', box('mvhd', mvhdPayload))]);
+  mvhdPayload.writeUInt32BE(movieDurationSeconds * 1_000, 16);
+  const mdhdPayload = Buffer.alloc(20);
+  mdhdPayload.writeUInt32BE(1_000, 12);
+  mdhdPayload.writeUInt32BE(durationSeconds * 1_000, 16);
+  const hdlrPayload = Buffer.alloc(12);
+  hdlrPayload.write('vide', 8, 4, 'ascii');
+  const trak = box(
+    'trak',
+    box('mdia', Buffer.concat([box('mdhd', mdhdPayload), box('hdlr', hdlrPayload)]))
+  );
+  return Buffer.concat([ftyp, box('moov', Buffer.concat([box('mvhd', mvhdPayload), trak]))]);
 }
 
 function box(type, payload) {
