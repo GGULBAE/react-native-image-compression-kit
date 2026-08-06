@@ -2,7 +2,8 @@ import React from 'react';
 import {
   ActivityIndicator,
   Image,
-  SafeAreaView,
+  Platform,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -24,9 +25,13 @@ export function GuidedDemo({ state }: GuidedDemoProps) {
     : -1;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        contentInsetAdjustmentBehavior="automatic"
+        scrollEnabled={false}
+      >
         <View>
           <Text style={styles.eyebrow}>Real native walkthrough</Text>
           <Text style={styles.title}>Image compression, end to end</Text>
@@ -72,8 +77,8 @@ export function GuidedDemo({ state }: GuidedDemoProps) {
         <Text style={styles.footer}>
           No browser substitute · deterministic repository fixture
         </Text>
-      </View>
-    </SafeAreaView>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -237,7 +242,13 @@ function Pill({ text }: { text: string }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#f3f7f6' },
-  container: { flex: 1, gap: 20, paddingHorizontal: 24, paddingVertical: 20 },
+  container: {
+    flexGrow: 1,
+    gap: 20,
+    paddingBottom: 20,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) + 12 : 20,
+  },
   eyebrow: {
     color: '#0f766e', fontSize: 12, fontWeight: '800', letterSpacing: 1.4,
     textTransform: 'uppercase',

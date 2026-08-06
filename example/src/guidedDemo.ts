@@ -45,12 +45,13 @@ export type GuidedDemoCapture = DemoCapture & {
   guidedLog: string;
 };
 
-const SOURCE_STAGE_MS = 5_000;
+const DEFAULT_SOURCE_STAGE_MS = 5_000;
+const ANDROID_SOURCE_STAGE_MS = 12_000;
 const SOURCE_READY_DELAY_MS = 750;
 const OPTIONS_STAGE_MS = 4_000;
 const CAPABILITIES_STAGE_MS = 4_000;
 const COMPRESSING_STAGE_MS = 2_000;
-const RESULT_STAGE_MS = 7_000;
+const RESULT_STAGE_MS = 6_000;
 
 export async function runGuidedNativeDemo(
   sampleModule: ExampleImageSourceModule,
@@ -60,6 +61,8 @@ export async function runGuidedNativeDemo(
   const wait = callbacks.wait ?? defaultWait;
   const now = callbacks.now ?? Date.now;
   const prepared = await prepareNativeDemoCapture(sampleModule);
+  const sourceStageMs =
+    platform === 'android' ? ANDROID_SOURCE_STAGE_MS : DEFAULT_SOURCE_STAGE_MS;
   const events: GuidedDemoEvent[] = [];
   const startedAt = now();
   let result: CompressionResult | null = null;
@@ -89,7 +92,7 @@ export async function runGuidedNativeDemo(
   await callbacks.emitLog(
     `RNICK_GUIDED_DEMO_READY ${JSON.stringify({ schemaVersion: 1, platform })}`
   );
-  await wait(SOURCE_STAGE_MS - SOURCE_READY_DELAY_MS);
+  await wait(sourceStageMs - SOURCE_READY_DELAY_MS);
 
   await enterStage('options');
   await wait(OPTIONS_STAGE_MS);

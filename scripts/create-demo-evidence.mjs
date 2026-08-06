@@ -105,6 +105,12 @@ const recordingReport = inspectMp4(readFileSync(assetPaths.recording));
 if (recordingReport.status !== 'passed') {
   throw new Error(`captured walkthrough is not a valid timed MP4: ${recordingReport.error}`);
 }
+if (
+  recordingReport.durationSeconds < 18 ||
+  recordingReport.durationSeconds > 30
+) {
+  throw new Error('captured walkthrough duration must be between 18 and 30 seconds');
+}
 assets.recording.durationSeconds = roundMilliseconds(recordingReport.durationSeconds);
 assets.recording.captureMethod = options.captureMethod;
 

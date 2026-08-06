@@ -25,7 +25,7 @@ describe('Android demo screenshot capture', () => {
 
   it('records the complete guided walkthrough on both native platforms', () => {
     expect(source).toContain('adb shell screenrecord');
-    expect(source).toContain('--time-limit 24');
+    expect(source).toContain('--time-limit 30');
     expect(source.indexOf('RNICK_GUIDED_DEMO_READY')).toBeLessThan(
       source.indexOf('adb shell screenrecord')
     );

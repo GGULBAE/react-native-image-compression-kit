@@ -95,7 +95,7 @@ adb shell rm -f /sdcard/rnick-guided-demo.mp4
 adb shell screenrecord \
   --size 720x1600 \
   --bit-rate 2000000 \
-  --time-limit 24 \
+  --time-limit 30 \
   /sdcard/rnick-guided-demo.mp4 \
   > /tmp/rnick-demo-raw/screenrecord.log 2>&1 &
 screenrecord_pid=$!
