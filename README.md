@@ -280,10 +280,11 @@ evidence contract records the ordered stage timeline, MP4 duration and digest,
 exact source SHA, workflow run, runtime, and device.
 
 The hosted recorders may omit repeated frames while a stage is static, so the
-workflow preserves the captured H.264 frames and normalizes only their
-timestamps to the separately logged walkthrough duration with `ffmpeg`. The
-manifest records that capture method, while validation reads the actual video
-track duration rather than trusting the container's movie header.
+workflow normalizes the real captured frames to the separately logged
+walkthrough duration with `ffmpeg` and holds the exact final native screenshot
+for six seconds. The manifest records that capture method, while validation
+reads the actual video track duration rather than trusting the container's
+movie header.
 
 The same runs emit
 versioned baseline and exact-plan comparison evidence with raw samples, fixture

@@ -210,10 +210,11 @@ export function inspectMp4(bytes) {
     if (!mvhd) throw new Error('mvhd box is missing');
     readFullBoxDuration(bytes, mvhd, 'mvhd');
 
-    const videoDurations = readBoxes(bytes, moov.payloadStart, moov.end)
+    const videoTracks = readBoxes(bytes, moov.payloadStart, moov.end)
       .filter(({ type }) => type === 'trak')
       .flatMap((trak) => {
-        const mdia = readBoxes(bytes, trak.payloadStart, trak.end).find(
+        const trackBoxes = readBoxes(bytes, trak.payloadStart, trak.end);
+        const mdia = trackBoxes.find(
           ({ type }) => type === 'mdia'
         );
         if (!mdia) return [];
@@ -222,14 +223,19 @@ export function inspectMp4(bytes) {
         if (!handler || readHandlerType(bytes, handler) !== 'vide') return [];
         const mdhd = mediaBoxes.find(({ type }) => type === 'mdhd');
         if (!mdhd) throw new Error('video mdhd box is missing');
-        return [readFullBoxDuration(bytes, mdhd, 'video mdhd')];
+        const tkhd = trackBoxes.find(({ type }) => type === 'tkhd');
+        if (!tkhd) throw new Error('video tkhd box is missing');
+        return [{
+          durationSeconds: readFullBoxDuration(bytes, mdhd, 'video mdhd'),
+          ...readTrackDimensions(bytes, tkhd),
+        }];
       });
-    if (videoDurations.length !== 1) {
+    if (videoTracks.length !== 1) {
       throw new Error('MP4 must contain exactly one timed video track');
     }
     return {
       status: 'passed',
-      durationSeconds: videoDurations[0],
+      ...videoTracks[0],
       error: null,
     };
   } catch (error) {
@@ -239,6 +245,16 @@ export function inspectMp4(bytes) {
       error: error instanceof Error ? error.message : String(error),
     };
   }
+}
+
+function readTrackDimensions(bytes, box) {
+  if (box.end - 8 < box.payloadStart) throw new Error('tkhd box is truncated');
+  const width = bytes.readUInt32BE(box.end - 8) / 65_536;
+  const height = bytes.readUInt32BE(box.end - 4) / 65_536;
+  if (!Number.isInteger(width) || width <= 0 || !Number.isInteger(height) || height <= 0) {
+    throw new Error('video track dimensions are invalid');
+  }
+  return { width, height };
 }
 
 function readFullBoxDuration(bytes, box, label) {

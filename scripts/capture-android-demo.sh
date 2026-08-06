@@ -157,7 +157,8 @@ device="$(adb shell getprop ro.product.manufacturer | tr -d '\r') $(adb shell ge
 node scripts/normalize-demo-recording.mjs \
   --input /tmp/rnick-demo-raw/recording-raw.mp4 \
   --output /tmp/rnick-demo-raw/recording.mp4 \
-  --log /tmp/rnick-demo-raw/native.log
+  --log /tmp/rnick-demo-raw/native.log \
+  --result-frame /tmp/rnick-demo-raw/screen.png
 
 node scripts/create-demo-evidence.mjs \
   --platform android \
@@ -169,7 +170,7 @@ node scripts/create-demo-evidence.mjs \
   --output /tmp/rnick-demo-raw/output.jpg \
   --screenshot /tmp/rnick-demo-raw/screen.png \
   --recording /tmp/rnick-demo-raw/recording.mp4 \
-  --capture-method "android adb screenrecord H.264; timestamps normalized with ffmpeg" \
+  --capture-method "android adb screenrecord H.264; timeline normalized and final native frame held with ffmpeg" \
   --log /tmp/rnick-demo-raw/native.log \
   --destination demo-evidence/android \
   --run-url "$RNICK_DEMO_RUN_URL"

@@ -133,9 +133,15 @@ function timedMp4(durationSeconds, movieDurationSeconds = durationSeconds) {
   mdhdPayload.writeUInt32BE(durationSeconds * 1_000, 16);
   const hdlrPayload = Buffer.alloc(12);
   hdlrPayload.write('vide', 8, 4, 'ascii');
+  const tkhdPayload = Buffer.alloc(84);
+  tkhdPayload.writeUInt32BE(720 * 65_536, 76);
+  tkhdPayload.writeUInt32BE(1_600 * 65_536, 80);
   const trak = box(
     'trak',
-    box('mdia', Buffer.concat([box('mdhd', mdhdPayload), box('hdlr', hdlrPayload)]))
+    Buffer.concat([
+      box('tkhd', tkhdPayload),
+      box('mdia', Buffer.concat([box('mdhd', mdhdPayload), box('hdlr', hdlrPayload)])),
+    ])
   );
   return Buffer.concat([ftyp, box('moov', Buffer.concat([box('mvhd', mvhdPayload), trak]))]);
 }

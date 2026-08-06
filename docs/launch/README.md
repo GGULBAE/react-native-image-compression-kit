@@ -69,11 +69,12 @@ publishing. Never synthesize a missing platform recording or relabel a local
 capture as hosted evidence.
 
 The hosted screen recorders can omit repeated frames during static stages. The
-workflow therefore keeps the real captured H.264 frames but rescales their
-timestamps to the independently logged walkthrough duration before evidence
-creation. Review the raw-to-normalized duration report in the job log as well
-as the final video-track duration; the movie-header duration alone is not
-sufficient evidence.
+workflow therefore rescales the real captured frames to the independently
+logged walkthrough duration and appends a six-second hold of the exact final
+native screenshot before evidence creation. Review the raw-to-normalized
+duration report in the job log, the final-frame provenance, and the final
+video-track duration; the movie-header duration alone is not sufficient
+evidence.
 
 ## Materials
 

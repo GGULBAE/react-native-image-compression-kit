@@ -7,12 +7,13 @@ import { inspectMp4 } from './demo-evidence-core.mjs';
 import { parseGuidedDemoPayload } from './guided-demo-core.mjs';
 
 const options = parseArgs(process.argv.slice(2));
-for (const field of ['input', 'output', 'log']) {
+for (const field of ['input', 'output', 'log', 'result-frame']) {
   if (!options[field]) throw new Error(`--${field} is required`);
 }
 
 const input = path.resolve(options.input);
 const output = path.resolve(options.output);
+const resultFrame = path.resolve(options['result-frame']);
 if (input === output) throw new Error('--input and --output must be different files');
 
 const rawReport = inspectMp4(readFileSync(input));
@@ -30,20 +31,34 @@ if (
 }
 
 // Both simctl recordVideo and adb screenrecord can omit repeated frames while
-// the UI is static. Preserve the captured H.264 frames and only rescale their
-// timestamps to the independently logged walkthrough wall-clock duration.
-const timestampScale = targetDurationSeconds / rawReport.durationSeconds;
+// the UI is static. Rescale the recorded walkthrough to the independently
+// logged wall-clock duration, then hold the exact final native screenshot long
+// enough to make the before/after result useful to a viewer.
+const resultFrameHoldSeconds = 6;
+const movingDurationSeconds = targetDurationSeconds - resultFrameHoldSeconds;
+const timestampScale = movingDurationSeconds / rawReport.durationSeconds;
 const result = spawnSync(
   'ffmpeg',
   [
     '-hide_banner',
     '-loglevel', 'error',
     '-y',
-    '-itsscale', timestampScale.toFixed(9),
     '-i', input,
-    '-map', '0:v:0',
+    '-loop', '1',
+    '-framerate', '15',
+    '-t', String(resultFrameHoldSeconds),
+    '-i', resultFrame,
+    '-filter_complex',
+    `[0:v]setpts=${timestampScale.toFixed(9)}*PTS,fps=15,format=yuv420p,setsar=1[walkthrough];` +
+      `[1:v]scale=${rawReport.width}:${rawReport.height}:flags=lanczos,` +
+      'fps=15,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[result];' +
+      '[walkthrough][result]concat=n=2:v=1:a=0[video]',
+    '-map', '[video]',
     '-an',
-    '-c', 'copy',
+    '-c:v', 'libx264',
+    '-preset', 'veryfast',
+    '-crf', '23',
+    '-pix_fmt', 'yuv420p',
     '-movflags', '+faststart',
     output,
   ],
@@ -71,9 +86,12 @@ if (
 
 process.stdout.write(`${JSON.stringify({
   rawDurationSeconds: rawReport.durationSeconds,
+  width: rawReport.width,
+  height: rawReport.height,
   targetDurationSeconds,
   normalizedDurationSeconds: normalizedReport.durationSeconds,
   timestampScale,
+  resultFrameHoldSeconds,
   ffmpegVersion,
 })}\n`);
 

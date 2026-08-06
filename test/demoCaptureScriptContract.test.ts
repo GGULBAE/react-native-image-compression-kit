@@ -35,11 +35,12 @@ describe('Android demo screenshot capture', () => {
     expect(source).toContain('--recording /tmp/rnick-demo-raw/recording.mp4');
     expect(source).toContain('recording-raw.mp4');
     expect(source).toContain('normalize-demo-recording.mjs');
+    expect(source).toContain('--result-frame /tmp/rnick-demo-raw/screen.png');
     expect(source.indexOf('normalize-demo-recording.mjs')).toBeLessThan(
       source.indexOf('create-demo-evidence.mjs')
     );
     expect(source).toContain(
-      '--capture-method "android adb screenrecord H.264; timestamps normalized with ffmpeg"'
+      '--capture-method "android adb screenrecord H.264; timeline normalized and final native frame held with ffmpeg"'
     );
 
     expect(workflow).toContain('permissions:\n  contents: read');
@@ -54,11 +55,12 @@ describe('Android demo screenshot capture', () => {
     );
     expect(workflow).toContain('recording-raw.mp4');
     expect(workflow).toContain('normalize-demo-recording.mjs');
+    expect(workflow).toContain('--result-frame /tmp/rnick-demo-raw/screen.png');
     expect(workflow.indexOf('node scripts/normalize-demo-recording.mjs')).toBeLessThan(
       workflow.indexOf('node scripts/create-demo-evidence.mjs')
     );
     expect(workflow).toContain(
-      '--capture-method "ios simctl recordVideo H.264; timestamps normalized with ffmpeg"'
+      '--capture-method "ios simctl recordVideo H.264; timeline normalized and final native frame held with ffmpeg"'
     );
   });
 });
