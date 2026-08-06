@@ -196,9 +196,17 @@ function buildNative(app, lane, platform) {
     const propertiesPath = path.join(app.appRoot, 'android', 'gradle.properties');
     const properties = readFileSync(propertiesPath, 'utf8');
     const newArch = lane.architecture === 'new' ? 'true' : 'false';
-    const updated = /(^|\n)newArchEnabled=.*/.test(properties)
+    const architectureUpdated = /(^|\n)newArchEnabled=.*/.test(properties)
       ? properties.replace(/(^|\n)newArchEnabled=.*/, `$1newArchEnabled=${newArch}`)
       : `${properties.trimEnd()}\nnewArchEnabled=${newArch}\n`;
+    const androidGradleJvmArgs = '-Xmx4g -XX:MaxMetaspaceSize=1g';
+    const gradleJvmArgsProperty = `org.gradle.jvmargs=${androidGradleJvmArgs}`;
+    const updated = /(^|\n)org\.gradle\.jvmargs=.*/.test(architectureUpdated)
+      ? architectureUpdated.replace(
+          /(^|\n)org\.gradle\.jvmargs=.*/,
+          `$1${gradleJvmArgsProperty}`
+        )
+      : `${architectureUpdated.trimEnd()}\n${gradleJvmArgsProperty}\n`;
     writeFileSync(propertiesPath, updated);
     run('./gradlew', ['app:assembleDebug', '--no-daemon', '--stacktrace'], path.join(app.appRoot, 'android'));
     return;

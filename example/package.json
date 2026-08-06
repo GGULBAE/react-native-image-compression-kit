@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@bam.tech/react-native-image-resizer": "3.0.11",
-    "react": "19.2.3",
+    "react": "19.2.8",
     "react-native": "0.86.2",
     "react-native-compressor": "1.19.4",
     "react-native-image-compression-kit": "workspace:*",
