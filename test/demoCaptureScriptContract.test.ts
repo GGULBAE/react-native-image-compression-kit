@@ -44,6 +44,13 @@ describe('Android demo screenshot capture', () => {
     );
     expect(source).toContain('--recording /tmp/rnick-demo-raw/recording.mp4');
     expect(source).toContain('recording-raw.mp4');
+    expect(source).toContain('if ! wait "$screenrecord_pid"; then');
+    expect(source.indexOf('if ! wait "$screenrecord_pid"; then')).toBeLessThan(
+      source.indexOf('adb pull /sdcard/rnick-guided-demo.mp4')
+    );
+    expect(source.indexOf('adb pull /sdcard/rnick-guided-demo.mp4')).toBeLessThan(
+      source.indexOf('normalize-demo-recording.mjs')
+    );
     expect(source).toContain('normalize-demo-recording.mjs');
     expect(source).toContain('--result-frame /tmp/rnick-demo-raw/screen.png');
     expect(source.indexOf('normalize-demo-recording.mjs')).toBeLessThan(
@@ -57,6 +64,17 @@ describe('Android demo screenshot capture', () => {
     expect(workflow).toContain('sudo apt-get install --yes --no-install-recommends ffmpeg');
     expect(workflow).toContain('brew list ffmpeg');
     expect(workflow).toContain('simctl io "$udid" recordVideo --codec=h264');
+    expect(workflow).toContain(
+      'xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example'
+    );
+    expect(workflow).toContain(
+      'xcrun simctl terminate "$udid" com.imagecompressionkit.example || true'
+    );
+    expect(
+      workflow.indexOf(
+        'xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example'
+      )
+    ).toBeLessThan(workflow.indexOf('simctl io "$udid" recordVideo'));
     expect(workflow.indexOf('simctl io "$udid" recordVideo')).toBeLessThan(
       workflow.indexOf('SIMCTL_CHILD_RNICK_DEMO_CAPTURE=1 xcrun simctl launch')
     );
@@ -64,11 +82,17 @@ describe('Android demo screenshot capture', () => {
       workflow.indexOf("grep -q 'RNICK_GUIDED_DEMO_READY'")
     );
     expect(workflow.indexOf("grep -q 'RNICK_GUIDED_DEMO_READY'")).toBeLessThan(
+      workflow.indexOf("grep -q 'RNICK_GUIDED_DEMO_STAGE.*\"id\":\"result\"'")
+    );
+    expect(
+      workflow.indexOf("grep -q 'RNICK_GUIDED_DEMO_STAGE.*\"id\":\"result\"'")
+    ).toBeLessThan(workflow.lastIndexOf('kill -INT "$video_pid"'));
+    expect(workflow.lastIndexOf('kill -INT "$video_pid"')).toBeLessThan(
       workflow.indexOf("grep -q 'RNICK_GUIDED_DEMO_PASS'")
     );
     expect(workflow).toContain('recording-raw.mp4');
     expect(workflow).toContain('normalize-demo-recording.mjs');
-    expect(workflow).toContain('--trim-start-seconds 2');
+    expect(workflow).toContain('--trim-start-seconds 3');
     expect(readFileSync('scripts/normalize-demo-recording.mjs', 'utf8')).toContain(
       'tpad=stop_mode=clone:stop_duration=${movingDurationSeconds}'
     );
@@ -77,7 +101,7 @@ describe('Android demo screenshot capture', () => {
       workflow.indexOf('node scripts/create-demo-evidence.mjs')
     );
     expect(workflow).toContain(
-      '--capture-method "ios simctl recordVideo H.264 started before app launch; 2-second lead trimmed, timeline normalized, and final native frame held with ffmpeg"'
+      '--capture-method "ios simctl recordVideo H.264 after a non-capture warm launch; 3-second recorder/startup lead trimmed, timeline normalized, and final native frame held with ffmpeg"'
     );
   });
 });

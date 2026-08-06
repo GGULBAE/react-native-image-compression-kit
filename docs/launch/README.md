@@ -77,9 +77,13 @@ duration report in the job log, the final-frame provenance, and the final
 video-track duration; the movie-header duration alone is not sufficient
 evidence.
 
-The iOS recorder starts two seconds before the capture-only app launch so slow
-unified-log polling cannot miss the Source or Options screens. Normalization
-trims that exact two-second lead before rescaling the real recorded frames.
+The iOS job first launches the normal app for 20 seconds to prime the Metro
+bundle, then terminates it without collecting evidence. The recorder starts two
+seconds before the subsequent capture-only launch so unified-log polling cannot
+miss the Source or Options screens, and it stops just after the real Result
+stage begins. Normalization trims a three-second recorder/startup lead before
+rescaling the real recorded frames; the appended six-second frame is the exact
+native screenshot collected after the walkthrough finishes.
 
 ## Materials
 

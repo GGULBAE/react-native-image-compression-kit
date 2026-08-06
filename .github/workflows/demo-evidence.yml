@@ -174,6 +174,12 @@ jobs:
             test "$attempt" != "60"
             sleep 1
           done
+          # Prime the Metro bundle outside capture mode. The real recording can
+          # then begin before launch without preserving a cold bundling screen.
+          xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example
+          sleep 20
+          xcrun simctl terminate "$udid" com.imagecompressionkit.example || true
+          sleep 1
           mkdir -p /tmp/rnick-demo-raw
           xcrun simctl io "$udid" recordVideo --codec=h264 --force /tmp/rnick-demo-raw/recording-raw.mp4 > /tmp/rnick-demo-raw/record-video.log 2>&1 &
           video_pid=$!
@@ -192,16 +198,24 @@ jobs:
           done
           for attempt in $(seq 1 60); do
             capture_native_log
+            if grep -q 'RNICK_GUIDED_DEMO_STAGE.*"id":"result"' /tmp/rnick-demo-raw/native.log; then
+              break
+            fi
+            test "$attempt" != "60"
+            sleep 1
+          done
+          sleep 1
+          kill -INT "$video_pid"
+          wait "$video_pid" || true
+          video_pid=""
+          for attempt in $(seq 1 60); do
+            capture_native_log
             if grep -q 'RNICK_GUIDED_DEMO_PASS' /tmp/rnick-demo-raw/native.log; then
               break
             fi
             test "$attempt" != "60"
             sleep 1
           done
-          sleep 2
-          kill -INT "$video_pid"
-          wait "$video_pid" || true
-          video_pid=""
           for attempt in $(seq 1 120); do
             capture_native_log
             if grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && \
@@ -231,7 +245,7 @@ jobs:
             --input /tmp/rnick-demo-raw/recording-raw.mp4 \
             --output /tmp/rnick-demo-raw/recording.mp4 \
             --log /tmp/rnick-demo-raw/native.log \
-            --trim-start-seconds 2 \
+            --trim-start-seconds 3 \
             --result-frame /tmp/rnick-demo-raw/screen.png
           node scripts/create-demo-evidence.mjs \
             --platform ios \
@@ -243,7 +257,7 @@ jobs:
             --output /tmp/rnick-demo-raw/output.jpg \
             --screenshot /tmp/rnick-demo-raw/screen.png \
             --recording /tmp/rnick-demo-raw/recording.mp4 \
-            --capture-method "ios simctl recordVideo H.264 started before app launch; 2-second lead trimmed, timeline normalized, and final native frame held with ffmpeg" \
+            --capture-method "ios simctl recordVideo H.264 after a non-capture warm launch; 3-second recorder/startup lead trimmed, timeline normalized, and final native frame held with ffmpeg" \
             --log /tmp/rnick-demo-raw/native.log \
             --destination demo-evidence/ios \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

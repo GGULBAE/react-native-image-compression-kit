@@ -109,7 +109,10 @@ for attempt in $(seq 1 60); do
   sleep 1
 done
 
-wait "$screenrecord_pid"
+if ! wait "$screenrecord_pid"; then
+  echo 'adb screenrecord exited non-zero; validating the captured MP4 before accepting it.' >&2
+  tail -n 50 /tmp/rnick-demo-raw/screenrecord.log >&2 || true
+fi
 screenrecord_pid=""
 adb pull /sdcard/rnick-guided-demo.mp4 /tmp/rnick-demo-raw/recording-raw.mp4 >/dev/null
 

@@ -48,6 +48,11 @@ const resultFrameHoldSeconds = 6;
 const movingDurationSeconds = targetDurationSeconds - resultFrameHoldSeconds;
 const trimmedDurationSeconds = rawReport.durationSeconds - trimStartSeconds;
 const timestampScale = movingDurationSeconds / trimmedDurationSeconds;
+const walkthroughTimelineFilter = trimStartSeconds > 0
+  ? `trim=start=${trimStartSeconds},setpts=${timestampScale.toFixed(9)}*(PTS-STARTPTS),` +
+    `fps=15,tpad=stop_mode=clone:stop_duration=${movingDurationSeconds},` +
+    `trim=duration=${movingDurationSeconds},setpts=PTS-STARTPTS`
+  : `setpts=${timestampScale.toFixed(9)}*PTS,fps=15`;
 const result = spawnSync(
   'ffmpeg',
   [
@@ -60,10 +65,7 @@ const result = spawnSync(
     '-t', String(resultFrameHoldSeconds),
     '-i', resultFrame,
     '-filter_complex',
-    `[0:v]trim=start=${trimStartSeconds},setpts=${timestampScale.toFixed(9)}*(PTS-STARTPTS),` +
-      `fps=15,tpad=stop_mode=clone:stop_duration=${movingDurationSeconds},` +
-      `trim=duration=${movingDurationSeconds},setpts=PTS-STARTPTS,` +
-      'format=yuv420p,setsar=1[walkthrough];' +
+    `[0:v]${walkthroughTimelineFilter},format=yuv420p,setsar=1[walkthrough];` +
       `[1:v]scale=${rawReport.width}:${rawReport.height}:flags=lanczos,` +
       'fps=15,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[result];' +
       '[walkthrough][result]concat=n=2:v=1:a=0[video]',
