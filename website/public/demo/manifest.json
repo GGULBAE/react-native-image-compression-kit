@@ -1,19 +1,19 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "status": "passed",
   "packageVersion": "0.4.0",
-  "sourceCommit": "6841a887b2d8b6c9e4823d2708233feeecaa77ea",
+  "sourceCommit": "11b91af66322d7b98b46481739c54825b406ef0c",
   "cases": [
     {
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "status": "passed",
       "packageVersion": "0.4.0",
-      "sourceCommit": "6841a887b2d8b6c9e4823d2708233feeecaa77ea",
-      "capturedAt": "2026-07-20T11:38:47.100Z",
+      "sourceCommit": "11b91af66322d7b98b46481739c54825b406ef0c",
+      "capturedAt": "2026-08-06T06:54:27.407Z",
       "platform": "android",
       "runtime": "Android 15 / API 35",
       "device": "Google sdk_gphone64_x86_64",
-      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29738858393",
+      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/31078379910",
       "sourceUriKind": "file",
       "options": {
         "resize": {
@@ -36,6 +36,60 @@
         "originalByteSize": 13543,
         "compressionRatio": 0.16717123237096654
       },
+      "walkthrough": {
+        "schemaVersion": 1,
+        "platform": "android",
+        "status": "passed",
+        "stages": [
+          {
+            "id": "source",
+            "ordinal": 0,
+            "elapsedMs": 1
+          },
+          {
+            "id": "options",
+            "ordinal": 1,
+            "elapsedMs": 12050
+          },
+          {
+            "id": "capabilities",
+            "ordinal": 2,
+            "elapsedMs": 16083
+          },
+          {
+            "id": "compressing",
+            "ordinal": 3,
+            "elapsedMs": 20117
+          },
+          {
+            "id": "result",
+            "ordinal": 4,
+            "elapsedMs": 22151
+          }
+        ],
+        "durationMs": 28200,
+        "options": {
+          "resize": {
+            "maxWidth": 160,
+            "maxHeight": 160,
+            "mode": "contain"
+          },
+          "output": {
+            "format": "jpeg",
+            "quality": 76,
+            "maxBytes": 8000
+          },
+          "metadata": "safe"
+        },
+        "result": {
+          "format": "jpeg",
+          "width": 100,
+          "height": 160,
+          "byteSize": 2264,
+          "originalByteSize": 13543,
+          "compressionRatio": 0.16717123237096654
+        }
+      },
       "assets": {
         "source": {
           "file": "android/source.jpg",
@@ -49,21 +103,28 @@
         },
         "screenshot": {
           "file": "android/screen.png",
-          "byteSize": 293673,
-          "sha256": "8481be8e201bde93bef5b4a8b415813142938bc5cce69a3829a53b488e5621d7"
+          "byteSize": 251403,
+          "sha256": "27b276a47f8972e89b49590b762fcb99137c73798fbde1ab45c1a1c34600908c"
+        },
+        "recording": {
+          "file": "android/recording.mp4",
+          "byteSize": 207926,
+          "sha256": "89c0a7cd3a921bbec9c6a796689048fe525e2dd709b0d8b12211fdb62d739847",
+          "durationSeconds": 28.2,
+          "captureMethod": "android adb screenrecord H.264; timeline normalized and final native frame held with ffmpeg"
         }
       }
     },
     {
-      "schemaVersion": 1,
+      "schemaVersion": 2,
       "status": "passed",
       "packageVersion": "0.4.0",
-      "sourceCommit": "6841a887b2d8b6c9e4823d2708233feeecaa77ea",
-      "capturedAt": "2026-07-20T11:40:53.195Z",
+      "sourceCommit": "11b91af66322d7b98b46481739c54825b406ef0c",
+      "capturedAt": "2026-08-06T07:03:57.876Z",
       "platform": "ios",
       "runtime": "iOS.26.4",
       "device": "iPhone 17 Pro",
-      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29738858393",
+      "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/31078379910",
       "sourceUriKind": "file",
       "options": {
         "resize": {
@@ -86,6 +147,60 @@
         "originalByteSize": 3317,
         "compressionRatio": 0.7093759421163702
       },
+      "walkthrough": {
+        "schemaVersion": 1,
+        "platform": "ios",
+        "status": "passed",
+        "stages": [
+          {
+            "id": "source",
+            "ordinal": 0,
+            "elapsedMs": 1
+          },
+          {
+            "id": "options",
+            "ordinal": 1,
+            "elapsedMs": 9007
+          },
+          {
+            "id": "capabilities",
+            "ordinal": 2,
+            "elapsedMs": 13025
+          },
+          {
+            "id": "compressing",
+            "ordinal": 3,
+            "elapsedMs": 17040
+          },
+          {
+            "id": "result",
+            "ordinal": 4,
+            "elapsedMs": 19066
+          }
+        ],
+        "durationMs": 26625,
+        "options": {
+          "resize": {
+            "maxWidth": 160,
+            "maxHeight": 160,
+            "mode": "contain"
+          },
+          "output": {
+            "format": "jpeg",
+            "quality": 76,
+            "maxBytes": 8000
+          },
+          "metadata": "safe"
+        },
+        "result": {
+          "format": "jpeg",
+          "width": 100,
+          "height": 160,
+          "byteSize": 2353,
+          "originalByteSize": 3317,
+          "compressionRatio": 0.7093759421163702
+        }
+      },
       "assets": {
         "source": {
           "file": "ios/source.jpg",
@@ -99,19 +214,17 @@
         },
         "screenshot": {
           "file": "ios/screen.png",
-          "byteSize": 284736,
-          "sha256": "49395bb269d2dafd180ebde054c79c250ec393685b6993cd55044683256b794d"
+          "byteSize": 252906,
+          "sha256": "6f6797b717979bb0e4461ef6868f8ea2e1ba284b72e6633d3b8a82a377109e8d"
+        },
+        "recording": {
+          "file": "ios/recording.mp4",
+          "byteSize": 318643,
+          "sha256": "09413ceedf6bb4774c35ec68f010a9d677e7737d8b07ceef8ae0aaeea45281e8",
+          "durationSeconds": 26.6,
+          "captureMethod": "ios simctl recordVideo H.264 after a non-capture warm launch; 3-second recorder/startup lead trimmed, timeline normalized, and final native frame held with ffmpeg"
         }
       }
     }
-  ],
-  "presentation": {
-    "video": {
-      "file": "native-demo.mp4",
-      "byteSize": 290337,
-      "sha256": "7c5aea639efb389675e6743abad5c9bdf743fb72f3bcb269fea0f68ef79c596e",
-      "durationSeconds": 5,
-      "generator": "ffmpeg 8.1.2 720x1280 crossfade of exact Android and iOS native screenshots; see website/demo/index.md"
-    }
-  }
+  ]
 }
