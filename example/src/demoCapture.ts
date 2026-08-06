@@ -14,17 +14,22 @@ export const DEMO_CAPTURE_OPTIONS: CompressionOptions = {
   metadata: 'safe',
 };
 
-type DemoCapture = {
+export type DemoCapture = {
   sourceUri: string;
   capabilities: ImageCompressionCapabilities;
   result: CompressionResult;
   log: string;
 };
 
-export async function runNativeDemoCapture(
-  sampleModule: ExampleImageSourceModule,
-  platform: 'android' | 'ios'
-): Promise<DemoCapture> {
+export type PreparedDemoCapture = {
+  sourceUri: string;
+  capabilities: ImageCompressionCapabilities;
+  options: CompressionOptions;
+};
+
+export async function prepareNativeDemoCapture(
+  sampleModule: ExampleImageSourceModule
+): Promise<PreparedDemoCapture> {
   const [sourceUri, capabilities] = await Promise.all([
     sampleModule.copySampleJpegToCache(),
     getImageCompressionCapabilities(),
@@ -36,10 +41,21 @@ export async function runNativeDemoCapture(
     throw new Error('The native runtime did not report JPEG output support.');
   }
 
-  const options: CompressionOptions = {
-    ...DEMO_CAPTURE_OPTIONS,
-    source: { uri: sourceUri },
+  return {
+    sourceUri,
+    capabilities,
+    options: {
+      ...DEMO_CAPTURE_OPTIONS,
+      source: { uri: sourceUri },
+    },
   };
+}
+
+export async function completeNativeDemoCapture(
+  prepared: PreparedDemoCapture,
+  platform: 'android' | 'ios'
+): Promise<DemoCapture> {
+  const { sourceUri, capabilities, options } = prepared;
   const result = await compressImage(options);
   const payload = {
     schemaVersion: 1,
@@ -59,4 +75,12 @@ export async function runNativeDemoCapture(
     result,
     log: `RNICK_DEMO_PASS ${JSON.stringify(payload)}`,
   };
+}
+
+export async function runNativeDemoCapture(
+  sampleModule: ExampleImageSourceModule,
+  platform: 'android' | 'ios'
+): Promise<DemoCapture> {
+  const prepared = await prepareNativeDemoCapture(sampleModule);
+  return completeNativeDemoCapture(prepared, platform);
 }

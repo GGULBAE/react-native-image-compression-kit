@@ -34,8 +34,12 @@ import {
 import { ResultLine } from './components/ResultLine';
 import { ResultPanel } from './components/ResultPanel';
 import { SourcePanel } from './components/SourcePanel';
+import { GuidedDemo } from './components/GuidedDemo';
 import { useCompressionForm } from './useCompressionForm';
-import { runNativeDemoCapture } from './demoCapture';
+import {
+  runGuidedNativeDemo,
+  type GuidedDemoState,
+} from './guidedDemo';
 import { runNativeBenchmark } from './nativeBenchmark';
 import { runNativeComparisonBenchmark } from './nativeComparisonBenchmark';
 
@@ -73,6 +77,9 @@ export default function App(): React.JSX.Element {
   const [isLoadingSample, setIsLoadingSample] = useState(false);
   const [isPickingImage, setIsPickingImage] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isDemoCaptureMode, setIsDemoCaptureMode] = useState(false);
+  const [guidedDemoState, setGuidedDemoState] =
+    useState<GuidedDemoState | null>(null);
 
   const supportedOutputFormats =
     capabilities?.formats
@@ -159,12 +166,17 @@ export default function App(): React.JSX.Element {
       .then(async (enabled) => {
         if (!enabled || !isMounted || !SAMPLE_MODULE) return;
 
+        setIsDemoCaptureMode(true);
         setIsCompressing(true);
         setError(null);
         try {
-          const capture = await runNativeDemoCapture(
+          const capture = await runGuidedNativeDemo(
             SAMPLE_MODULE,
-            Platform.OS === 'ios' ? 'ios' : 'android'
+            Platform.OS === 'ios' ? 'ios' : 'android',
+            {
+              onState: setGuidedDemoState,
+              emitLog: emitIOSSmokeLog,
+            }
           );
           if (!isMounted) return;
           setSourceUri(capture.sourceUri);
@@ -172,6 +184,7 @@ export default function App(): React.JSX.Element {
           setResult(capture.result);
           setResultMetadataPolicy('safe');
           await emitIOSSmokeLog(capture.log);
+          await emitIOSSmokeLog(capture.guidedLog);
           const benchmark = await runNativeBenchmark(
             SAMPLE_MODULE,
             Platform.OS === 'ios' ? 'ios' : 'android'
@@ -323,6 +336,10 @@ export default function App(): React.JSX.Element {
   );
   const supportedMetadataPolicies = capabilities?.metadataPolicies ?? [];
   const canSubmit = sourceUri.trim().length > 0 && !isCompressing;
+
+  if (isDemoCaptureMode) {
+    return <GuidedDemo state={guidedDemoState} />;
+  }
 
   return (
     <View style={styles.safeArea}>

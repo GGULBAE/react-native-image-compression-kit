@@ -35,7 +35,8 @@ Honest limits:
 - Native evidence explorer: https://ggulbae.github.io/react-native-image-compression-kit/demo/
 - Android screenshot: https://ggulbae.github.io/react-native-image-compression-kit/demo/android/screen.png
 - iOS screenshot: https://ggulbae.github.io/react-native-image-compression-kit/demo/ios/screen.png
-- Short native-result video: https://ggulbae.github.io/react-native-image-compression-kit/demo/native-demo.mp4
+- Android native walkthrough: https://ggulbae.github.io/react-native-image-compression-kit/demo/android/recording.mp4
+- iOS native walkthrough: https://ggulbae.github.io/react-native-image-compression-kit/demo/ios/recording.mp4
 - Capability table: https://ggulbae.github.io/react-native-image-compression-kit/guide/capabilities
 
 Do not use an asset until its URL and manifest digest work from a signed-out
