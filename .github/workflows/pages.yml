@@ -54,7 +54,7 @@ jobs:
     name: Deploy public site
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     permissions:
       pages: write
       id-token: write
@@ -66,3 +66,6 @@ jobs:
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        with:
+          # Leave headroom for transient GitHub Pages deployment queues.
+          timeout: 1200000
