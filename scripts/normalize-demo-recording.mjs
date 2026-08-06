@@ -20,6 +20,16 @@ const rawReport = inspectMp4(readFileSync(input));
 if (rawReport.status !== 'passed') {
   throw new Error(`raw recording is not a valid timed MP4: ${rawReport.error}`);
 }
+const trimStartSeconds = options['trim-start-seconds']
+  ? Number(options['trim-start-seconds'])
+  : 0;
+if (
+  !Number.isFinite(trimStartSeconds) ||
+  trimStartSeconds < 0 ||
+  trimStartSeconds >= rawReport.durationSeconds
+) {
+  throw new Error('--trim-start-seconds must be within the raw recording');
+}
 const walkthrough = parseGuidedDemoPayload(readFileSync(path.resolve(options.log), 'utf8'));
 const targetDurationSeconds = walkthrough.durationMs / 1_000;
 if (
@@ -36,7 +46,8 @@ if (
 // enough to make the before/after result useful to a viewer.
 const resultFrameHoldSeconds = 6;
 const movingDurationSeconds = targetDurationSeconds - resultFrameHoldSeconds;
-const timestampScale = movingDurationSeconds / rawReport.durationSeconds;
+const trimmedDurationSeconds = rawReport.durationSeconds - trimStartSeconds;
+const timestampScale = movingDurationSeconds / trimmedDurationSeconds;
 const result = spawnSync(
   'ffmpeg',
   [
@@ -49,7 +60,8 @@ const result = spawnSync(
     '-t', String(resultFrameHoldSeconds),
     '-i', resultFrame,
     '-filter_complex',
-    `[0:v]setpts=${timestampScale.toFixed(9)}*PTS,fps=15,format=yuv420p,setsar=1[walkthrough];` +
+    `[0:v]trim=start=${trimStartSeconds},setpts=${timestampScale.toFixed(9)}*(PTS-STARTPTS),` +
+      'fps=15,format=yuv420p,setsar=1[walkthrough];' +
       `[1:v]scale=${rawReport.width}:${rawReport.height}:flags=lanczos,` +
       'fps=15,format=yuv420p,setsar=1,setpts=PTS-STARTPTS[result];' +
       '[walkthrough][result]concat=n=2:v=1:a=0[video]',
@@ -88,6 +100,8 @@ process.stdout.write(`${JSON.stringify({
   rawDurationSeconds: rawReport.durationSeconds,
   width: rawReport.width,
   height: rawReport.height,
+  trimStartSeconds,
+  trimmedDurationSeconds,
   targetDurationSeconds,
   normalizedDurationSeconds: normalizedReport.durationSeconds,
   timestampScale,

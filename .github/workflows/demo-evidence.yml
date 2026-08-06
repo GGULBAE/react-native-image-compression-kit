@@ -174,8 +174,11 @@ jobs:
             test "$attempt" != "60"
             sleep 1
           done
-          SIMCTL_CHILD_RNICK_DEMO_CAPTURE=1 xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example --rnick-demo-capture
           mkdir -p /tmp/rnick-demo-raw
+          xcrun simctl io "$udid" recordVideo --codec=h264 --force /tmp/rnick-demo-raw/recording-raw.mp4 > /tmp/rnick-demo-raw/record-video.log 2>&1 &
+          video_pid=$!
+          sleep 2
+          SIMCTL_CHILD_RNICK_DEMO_CAPTURE=1 xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example --rnick-demo-capture
           capture_native_log() {
             xcrun simctl spawn "$udid" log show --style compact --last 3m --predicate 'eventMessage CONTAINS "RNICK_DEMO_" OR eventMessage CONTAINS "RNICK_GUIDED_DEMO_" OR eventMessage CONTAINS "RNICK_BENCHMARK_"' > /tmp/rnick-demo-raw/native.log
           }
@@ -187,8 +190,6 @@ jobs:
             test "$attempt" != "60"
             sleep 1
           done
-          xcrun simctl io "$udid" recordVideo --codec=h264 --force /tmp/rnick-demo-raw/recording-raw.mp4 > /tmp/rnick-demo-raw/record-video.log 2>&1 &
-          video_pid=$!
           for attempt in $(seq 1 60); do
             capture_native_log
             if grep -q 'RNICK_GUIDED_DEMO_PASS' /tmp/rnick-demo-raw/native.log; then
@@ -230,6 +231,7 @@ jobs:
             --input /tmp/rnick-demo-raw/recording-raw.mp4 \
             --output /tmp/rnick-demo-raw/recording.mp4 \
             --log /tmp/rnick-demo-raw/native.log \
+            --trim-start-seconds 2 \
             --result-frame /tmp/rnick-demo-raw/screen.png
           node scripts/create-demo-evidence.mjs \
             --platform ios \
@@ -241,7 +243,7 @@ jobs:
             --output /tmp/rnick-demo-raw/output.jpg \
             --screenshot /tmp/rnick-demo-raw/screen.png \
             --recording /tmp/rnick-demo-raw/recording.mp4 \
-            --capture-method "ios simctl recordVideo H.264; timeline normalized and final native frame held with ffmpeg" \
+            --capture-method "ios simctl recordVideo H.264 started before app launch; 2-second lead trimmed, timeline normalized, and final native frame held with ffmpeg" \
             --log /tmp/rnick-demo-raw/native.log \
             --destination demo-evidence/ios \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
