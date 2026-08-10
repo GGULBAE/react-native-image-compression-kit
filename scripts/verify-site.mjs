@@ -32,8 +32,10 @@ const requiredFiles = [
   'website/guide/errors.md',
   'website/guide/testing.md',
   'website/reference/api.md',
+  'website/reference/architecture.md',
   'website/reference/compatibility.md',
   'website/demo/index.md',
+  'website/roadmap.md',
   'website/changelog.md',
   'test/publicApiExamples.ts',
 ];
@@ -46,6 +48,15 @@ for (const relativePath of requiredFiles) {
 }
 
 const packageJson = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+const siteConfig = readFileSync(
+  path.join(root, 'website', '.vitepress', 'config.mts'),
+  'utf8'
+);
+for (const route of ["link: '/reference/architecture'", "link: '/roadmap'"]) {
+  if (!siteConfig.includes(route)) {
+    errors.push(`site navigation missing route: ${route}`);
+  }
+}
 const releaseStatus = JSON.parse(
   readFileSync(path.join(root, 'docs', 'release-status.json'), 'utf8')
 );
@@ -109,6 +120,8 @@ for (const requiredText of [
   'compressionRatio',
   'cache file',
   'SHA-256',
+  'capability-first',
+  'No roadmap item is a release promise',
 ]) {
   if (!combined.includes(requiredText)) {
     errors.push(`site missing semantic contract: ${requiredText}`);

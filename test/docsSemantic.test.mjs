@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
   collectMarkdownLinkViolations,
   inspectDocumentation,
+  inspectProductDirectionContracts,
   inspectStatusContract,
   parseCurrentStatus,
   parseHeadings,
@@ -116,9 +117,37 @@ describe('documentation semantic gate', () => {
       'docs/supply-chain/dependabot-triage.md'
     );
     expect(report.markdownFiles).toContain('docs/verification-architecture.md');
+    expect(report.markdownFiles).toContain('docs/product-architecture.md');
+    expect(report.markdownFiles).toContain('ROADMAP.md');
     expect(report.markdownFiles).toContain(
       `docs/launch/v${PACKAGE_JSON.version}-release-notes.md`
     );
+  });
+
+  it('rejects weakened product architecture and roadmap decision contracts', () => {
+    const roadmap = readFileSync(path.join(ROOT, 'ROADMAP.md'), 'utf8');
+    const architecture = readFileSync(
+      path.join(ROOT, 'docs/product-architecture.md'),
+      'utf8'
+    );
+
+    expect(inspectProductDirectionContracts({ roadmap, architecture })).toEqual([]);
+
+    expect(
+      inspectProductDirectionContracts({
+        roadmap: roadmap
+          .replace('## Evidence-gated candidates', '## Possible ideas')
+          .replace('No roadmap item is a release promise', 'Plans may change'),
+        architecture: architecture
+          .replaceAll('capability-first', 'format-aware')
+          .replaceAll('ERR_RESOURCE_LIMIT', 'resource error'),
+      })
+    ).toEqual([
+      'ROADMAP missing heading: Evidence-gated candidates',
+      'ROADMAP missing decision contract: No roadmap item is a release promise',
+      'product architecture missing decision contract: capability-first',
+      'product architecture missing decision contract: ERR_RESOURCE_LIMIT',
+    ]);
   });
 
   it('parses only marked README and RELEASE status blocks', () => {

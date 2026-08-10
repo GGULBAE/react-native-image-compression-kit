@@ -53,6 +53,7 @@ export default defineConfig({
       { text: 'API', link: '/reference/api' },
       { text: 'Native demo', link: '/demo/' },
       { text: 'Compatibility', link: '/reference/compatibility' },
+      { text: 'Roadmap', link: '/roadmap' },
       { text: 'Changelog', link: '/changelog' },
     ],
     sidebar: [
@@ -78,6 +79,8 @@ export default defineConfig({
         items: [
           { text: 'Public API', link: '/reference/api' },
           { text: 'Compatibility matrix', link: '/reference/compatibility' },
+          { text: 'Product architecture', link: '/reference/architecture' },
+          { text: 'Roadmap', link: '/roadmap' },
           { text: 'Native result demo', link: '/demo/' },
           { text: 'Changelog', link: '/changelog' },
         ],

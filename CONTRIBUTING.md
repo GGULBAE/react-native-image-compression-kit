@@ -10,6 +10,8 @@ fail-closed release evidence.
 - Search existing issues before reporting a bug or proposing a feature.
 - Report vulnerabilities through the private route in [SECURITY.md](SECURITY.md).
 - Open an issue before implementing a new codec, public API, or platform claim.
+- Read the [product architecture](docs/product-architecture.md) for behavioral
+  boundaries and the [roadmap](ROADMAP.md) for evidence-gated or deferred work.
 
 ## Local setup
 
