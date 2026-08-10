@@ -7,6 +7,11 @@ import {
   DEPENDENCY_SECURITY_CHECK_FIELDS,
   DEPENDENCY_SECURITY_REPORT_FIELDS,
   ESBUILD_MINIMUM_SAFE_VERSION,
+  IMAGE_SIZE_AUDIT_IGNORES,
+  IMAGE_SIZE_PATCH_FILE,
+  IMAGE_SIZE_PATCH_SHA256,
+  IMAGE_SIZE_REVIEWED_VERSION,
+  JS_YAML_MINIMUM_SAFE_VERSION,
   OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION,
   PNPM_REVIEWED_VERSION,
   POSTCSS_MINIMUM_SAFE_VERSION,
@@ -31,6 +36,10 @@ function repositoryInputs() {
       'utf8'
     ),
     lockfileContents: readFileSync(path.join(ROOT, 'pnpm-lock.yaml'), 'utf8'),
+    imageSizePatchContents: readFileSync(
+      path.join(ROOT, IMAGE_SIZE_PATCH_FILE),
+      'utf8'
+    ),
   };
 }
 
@@ -50,6 +59,10 @@ describe('dependency security gate', () => {
       sentryNodeOverride: SENTRY_NODE_REVIEWED_VERSION,
       shellQuoteOverride: SHELL_QUOTE_REVIEWED_VERSION,
       postcssOverride: POSTCSS_MINIMUM_SAFE_VERSION,
+      jsYamlOverride: JS_YAML_MINIMUM_SAFE_VERSION,
+      imageSizePatch: IMAGE_SIZE_PATCH_FILE,
+      imageSizePatchSha256: IMAGE_SIZE_PATCH_SHA256,
+      auditIgnoredGhsas: [...IMAGE_SIZE_AUDIT_IGNORES].sort(),
       productionExposure: [],
       checks: Object.fromEntries(
         DEPENDENCY_SECURITY_CHECK_FIELDS.map((field) => [field, true])
@@ -61,6 +74,8 @@ describe('dependency security gate', () => {
     expect(report.opentelemetryCoreVersions).toContain('2.9.0');
     expect(report.shellQuoteVersions).toEqual([SHELL_QUOTE_REVIEWED_VERSION]);
     expect(report.postcssVersions).toEqual([POSTCSS_MINIMUM_SAFE_VERSION]);
+    expect(report.jsYamlVersions).toEqual([JS_YAML_MINIMUM_SAFE_VERSION]);
+    expect(report.imageSizeVersions).toEqual([IMAGE_SIZE_REVIEWED_VERSION]);
     expect(canonicalDependencySecurityReport(report)).toBe(
       JSON.stringify(report) + '\n'
     );
@@ -115,6 +130,53 @@ describe('dependency security gate', () => {
       'Expected pnpm override postcss=' + POSTCSS_MINIMUM_SAFE_VERSION,
     ],
     [
+      'missing js-yaml override',
+      (inputs) => {
+        inputs.workspaceContents = inputs.workspaceContents.replace(
+          /^  "cosmiconfig@9\.0\.2>js-yaml": "4\.3\.1"\n/m,
+          ''
+        );
+      },
+      'cosmiconfig@9.0.2>js-yaml',
+    ],
+    [
+      'missing image-size audit ignore',
+      (inputs) => {
+        inputs.workspaceContents = inputs.workspaceContents.replace(
+          /^    - GHSA-w3rx-r6r6-pgpr\n/m,
+          ''
+        );
+      },
+      'must contain only the reviewed image-size advisories',
+    ],
+    [
+      'unreviewed audit ignore',
+      (inputs) => {
+        inputs.workspaceContents = inputs.workspaceContents.replace(
+          '    - GHSA-w3rx-r6r6-pgpr\n',
+          '    - GHSA-w3rx-r6r6-pgpr\n    - GHSA-unreviewed-ignore\n'
+        );
+      },
+      'must contain only the reviewed image-size advisories',
+    ],
+    [
+      'missing image-size patch mapping',
+      (inputs) => {
+        inputs.workspaceContents = inputs.workspaceContents.replace(
+          /^  image-size@1\.2\.1: patches\/image-size@1\.2\.1\.patch\n/m,
+          ''
+        );
+      },
+      'Expected patched dependency image-size@1.2.1',
+    ],
+    [
+      'altered image-size patch',
+      (inputs) => {
+        inputs.imageSizePatchContents += '\n# mutation\n';
+      },
+      'SHA-256 drifted',
+    ],
+    [
       'vulnerable vite',
       (inputs) => {
         inputs.lockfileContents = inputs.lockfileContents.replaceAll(
@@ -165,6 +227,26 @@ describe('dependency security gate', () => {
       'minimum is ' + POSTCSS_MINIMUM_SAFE_VERSION,
     ],
     [
+      'vulnerable js-yaml',
+      (inputs) => {
+        inputs.lockfileContents = inputs.lockfileContents.replaceAll(
+          'js-yaml@4.3.1',
+          'js-yaml@4.3.0'
+        );
+      },
+      'minimum is ' + JS_YAML_MINIMUM_SAFE_VERSION,
+    ],
+    [
+      'unpatched image-size lock snapshot',
+      (inputs) => {
+        inputs.lockfileContents = inputs.lockfileContents.replaceAll(
+          IMAGE_SIZE_PATCH_SHA256,
+          '0'.repeat(64)
+        );
+      },
+      'must bind image-size@1.2.1 to reviewed patch',
+    ],
+    [
       'production exposure',
       (inputs) => {
         inputs.packageJson.dependencies = {
@@ -207,6 +289,9 @@ describe('dependency security gate', () => {
       sentryNodeOverride: SENTRY_NODE_REVIEWED_VERSION,
       shellQuoteOverride: SHELL_QUOTE_REVIEWED_VERSION,
       postcssOverride: POSTCSS_MINIMUM_SAFE_VERSION,
+      jsYamlOverride: JS_YAML_MINIMUM_SAFE_VERSION,
+      imageSizePatchSha256: IMAGE_SIZE_PATCH_SHA256,
+      auditIgnoredGhsas: [...IMAGE_SIZE_AUDIT_IGNORES].sort(),
       productionExposure: [],
     });
   });

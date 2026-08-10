@@ -1,7 +1,8 @@
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-export const DEPENDENCY_SECURITY_SCHEMA_VERSION = 3;
+export const DEPENDENCY_SECURITY_SCHEMA_VERSION = 4;
 export const PNPM_REVIEWED_VERSION = '11.8.0';
 export const VITE_MINIMUM_SAFE_VERSION = '6.4.3';
 export const ESBUILD_MINIMUM_SAFE_VERSION = '0.25.0';
@@ -10,16 +11,30 @@ export const POSTCSS_MINIMUM_SAFE_VERSION = '8.5.23';
 export const SENTRY_NODE_REVIEWED_VERSION = '10.66.0';
 export const SHELL_QUOTE_MINIMUM_SAFE_VERSION = '1.9.0';
 export const SHELL_QUOTE_REVIEWED_VERSION = '1.10.0';
+export const JS_YAML_MINIMUM_SAFE_VERSION = '4.3.1';
+export const IMAGE_SIZE_REVIEWED_VERSION = '1.2.1';
+export const IMAGE_SIZE_PATCH_SELECTOR =
+  'image-size@' + IMAGE_SIZE_REVIEWED_VERSION;
+export const IMAGE_SIZE_PATCH_FILE = 'patches/image-size@1.2.1.patch';
+export const IMAGE_SIZE_PATCH_SHA256 =
+  '34e52296d9c916036e01dd16594c1cdf69a3a92b24fd3b6734eb4eb01cc2c556';
+export const IMAGE_SIZE_AUDIT_IGNORES = Object.freeze([
+  'GHSA-5p2g-fcmc-qvqq',
+  'GHSA-w3rx-r6r6-pgpr',
+]);
 export const VITEPRESS_OVERRIDE_SELECTOR = 'vitepress@1.6.4>vite';
 export const SENTRY_NODE_OVERRIDE_SELECTOR =
   'lighthouse@13.4.0>@sentry/node';
 export const POSTCSS_OVERRIDE_SELECTOR = 'postcss';
 export const SHELL_QUOTE_OVERRIDE_SELECTOR =
   'react-devtools-core@6.1.5>shell-quote';
+export const JS_YAML_OVERRIDE_SELECTOR = 'cosmiconfig@9.0.2>js-yaml';
 
 export const DEPENDENCY_SECURITY_CHECK_FIELDS = Object.freeze([
   'manifest',
   'override',
+  'audit',
+  'patch',
   'lockfile',
   'ranges',
   'production',
@@ -36,11 +51,17 @@ export const DEPENDENCY_SECURITY_REPORT_FIELDS = Object.freeze([
   'sentryNodeOverride',
   'shellQuoteOverride',
   'postcssOverride',
+  'jsYamlOverride',
+  'imageSizePatch',
+  'imageSizePatchSha256',
+  'auditIgnoredGhsas',
   'viteVersions',
   'esbuildVersions',
   'opentelemetryCoreVersions',
   'shellQuoteVersions',
   'postcssVersions',
+  'jsYamlVersions',
+  'imageSizeVersions',
   'productionExposure',
   'checks',
   'error',
@@ -62,10 +83,17 @@ const TOOLING_PACKAGES = new Set([
   'react-devtools-core',
   'shell-quote',
   'postcss',
+  'js-yaml',
+  'image-size',
 ]);
 
 export function verifyDependencySecurity(
-  { packageJson, workspaceContents, lockfileContents } = {}
+  {
+    packageJson,
+    workspaceContents,
+    lockfileContents,
+    imageSizePatchContents,
+  } = {}
 ) {
   const state = {
     package: null,
@@ -76,11 +104,17 @@ export function verifyDependencySecurity(
     sentryNodeOverride: null,
     shellQuoteOverride: null,
     postcssOverride: null,
+    jsYamlOverride: null,
+    imageSizePatch: null,
+    imageSizePatchSha256: null,
+    auditIgnoredGhsas: [],
     viteVersions: [],
     esbuildVersions: [],
     opentelemetryCoreVersions: [],
     shellQuoteVersions: [],
     postcssVersions: [],
+    jsYamlVersions: [],
+    imageSizeVersions: [],
     productionExposure: [],
     checks: {},
   };
@@ -92,6 +126,10 @@ export function verifyDependencySecurity(
       'pnpm-workspace.yaml must be text.'
     );
     assert(typeof lockfileContents === 'string', 'pnpm-lock.yaml must be text.');
+    assert(
+      typeof imageSizePatchContents === 'string',
+      IMAGE_SIZE_PATCH_FILE + ' must be text.'
+    );
 
     assert(
       typeof packageJson.name === 'string' && packageJson.name.length > 0,
@@ -180,7 +218,63 @@ export function verifyDependencySecurity(
         describe(state.postcssOverride) +
         '.'
     );
+    state.jsYamlOverride = readWorkspaceOverride(
+      workspaceContents,
+      JS_YAML_OVERRIDE_SELECTOR
+    );
+    assert(
+      state.jsYamlOverride === JS_YAML_MINIMUM_SAFE_VERSION,
+      'Expected pnpm override ' +
+        JS_YAML_OVERRIDE_SELECTOR +
+        '=' +
+        JS_YAML_MINIMUM_SAFE_VERSION +
+        ', received ' +
+        describe(state.jsYamlOverride) +
+        '.'
+    );
     state.checks.override = true;
+
+    state.auditIgnoredGhsas = readWorkspaceList(
+      workspaceContents,
+      'auditConfig',
+      'ignoreGhsas'
+    ).sort();
+    assertStringArraysEqual(
+      state.auditIgnoredGhsas,
+      [...IMAGE_SIZE_AUDIT_IGNORES].sort(),
+      'pnpm auditConfig.ignoreGhsas must contain only the reviewed image-size advisories'
+    );
+    state.checks.audit = true;
+
+    state.imageSizePatch = readWorkspaceMappingValue(
+      workspaceContents,
+      'patchedDependencies',
+      IMAGE_SIZE_PATCH_SELECTOR
+    );
+    assert(
+      state.imageSizePatch === IMAGE_SIZE_PATCH_FILE,
+      'Expected patched dependency ' +
+        IMAGE_SIZE_PATCH_SELECTOR +
+        '=' +
+        IMAGE_SIZE_PATCH_FILE +
+        ', received ' +
+        describe(state.imageSizePatch) +
+        '.'
+    );
+    state.imageSizePatchSha256 = createHash('sha256')
+      .update(imageSizePatchContents)
+      .digest('hex');
+    assert(
+      state.imageSizePatchSha256 === IMAGE_SIZE_PATCH_SHA256,
+      IMAGE_SIZE_PATCH_FILE +
+        ' SHA-256 drifted: expected ' +
+        IMAGE_SIZE_PATCH_SHA256 +
+        ', received ' +
+        state.imageSizePatchSha256 +
+        '.'
+    );
+    assertImageSizePatchContract(imageSizePatchContents);
+    state.checks.patch = true;
 
     state.viteVersions = extractLockedVersions(lockfileContents, 'vite');
     state.esbuildVersions = extractLockedVersions(lockfileContents, 'esbuild');
@@ -193,6 +287,11 @@ export function verifyDependencySecurity(
       'shell-quote'
     );
     state.postcssVersions = extractLockedVersions(lockfileContents, 'postcss');
+    state.jsYamlVersions = extractLockedVersions(lockfileContents, 'js-yaml');
+    state.imageSizeVersions = extractLockedVersions(
+      lockfileContents,
+      'image-size'
+    );
     assert(state.viteVersions.length > 0, 'pnpm-lock.yaml does not resolve vite.');
     assert(
       state.esbuildVersions.length > 0,
@@ -209,6 +308,38 @@ export function verifyDependencySecurity(
     assert(
       state.postcssVersions.length > 0,
       'pnpm-lock.yaml does not resolve postcss.'
+    );
+    assert(
+      state.jsYamlVersions.length > 0,
+      'pnpm-lock.yaml does not resolve js-yaml.'
+    );
+    assert(
+      state.imageSizeVersions.length > 0,
+      'pnpm-lock.yaml does not resolve image-size.'
+    );
+    const lockPatchHash = readLockPatchedDependencyHash(
+      lockfileContents,
+      IMAGE_SIZE_PATCH_SELECTOR
+    );
+    assert(
+      lockPatchHash === IMAGE_SIZE_PATCH_SHA256,
+      'pnpm-lock.yaml must bind ' +
+        IMAGE_SIZE_PATCH_SELECTOR +
+        ' to reviewed patch ' +
+        IMAGE_SIZE_PATCH_SHA256 +
+        ', received ' +
+        describe(lockPatchHash) +
+        '.'
+    );
+    assert(
+      lockfileContents.includes(
+        '  ' +
+          IMAGE_SIZE_PATCH_SELECTOR +
+          '(patch_hash=' +
+          IMAGE_SIZE_PATCH_SHA256 +
+          '):'
+      ),
+      'pnpm-lock.yaml does not resolve the patched image-size snapshot.'
     );
     state.checks.lockfile = true;
 
@@ -236,6 +367,20 @@ export function verifyDependencySecurity(
       'postcss',
       state.postcssVersions,
       POSTCSS_MINIMUM_SAFE_VERSION
+    );
+    assertMinimumVersions(
+      'js-yaml',
+      state.jsYamlVersions,
+      JS_YAML_MINIMUM_SAFE_VERSION
+    );
+    assert(
+      state.imageSizeVersions.length === 1 &&
+        state.imageSizeVersions[0] === IMAGE_SIZE_REVIEWED_VERSION,
+      'pnpm-lock.yaml must resolve only reviewed patched image-size ' +
+        IMAGE_SIZE_REVIEWED_VERSION +
+        ', received ' +
+        state.imageSizeVersions.join(', ') +
+        '.'
     );
     assert(
       state.viteVersions.includes(VITE_MINIMUM_SAFE_VERSION),
@@ -289,11 +434,17 @@ export function createDependencySecurityReport({
   sentryNodeOverride = null,
   shellQuoteOverride = null,
   postcssOverride = null,
+  jsYamlOverride = null,
+  imageSizePatch = null,
+  imageSizePatchSha256 = null,
+  auditIgnoredGhsas = [],
   viteVersions = [],
   esbuildVersions = [],
   opentelemetryCoreVersions = [],
   shellQuoteVersions = [],
   postcssVersions = [],
+  jsYamlVersions = [],
+  imageSizeVersions = [],
   productionExposure = [],
   checks = {},
   status = 'failed',
@@ -310,11 +461,17 @@ export function createDependencySecurityReport({
     sentryNodeOverride,
     shellQuoteOverride,
     postcssOverride,
+    jsYamlOverride,
+    imageSizePatch,
+    imageSizePatchSha256,
+    auditIgnoredGhsas: [...auditIgnoredGhsas],
     viteVersions: [...viteVersions],
     esbuildVersions: [...esbuildVersions],
     opentelemetryCoreVersions: [...opentelemetryCoreVersions],
     shellQuoteVersions: [...shellQuoteVersions],
     postcssVersions: [...postcssVersions],
+    jsYamlVersions: [...jsYamlVersions],
+    imageSizeVersions: [...imageSizeVersions],
     productionExposure: [...productionExposure],
     checks: Object.fromEntries(
       DEPENDENCY_SECURITY_CHECK_FIELDS.map((field) => [
@@ -341,6 +498,10 @@ export function readDependencySecurityInputs(rootDir) {
       'utf8'
     ),
     lockfileContents: readFileSync(path.join(root, 'pnpm-lock.yaml'), 'utf8'),
+    imageSizePatchContents: readFileSync(
+      path.join(root, IMAGE_SIZE_PATCH_FILE),
+      'utf8'
+    ),
   };
 }
 
@@ -394,6 +555,87 @@ function readWorkspaceOverride(contents, selector) {
     'pnpm-workspace.yaml contains duplicate ' + selector + ' overrides.'
   );
   return matches[0]?.[1] ?? null;
+}
+
+function readWorkspaceMappingValue(contents, section, key) {
+  const block = readWorkspaceSection(contents, section);
+  const escaped = escapeRegExp(key);
+  const matches = [
+    ...block.matchAll(
+      new RegExp(
+        '^  ["\']?' + escaped + '["\']?:\\s*["\']?([^"\'\\s#]+)["\']?\\s*$',
+        'gm'
+      )
+    ),
+  ];
+  assert(matches.length <= 1, section + ' contains duplicate ' + key + '.');
+  return matches[0]?.[1] ?? null;
+}
+
+function readWorkspaceList(contents, section, key) {
+  const block = readWorkspaceSection(contents, section);
+  const escaped = escapeRegExp(key);
+  const match = block.match(
+    new RegExp(
+      '^  ' +
+        escaped +
+        ':\\s*$([\\s\\S]*?)(?=^  \\S[^\\n]*:\\s*$|(?![\\s\\S]))',
+      'm'
+    )
+  );
+  if (!match) return [];
+  return [...match[1].matchAll(/^    -\s*["']?([^"'\s#]+)["']?\s*$/gm)].map(
+    (entry) => entry[1]
+  );
+}
+
+function readWorkspaceSection(contents, section) {
+  const escaped = escapeRegExp(section);
+  const match = contents.match(
+    new RegExp(
+      '^' + escaped + ':\\s*$([\\s\\S]*?)(?=^\\S|(?![\\s\\S]))',
+      'm'
+    )
+  );
+  return match?.[1] ?? '';
+}
+
+function readLockPatchedDependencyHash(contents, selector) {
+  const escaped = escapeRegExp(selector);
+  const match = contents.match(
+    new RegExp('^  ' + escaped + ':\\s*([a-f0-9]{64})\\s*$', 'm')
+  );
+  return match?.[1] ?? null;
+}
+
+function assertImageSizePatchContract(contents) {
+  for (const required of [
+    "throw new TypeError('Invalid ICNS image entry length')",
+    'assertValidImageLength(imageHeader[1]);',
+    'length < SIZE_HEADER',
+  ]) {
+    assert(
+      contents.includes(required),
+      IMAGE_SIZE_PATCH_FILE + ' is missing required guard: ' + required + '.'
+    );
+  }
+  assert(
+    contents.match(/assertValidImageLength\(imageHeader\[1\]\);/g)?.length === 2,
+    IMAGE_SIZE_PATCH_FILE + ' must guard both the initial and repeated ICNS entry.'
+  );
+}
+
+function assertStringArraysEqual(actual, expected, message) {
+  assert(
+    actual.length === expected.length &&
+      actual.every((value, index) => value === expected[index]),
+    message +
+      ': expected ' +
+      describe(expected) +
+      ', received ' +
+      describe(actual) +
+      '.'
+  );
 }
 
 function assertMinimumVersions(packageName, versions, minimum) {
