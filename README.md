@@ -30,6 +30,18 @@ unsafe work before full decode, supports cancellation, and publishes only
 complete transactional cache files. npm `latest`, immutable tag `v0.4.0`, and
 the GitHub Release all resolve to the verified 0.4.0 artifact and source.
 
+## Project direction
+
+The [roadmap](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/ROADMAP.md)
+organizes work around integration problems and required evidence rather than
+release dates. The
+[product architecture](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/product-architecture.md)
+records the capability-first native pipeline, bounded-work, cancellation,
+metadata, and transactional-output decisions that changes must preserve. For a
+shorter user-facing view, see the
+[hosted architecture guide](https://ggulbae.github.io/react-native-image-compression-kit/reference/architecture)
+and [hosted roadmap](https://ggulbae.github.io/react-native-image-compression-kit/roadmap).
+
 ## Installation
 
 ```bash
@@ -365,6 +377,8 @@ Operational material is repository-only and is not included in the npm
 tarball:
 
 - [User guides and native-result demo](https://ggulbae.github.io/react-native-image-compression-kit/)
+- [Product architecture](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/product-architecture.md)
+- [Roadmap](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/ROADMAP.md)
 - [Native benchmark evidence](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/benchmarks/README.md)
 
 - [Release evidence operations](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/README.md)

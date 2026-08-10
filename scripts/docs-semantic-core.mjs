@@ -37,6 +37,7 @@ export const REQUIRED_DOCUMENTATION_FILES = [
   'CODE_OF_CONDUCT.md',
   'CONTRIBUTING.md',
   'GOVERNANCE.md',
+  'ROADMAP.md',
   'RELEASE.md',
   'SECURITY.md',
   'SUPPORT.md',
@@ -44,6 +45,7 @@ export const REQUIRED_DOCUMENTATION_FILES = [
   RELEASE_STATUS_MANIFEST_PATH,
   'docs/compatibility-matrix.json',
   'docs/repository-settings.json',
+  'docs/product-architecture.md',
   'docs/verification-architecture.md',
   'docs/maintainers/account-recovery.md',
   'docs/maintainers/repository-settings.md',
@@ -68,6 +70,7 @@ export const REQUIRED_DOCUMENTATION_FILES = [
 
 const README_HEADINGS = [
   'Current status',
+  'Project direction',
   'Installation',
   'Quick start',
   'Public API',
@@ -95,6 +98,10 @@ const README_COMMANDS = [
 
 const README_LINKS = [
   'https://ggulbae.github.io/react-native-image-compression-kit/',
+  'https://ggulbae.github.io/react-native-image-compression-kit/reference/architecture',
+  'https://ggulbae.github.io/react-native-image-compression-kit/roadmap',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/ROADMAP.md',
+  'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/product-architecture.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/README.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/registry-provenance.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/release-evidence/policy-review.md',
@@ -548,6 +555,17 @@ export function inspectDocumentation(root) {
     }
   }
 
+  const roadmapPath = path.join(root, 'ROADMAP.md');
+  const productArchitecturePath = path.join(root, 'docs/product-architecture.md');
+  if (existsSync(roadmapPath) && existsSync(productArchitecturePath)) {
+    errors.push(
+      ...inspectProductDirectionContracts({
+        roadmap: readFileSync(roadmapPath, 'utf8'),
+        architecture: readFileSync(productArchitecturePath, 'utf8'),
+      })
+    );
+  }
+
   inspectPublicLaunchContracts(
     root,
     packageJson.version,
@@ -691,6 +709,72 @@ export function validateDocumentation(root) {
   return report;
 }
 
+export function inspectProductDirectionContracts({ roadmap, architecture }) {
+  const errors = [];
+  inspectDecisionDocument({
+    label: 'ROADMAP',
+    contents: roadmap,
+    headings: [
+      'How priorities are chosen',
+      'Current priorities',
+      'Evidence-gated candidates',
+      'Deferred work',
+      'Non-goals',
+      'How to propose a change',
+    ],
+    snippets: [
+      'No roadmap item is a release promise',
+      'getImageCompressionCapabilities()',
+      'GitHub Discussions',
+      'HEIC, HEIF, or AVIF output',
+    ],
+    errors,
+  });
+  inspectDecisionDocument({
+    label: 'product architecture',
+    contents: architecture,
+    headings: [
+      'System boundary',
+      'Request lifecycle',
+      'Platform pipelines',
+      'Architectural decisions',
+      'Verification ownership',
+      'Change rules',
+    ],
+    snippets: [
+      'capability-first',
+      'getImageCompressionCapabilities()',
+      'ERR_RESOURCE_LIMIT',
+      'ERR_CANCELLED',
+      'transactional',
+      'Codegen',
+      'NativeModules',
+    ],
+    errors,
+  });
+  return errors;
+}
+
+function inspectDecisionDocument({
+  label,
+  contents,
+  headings,
+  snippets,
+  errors,
+}) {
+  const actualHeadings = new Set(parseHeadings(contents).map(({ text }) => text));
+  for (const heading of headings) {
+    if (!actualHeadings.has(heading)) {
+      errors.push(`${label} missing heading: ${heading}`);
+    }
+  }
+  for (const snippet of snippets) {
+    if (!contents.includes(snippet)) {
+      errors.push(`${label} missing decision contract: ${snippet}`);
+    }
+  }
+}
+
 export function collectMarkdownLinkViolations(root, markdownFiles) {
   const errors = [];
 
@@ -784,6 +868,7 @@ function collectMarkdownFiles(root) {
     'CODE_OF_CONDUCT.md',
     'CONTRIBUTING.md',
     'GOVERNANCE.md',
+    'ROADMAP.md',
     'RELEASE.md',
     'SECURITY.md',
     'SUPPORT.md',
