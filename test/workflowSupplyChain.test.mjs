@@ -145,9 +145,9 @@ describe('GitHub Actions workflow supply-chain gate', () => {
       status: 'passed',
       workflowCount: 11,
       actionCount: 12,
-      usageCount: 61,
+      usageCount: 62,
       lockSha256:
-        '6826a25eef7dadc6e3759338dbc238828bc1eabe9c2e157ae6b2102a33e14926',
+        '97fe222ee12956504548b1097a5f9e686da539deb352b322c1931a98032446ec',
       checks: Object.fromEntries(
         WORKFLOW_SUPPLY_CHAIN_CHECK_FIELDS.map((field) => [field, true])
       ),
