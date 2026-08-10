@@ -65,6 +65,12 @@ function main() {
         report.opentelemetryCoreVersions.join(', ') +
         ', shell-quote ' +
         report.shellQuoteVersions.join(', ') +
+        ', js-yaml ' +
+        report.jsYamlVersions.join(', ') +
+        ', image-size ' +
+        report.imageSizeVersions.join(', ') +
+        ' with reviewed patch ' +
+        report.imageSizePatchSha256 +
         ', production exposure none.'
     );
   } else {

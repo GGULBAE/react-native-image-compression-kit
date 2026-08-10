@@ -6,9 +6,9 @@ part of the npm package.
 
 ## Procedure index
 
-- [Dependency security](dependency-security.md) — reviewed Vite/esbuild and
-  Lighthouse/OpenTelemetry resolutions, production boundary, offline gate, and
-  override exit criteria.
+- [Dependency security](dependency-security.md) — reviewed development-tool
+  resolutions, narrow local patch and advisory exception policy, production
+  boundary, offline gate, and override/patch exit criteria.
 - [Dependabot triage](dependabot-triage.md) — update grouping, queue limits,
   major-update policy, and the 2026-07-20 backlog disposition.
 - [Immutable Action pins](action-pins.md) — canonical full-SHA lock, networked
