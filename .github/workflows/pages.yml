@@ -60,12 +60,16 @@ jobs:
       id-token: write
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment_primary.outcome == 'success' && steps.deployment_primary.outputs.page_url || steps.deployment_retry.outputs.page_url }}
 
     steps:
       - name: Deploy Pages
-        id: deployment
+        # deploy-pages v4 caps one polling attempt at ten minutes.
+        id: deployment_primary
+        continue-on-error: true
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
-        with:
-          # Leave headroom for transient GitHub Pages deployment queues.
-          timeout: 1200000
+
+      - name: Retry Pages deployment once
+        id: deployment_retry
+        if: steps.deployment_primary.outcome == 'failure'
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
