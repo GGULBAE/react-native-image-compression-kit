@@ -22,6 +22,8 @@ const requiredFiles = [
   'website/.vitepress/theme/custom.css',
   'website/public/logo.svg',
   'website/public/social-card.svg',
+  'website/public/evidence-scorecard.svg',
+  'website/public/evidence-scorecard-mobile.svg',
   'website/index.md',
   'website/404.md',
   'website/guide/installation.md',

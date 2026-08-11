@@ -42,6 +42,17 @@ features:
 > GitHub Release, registry provenance, and retained evidence all bind the same
 > verified artifact and source.
 
+## Evidence, not adjectives
+
+<picture class="evidence-scorecard-picture">
+  <source media="(max-width: 640px)" srcset="/evidence-scorecard-mobile.svg" />
+  <img class="evidence-scorecard-image" src="/evidence-scorecard.svg" alt="v0.4.0 evidence snapshot: two of two byte-budget fixtures passed, zero residual-output target, two recorded runtime capability captures, 96 percent fewer planned decoded pixels, zero of seven named sensitive fields retained, and eight of eight packed-consumer platform builds passed." />
+</picture>
+
+The scorecard separates measured fixture and release evidence from broader
+claims the project does not yet make. Review the [metric definitions and
+interpretation limits](./reference/evidence.md) before comparing results.
+
 ## Install
 
 ```bash

@@ -30,6 +30,32 @@ unsafe work before full decode, supports cancellation, and publishes only
 complete transactional cache files. npm `latest`, immutable tag `v0.4.0`, and
 the GitHub Release all resolve to the verified 0.4.0 artifact and source.
 
+## Why this package
+
+Many image tools expose a resize or quality call. This package is for local
+image operations where the application must also reason about byte budgets,
+runtime codec differences, bounded native work, metadata privacy, cancellation,
+and the integrity of the returned file. The differentiation is the combined
+contract, not a claim that every individual primitive is unique or universally
+faster.
+
+<picture>
+  <source media="(max-width: 640px)" srcset="website/public/evidence-scorecard-mobile.svg" />
+  <img src="website/public/evidence-scorecard.svg" alt="v0.4.0 evidence snapshot: byte-budget, failure-safety, runtime capability, planned pixels, metadata, and packed-build signals" />
+</picture>
+
+| Application concern | Explicit package contract | Current public evidence |
+| --- | --- | --- |
+| Upload byte limit | `maxBytes` searches for the highest generated JPEG or WebP quality under the requested budget | The v0.4.0 native walkthrough cases both met an 8,000-byte budget: Android 2,264 B and iOS 2,353 B. The two platforms use different source fixtures and are not compared with each other. |
+| Large-photo memory risk | Decode-time downsampling, 25 MP working limit, 100 MP source limit, and bounded two-operation scheduling | The Android policy test plans a 48 MP source to a 1.92 MP decode, 96% fewer planned decoded pixels; the iOS native suite exercises the same resize and rejects unbounded 48 MP work. |
+| Navigation or request cancellation | Preflight, queued, and running aborts settle as `ERR_CANCELLED`; failed or cancelled work must not publish a partial result | JavaScript and both native suites assert a zero-residual-output cleanup invariant after representative cancellation boundaries. |
+| Metadata privacy | `preserve`, `safe`, and `strip` are explicit policies rather than a silent best effort | The Android `safe` fixture retains 0 of 7 named sensitive fields; iOS `safe` and `strip` copy no source metadata into destination properties. |
+| Device codec drift | `getImageCompressionCapabilities()` reports runtime input/output support and named limits | Two native walkthroughs capture capabilities before compression. A broader cross-device capability-agreement percentage is not yet claimed. |
+| Integration confidence | Compatibility claims require fresh consumers to install the packed tarball and complete native builds | Four release-required configurations across Android and iOS produced 8 of 8 verified platform build targets for v0.4.0. |
+
+Read the [product evidence metrics](https://ggulbae.github.io/react-native-image-compression-kit/reference/evidence)
+for definitions, decision thresholds, evidence links, and interpretation limits.
+
 ## Project direction
 
 The [roadmap](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/ROADMAP.md)
@@ -378,6 +404,7 @@ tarball:
 
 - [User guides and native-result demo](https://ggulbae.github.io/react-native-image-compression-kit/)
 - [Product architecture](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/product-architecture.md)
+- [Product evidence metrics](https://ggulbae.github.io/react-native-image-compression-kit/reference/evidence)
 - [Roadmap](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/ROADMAP.md)
 - [Native benchmark evidence](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/benchmarks/README.md)
 

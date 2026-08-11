@@ -47,6 +47,7 @@ export const REQUIRED_DOCUMENTATION_FILES = [
   'docs/repository-settings.json',
   'docs/product-architecture.md',
   'docs/verification-architecture.md',
+  'website/reference/evidence.md',
   'docs/maintainers/account-recovery.md',
   'docs/maintainers/repository-settings.md',
   'docs/maintainers/trusted-release.md',
@@ -70,6 +71,7 @@ export const REQUIRED_DOCUMENTATION_FILES = [
 
 const README_HEADINGS = [
   'Current status',
+  'Why this package',
   'Project direction',
   'Installation',
   'Quick start',
@@ -99,6 +101,7 @@ const README_COMMANDS = [
 const README_LINKS = [
   'https://ggulbae.github.io/react-native-image-compression-kit/',
   'https://ggulbae.github.io/react-native-image-compression-kit/reference/architecture',
+  'https://ggulbae.github.io/react-native-image-compression-kit/reference/evidence',
   'https://ggulbae.github.io/react-native-image-compression-kit/roadmap',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/ROADMAP.md',
   'https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/product-architecture.md',
@@ -566,6 +569,15 @@ export function inspectDocumentation(root) {
     );
   }
 
+  const productEvidencePath = path.join(root, 'website/reference/evidence.md');
+  if (existsSync(productEvidencePath)) {
+    errors.push(
+      ...inspectProductEvidenceContracts(
+        readFileSync(productEvidencePath, 'utf8')
+      )
+    );
+  }
+
   inspectPublicLaunchContracts(
     root,
     packageJson.version,
@@ -749,6 +761,37 @@ export function inspectProductDirectionContracts({ roadmap, architecture }) {
       'transactional',
       'Codegen',
       'NativeModules',
+    ],
+    errors,
+  });
+  return errors;
+}
+
+export function inspectProductEvidenceContracts(contents) {
+  const errors = [];
+  inspectDecisionDocument({
+    label: 'product evidence',
+    contents,
+    headings: [
+      'Purpose and claim boundary',
+      'Primary metrics',
+      'Byte-budget attainment',
+      'Failure-safe completion',
+      'Runtime capability agreement',
+      'Driver and guardrail metrics',
+      'Evidence charts',
+      'Current evidence snapshot',
+      'Interpretation limits',
+      'Reproduce the evidence',
+    ],
+    snippets: [
+      '2 / 2',
+      '8 / 8',
+      '96%',
+      '0 of 7',
+      'not a peak-memory measurement',
+      'does not establish image-quality superiority',
+      'evidence-scorecard.svg',
     ],
     errors,
   });

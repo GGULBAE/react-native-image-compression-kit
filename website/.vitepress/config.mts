@@ -80,6 +80,7 @@ export default defineConfig({
           { text: 'Public API', link: '/reference/api' },
           { text: 'Compatibility matrix', link: '/reference/compatibility' },
           { text: 'Product architecture', link: '/reference/architecture' },
+          { text: 'Product evidence', link: '/reference/evidence' },
           { text: 'Roadmap', link: '/roadmap' },
           { text: 'Native result demo', link: '/demo/' },
           { text: 'Changelog', link: '/changelog' },

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title description">
+  <title id="title">React Native Image Compression Kit v0.4.0 evidence snapshot</title>
+  <desc id="description">Two of two byte-budget fixtures passed, cancellation has a zero residual-output target, two runtimes record capabilities before compression, planned decoded pixels are reduced by 96 percent in the large-image fixture, zero of seven named sensitive metadata fields remain in the Android safe fixture, and eight of eight packed-consumer platform builds passed.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07151d" />
+      <stop offset="0.54" stop-color="#0a1b25" />
+      <stop offset="1" stop-color="#0b172c" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4bf" />
+      <stop offset="1" stop-color="#60a5fa" />
+    </linearGradient>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; }
+      .eyebrow { fill: #5eead4; font-size: 15px; font-weight: 700; letter-spacing: 2.4px; }
+      .headline { fill: #f8fafc; font-size: 34px; font-weight: 750; }
+      .subtitle { fill: #94a3b8; font-size: 17px; font-weight: 400; }
+      .card { fill: #102632; stroke: #244354; stroke-width: 1; }
+      .card-label { fill: #99f6e4; font-size: 13px; font-weight: 700; letter-spacing: 1.35px; }
+      .card-value { fill: #f8fafc; font-size: 48px; font-weight: 760; }
+      .card-copy { fill: #cbd5e1; font-size: 16px; font-weight: 500; }
+      .guardrail { fill: #0d2230; stroke: #1e3a4b; stroke-width: 1; }
+      .guardrail-value { fill: #f8fafc; font-size: 28px; font-weight: 740; }
+      .guardrail-copy { fill: #9fb1c2; font-size: 14px; font-weight: 500; }
+      .footer { fill: #7f96aa; font-size: 13px; font-weight: 500; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="560" rx="28" fill="url(#background)" />
+  <circle cx="1120" cy="-30" r="230" fill="#2563eb" opacity="0.09" />
+  <circle cx="75" cy="600" r="260" fill="#14b8a6" opacity="0.08" />
+  <rect x="60" y="54" width="42" height="4" rx="2" fill="url(#accent)" />
+  <text x="116" y="64" class="eyebrow">PRODUCT EVIDENCE · v0.4.0</text>
+  <text x="60" y="112" class="headline">Predictability, measured as a contract</text>
+  <text x="60" y="143" class="subtitle">Versioned fixtures and release evidence — not universal performance claims.</text>
+
+  <g>
+    <rect x="60" y="178" width="346" height="172" rx="18" class="card" />
+    <rect x="427" y="178" width="346" height="172" rx="18" class="card" />
+    <rect x="794" y="178" width="346" height="172" rx="18" class="card" />
+  </g>
+
+  <text x="86" y="211" class="card-label">BYTE-BUDGET ATTAINMENT</text>
+  <text x="86" y="276" class="card-value">2 / 2</text>
+  <text x="86" y="311" class="card-copy">native fixtures ≤ 8,000 B</text>
+  <rect x="86" y="328" width="116" height="4" rx="2" fill="url(#accent)" />
+
+  <text x="453" y="211" class="card-label">FAILURE-SAFE COMPLETION</text>
+  <text x="453" y="276" class="card-value">0</text>
+  <text x="453" y="311" class="card-copy">residual-output target</text>
+  <rect x="453" y="328" width="116" height="4" rx="2" fill="url(#accent)" />
+
+  <text x="820" y="211" class="card-label">RUNTIME CAPABILITY SIGNAL</text>
+  <text x="820" y="276" class="card-value">2</text>
+  <text x="820" y="311" class="card-copy">recorded runtimes before work</text>
+  <rect x="820" y="328" width="116" height="4" rx="2" fill="url(#accent)" />
+
+  <rect x="60" y="374" width="346" height="112" rx="16" class="guardrail" />
+  <rect x="427" y="374" width="346" height="112" rx="16" class="guardrail" />
+  <rect x="794" y="374" width="346" height="112" rx="16" class="guardrail" />
+
+  <text x="86" y="422" class="guardrail-value">96%</text>
+  <text x="86" y="451" class="guardrail-copy">fewer planned decoded pixels</text>
+
+  <text x="453" y="422" class="guardrail-value">0 / 7</text>
+  <text x="453" y="451" class="guardrail-copy">named sensitive fields retained</text>
+
+  <text x="820" y="422" class="guardrail-value">8 / 8</text>
+  <text x="820" y="451" class="guardrail-copy">packed-consumer platform builds</text>
+
+  <text x="60" y="526" class="footer">Snapshot scope: deterministic fixtures and v0.4.0 release evidence · See the evidence page for definitions and limits.</text>
+</svg>
