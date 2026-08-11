@@ -13,6 +13,10 @@
   background-color: #0a0c10;
 }
 
+.vp-doc .language-text .line span {
+  color: #f0f3f6;
+}
+
 .VPHomeHero .text {
   max-width: 740px;
 }
