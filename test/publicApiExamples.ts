@@ -2,6 +2,7 @@ import {
   compressImage,
   getImageCompressionCapabilities,
   ImageCompressionKitError,
+  removeCompressionOutput,
   type CompressionOptions,
   type CompressionResult,
   type ImageCompressionKitErrorCode,
@@ -21,6 +22,21 @@ export async function publicQuickStart(): Promise<CompressionResult> {
     output: { format: canWriteWebP ? 'webp' : 'jpeg', quality: 80 },
     metadata: 'safe',
   });
+}
+
+export async function publicUploadAndCleanupRecipe(
+  upload: (uri: string) => Promise<void>
+): Promise<void> {
+  const result = await compressImage({
+    source: { uri: imageUri },
+    output: { format: 'jpeg', quality: 80 },
+  });
+
+  try {
+    await upload(result.uri);
+  } finally {
+    await removeCompressionOutput(result.uri);
+  }
 }
 
 export async function publicTargetSizeRecipe(): Promise<CompressionResult> {

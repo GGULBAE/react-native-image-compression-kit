@@ -60,6 +60,21 @@ format-specific input/output flags, alpha/animation flags, metadata policies,
 target-size support, cancellation support, `maxConcurrentOperations`,
 `supportsDecodeDownsampling`, named `resourceLimits`, and explanatory notes.
 
+## `removeCompressionOutput(uri)`
+
+Returns `Promise<void>` and removes only a completed package-owned cache output
+returned by `compressImage`.
+
+- Only generated `file://` outputs directly inside the package cache directory
+  are accepted.
+- An already-missing valid output is a successful no-op.
+- Foreign files, source files, path traversal, symlinks, and directories reject
+  with `ERR_INVALID_OPTIONS`.
+- A filesystem deletion failure rejects with `ERR_FILE_ACCESS`.
+
+The method never removes directories recursively and does not maintain a global
+output registry.
+
 ## Errors
 
 - `ImageCompressionKitError` is the runtime error class.

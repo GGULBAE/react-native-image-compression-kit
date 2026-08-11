@@ -3,6 +3,7 @@
 NS_ASSUME_NONNULL_BEGIN
 
 FOUNDATION_EXPORT NSString *const RCTImageCompressionKitOutputFailedCode;
+FOUNDATION_EXPORT NSString *const RCTImageCompressionKitOutputFileAccessCode;
 
 @interface RCTImageCompressionOutputRequest : NSObject
 
@@ -69,6 +70,11 @@ typedef BOOL (^RCTImageCompressionOutputFileWriter)(
   NSString *path,
   NSError * _Nullable * _Nullable error
 );
+typedef BOOL (^RCTImageCompressionOutputPathIsRegularFile)(NSString *path);
+typedef BOOL (^RCTImageCompressionOutputFileRemover)(
+  NSString *path,
+  NSError * _Nullable * _Nullable error
+);
 
 @interface RCTImageCompressionOutput : NSObject
 
@@ -77,11 +83,16 @@ typedef BOOL (^RCTImageCompressionOutputFileWriter)(
                                 directoryCreator:(RCTImageCompressionOutputDirectoryCreator)directoryCreator
                                            clock:(RCTImageCompressionOutputClock)clock
                                     uuidProvider:(RCTImageCompressionOutputUUIDProvider)uuidProvider
-                                      fileWriter:(RCTImageCompressionOutputFileWriter)fileWriter NS_DESIGNATED_INITIALIZER;
+                                      fileWriter:(RCTImageCompressionOutputFileWriter)fileWriter
+                               pathIsRegularFile:(RCTImageCompressionOutputPathIsRegularFile)pathIsRegularFile
+                                     fileRemover:(RCTImageCompressionOutputFileRemover)fileRemover NS_DESIGNATED_INITIALIZER;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (nullable RCTImageCompressionOutputResult *)persistRequest:(RCTImageCompressionOutputRequest *)request
                                                        error:(RCTImageCompressionOutputError * _Nullable * _Nullable)error;
+
+- (BOOL)removeOutputURI:(NSString *)uri
+                  error:(RCTImageCompressionOutputError * _Nullable * _Nullable)error;
 
 @end
 

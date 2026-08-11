@@ -1,5 +1,12 @@
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Button,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type {
   CompressionResult,
   MetadataPolicy,
@@ -18,6 +25,8 @@ type ResultPanelProps = {
   metadataPolicy: MetadataPolicy;
   resultMetadataPolicy: MetadataPolicy | null;
   error: ErrorState | null;
+  isRemovingOutput: boolean;
+  onRemoveOutput: () => void;
 };
 
 export function ResultPanel({
@@ -26,6 +35,8 @@ export function ResultPanel({
   metadataPolicy,
   resultMetadataPolicy,
   error,
+  isRemovingOutput,
+  onRemoveOutput,
 }: ResultPanelProps) {
   return (
     <>
@@ -42,7 +53,19 @@ export function ResultPanel({
             label="metadata"
             value={resultMetadataPolicy ?? metadataPolicy}
           />
-          <ResultLine label="dimensions" value={`${result.width} × ${result.height}`} />
+          <Text style={styles.cleanupHint}>
+            The result is a cache file. Preserve or upload it first, then remove
+            the package-owned output explicitly.
+          </Text>
+          {isRemovingOutput ? (
+            <ActivityIndicator size="small" />
+          ) : (
+            <Button onPress={onRemoveOutput} title="Remove cached output" />
+          )}
+          <ResultLine
+            label="dimensions"
+            value={`${result.width} × ${result.height}`}
+          />
           <ResultLine label="byteSize" value={formatBytes(result.byteSize)} />
           <ResultLine
             label="originalByteSize"
@@ -125,5 +148,10 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 8,
     backgroundColor: '#ffffff',
+  },
+  cleanupHint: {
+    color: '#475467',
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

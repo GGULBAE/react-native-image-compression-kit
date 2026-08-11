@@ -16,13 +16,16 @@ operation.
 
 The application remains responsible for acquiring permissions, choosing an
 image, downloading remote content, moving successful cache files into durable
-storage, uploading them, and deleting them according to its lifecycle. Network
-URLs and inline data URIs are rejected before native dispatch.
+storage, uploading them, and deciding when to release them. The package exposes
+a constrained removal primitive for its own generated cache outputs; it does
+not expose arbitrary filesystem deletion. Network URLs and inline data URIs are
+rejected before native dispatch.
 
 The public surface is deliberately narrow:
 
 - `compressImage(options, control?)` performs one operation;
 - `getImageCompressionCapabilities()` reports runtime-dependent behavior;
+- `removeCompressionOutput(uri)` releases one package-owned cache output;
 - stable result, option, capability, and error types describe the boundary.
 
 ## Request lifecycle
@@ -50,6 +53,9 @@ The public surface is deliberately narrow:
    rather than resolving a partial file.
 8. **Return observed metadata.** The result reports URI, format, dimensions,
    byte sizes, and compression ratio from the completed output.
+9. **Release explicitly.** When the application is done, native ownership
+   checks allow idempotent removal of that generated output while rejecting
+   foreign files, traversal, symlinks, and directories.
 
 Cancellation is cooperative across the bridge and native stages. It prevents a
 late native result from resettling the JavaScript promise, but applications
@@ -126,6 +132,18 @@ published. Failures and cancellation clean temporary or late output files.
 
 **Trade-off:** the pipeline may require temporary disk space near the final
 output size while an operation completes.
+
+### Constrained output removal
+
+**Decision:** `removeCompressionOutput(uri)` accepts only a direct generated
+file in the package output cache directory. Missing valid outputs are
+idempotent; recursive directory deletion and arbitrary paths are rejected.
+
+**Reason:** applications need a portable way to close the cache lifecycle
+without granting a broad delete primitive to the bridge.
+
+**Trade-off:** copied, moved, renamed, source, and application-owned files must
+be managed by the application instead.
 
 ### Explicit metadata policy
 

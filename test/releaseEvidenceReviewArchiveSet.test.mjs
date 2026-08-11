@@ -139,7 +139,7 @@ describe('release evidence review archive regression set', () => {
     } finally {
       rmSync(parent, { recursive: true, force: true });
     }
-  }, 15_000);
+  }, process.env.RNICK_DOCKER === '1' ? 30_000 : 15_000);
 
   it('reports a failed archive without hiding completed results', () => {
     const parent = mkdtempSync(path.join(os.tmpdir(), 'rnick-review-set-fail-'));

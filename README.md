@@ -49,6 +49,7 @@ faster.
 | Upload byte limit | `maxBytes` searches for the highest generated JPEG or WebP quality under the requested budget | The v0.4.0 native walkthrough cases both met an 8,000-byte budget: Android 2,264 B and iOS 2,353 B. The two platforms use different source fixtures and are not compared with each other. |
 | Large-photo memory risk | Decode-time downsampling, 25 MP working limit, 100 MP source limit, and bounded two-operation scheduling | The Android policy test plans a 48 MP source to a 1.92 MP decode, 96% fewer planned decoded pixels; the iOS native suite exercises the same resize and rejects unbounded 48 MP work. |
 | Navigation or request cancellation | Preflight, queued, and running aborts settle as `ERR_CANCELLED`; failed or cancelled work must not publish a partial result | JavaScript and both native suites assert a zero-residual-output cleanup invariant after representative cancellation boundaries. |
+| Cache-file lifecycle | `removeCompressionOutput(uri)` deletes only package-owned generated outputs and treats an already-missing output as success | JavaScript and native suites assert owned-file deletion plus rejection of foreign, traversal, content, and directory targets. |
 | Metadata privacy | `preserve`, `safe`, and `strip` are explicit policies rather than a silent best effort | The Android `safe` fixture retains 0 of 7 named sensitive fields; iOS `safe` and `strip` copy no source metadata into destination properties. |
 | Device codec drift | `getImageCompressionCapabilities()` reports runtime input/output support and named limits | Two native walkthroughs capture capabilities before compression. A broader cross-device capability-agreement percentage is not yet claimed. |
 | Integration confidence | Compatibility claims require fresh consumers to install the packed tarball and complete native builds | Four release-required configurations across Android and iOS produced 8 of 8 verified platform build targets for v0.4.0. |
@@ -189,6 +190,28 @@ decode-downsampling support, and named source/working pixel limits. Check it at
 runtime; codec support is not identical across Android versions, devices, and
 iOS runtimes.
 
+### `removeCompressionOutput(uri)`
+
+Deletes a completed cache output returned by `compressImage`. It accepts only a
+package-generated `file://` URI in the package output directory, never deletes
+recursively, and treats an already-missing valid output as success. A foreign,
+source, traversal, symlink, or directory target rejects with
+`ERR_INVALID_OPTIONS`; a filesystem deletion failure rejects with
+`ERR_FILE_ACCESS`.
+
+```ts
+const result = await compressImage(options);
+
+try {
+  await upload(result.uri);
+} finally {
+  await removeCompressionOutput(result.uri);
+}
+```
+
+Copy or move an output before removal when it must remain available after the
+cache lifecycle.
+
 ### Other exports
 
 - `ImageCompressionKitError`
@@ -284,9 +307,10 @@ Important limitations:
   must provide smaller resize bounds.
 - JPEG output flattens transparency onto white on both platforms. PNG and WebP
   alpha capability reflects decode-back validation.
-- Failed and cancelled operations remove temporary/partial cache files; a
-  successful returned cache file retains the existing application ownership
-  contract.
+- Failed and cancelled operations remove temporary/partial cache files. A
+  successful result remains application-owned; call
+  `removeCompressionOutput(result.uri)` when the package-owned cache output is
+  no longer needed.
 - Capability checks should drive fallbacks for SDK-, device-, and
   runtime-dependent codecs.
 
@@ -296,6 +320,8 @@ Important limitations:
 pnpm test:coverage
 pnpm verify
 pnpm example:typecheck
+pnpm example:android-unit-test
+pnpm example:android-instrumentation-build
 pnpm example:ios:decoder-test
 pnpm example:ios:encoder-test
 pnpm example:ios:output-test
@@ -310,6 +336,13 @@ pnpm fixtures:compatibility:check
 git diff --check
 pnpm pack --dry-run
 ```
+
+`pnpm example:android-instrumentation-build` compiles the device-test APK
+without requiring an emulator. Run `pnpm example:android-instrumentation` with
+an API 34+ device or emulator to execute codec and output-lifecycle tests. When
+Java or the Android SDK is unavailable locally, `pnpm docker:android:ci` runs
+the repository gate, Codegen, unit tests, instrumentation APK compile, and
+example APK build in the pinned container toolchain.
 
 Native demo captures run a deterministic, capture-only walkthrough in the real
 Android and iOS example apps: bundled source, selected options, runtime

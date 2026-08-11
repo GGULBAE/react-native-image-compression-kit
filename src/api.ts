@@ -73,6 +73,21 @@ export async function getImageCompressionCapabilities(): Promise<ImageCompressio
   }
 }
 
+export async function removeCompressionOutput(uri: string): Promise<void> {
+  if (typeof uri !== 'string' || uri.trim().length === 0) {
+    throw new ImageCompressionKitError(
+      'ERR_INVALID_OPTIONS',
+      'removeCompressionOutput requires a non-empty output URI.'
+    );
+  }
+
+  try {
+    await getNativeModule().removeCompressionOutput(uri.trim());
+  } catch (error) {
+    throw normalizeNativeError(error);
+  }
+}
+
 let operationSequence = 0;
 
 function createOperationId(): string {

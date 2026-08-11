@@ -185,6 +185,31 @@ class ImageCompressionKitModuleTest {
   }
 
   @Test
+  fun removeCompressionOutputDeletesOnlyPackageOwnedCacheFiles() {
+    val reactContext = createReactContext()
+    val module = createModule(reactContext)
+    val outputFile = ImageCompressionOutput.createOutputFile(
+      reactContext.cacheDir,
+      OutputFormat.JPEG
+    ).apply { writeBytes(byteArrayOf(1, 2, 3)) }
+    val success = RecordingPromise()
+
+    module.removeCompressionOutput(Uri.fromFile(outputFile).toString(), success)
+
+    assertEquals(1, success.settlementCount.get())
+    assertNull(success.rejectionCode)
+    assertTrue(!outputFile.exists())
+
+    val foreignFile = temporaryFolder.newFile("compressed-1-foreign.jpg")
+    val rejected = RecordingPromise()
+    module.removeCompressionOutput(Uri.fromFile(foreignFile).toString(), rejected)
+
+    assertEquals(ImageCompressionKitModule.ERR_INVALID_OPTIONS, rejected.rejectionCode)
+    assertEquals(ImageCompressionOutput.OUTPUT_OWNERSHIP_MESSAGE, rejected.rejectionMessage)
+    assertTrue(foreignFile.exists())
+  }
+
+  @Test
   fun compressImagePreservesAlphaForPngAndWebpAndFlattensJpegToWhite() {
     val module = createModule()
     val sourceFile = createTransparentPngFile()

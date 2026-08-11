@@ -123,13 +123,14 @@ describe('Android source contract', () => {
     expect(moduleSource).toContain('ThreadPoolExecutor(');
     expect(moduleSource).toContain('ANDROID_MAX_CONCURRENT_OPERATIONS');
     expect(moduleSource).toContain('override fun cancelCompression');
+    expect(moduleSource).toContain('override fun removeCompressionOutput');
     expect(moduleSource).toContain('override fun invalidate()');
     expect(moduleSource.split(/\r?\n/).length).toBeLessThanOrEqual(400);
     expect(
       functionLineCount(
         moduleSource,
         'override fun compressImage',
-        'override fun getImageCompressionCapabilities'
+        'override fun cancelCompression'
       )
     ).toBeLessThanOrEqual(70);
     expect(moduleSource).not.toMatch(
@@ -257,19 +258,22 @@ describe('Android source contract', () => {
       },
       {
         file: 'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
-        minimum: 20,
+        minimum: 21,
         required: [
           'compressImageCreatesJpegPngAndWebpOutputsWithExpectedResultMetadata',
           'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif',
           'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata',
+          'removeCompressionOutputDeletesOnlyPackageOwnedCacheFiles',
         ],
       },
       {
         file: 'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
-        minimum: 5,
+        minimum: 7,
         required: [
           'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile',
           'capabilitiesExposeJpegPngWebpGifHeicHeifAvifInputsAndJpegPngWebpOutputsOnly',
+          'removeOutputDeletesGeneratedFilesAndTreatsMissingOutputsAsSuccess',
+          'removeOutputRejectsForeignTraversalContentAndDirectoryTargets',
         ],
       },
       {
@@ -298,9 +302,10 @@ describe('Android source contract', () => {
       },
       {
         file: 'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
-        minimum: 3,
+        minimum: 4,
         required: [
           'compressesCommittedHeicHeifAndAvifSamplesToJpegPngAndWebp',
+          'removesCompletedOutputIdempotentlyAndRejectsForeignFiles',
           'attemptsAndroidAvifOutputEncodeDecodeBackSmoke',
         ],
       },
@@ -321,6 +326,7 @@ describe('Android source contract', () => {
     expect(workflow).toContain('run: pnpm example:codegen');
     expect(workflow).toContain('api-level: 35');
     expect(workflow).toContain('pnpm example:android-instrumentation');
+    expect(workflow).toContain('Native codec and output lifecycle emulator validation');
     expectFixtureManifest('android/src/test/assets/avif/manifest.json', ['avif']);
     expectFixtureManifest('android/src/test/assets/heic-heif/manifest.json', [
       'heic',

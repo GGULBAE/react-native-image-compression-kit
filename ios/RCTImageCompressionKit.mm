@@ -281,6 +281,36 @@ RCT_EXPORT_METHOD(cancelCompression:(NSString *)operationID)
 }
 #endif
 
+- (void)removeCompressionOutputURI:(NSString *)uri
+                            resolve:(RCTPromiseResolveBlock)resolve
+                             reject:(RCTPromiseRejectBlock)reject
+{
+  RCTImageCompressionOutputError *outputError = nil;
+  if (![[RCTImageCompressionOutput defaultOutput] removeOutputURI:uri error:&outputError]) {
+    reject(
+      outputError.code ?: RCTImageCompressionKitNativeOperationFailedCode,
+      outputError.message ?: @"iOS could not remove the compression output cache file.",
+      outputError.underlyingError
+    );
+    return;
+  }
+  resolve(nil);
+}
+
+#if RNICK_HAS_CODEGEN_SPEC
+- (void)removeCompressionOutput:(NSString *)uri
+                        resolve:(RCTPromiseResolveBlock)resolve
+                         reject:(RCTPromiseRejectBlock)reject
+#else
+RCT_REMAP_METHOD(removeCompressionOutput,
+                 removeCompressionOutputWithURI:(NSString *)uri
+                 resolver:(RCTPromiseResolveBlock)resolve
+                 rejecter:(RCTPromiseRejectBlock)reject)
+#endif
+{
+  [self removeCompressionOutputURI:uri resolve:resolve reject:reject];
+}
+
 - (void)invalidate
 {
   self.invalidated = YES;

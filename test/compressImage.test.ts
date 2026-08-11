@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   compressImage,
   getImageCompressionCapabilities,
+  removeCompressionOutput,
   type CompressionResult,
   type ImageCompressionCapabilities,
   type ImageCompressionKitErrorCode,
@@ -61,6 +62,7 @@ function mockNativeModule(
   return {
     compressImage: vi.fn().mockResolvedValue(result),
     cancelCompression: vi.fn(),
+    removeCompressionOutput: vi.fn().mockResolvedValue(undefined),
     getImageCompressionCapabilities: vi.fn().mockResolvedValue(capabilities),
     ...overrides,
   };
@@ -69,6 +71,61 @@ function mockNativeModule(
 afterEach(() => {
   resetNativeModuleForTesting();
   vi.restoreAllMocks();
+});
+
+describe('removeCompressionOutput', () => {
+  it('trims and delegates a compression output URI', async () => {
+    const nativeModule = mockNativeModule();
+    setNativeModuleForTesting(nativeModule);
+
+    await expect(
+      removeCompressionOutput('  file:///cache/compressed-1-id.jpg  ')
+    ).resolves.toBeUndefined();
+
+    expect(nativeModule.removeCompressionOutput).toHaveBeenCalledWith(
+      'file:///cache/compressed-1-id.jpg'
+    );
+  });
+
+  it('rejects blank and non-string values before the native bridge', async () => {
+    const nativeModule = mockNativeModule();
+    setNativeModuleForTesting(nativeModule);
+
+    await expect(removeCompressionOutput('   ')).rejects.toMatchObject({
+      code: 'ERR_INVALID_OPTIONS',
+    });
+    await expect(
+      removeCompressionOutput(null as unknown as string)
+    ).rejects.toMatchObject({ code: 'ERR_INVALID_OPTIONS' });
+    expect(nativeModule.removeCompressionOutput).not.toHaveBeenCalled();
+  });
+
+  it('normalizes native ownership and file-access failures', async () => {
+    const invalidModule = mockNativeModule({
+      removeCompressionOutput: vi.fn().mockRejectedValue({
+        code: 'ERR_INVALID_OPTIONS',
+        message: 'Output URI is not package-owned.',
+      }),
+    });
+    setNativeModuleForTesting(invalidModule);
+    await expect(
+      removeCompressionOutput('file:///tmp/source.jpg')
+    ).rejects.toMatchObject({
+      code: 'ERR_INVALID_OPTIONS',
+      message: 'Output URI is not package-owned.',
+    });
+
+    const failingModule = mockNativeModule({
+      removeCompressionOutput: vi.fn().mockRejectedValue({
+        code: 'ERR_FILE_ACCESS',
+        message: 'Output could not be removed.',
+      }),
+    });
+    setNativeModuleForTesting(failingModule);
+    await expect(
+      removeCompressionOutput('file:///cache/compressed-1-id.jpg')
+    ).rejects.toMatchObject({ code: 'ERR_FILE_ACCESS' });
+  });
 });
 
 describe('compressImage', () => {

@@ -1,6 +1,7 @@
 export {
   compressImage,
   getImageCompressionCapabilities,
+  removeCompressionOutput,
 } from './api';
 export { ImageCompressionKitError } from './errors';
 export type { ImageCompressionKitErrorCode } from './errors';

@@ -4,6 +4,20 @@ Notable user-facing changes are recorded here. The project follows Semantic
 Versioning while it is in `0.x`: minor releases may change public contracts,
 and patch releases remain backward compatible within the current minor line.
 
+## Unreleased
+
+### Added
+
+- `removeCompressionOutput(uri)` for idempotent deletion of package-owned
+  generated cache outputs, with native ownership validation that rejects
+  arbitrary files, traversal, symlinks, and directories.
+
+### Changed
+
+- The reproducible Android Docker toolchain now includes a checksum-pinned
+  GitHub CLI and compiles the instrumentation APK so the full non-emulator
+  repository verification lane can run in the container.
+
 ## 0.4.0 - 2026-07-20
 
 ### Added

@@ -37,7 +37,9 @@ async function compressPickedAsset(asset: PickedAsset) {
   file before compression when the picker does not materialize one.
 
 The output `uri` points to a new cache file. Do not overwrite or delete the
-picker source while compression is running.
+picker source while compression is running. After preserving or uploading the
+result, release its package-owned cache file with
+`removeCompressionOutput(result.uri)`.
 
 ## Camera and privacy
 

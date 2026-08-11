@@ -7,11 +7,27 @@ source is not modified.
 
 - Treat the returned URI as temporary.
 - Upload, copy, or move an output that must outlive normal cache cleanup.
-- Delete outputs when the application no longer needs them.
+- Call `removeCompressionOutput(result.uri)` when the application no longer
+  needs a package-owned output.
 - Do not assume a cache URI survives an OS cleanup, app reinstall, or device
   migration.
 - The package does not maintain a global output registry or delete old files on
   your behalf.
+
+```ts
+const result = await compressImage(options);
+
+try {
+  await upload(result.uri);
+} finally {
+  await removeCompressionOutput(result.uri);
+}
+```
+
+The removal API is intentionally narrow: it accepts only the generated output
+URI, treats an already-missing output as success, and rejects foreign files,
+source files, traversal paths, symlinks, and directories. Copy or move a result
+to durable storage before removal when it must outlive the cache.
 
 ## Metadata policies
 

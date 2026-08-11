@@ -554,19 +554,22 @@ function checkAndroidRuntimeAuthorities() {
     },
     {
       file: 'android/src/test/java/com/imagecompressionkit/ImageCompressionKitModuleTest.kt',
-      minimum: 20,
+      minimum: 21,
       required: [
         'compressImageCreatesJpegPngAndWebpOutputsWithExpectedResultMetadata',
         'compressImageAppliesExifOrientationBeforeResizeModesAndNormalizesOutputExif',
         'compressImageHonorsJpegAndWebpMaxBytesAndReportsFileMetadata',
+        'removeCompressionOutputDeletesOnlyPackageOwnedCacheFiles',
       ],
     },
     {
       file: 'android/src/test/java/com/imagecompressionkit/ImageCompressionOutputTest.kt',
-      minimum: 5,
+      minimum: 7,
       required: [
         'encodedOutputsContainExpectedByteSignaturesAndResultMetadataMatchesFile',
         'capabilitiesExposeJpegPngWebpGifHeicHeifAvifInputsAndJpegPngWebpOutputsOnly',
+        'removeOutputDeletesGeneratedFilesAndTreatsMissingOutputsAsSuccess',
+        'removeOutputRejectsForeignTraversalContentAndDirectoryTargets',
       ],
     },
     {
@@ -595,9 +598,10 @@ function checkAndroidRuntimeAuthorities() {
     },
     {
       file: 'android/src/androidTest/java/com/imagecompressionkit/ImageCompressionKitHeicHeifInstrumentationTest.kt',
-      minimum: 3,
+      minimum: 4,
       required: [
         'compressesCommittedHeicHeifAndAvifSamplesToJpegPngAndWebp',
+        'removesCompletedOutputIdempotentlyAndRejectsForeignFiles',
         'attemptsAndroidAvifOutputEncodeDecodeBackSmoke',
       ],
     },
@@ -615,7 +619,7 @@ function checkAndroidRuntimeAuthorities() {
   });
   const compressStart = moduleContents.indexOf('override fun compressImage');
   const capabilitiesStart = moduleContents.indexOf(
-    'override fun getImageCompressionCapabilities',
+    'override fun cancelCompression',
     compressStart
   );
   const compressLineCount =
@@ -719,6 +723,10 @@ function checkAndroidRuntimeAuthorities() {
       name: 'module name override',
     },
     {
+      ok: moduleContents.includes('override fun removeCompressionOutput'),
+      name: 'safe output removal bridge method',
+    },
+    {
       ok: /const val NAME\s*=\s*"ImageCompressionKit"/u.test(moduleContents),
       name: 'stable module name',
     },
@@ -788,7 +796,7 @@ function checkIOSRuntimeAuthorities() {
     '- (void)compressImageWithDictionary:'
   );
   const methodEnd = moduleContents.indexOf(
-    '- (void)getImageCompressionCapabilities:',
+    '- (void)removeCompressionOutputURI:',
     methodStart
   );
   const methodLineCount =
@@ -919,7 +927,7 @@ function checkIOSInputAuthorities() {
     '- (void)compressImageWithDictionary:'
   );
   const methodEnd = moduleContents.indexOf(
-    '- (void)getImageCompressionCapabilities:',
+    '- (void)removeCompressionOutputURI:',
     methodStart
   );
   const methodLineCount =
@@ -1047,7 +1055,7 @@ function checkIOSImageDecoderAuthorities() {
     '- (void)compressImageWithDictionary:'
   );
   const methodEnd = moduleContents.indexOf(
-    '- (void)getImageCompressionCapabilities:',
+    '- (void)removeCompressionOutputURI:',
     methodStart
   );
   const methodLineCount =
@@ -1216,7 +1224,7 @@ function checkIOSImageTransformerAuthorities() {
     '- (void)compressImageWithDictionary:'
   );
   const methodEnd = moduleContents.indexOf(
-    '- (void)getImageCompressionCapabilities:',
+    '- (void)removeCompressionOutputURI:',
     methodStart
   );
   const methodLineCount =
@@ -1361,7 +1369,7 @@ function checkIOSJpegMetadataAuthorities() {
     '- (void)compressImageWithDictionary:'
   );
   const methodEnd = moduleContents.indexOf(
-    '- (void)getImageCompressionCapabilities:',
+    '- (void)removeCompressionOutputURI:',
     methodStart
   );
   const methodLineCount =
@@ -1495,7 +1503,7 @@ function checkIOSImageEncoderAuthorities() {
     '- (void)compressImageWithDictionary:'
   );
   const methodEnd = moduleContents.indexOf(
-    '- (void)getImageCompressionCapabilities:',
+    '- (void)removeCompressionOutputURI:',
     methodStart
   );
   const methodLineCount =
@@ -1631,12 +1639,14 @@ function checkIOSOutputAuthorities() {
     'TestRejectsWriteFailureMatrixWithStableErrors',
     'TestCopiesImmutableRequestResultAndErrorModels',
     'TestClearsExistingErrorOnSuccess',
+    'TestRemovesOwnedOutputAndTreatsMissingAsSuccess',
+    'TestRejectsForeignTraversalAndDirectoryOutputs',
   ];
   const methodStart = moduleContents.indexOf(
     '- (void)compressImageWithDictionary:'
   );
   const methodEnd = moduleContents.indexOf(
-    '- (void)getImageCompressionCapabilities:',
+    '- (void)removeCompressionOutputURI:',
     methodStart
   );
   const methodLineCount =
@@ -1654,6 +1664,8 @@ function checkIOSOutputAuthorities() {
     'RCTImageCompressionOutputClock',
     'RCTImageCompressionOutputUUIDProvider',
     'RCTImageCompressionOutputFileWriter',
+    'RCTImageCompressionOutputPathIsRegularFile',
+    'RCTImageCompressionOutputFileRemover',
   ];
   const defaultOutputAPIs = [
     'NSCachesDirectory',
@@ -1661,6 +1673,7 @@ function checkIOSOutputAuthorities() {
     'NSDataWritingAtomic',
     '[NSDate date].timeIntervalSince1970',
     '[NSUUID UUID].UUIDString',
+    'unlink(path.fileSystemRepresentation)',
   ];
   const forbiddenOutputDependencies =
     /(?:UIImage|CGImageDestination|UIGraphicsImageRenderer|metadataPolicy|maxBytes|RCTPromise)/u;
@@ -1702,7 +1715,7 @@ function checkIOSOutputAuthorities() {
     },
     {
       ok:
-        nativeTestNames.length === 7 &&
+        nativeTestNames.length === 9 &&
         requiredNativeTests.every((name) => nativeTestNames.includes(name)),
       name: 'table-driven native output test authority',
     },
@@ -1734,7 +1747,7 @@ function checkIOSOutputAuthorities() {
     label: 'iOS output persistence boundary and native tests are present',
     detail:
       violations.length === 0
-        ? 'cache paths, atomic writes, stable errors, result projection, bridge limits, and seven native groups are aligned'
+        ? 'cache paths, atomic writes, safe removal, stable errors, result projection, bridge limits, and nine native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }
@@ -1767,7 +1780,7 @@ function checkIOSPipelineAuthorities() {
     '- (void)compressImageWithDictionary:'
   );
   const methodEnd = moduleContents.indexOf(
-    '- (void)getImageCompressionCapabilities:',
+    '- (void)removeCompressionOutputURI:',
     methodStart
   );
   const methodLineCount =
@@ -1807,7 +1820,7 @@ function checkIOSPipelineAuthorities() {
     'RCTImageCompressionOutput defaultOutput',
   ];
   const directPipelineOwners =
-    /(?:defaultLoader|defaultDecoder|defaultTransformer|defaultMetadata|defaultEncoder|defaultOutput|loadSourceURI:|decodeInput:|transformRequest:|encodeRequest:|persistRequest:|CGImageSource|RNICK_IOS_SMOKE_NATIVE)/u;
+    /(?:defaultLoader|defaultDecoder|defaultTransformer|defaultMetadata|defaultEncoder|loadSourceURI:|decodeInput:|transformRequest:|encodeRequest:|persistRequest:|CGImageSource|RNICK_IOS_SMOKE_NATIVE)/u;
   const directComponentImports =
     /#import "RCTImageCompression(?:Input|ImageDecoder|ImageTransformer|JpegMetadata|ImageEncoder)\.h"/u;
   const structureChecks = [
