@@ -29,6 +29,25 @@ URI, treats an already-missing output as success, and rejects foreign files,
 source files, traversal paths, symlinks, and directories. Copy or move a result
 to durable storage before removal when it must outlive the cache.
 
+## Storage-accounting boundary
+
+Measure the storage this application controls rather than claiming that
+compression reduces total phone or gallery storage:
+
+```text
+app-owned image footprint = durable upload queue + package outputs + caches + residual files
+```
+
+The source and a newly encoded output can coexist, so transient storage may
+increase during compression. A queue-size reduction applies only when the host
+owns a staged source and is allowed to replace or delete it. Gallery sources,
+provider-owned content, copied or moved outputs, and other durable application
+files remain outside `removeCompressionOutput()`.
+
+See [why device-side bytes matter](./byte-economics.md) for upload and storage
+formulas, illustrative scenarios, and metrics that separate device, network,
+and backend effects.
+
 ## Metadata policies
 
 | Policy | Behavior |

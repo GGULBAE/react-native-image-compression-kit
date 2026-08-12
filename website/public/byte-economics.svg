@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="820" viewBox="0 0 1600 820" role="img" aria-labelledby="title desc">
+  <title id="title">Device-side image byte economics</title>
+  <desc id="desc">A two-panel diagram showing upload bytes that move and app-owned storage bytes that remain, with illustrative arithmetic and the boundary that gallery sources are not deleted.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07151d"/>
+      <stop offset="1" stop-color="#0b1f2b"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#172554"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <linearGradient id="teal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#083344"/>
+      <stop offset="1" stop-color="#134e4a"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#94a3b8"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .label { font-size: 20px; font-weight: 800; letter-spacing: 2px; }
+      .panel-title { font-size: 36px; font-weight: 800; fill: #f8fafc; }
+      .box-title { font-size: 25px; font-weight: 800; fill: #f8fafc; }
+      .box-note { font-size: 18px; fill: #cbd5e1; }
+      .formula { font-size: 25px; font-weight: 750; }
+      .scenario { font-size: 22px; fill: #e2e8f0; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="820" rx="32" fill="url(#background)"/>
+  <text x="70" y="76" fill="#f8fafc" font-size="46" font-weight="850">Control image bytes before they become product cost</text>
+  <text x="70" y="122" fill="#94a3b8" font-size="23">One device-side boundary affects bytes in motion and app-owned bytes at rest.</text>
+
+  <rect x="60" y="170" width="720" height="500" rx="26" fill="url(#blue)" stroke="#3b82f6" stroke-opacity="0.45" stroke-width="2"/>
+  <text x="100" y="222" class="label" fill="#60a5fa">01 · UPLOAD ECONOMICS</text>
+  <text x="100" y="268" class="panel-title">Bytes that move</text>
+
+  <rect x="100" y="320" width="170" height="112" rx="18" fill="#0f172a" stroke="#64748b"/>
+  <text x="125" y="363" class="box-title">4 MB</text>
+  <text x="125" y="396" class="box-note">local source</text>
+  <line x1="285" y1="376" x2="330" y2="376" stroke="#94a3b8" stroke-width="6" marker-end="url(#arrow)"/>
+  <rect x="345" y="320" width="210" height="112" rx="18" fill="#2563eb" stroke="#60a5fa"/>
+  <text x="370" y="363" class="box-title">500 KB</text>
+  <text x="370" y="396" class="box-note">accepted output</text>
+  <line x1="570" y1="376" x2="615" y2="376" stroke="#94a3b8" stroke-width="6" marker-end="url(#arrow)"/>
+  <rect x="630" y="320" width="110" height="112" rx="18" fill="#f8fafc"/>
+  <text x="653" y="377" fill="#0f172a" font-size="24" font-weight="800">upload</text>
+
+  <text x="100" y="512" class="formula" fill="#93c5fd">avoided first-hop bytes = source − accepted output</text>
+  <text x="100" y="566" class="scenario">Illustrative: 1M images · 4 MB → 500 KB</text>
+  <text x="100" y="606" fill="#f8fafc" font-size="31" font-weight="850">≈ 3.5 TB fewer bytes before retries</text>
+
+  <rect x="820" y="170" width="720" height="500" rx="26" fill="url(#teal)" stroke="#2dd4bf" stroke-opacity="0.45" stroke-width="2"/>
+  <text x="860" y="222" class="label" fill="#5eead4">02 · DEVICE STORAGE ECONOMICS</text>
+  <text x="860" y="268" class="panel-title">App-owned bytes at rest</text>
+
+  <rect x="860" y="320" width="140" height="112" rx="18" fill="#0f172a" stroke="#64748b"/>
+  <text x="882" y="361" class="box-title">source</text>
+  <text x="882" y="395" class="box-note">unchanged</text>
+  <line x1="1010" y1="376" x2="1038" y2="376" stroke="#94a3b8" stroke-width="6" marker-end="url(#arrow)"/>
+  <rect x="1052" y="320" width="176" height="112" rx="18" fill="#0f766e" stroke="#5eead4"/>
+  <text x="1074" y="361" class="box-title">verified</text>
+  <text x="1074" y="395" class="box-note">owned output</text>
+  <line x1="1238" y1="376" x2="1266" y2="376" stroke="#94a3b8" stroke-width="6" marker-end="url(#arrow)"/>
+  <rect x="1280" y="320" width="105" height="112" rx="18" fill="#f8fafc"/>
+  <text x="1294" y="377" fill="#0f172a" font-size="23" font-weight="800">upload</text>
+  <line x1="1395" y1="376" x2="1423" y2="376" stroke="#94a3b8" stroke-width="6" marker-end="url(#arrow)"/>
+  <rect x="1437" y="320" width="70" height="112" rx="18" fill="#ccfbf1"/>
+  <text x="1448" y="368" fill="#134e4a" font-size="20" font-weight="850">remove</text>
+  <text x="1450" y="397" fill="#134e4a" font-size="16">owned</text>
+
+  <text x="860" y="512" class="formula" fill="#5eead4">app footprint = queue + outputs + cache + residual</text>
+  <text x="860" y="566" class="scenario">Illustrative: 200 app-owned staged images</text>
+  <text x="860" y="606" fill="#f8fafc" font-size="31" font-weight="850">800 MB → 100 MB · 700 MB difference</text>
+
+  <rect x="60" y="706" width="1480" height="76" rx="20" fill="#fef3c7"/>
+  <text x="92" y="742" fill="#92400e" font-size="22" font-weight="850">BOUNDARY</text>
+  <text x="240" y="742" fill="#78350f" font-size="22" font-weight="700">The package does not shrink or delete the gallery source.</text>
+  <text x="240" y="769" fill="#92400e" font-size="17">Transient source + output storage can increase during processing. Scenarios are arithmetic, not measured performance.</text>
+</svg>
