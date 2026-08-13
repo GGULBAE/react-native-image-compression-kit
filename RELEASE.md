@@ -34,6 +34,8 @@ has been created for 0.4.1.
   symlink, and directory rejection.
 - Dependabot alert and security-update settings enforced by the repository
   settings contract.
+- A namespaced iOS SDK privacy-manifest bundle declaring no tracking or
+  collected data and the C617.1 reason for package-cache file metadata checks.
 
 ### Candidate validation
 

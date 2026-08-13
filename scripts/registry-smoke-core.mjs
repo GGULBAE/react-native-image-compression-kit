@@ -18,6 +18,7 @@ export const REQUIRED_PACKAGE_FILES = [
   'react-native-image-compression-kit.podspec',
   'react-native.config.js',
 ];
+const IOS_PRIVACY_MANIFEST_FIRST_VERSION = '0.4.1';
 
 export const FORBIDDEN_PACKAGE_FILES = [
   'scripts/consumer-smoke-test.mjs',
@@ -143,7 +144,7 @@ export function validateRegistryEvidence({
       'Packed tarball shasum does not match npm registry metadata.'
     );
 
-    const missing = REQUIRED_PACKAGE_FILES.filter(
+    const missing = requiredPackageFilesForVersion(requestedVersion).filter(
       (filePath) => !filePaths.includes(filePath)
     );
     assert(
@@ -186,6 +187,25 @@ export function validateRegistryEvidence({
       error: error instanceof Error ? error.message : String(error),
     });
   }
+}
+
+export function requiredPackageFilesForVersion(version) {
+  return versionAtLeast(version, IOS_PRIVACY_MANIFEST_FIRST_VERSION)
+    ? [...REQUIRED_PACKAGE_FILES, 'ios/PrivacyInfo.xcprivacy']
+    : [...REQUIRED_PACKAGE_FILES];
+}
+
+function versionAtLeast(version, minimum) {
+  if (!/^\d+\.\d+\.\d+$/.test(version ?? '')) {
+    return true;
+  }
+  const current = version.split('.').map(Number);
+  const floor = minimum.split('.').map(Number);
+  for (let index = 0; index < current.length; index += 1) {
+    if (current[index] > floor[index]) return true;
+    if (current[index] < floor[index]) return false;
+  }
+  return true;
 }
 
 export function canonicalRegistryReport(report) {

@@ -51,6 +51,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/installation' },
       { text: 'API', link: '/reference/api' },
+      { text: 'Pipeline fit', link: '/guide/choosing-an-image-pipeline' },
       { text: 'Why bytes matter', link: '/guide/byte-economics' },
       { text: 'Compatibility', link: '/reference/compatibility' },
       { text: 'Roadmap', link: '/roadmap' },
@@ -61,6 +62,7 @@ export default defineConfig({
         text: 'Get started',
         items: [
           { text: 'Why device-side bytes matter', link: '/guide/byte-economics' },
+          { text: 'Choosing an image pipeline', link: '/guide/choosing-an-image-pipeline' },
           { text: 'Installation', link: '/guide/installation' },
           { text: 'Image picker integration', link: '/guide/integration' },
           { text: 'Compression recipes', link: '/guide/recipes' },

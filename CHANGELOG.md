@@ -11,6 +11,8 @@ and patch releases remain backward compatible within the current minor line.
 - `removeCompressionOutput(uri)` for idempotent deletion of package-owned
   generated cache outputs, with native ownership validation that rejects
   arbitrary files, traversal, symlinks, and directories.
+- An iOS SDK privacy manifest declaring no tracking or collected data and the
+  C617.1 reason used to inspect package-owned cache output metadata.
 
 ### Changed
 

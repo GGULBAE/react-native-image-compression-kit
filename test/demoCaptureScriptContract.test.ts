@@ -33,6 +33,12 @@ describe('Android demo screenshot capture', () => {
     );
     expect(guidedScreen).toContain('<ActivityIndicator color="#0d5f59" size="small" />');
     expect(guidedScreen).toContain('contentInsetAdjustmentBehavior="never"');
+    expect(guidedScreen).toContain(
+      'accessibilityLabel="Native compression walkthrough progress"'
+    );
+    expect(guidedScreen).toContain('accessibilityRole="progressbar"');
+    expect(guidedScreen).toContain('accessibilityValue={{');
+    expect(guidedScreen).toContain("text: progressText");
     expect(guidedScreen).toContain("(StatusBar.currentHeight ?? 24) + 12 : 64");
     expect(source).toContain('adb shell screenrecord');
     expect(source).toContain('--time-limit 30');

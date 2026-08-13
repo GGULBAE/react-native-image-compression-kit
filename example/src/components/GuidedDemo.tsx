@@ -23,6 +23,11 @@ export function GuidedDemo({ state }: GuidedDemoProps) {
   const activeIndex = state
     ? GUIDED_DEMO_STAGES.findIndex(({ id }) => id === state.stage)
     : -1;
+  const progressText =
+    activeIndex >= 0
+      ? `${GUIDED_DEMO_STAGES[activeIndex].label}, ` +
+        `step ${activeIndex + 1} of ${GUIDED_DEMO_STAGES.length}`
+      : 'Preparing walkthrough';
 
   return (
     <View style={styles.safeArea}>
@@ -40,7 +45,17 @@ export function GuidedDemo({ state }: GuidedDemoProps) {
           </Text>
         </View>
 
-        <View accessibilityRole="progressbar" style={styles.progressRow}>
+        <View
+          accessibilityLabel="Native compression walkthrough progress"
+          accessibilityRole="progressbar"
+          accessibilityValue={{
+            min: 0,
+            max: GUIDED_DEMO_STAGES.length,
+            now: activeIndex + 1,
+            text: progressText,
+          }}
+          style={styles.progressRow}
+        >
           {GUIDED_DEMO_STAGES.map((stage, index) => {
             const isActive = index === activeIndex;
             const isComplete = index < activeIndex;

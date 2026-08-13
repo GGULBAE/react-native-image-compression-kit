@@ -5,11 +5,11 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readReleaseStatusManifest } from './docs-semantic-core.mjs';
 import {
-  getReadmeStatusViolations,
-  validateReadmeStatus,
-} from './readme-status-validator.mjs';
+  inspectReleaseLanguageContracts,
+  readReleaseStatusManifest,
+} from './docs-semantic-core.mjs';
+import { getReadmeStatusViolations } from './readme-status-validator.mjs';
 
 const SCRIPT_PATH = fileURLToPath(import.meta.url);
 const ROOT = path.resolve(path.dirname(SCRIPT_PATH), '..');
@@ -94,10 +94,20 @@ export function getPackedReadmeStatusViolations(
   readmeContents,
   { version = PACKAGE_VERSION, manifest = RELEASE_STATUS_MANIFEST } = {}
 ) {
-  return getReadmeStatusViolations(readmeContents, {
+  const statusViolations = getReadmeStatusViolations(readmeContents, {
     version,
     manifest,
     requireStatusBlock: true,
+  });
+
+  if (statusViolations.length > 0) {
+    return statusViolations;
+  }
+
+  return inspectReleaseLanguageContracts({
+    packageVersion: version,
+    releaseState: manifest.releaseState,
+    documents: [{ documentName: 'Packed README', contents: readmeContents }],
   });
 }
 
@@ -105,20 +115,14 @@ export function validatePackedReadmeStatus(
   readmeContents,
   { version = PACKAGE_VERSION, manifest = RELEASE_STATUS_MANIFEST } = {}
 ) {
-  try {
-    validateReadmeStatus(readmeContents, {
-      version,
-      manifest,
-      requireStatusBlock: true,
-    });
-  } catch (error) {
-    const violations = getPackedReadmeStatusViolations(readmeContents, {
-      version,
-      manifest,
-    });
+  const violations = getPackedReadmeStatusViolations(readmeContents, {
+    version,
+    manifest,
+  });
+
+  if (violations.length > 0) {
     throw new Error(
-      `Packed README current status blocks release: ${violations.join(' | ')}`,
-      { cause: error }
+      `Packed README current status blocks release: ${violations.join(' | ')}`
     );
   }
 }

@@ -8,6 +8,7 @@ import {
   inspectDocumentation,
   inspectProductEvidenceContracts,
   inspectProductDirectionContracts,
+  inspectReleaseLanguageContracts,
   inspectStatusContract,
   parseCurrentStatus,
   parseHeadings,
@@ -232,6 +233,89 @@ describe('documentation semantic gate', () => {
       releaseTarget: '1.2.3',
       publishedNpmLatest: '1.2.2',
     });
+  });
+
+  it('keeps versioned release notes true before and after publication', () => {
+    const evergreenNotes = [
+      '# Package v1.2.3',
+      'This backward-compatible patch fixes output handling.',
+      '## Install',
+      'At the 2030-01-02 source review, npm latest resolved to 1.2.2.',
+      'Publication is separately authorized by the exact-source workflow.',
+    ].join('\n');
+    const staleNotes = [
+      '# Package v1.2.3',
+      'This backward-compatible candidate fixes output handling.',
+      '## Install after publication',
+      'Until publication, npm latest remains 1.2.2.',
+      'The 1.2.3 source candidate is not represented as a registry release.',
+    ].join('\n');
+
+    for (const releaseState of ['candidate', 'release']) {
+      expect(
+        inspectReleaseLanguageContracts({
+          packageVersion: '1.2.3',
+          releaseState,
+          releaseNotes: { documentName: 'notes.md', contents: evergreenNotes },
+        })
+      ).toEqual([]);
+    }
+    expect(
+      inspectReleaseLanguageContracts({
+        packageVersion: '1.2.3',
+        releaseState: 'candidate',
+        releaseNotes: { documentName: 'notes.md', contents: staleNotes },
+      })
+    ).toEqual([
+      'notes.md: release notes must remain true after publication; found candidate self-description',
+      'notes.md: release notes must remain true after publication; found publication-conditional install heading',
+      'notes.md: release notes must remain true after publication; found publication-conditional timing',
+      'notes.md: release notes must remain true after publication; found current-version source-candidate label',
+      'notes.md: release notes must remain true after publication; found registry-release negation',
+    ]);
+  });
+
+  it('allows candidate-state prose but blocks it when the current target becomes a release', () => {
+    const documents = [
+      {
+        documentName: 'README.md',
+        contents: 'Version 1.2.3 is a source candidate until the candidate is released.',
+      },
+      {
+        documentName: 'RELEASE.md',
+        contents: 'This candidate fixes output handling.\n\n### Candidate validation',
+      },
+      {
+        documentName: 'website/index.md',
+        contents: 'The 1.2.3 source candidate is ready. Until it is published, use 1.2.2.',
+      },
+      {
+        documentName: 'history.md',
+        contents: 'Historical review candidate notes for 1.1.0 remain archived.',
+      },
+    ];
+
+    expect(
+      inspectReleaseLanguageContracts({
+        packageVersion: '1.2.3',
+        releaseState: 'candidate',
+        documents,
+      })
+    ).toEqual([]);
+    expect(
+      inspectReleaseLanguageContracts({
+        packageVersion: '1.2.3',
+        releaseState: 'release',
+        documents,
+      })
+    ).toEqual([
+      'README.md: release-state document still contains current-version candidate label for 1.2.3',
+      'README.md: release-state document still contains pending candidate release timing for 1.2.3',
+      'RELEASE.md: release-state document still contains current release self-description for 1.2.3',
+      'RELEASE.md: release-state document still contains candidate validation heading for 1.2.3',
+      'website/index.md: release-state document still contains current-version candidate label for 1.2.3',
+      'website/index.md: release-state document still contains pending publication timing for 1.2.3',
+    ]);
   });
 
   it('accepts the release to candidate regression only when both mirrors change together', () => {

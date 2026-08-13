@@ -8,6 +8,9 @@ const REQUIRED_TOPICS = [
   'typescript',
 ];
 const REQUIRED_CHECKS = [
+  'Analyze (actions)',
+  'Analyze (javascript-typescript)',
+  'Analyze (ruby)',
   'HEIC/HEIF/AVIF emulator validation',
   'JS, TypeScript, and Android',
   'iOS host-app smoke',

@@ -32,8 +32,12 @@ cannot undo the first device-to-server transfer. The directly observable
 device-side quantity is:
 
 ```text
-source-to-output byte delta = max(0, package input bytes − accepted output bytes)
+source-to-output byte difference = package input bytes − accepted output bytes
 ```
+
+A positive value means the accepted output is smaller; a negative value means
+it is larger. Keep that sign instead of hiding output growth by flooring the
+difference at zero.
 
 Use **accepted output** rather than every generated result. An application may
 reject a result because it misses its byte limit, dimensions, visual-quality
@@ -91,6 +95,16 @@ different cases:
 The [public API reference](../reference/api.md) defines the exact return values,
 errors, and ownership rules. The [output-files guide](./files-metadata.md)
 explains what remains the host application's responsibility.
+
+## 🧮 Calculate a bounded scenario
+
+The local-only calculator below keeps its inputs in browser memory. It reports
+the package input/output observation separately from a matched current-pipeline
+baseline, and it enables the staging-replacement result only when the
+application owns that source. Its byte-storage estimate does not price object,
+request, delivery, or transformation counts.
+
+<ByteEconomicsCalculator />
 
 ## 🧮 Illustrative scale
 
@@ -182,10 +196,8 @@ try {
     throw new Error('Image did not meet the upload policy');
   }
 
-  const sourceToOutputByteDelta = Math.max(
-    0,
-    result.originalByteSize - result.byteSize
-  );
+  const sourceToOutputByteDelta =
+    result.originalByteSize - result.byteSize;
 
   await upload(result.uri, { sourceToOutputByteDelta });
 } finally {
@@ -205,7 +217,7 @@ sent by a matched current-pipeline baseline.
 | Metric | Definition | Why it matters |
 | --- | --- | --- |
 | Accepted-output rate | Accepted results ÷ completed compression results | Prevents counting unusable outputs as savings |
-| Accepted source-to-output byte delta | Sum of `originalByteSize − byteSize` for accepted outputs, floored at zero | Measures the package input/output difference without inventing a baseline |
+| Accepted source-to-output byte difference | Sum of `originalByteSize − byteSize` for accepted outputs, retaining negative growth | Measures the package input/output difference without inventing a baseline |
 | Incremental transferred bytes | Current-pipeline bytes − new-pipeline bytes for comparable accepted uploads | Measures the counterfactual transfer effect, including retry and partial-attempt behavior |
 | Retry bytes | Bytes transferred by repeated or partial upload attempts | Shows whether smaller payloads change the retry surface in the real network path |
 | Upload latency p50/p95 | Selection-to-server-acceptance time, reported separately from compression time | Separates device work from network effects |

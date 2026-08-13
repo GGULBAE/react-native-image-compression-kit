@@ -19,6 +19,8 @@ const requiredFiles = [
   'website/.vitepress/config.mts',
   'website/.vitepress/theme/index.ts',
   'website/.vitepress/theme/OptionBuilder.vue',
+  'website/.vitepress/theme/ByteEconomicsCalculator.vue',
+  'website/.vitepress/theme/byteEconomics.ts',
   'website/.vitepress/theme/custom.css',
   'website/public/logo.svg',
   'website/public/social-card.svg',
@@ -28,6 +30,7 @@ const requiredFiles = [
   'website/404.md',
   'website/guide/installation.md',
   'website/guide/byte-economics.md',
+  'website/guide/choosing-an-image-pipeline.md',
   'website/guide/integration.md',
   'website/guide/recipes.md',
   'website/guide/capabilities.md',
@@ -55,7 +58,11 @@ const siteConfig = readFileSync(
   path.join(root, 'website', '.vitepress', 'config.mts'),
   'utf8'
 );
-for (const route of ["link: '/reference/architecture'", "link: '/roadmap'"]) {
+for (const route of [
+  "link: '/reference/architecture'",
+  "link: '/guide/choosing-an-image-pipeline'",
+  "link: '/roadmap'",
+]) {
   if (!siteConfig.includes(route)) {
     errors.push(`site navigation missing route: ${route}`);
   }
@@ -113,7 +120,7 @@ for (const sourcePath of markdownFiles) {
 const combined = markdownFiles
   .map((file) => readFileSync(file, 'utf8'))
   .join('\n');
-for (const requiredText of [
+const requiredSemanticText = [
   'npm install react-native-image-compression-kit',
   'Expo Go',
   'development build',
@@ -124,12 +131,17 @@ for (const requiredText of [
   'cache file',
   'prevented upload bytes',
   'app-owned image footprint',
+  '<ByteEconomicsCalculator />',
+  'Choose by contract, not a speed rank',
   'SHA-256',
   'capability-first',
   'No roadmap item is a release promise',
-  '0.4.1 source candidate',
   'v0.4.0 iOS renderer',
-]) {
+];
+if (releaseStatus.releaseState === 'candidate') {
+  requiredSemanticText.push(`${packageJson.version} source candidate`);
+}
+for (const requiredText of requiredSemanticText) {
   if (!combined.includes(requiredText)) {
     errors.push(`site missing semantic contract: ${requiredText}`);
   }

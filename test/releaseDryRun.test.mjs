@@ -102,6 +102,30 @@ describe('release dry-run packed README current-status guard', () => {
     expect(releaseManifest.publishedNpmLatest).toBe(releaseManifest.releaseTarget);
   });
 
+  it('rejects current-target candidate prose from a release-state packed README', () => {
+    const releaseManifest = {
+      ...MANIFEST,
+      publishedNpmLatest: PACKAGE_VERSION,
+      releaseState: 'release',
+    };
+    const packedReadme = readmeWithStatus({
+      publishedNpmLatest: PACKAGE_VERSION,
+      releaseState: 'release',
+      after: `Version ${PACKAGE_VERSION} is a source candidate until the candidate is released.`,
+    });
+    const violations = getPackedReadmeStatusViolations(packedReadme, {
+      manifest: releaseManifest,
+    });
+
+    expect(violations).toEqual([
+      `Packed README: release-state document still contains current-version candidate label for ${PACKAGE_VERSION}`,
+      `Packed README: release-state document still contains pending candidate release timing for ${PACKAGE_VERSION}`,
+    ]);
+    expect(() =>
+      validatePackedReadmeStatus(packedReadme, { manifest: releaseManifest })
+    ).toThrow('release-state document still contains current-version candidate label');
+  });
+
   it('rejects package and manifest mismatches before evaluating publishability', () => {
     const otherVersion = '9.9.9';
     const otherReleaseState =

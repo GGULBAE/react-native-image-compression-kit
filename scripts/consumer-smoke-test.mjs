@@ -198,6 +198,7 @@ function assertInstalledPackageFiles(projectDir) {
     'lib/index.d.ts',
     'android/build.gradle',
     'ios/RCTImageCompressionKit.h',
+    'ios/PrivacyInfo.xcprivacy',
     'react-native.config.js',
   ];
   const missing = requiredFiles.filter(

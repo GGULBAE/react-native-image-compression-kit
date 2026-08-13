@@ -48,10 +48,18 @@ describe('iOS source contract', () => {
     const podspec = readProjectFile(
       'react-native-image-compression-kit.podspec'
     );
+    const privacyManifestPath = path.join(ROOT, 'ios/PrivacyInfo.xcprivacy');
+    const privacyManifest = readFileSync(privacyManifestPath, 'utf8');
+    const output = readProjectFile('ios/RCTImageCompressionOutput.mm');
+    const runner = readProjectFile('scripts/ios-validation.mjs');
 
+    expect(existsSync(privacyManifestPath)).toBe(true);
     expect(podspec).toContain('s.version = package["version"]');
     expect(podspec).toContain('s.platforms = { :ios => "13.4" }');
     expect(podspec).toContain('s.source_files = "ios/**/*.{h,m,mm}"');
+    expect(podspec).toContain(
+      '"react-native-image-compression-kit_privacy" => ["ios/PrivacyInfo.xcprivacy"]'
+    );
     expect(podspec).toContain('"ios/RCTImageCompressionImageDecoder.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageEncoder.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageTransformer.h"');
@@ -63,6 +71,30 @@ describe('iOS source contract', () => {
     expect(podspec).toContain('"ios/RCTImageCompressionRequest.h"');
     expect(podspec).toContain('install_modules_dependencies(s)');
     expect(podspec).toContain('s.dependency "React-Core"');
+    expect(output).toContain('lstat(path.fileSystemRepresentation');
+    expect(output).toContain('NSCachesDirectory');
+    expect(privacyManifest).toContain('<key>NSPrivacyTracking</key>\n\t<false/>');
+    expect(privacyManifest).toContain(
+      '<key>NSPrivacyCollectedDataTypes</key>\n\t<array/>'
+    );
+    expect(privacyManifest).toContain(
+      '<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>'
+    );
+    expect(privacyManifest).toContain('<string>C617.1</string>');
+    expect(
+      privacyManifest.match(/NSPrivacyAccessedAPICategory/g)
+    ).toHaveLength(1);
+    expect(privacyManifest.match(/<string>C617\.1<\/string>/g)).toHaveLength(1);
+    expect(privacyManifest).not.toContain('NSPrivacyTrackingDomains');
+    expect(runner.match(/verifyBuiltPrivacyManifest\(\);/g)).toHaveLength(2);
+    expect(runner).toContain(
+      "'react-native-image-compression-kit_privacy.bundle'"
+    );
+    expect(runner).toContain("mustRun('plutil', ['-lint', manifestPath])");
+    expect(runner).toContain("NSPrivacyAccessedAPITypeReasons: ['C617.1']");
+    expect(runner).toContain(
+      "podProjectContents.includes('PrivacyInfo.xcprivacy')"
+    );
   });
 
   it('isolates immutable request parsing behind executable native tests', () => {
