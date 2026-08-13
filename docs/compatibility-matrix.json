@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "packageVersion": "0.4.0",
+  "packageVersion": "0.4.1",
   "workflow": ".github/workflows/compatibility.yml",
   "lanes": [
     {

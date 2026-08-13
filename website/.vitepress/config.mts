@@ -51,7 +51,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/installation' },
       { text: 'API', link: '/reference/api' },
-      { text: 'Native demo', link: '/demo/' },
+      { text: 'Why bytes matter', link: '/guide/byte-economics' },
       { text: 'Compatibility', link: '/reference/compatibility' },
       { text: 'Roadmap', link: '/roadmap' },
       { text: 'Changelog', link: '/changelog' },
@@ -60,6 +60,7 @@ export default defineConfig({
       {
         text: 'Get started',
         items: [
+          { text: 'Why device-side bytes matter', link: '/guide/byte-economics' },
           { text: 'Installation', link: '/guide/installation' },
           { text: 'Image picker integration', link: '/guide/integration' },
           { text: 'Compression recipes', link: '/guide/recipes' },
@@ -80,6 +81,7 @@ export default defineConfig({
           { text: 'Public API', link: '/reference/api' },
           { text: 'Compatibility matrix', link: '/reference/compatibility' },
           { text: 'Product architecture', link: '/reference/architecture' },
+          { text: 'Product evidence', link: '/reference/evidence' },
           { text: 'Roadmap', link: '/roadmap' },
           { text: 'Native result demo', link: '/demo/' },
           { text: 'Changelog', link: '/changelog' },

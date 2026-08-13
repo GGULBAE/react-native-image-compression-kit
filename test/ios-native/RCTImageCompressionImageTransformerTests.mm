@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 
+#import "RCTImageCompressionCGImage.h"
 #import "RCTImageCompressionImageTransformer.h"
 
 #include <math.h>
@@ -368,6 +369,82 @@ static void TestClearsExistingErrorOnSuccess(void)
   RCTTransformerAssert(error == nil, @"successful transform clears previous error");
 }
 
+static RCTImageCompressionCGImage *RCTTransformerAsymmetricPixelFixture(void)
+{
+  const uint8_t pixels[] = {
+    240, 20, 20, 255, 20, 220, 20, 255,
+    20, 20, 240, 255, 240, 220, 20, 255,
+  };
+  CFDataRef data = CFDataCreate(kCFAllocatorDefault, pixels, sizeof(pixels));
+  CGDataProviderRef provider = CGDataProviderCreateWithCFData(data);
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  CGImageRef image = CGImageCreate(
+    2,
+    2,
+    8,
+    32,
+    8,
+    colorSpace,
+    kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big,
+    provider,
+    nil,
+    false,
+    kCGRenderingIntentDefault
+  );
+  RCTImageCompressionCGImage *fixture = [[RCTImageCompressionCGImage alloc]
+    initWithImage:image
+    sourcePixelSize:CGSizeMake(2, 2)
+  ];
+  CGImageRelease(image);
+  CGColorSpaceRelease(colorSpace);
+  CGDataProviderRelease(provider);
+  CFRelease(data);
+  return fixture;
+}
+
+static NSData *RCTTransformerPixelData(RCTImageCompressionCGImage *image)
+{
+  CFDataRef data = CGDataProviderCopyData(CGImageGetDataProvider(image.image));
+  return CFBridgingRelease(data);
+}
+
+static void TestDefaultRendererPreservesPixelOrientation(void)
+{
+  RCTImageCompressionCGImage *source = RCTTransformerAsymmetricPixelFixture();
+  RCTImageCompressionImageTransformer *transformer =
+    [RCTImageCompressionImageTransformer defaultTransformer];
+  RCTImageCompressionImageTransformRequest *request =
+    [[RCTImageCompressionImageTransformRequest alloc]
+      initWithImage:(UIImage *)source
+      resizeOptions:RCTTransformerResize(
+        NO,
+        NO,
+        0,
+        NO,
+        0,
+        RCTImageCompressionKitResizeModeContain
+      )
+      opaque:YES
+    ];
+  RCTImageCompressionImageTransformError *error = nil;
+  RCTImageCompressionTransformedImage *result =
+    [transformer transformRequest:request error:&error];
+  RCTImageCompressionCGImage *rendered =
+    [(id)result.image isKindOfClass:[RCTImageCompressionCGImage class]]
+      ? (RCTImageCompressionCGImage *)(id)result.image
+      : nil;
+
+  RCTTransformerAssert(result != nil, @"default renderer returns a transformed image");
+  RCTTransformerAssert(error == nil, @"default renderer clears the transform error");
+  RCTTransformerAssert(rendered != nil, @"default renderer returns the Core Graphics wrapper");
+  RCTTransformerAssertEqualSize(result.pixelSize, CGSizeMake(2, 2), @"default renderer keeps pixel size");
+  RCTTransformerAssertEqualObjects(
+    RCTTransformerPixelData(rendered),
+    RCTTransformerPixelData(source),
+    @"default renderer preserves asymmetric pixel row and corner order"
+  );
+}
+
 int main(void)
 {
   @autoreleasepool {
@@ -377,6 +454,7 @@ int main(void)
     TestRejectsMissingRenderAndSkippedExecutor();
     TestRetainsImmutableRequestResultAndErrorModels();
     TestClearsExistingErrorOnSuccess();
+    TestDefaultRendererPreservesPixelOrientation();
 
     if (RCTImageTransformerFailureCount > 0) {
       fprintf(
@@ -389,7 +467,7 @@ int main(void)
     }
 
     printf(
-      "iOS image transformer native tests passed: %lu assertions across 6 table-driven groups.\n",
+      "iOS image transformer native tests passed: %lu assertions across 7 table-driven groups.\n",
       (unsigned long)RCTImageTransformerAssertionCount
     );
   }

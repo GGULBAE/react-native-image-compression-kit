@@ -34,6 +34,19 @@ Run the example app with `pnpm example:android` or `pnpm example:ios`. See
 [example/README.md](example/README.md) for platform setup and deterministic
 sample instructions.
 
+If Java or the Android SDK is unavailable locally, use the repository's pinned
+container toolchain instead:
+
+```bash
+pnpm docker:android:build
+pnpm docker:android:ci
+```
+
+The Docker lane covers repository verification, TypeScript, React Native
+Codegen, Android JVM unit tests, instrumentation APK compilation, and the
+example Debug APK build. Executing instrumentation tests still requires a
+connected Android device or emulator.
+
 ## Change expectations
 
 - Add or update tests for observable behavior.

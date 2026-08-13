@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="1220" viewBox="0 0 760 1220" role="img" aria-labelledby="title desc">
+  <title id="title">Device-side image byte economics</title>
+  <desc id="desc">A mobile layout showing the source-to-output byte delta and two distinct storage cases: a gallery source that remains and app-owned staging that may be replaced only when policy permits deletion.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07151d"/>
+      <stop offset="1" stop-color="#0b1f2b"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+      <path d="M0,0 L9,4.5 L0,9 Z" fill="#94a3b8"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .label { font-size: 18px; font-weight: 800; letter-spacing: 1.5px; }
+      .title { font-size: 34px; font-weight: 850; fill: #f8fafc; }
+      .box-title { font-size: 20px; font-weight: 800; }
+      .box-note { font-size: 15px; }
+    </style>
+  </defs>
+  <rect width="760" height="1220" rx="28" fill="url(#background)"/>
+  <text x="42" y="66" fill="#f8fafc" font-size="38" font-weight="850">Control bytes before cost</text>
+  <text x="42" y="106" fill="#94a3b8" font-size="19">Moving bytes + app-owned bytes at rest</text>
+
+  <rect x="32" y="145" width="696" height="405" rx="24" fill="#172554" stroke="#3b82f6" stroke-opacity="0.5"/>
+  <text x="64" y="190" class="label" fill="#60a5fa">01 · UPLOAD ECONOMICS</text>
+  <text x="64" y="232" class="title">Bytes that move</text>
+  <rect x="64" y="275" width="155" height="94" rx="16" fill="#0f172a" stroke="#64748b"/>
+  <text x="84" y="316" class="box-title" fill="#f8fafc">4 MB source</text>
+  <text x="84" y="344" class="box-note" fill="#cbd5e1">local</text>
+  <line x1="229" y1="322" x2="263" y2="322" stroke="#94a3b8" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="278" y="275" width="205" height="94" rx="16" fill="#2563eb" stroke="#60a5fa"/>
+  <text x="298" y="316" class="box-title" fill="#f8fafc">500 KB output</text>
+  <text x="298" y="344" class="box-note" fill="#dbeafe">accepted</text>
+  <line x1="493" y1="322" x2="527" y2="322" stroke="#94a3b8" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="542" y="275" width="130" height="94" rx="16" fill="#f8fafc"/>
+  <text x="566" y="331" class="box-title" fill="#0f172a">upload</text>
+  <text x="64" y="408" fill="#93c5fd" font-size="21" font-weight="750">source-to-output byte delta</text>
+  <text x="64" y="438" fill="#93c5fd" font-size="21" font-weight="750">= input − accepted output</text>
+  <text x="64" y="474" fill="#e2e8f0" font-size="18">Illustrative: 1M accepted · 4 MB → 500 KB</text>
+  <text x="64" y="510" fill="#f8fafc" font-size="27" font-weight="850">3.5 TB source-to-output delta</text>
+  <text x="64" y="536" fill="#cbd5e1" font-size="14">Incremental savings require a matched current-pipeline baseline.</text>
+
+  <rect x="32" y="580" width="696" height="460" rx="24" fill="#083344" stroke="#2dd4bf" stroke-opacity="0.5"/>
+  <text x="64" y="625" class="label" fill="#5eead4">02 · DEVICE STORAGE ECONOMICS</text>
+  <text x="64" y="667" class="title">Ownership changes the outcome</text>
+
+  <rect x="64" y="690" width="632" height="142" rx="17" fill="#071d26" stroke="#2dd4bf" stroke-opacity="0.55"/>
+  <text x="84" y="720" fill="#5eead4" font-size="14" font-weight="850" letter-spacing="1.2">GALLERY / PROVIDER SOURCE</text>
+  <rect x="84" y="738" width="162" height="62" rx="13" fill="#0f172a" stroke="#64748b"/>
+  <text x="100" y="765" fill="#f8fafc" font-size="18" font-weight="800">gallery source</text>
+  <text x="100" y="789" fill="#cbd5e1" font-size="15">remains</text>
+  <text x="261" y="779" fill="#94a3b8" font-size="27" font-weight="800">+</text>
+  <rect x="290" y="738" width="170" height="62" rx="13" fill="#0f766e" stroke="#5eead4"/>
+  <text x="306" y="765" fill="#f8fafc" font-size="18" font-weight="800">owned output</text>
+  <text x="306" y="789" fill="#ccfbf1" font-size="15">transient</text>
+  <line x1="475" y1="769" x2="500" y2="769" stroke="#94a3b8" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="515" y="738" width="155" height="62" rx="13" fill="#ccfbf1"/>
+  <text x="532" y="765" fill="#134e4a" font-size="17" font-weight="850">remove only</text>
+  <text x="539" y="789" fill="#134e4a" font-size="15">the output</text>
+  <text x="84" y="821" fill="#cbd5e1" font-size="14">Peak storage can rise while source and output coexist.</text>
+
+  <rect x="64" y="850" width="632" height="166" rx="17" fill="#071d26" stroke="#2dd4bf" stroke-opacity="0.55"/>
+  <text x="84" y="880" fill="#5eead4" font-size="14" font-weight="850" letter-spacing="1.2">APP-OWNED STAGING</text>
+  <rect x="84" y="896" width="215" height="58" rx="13" fill="#0f172a" stroke="#64748b"/>
+  <text x="101" y="922" fill="#f8fafc" font-size="18" font-weight="800">200 × 4 MB staging</text>
+  <text x="101" y="944" fill="#cbd5e1" font-size="14">800 MB app-owned</text>
+  <line x1="314" y1="925" x2="349" y2="925" stroke="#94a3b8" stroke-width="4" marker-end="url(#arrow)"/>
+  <rect x="364" y="896" width="306" height="58" rx="13" fill="#0f766e" stroke="#5eead4"/>
+  <text x="381" y="922" fill="#f8fafc" font-size="18" font-weight="800">200 × 0.5 MB accepted</text>
+  <text x="381" y="944" fill="#ccfbf1" font-size="14">100 MB after replacement</text>
+  <text x="84" y="982" fill="#f8fafc" font-size="23" font-weight="850">800 MB → 100 MB · 700 MB lower</text>
+  <text x="84" y="1005" fill="#cbd5e1" font-size="14">Only when the app may replace or delete staging files.</text>
+
+  <rect x="32" y="1070" width="696" height="112" rx="20" fill="#fef3c7"/>
+  <text x="58" y="1108" fill="#92400e" font-size="20" font-weight="850">BOUNDARY · gallery sources remain</text>
+  <text x="58" y="1140" fill="#78350f" font-size="17">Staging falls only when the app may replace or delete it.</text>
+  <text x="58" y="1168" fill="#92400e" font-size="15">Arithmetic, not incremental savings without a matched baseline.</text>
+</svg>

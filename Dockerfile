@@ -2,6 +2,9 @@ FROM eclipse-temurin:21-jdk-jammy
 
 ARG NODE_VERSION=24.11.1
 ARG PNPM_VERSION=11.8.0
+ARG GH_VERSION=2.95.0
+ARG GH_LINUX_AMD64_SHA256=25d1e4729e8808c9ed3d613e96ebd3f3e44446f2d368c89d878a71a36ddb3d8c
+ARG GH_LINUX_ARM64_SHA256=d41e0b3b6218e5741c8bb4db39b16e53a59e0e06299a8489bd38f623ef7ebaae
 ARG ANDROID_CMDLINE_TOOLS_VERSION=12266719
 ARG ANDROID_PLATFORM=android-36
 ARG ANDROID_BUILD_TOOLS_VERSION=36.0.0
@@ -48,6 +51,22 @@ RUN set -eux; \
   mkdir -p "${PNPM_HOME}/store"; \
   pnpm config set store-dir "${PNPM_HOME}/store"; \
   pnpm --version
+
+RUN set -eux; \
+  arch="$(dpkg --print-architecture)"; \
+  case "$arch" in \
+    amd64) gh_arch="amd64"; gh_sha256="${GH_LINUX_AMD64_SHA256}" ;; \
+    arm64) gh_arch="arm64"; gh_sha256="${GH_LINUX_ARM64_SHA256}" ;; \
+    *) echo "Unsupported architecture for GitHub CLI: $arch" >&2; exit 1 ;; \
+  esac; \
+  archive="gh_${GH_VERSION}_linux_${gh_arch}.tar.gz"; \
+  curl -fsSLo "/tmp/${archive}" \
+    "https://github.com/cli/cli/releases/download/v${GH_VERSION}/${archive}"; \
+  echo "${gh_sha256}  /tmp/${archive}" | sha256sum -c -; \
+  tar -xzf "/tmp/${archive}" -C /tmp; \
+  install -m 0755 "/tmp/gh_${GH_VERSION}_linux_${gh_arch}/bin/gh" /usr/local/bin/gh; \
+  rm -rf "/tmp/${archive}" "/tmp/gh_${GH_VERSION}_linux_${gh_arch}"; \
+  gh --version
 
 RUN set -eux; \
   mkdir -p "${ANDROID_HOME}/cmdline-tools"; \

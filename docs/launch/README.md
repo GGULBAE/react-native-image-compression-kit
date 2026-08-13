@@ -89,6 +89,7 @@ native screenshot collected after the walkthrough finishes.
 
 - [English announcement](announcement-en.md)
 - [Korean announcement](announcement-ko.md)
+- [v0.4.1 candidate release notes](v0.4.1-release-notes.md)
 - [v0.4.0 release notes](v0.4.0-release-notes.md)
 - [v0.3.0 release notes](v0.3.0-release-notes.md)
 - [Channel-specific copy and asset map](channel-copy.md)

@@ -18,7 +18,11 @@ All v0.4.0 release-required lanes passed for the exact package source inside
 - Android: API 23+
 - iOS: 13.4+
 - Node: 18+; Node 18 is exercised by the React Native floor lane and Node 24 by
-  current React Native and Expo lanes.
+  the pinned React Native 0.86 and Expo 57 release-target lanes.
+
+The lane IDs are stable automation identifiers, not a claim that 0.86 will
+remain the ecosystem's latest version. A newer React Native line is added only
+after its fresh-consumer Android and iOS evidence passes.
 
 The package peer range remains `>=0.73 <1.0`. React Native versions between
 0.73.11 and 0.86.0 are accepted by that range but are not individually tested

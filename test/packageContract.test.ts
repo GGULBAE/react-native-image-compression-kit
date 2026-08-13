@@ -101,6 +101,7 @@ describe('npm package contract', () => {
         compressionRatio: 0.5,
       }),
       cancelCompression: () => undefined,
+      removeCompressionOutput: async () => undefined,
       getImageCompressionCapabilities: async () => ({
         platform: 'unknown' as const,
         formats: [],
@@ -121,6 +122,7 @@ describe('npm package contract', () => {
       'cancelCompression',
       'compressImage',
       'getImageCompressionCapabilities',
+      'removeCompressionOutput',
     ]);
   });
 
@@ -144,6 +146,8 @@ describe('npm package contract', () => {
         'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:testDebugUnitTest pnpm android:build',
       'example:android-instrumentation':
         'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:connectedDebugAndroidTest pnpm android:build',
+      'example:android-instrumentation-build':
+        'RNICK_ANDROID_APP_DIR=example/android RNICK_ANDROID_GRADLE_TASK=:react-native-image-compression-kit:assembleDebugAndroidTest pnpm android:build',
       'example:ios:smoke': 'node scripts/ios-validation.mjs smoke',
       'example:ios:decoder-test':
         'node scripts/ios-validation.mjs decoder-test',
@@ -190,6 +194,11 @@ describe('npm package contract', () => {
     expect(parseDockerArgs(readProjectFile('Dockerfile'))).toEqual({
       NODE_VERSION: '24.11.1',
       PNPM_VERSION: '11.8.0',
+      GH_VERSION: '2.95.0',
+      GH_LINUX_AMD64_SHA256:
+        '25d1e4729e8808c9ed3d613e96ebd3f3e44446f2d368c89d878a71a36ddb3d8c',
+      GH_LINUX_ARM64_SHA256:
+        'd41e0b3b6218e5741c8bb4db39b16e53a59e0e06299a8489bd38f623ef7ebaae',
       ANDROID_CMDLINE_TOOLS_VERSION: '12266719',
       ANDROID_PLATFORM: 'android-36',
       ANDROID_BUILD_TOOLS_VERSION: '36.0.0',
@@ -219,9 +228,14 @@ describe('npm package contract', () => {
     expect(packageJson.scripts).toMatchObject({
       'docker:android:build': 'node scripts/docker-android.mjs build',
       'docker:android:verify': 'node scripts/docker-android.mjs verify',
+      'docker:android:example:android-instrumentation-build':
+        'node scripts/docker-android.mjs example:android-instrumentation-build',
       'docker:android:ci': 'node scripts/docker-android.mjs ci',
       'docker:android:shell': 'node scripts/docker-android.mjs shell',
     });
+    expect(readProjectFile('scripts/docker-android.mjs')).toContain(
+      "'RNICK_DOCKER=1'"
+    );
   });
 
   it('keeps Vitest and its V8 coverage provider on one exact version', () => {

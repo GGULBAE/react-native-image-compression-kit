@@ -22,9 +22,12 @@ const requiredFiles = [
   'website/.vitepress/theme/custom.css',
   'website/public/logo.svg',
   'website/public/social-card.svg',
+  'website/public/evidence-scorecard.svg',
+  'website/public/evidence-scorecard-mobile.svg',
   'website/index.md',
   'website/404.md',
   'website/guide/installation.md',
+  'website/guide/byte-economics.md',
   'website/guide/integration.md',
   'website/guide/recipes.md',
   'website/guide/capabilities.md',
@@ -119,9 +122,13 @@ for (const requiredText of [
   'ImageCompressionKitErrorCode',
   'compressionRatio',
   'cache file',
+  'prevented upload bytes',
+  'app-owned image footprint',
   'SHA-256',
   'capability-first',
   'No roadmap item is a release promise',
+  '0.4.1 source candidate',
+  'v0.4.0 iOS renderer',
 ]) {
   if (!combined.includes(requiredText)) {
     errors.push(`site missing semantic contract: ${requiredText}`);
@@ -140,9 +147,13 @@ for (const forbiddenClaim of [
 
 const demoManifestPath = path.join(websiteRoot, 'public', 'demo', 'manifest.json');
 if (existsSync(demoManifestPath)) {
+  const demoManifest = JSON.parse(readFileSync(demoManifestPath, 'utf8'));
+  if (demoManifest.schemaVersion !== 3) {
+    errors.push('authoritative native demo evidence must use schemaVersion 3');
+  }
   const report = inspectDemoEvidence(
     path.dirname(demoManifestPath),
-    JSON.parse(readFileSync(demoManifestPath, 'utf8'))
+    demoManifest
   );
   if (report.status !== 'passed') errors.push(`native demo evidence: ${report.error}`);
   const evidencePackageVersion = releaseStatus.publishedNpmLatest;
@@ -150,6 +161,38 @@ if (existsSync(demoManifestPath)) {
     errors.push(
       'native demo evidence package version does not match the latest published version'
     );
+  }
+  const releaseEvidenceIndexPath = path.join(
+    root,
+    'evidence',
+    'npm',
+    evidencePackageVersion,
+    'release-evidence-index.json'
+  );
+  if (!existsSync(releaseEvidenceIndexPath)) {
+    errors.push('native demo evidence cannot resolve retained release provenance');
+  } else {
+    const releaseEvidence = JSON.parse(
+      readFileSync(releaseEvidenceIndexPath, 'utf8')
+    );
+    if (
+      releaseEvidence.version !== evidencePackageVersion ||
+      !/^[0-9a-f]{40}$/.test(releaseEvidence.sourceDigest ?? '')
+    ) {
+      errors.push('retained release evidence has invalid version or source identity');
+    } else if (report.sourceCommit !== releaseEvidence.sourceDigest) {
+      if (
+        demoManifest.sourceProvenance?.kind !== 'post-release' ||
+        demoManifest.sourceProvenance?.releaseSourceCommit !==
+          releaseEvidence.sourceDigest
+      ) {
+        errors.push(
+          'post-release native demo evidence must disclose the immutable release source commit'
+        );
+      }
+    } else if (demoManifest.sourceProvenance !== undefined) {
+      errors.push('exact-release native demo evidence must not declare post-release provenance');
+    }
   }
 } else if (releaseStatus.releaseState === 'release') {
   errors.push('release state requires passed Android and iOS native demo evidence');

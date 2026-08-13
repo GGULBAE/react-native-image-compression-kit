@@ -39,7 +39,10 @@ cleanup behavior first.
 
 The package owns validation and native processing for a local URI. The
 application owns permissions, image picking, remote downloads, durable storage,
-uploads, and cache-file lifecycle after a successful result.
+uploads, and the decision to release a successful result. The package provides
+`removeCompressionOutput(uri)` as a constrained lifecycle primitive: native
+code verifies that the URI is a direct package-generated cache output before
+removing it, without exposing arbitrary filesystem deletion.
 
 Read the complete
 [architecture decision record](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/product-architecture.md)

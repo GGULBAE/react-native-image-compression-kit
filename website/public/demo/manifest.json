@@ -1,11 +1,15 @@
 {
-  "schemaVersion": 2,
-  "status": "passed",
+  "schemaVersion": 3,
+  "status": "affected",
   "packageVersion": "0.4.0",
   "sourceCommit": "11b91af66322d7b98b46481739c54825b406ef0c",
+  "sourceProvenance": {
+    "kind": "post-release",
+    "releaseSourceCommit": "6841a887b2d8b6c9e4823d2708233feeecaa77ea"
+  },
   "cases": [
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "status": "passed",
       "packageVersion": "0.4.0",
       "sourceCommit": "11b91af66322d7b98b46481739c54825b406ef0c",
@@ -90,6 +94,31 @@
           "compressionRatio": 0.16717123237096654
         }
       },
+      "visualAgreement": {
+        "schemaVersion": 2,
+        "status": "passed",
+        "algorithm": "ffmpeg-auto-oriented-contain-ssim-v2",
+        "resizeMode": "contain",
+        "maxWidth": 160,
+        "maxHeight": 160,
+        "sourceWidth": 600,
+        "sourceHeight": 960,
+        "expectedWidth": 100,
+        "expectedHeight": 160,
+        "width": 100,
+        "height": 160,
+        "uprightSimilarity": 0.930801,
+        "verticalFlipSimilarity": 0.584795,
+        "minimumSimilarity": 0.9,
+        "minimumOrientationMargin": 0.02,
+        "checks": {
+          "geometry": true,
+          "minimumSimilarity": true,
+          "orientationMargin": true
+        },
+        "sourceSha256": "5bd83125571f96b575b25f3172630a0a6dd61223ca310b586538c3d5b5f0a830",
+        "outputSha256": "1ef3c5b545643617b0cb5449ad1589a7eb6f19b850331fd40e8f47990d9dc0b4"
+      },
       "assets": {
         "source": {
           "file": "android/source.jpg",
@@ -116,8 +145,8 @@
       }
     },
     {
-      "schemaVersion": 2,
-      "status": "passed",
+      "schemaVersion": 3,
+      "status": "affected",
       "packageVersion": "0.4.0",
       "sourceCommit": "11b91af66322d7b98b46481739c54825b406ef0c",
       "capturedAt": "2026-08-06T07:03:57.876Z",
@@ -200,6 +229,31 @@
           "originalByteSize": 3317,
           "compressionRatio": 0.7093759421163702
         }
+      },
+      "visualAgreement": {
+        "schemaVersion": 2,
+        "status": "failed",
+        "algorithm": "ffmpeg-auto-oriented-contain-ssim-v2",
+        "resizeMode": "contain",
+        "maxWidth": 160,
+        "maxHeight": 160,
+        "sourceWidth": 200,
+        "sourceHeight": 320,
+        "expectedWidth": 100,
+        "expectedHeight": 160,
+        "width": 100,
+        "height": 160,
+        "uprightSimilarity": 0.756818,
+        "verticalFlipSimilarity": 0.942948,
+        "minimumSimilarity": 0.9,
+        "minimumOrientationMargin": 0.02,
+        "checks": {
+          "geometry": true,
+          "minimumSimilarity": false,
+          "orientationMargin": false
+        },
+        "sourceSha256": "cf6d942c3fbf81442723bc64cab2d5133044494ad0b1e79d6dc9c280519742f2",
+        "outputSha256": "2d67403a25ea1cc262805368e7b2b66e2438e605084f042b43151e3c8b0ddca1"
       },
       "assets": {
         "source": {

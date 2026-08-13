@@ -2,7 +2,17 @@
 
 #import "RCTImageCompressionRequest.h"
 
+#include <errno.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 NSString *const RCTImageCompressionKitOutputFailedCode = @"ERR_ENCODE_FAILED";
+NSString *const RCTImageCompressionKitOutputFileAccessCode = @"ERR_FILE_ACCESS";
+
+static NSString *const RCTImageCompressionOutputOwnershipMessage =
+  @"Output URI must reference a file created by react-native-image-compression-kit.";
+static NSString *const RCTImageCompressionOutputRemovalMessage =
+  @"iOS could not remove the compression output cache file.";
 
 @implementation RCTImageCompressionOutputRequest
 
@@ -86,6 +96,8 @@ NSString *const RCTImageCompressionKitOutputFailedCode = @"ERR_ENCODE_FAILED";
 @property (nonatomic, copy, readonly) RCTImageCompressionOutputClock clock;
 @property (nonatomic, copy, readonly) RCTImageCompressionOutputUUIDProvider uuidProvider;
 @property (nonatomic, copy, readonly) RCTImageCompressionOutputFileWriter fileWriter;
+@property (nonatomic, copy, readonly) RCTImageCompressionOutputPathIsRegularFile pathIsRegularFile;
+@property (nonatomic, copy, readonly) RCTImageCompressionOutputFileRemover fileRemover;
 
 @end
 
@@ -97,6 +109,8 @@ NSString *const RCTImageCompressionKitOutputFailedCode = @"ERR_ENCODE_FAILED";
                                            clock:(RCTImageCompressionOutputClock)clock
                                     uuidProvider:(RCTImageCompressionOutputUUIDProvider)uuidProvider
                                       fileWriter:(RCTImageCompressionOutputFileWriter)fileWriter
+                               pathIsRegularFile:(RCTImageCompressionOutputPathIsRegularFile)pathIsRegularFile
+                                     fileRemover:(RCTImageCompressionOutputFileRemover)fileRemover
 {
   self = [super init];
   if (self != nil) {
@@ -106,8 +120,19 @@ NSString *const RCTImageCompressionKitOutputFailedCode = @"ERR_ENCODE_FAILED";
     _clock = [clock copy];
     _uuidProvider = [uuidProvider copy];
     _fileWriter = [fileWriter copy];
+    _pathIsRegularFile = [pathIsRegularFile copy];
+    _fileRemover = [fileRemover copy];
   }
   return self;
+}
+
+- (NSString *)outputDirectory
+{
+  NSString *cacheDirectory = self.cacheDirectoryProvider();
+  if (cacheDirectory.length == 0) {
+    cacheDirectory = NSTemporaryDirectory();
+  }
+  return [cacheDirectory stringByAppendingPathComponent:@"ImageCompressionKit"];
 }
 
 - (NSString *)extensionForOutputFormat:(NSString *)outputFormat
@@ -128,11 +153,7 @@ NSString *const RCTImageCompressionKitOutputFailedCode = @"ERR_ENCODE_FAILED";
     *error = nil;
   }
 
-  NSString *cacheDirectory = self.cacheDirectoryProvider();
-  if (cacheDirectory.length == 0) {
-    cacheDirectory = NSTemporaryDirectory();
-  }
-  NSString *outputDirectory = [cacheDirectory stringByAppendingPathComponent:@"ImageCompressionKit"];
+  NSString *outputDirectory = [self outputDirectory];
   if (!self.pathExists(outputDirectory)) {
     NSError *directoryError = nil;
     if (!self.directoryCreator(outputDirectory, &directoryError)) {
@@ -183,6 +204,65 @@ NSString *const RCTImageCompressionKitOutputFailedCode = @"ERR_ENCODE_FAILED";
   ];
 }
 
+- (BOOL)removeOutputURI:(NSString *)uri
+                  error:(RCTImageCompressionOutputError * _Nullable * _Nullable)error
+{
+  if (error != nil) *error = nil;
+  NSURL *URL = uri.length > 0 ? [NSURL URLWithString:uri] : nil;
+  NSString *path = URL.path;
+  NSArray<NSString *> *pathComponents = path.pathComponents;
+  NSString *outputDirectory = self.outputDirectory.stringByStandardizingPath;
+  NSString *requestedPath = path.stringByStandardizingPath;
+  NSString *resolvedDirectory = outputDirectory.stringByResolvingSymlinksInPath;
+  NSString *resolvedOutputParent =
+    outputDirectory.stringByDeletingLastPathComponent.stringByResolvingSymlinksInPath;
+  NSString *expectedResolvedDirectory =
+    [resolvedOutputParent stringByAppendingPathComponent:outputDirectory.lastPathComponent];
+  NSString *resolvedPath = requestedPath.stringByResolvingSymlinksInPath;
+  NSString *fileName = requestedPath.lastPathComponent;
+  NSRegularExpression *fileNamePattern = [NSRegularExpression
+    regularExpressionWithPattern:@"^compressed-[0-9]+-[A-Za-z0-9-]+\\.(jpg|png|webp)$"
+    options:0
+    error:nil
+  ];
+  BOOL valid = URL.isFileURL && URL.host.length == 0 && URL.query.length == 0 &&
+    URL.fragment.length == 0 && path.length > 0 &&
+    ![pathComponents containsObject:@"."] && ![pathComponents containsObject:@".."] &&
+    [resolvedDirectory isEqualToString:expectedResolvedDirectory] &&
+    [requestedPath.stringByDeletingLastPathComponent isEqualToString:outputDirectory] &&
+    [resolvedPath.stringByDeletingLastPathComponent isEqualToString:resolvedDirectory] &&
+    [resolvedPath.lastPathComponent isEqualToString:fileName] &&
+    [fileNamePattern
+      numberOfMatchesInString:fileName
+      options:0
+      range:NSMakeRange(0, fileName.length)
+    ] == 1;
+  if (!valid || (self.pathExists(requestedPath) && !self.pathIsRegularFile(requestedPath))) {
+    if (error != nil) {
+      *error = [[RCTImageCompressionOutputError alloc]
+        initWithCode:RCTImageCompressionKitInvalidOptionsCode
+        message:RCTImageCompressionOutputOwnershipMessage
+        underlyingError:nil
+      ];
+    }
+    return NO;
+  }
+  if (!self.pathExists(requestedPath)) return YES;
+
+  NSError *removalError = nil;
+  if (self.fileRemover(requestedPath, &removalError) || !self.pathExists(requestedPath)) {
+    return YES;
+  }
+  if (error != nil) {
+    *error = [[RCTImageCompressionOutputError alloc]
+      initWithCode:RCTImageCompressionKitOutputFileAccessCode
+      message:RCTImageCompressionOutputRemovalMessage
+      underlyingError:removalError
+    ];
+  }
+  return NO;
+}
+
 @end
 
 @implementation RCTImageCompressionOutput (Default)
@@ -217,6 +297,18 @@ NSString *const RCTImageCompressionKitOutputFailedCode = @"ERR_ENCODE_FAILED";
     }
     fileWriter:^BOOL(NSData *data, NSString *path, NSError **error) {
       return [data writeToFile:path options:NSDataWritingAtomic error:error];
+    }
+    pathIsRegularFile:^BOOL(NSString *path) {
+      struct stat fileStatus;
+      return lstat(path.fileSystemRepresentation, &fileStatus) == 0 &&
+        S_ISREG(fileStatus.st_mode);
+    }
+    fileRemover:^BOOL(NSString *path, NSError **error) {
+      if (unlink(path.fileSystemRepresentation) == 0) return YES;
+      if (error != nil) {
+        *error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:nil];
+      }
+      return NO;
     }
   ];
 }

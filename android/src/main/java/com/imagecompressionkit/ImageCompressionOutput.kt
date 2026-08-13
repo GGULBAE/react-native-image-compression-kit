@@ -53,6 +53,11 @@ internal class CompressionOutputTransaction(
   }
 }
 
+internal class CompressionOutputOwnershipException(message: String) :
+  IllegalArgumentException(message)
+internal class CompressionOutputRemovalException(message: String, cause: Throwable? = null) :
+  Exception(message, cause)
+
 internal enum class OutputFormat(
   val value: String,
   val fileExtension: String,
@@ -107,6 +112,10 @@ internal enum class OutputFormat(
 }
 
 internal object ImageCompressionOutput {
+  const val OUTPUT_OWNERSHIP_MESSAGE =
+    "Output URI must reference a file created by react-native-image-compression-kit."
+  const val OUTPUT_REMOVAL_MESSAGE =
+    "Android could not remove the compression output cache file."
   const val MAX_BYTES_UNSUPPORTED_MESSAGE =
     "Android MVP supports output.maxBytes for JPEG and WebP output only."
   const val UNSUPPORTED_OUTPUT_FORMAT_MESSAGE =
@@ -122,6 +131,8 @@ internal object ImageCompressionOutput {
   private const val GIF_FORMAT = "gif"
   private const val OUTPUT_DIRECTORY_NAME = "image-compression-kit"
   private const val MIN_QUALITY = 0
+  private val OUTPUT_FILE_NAME =
+    Regex("^compressed-[0-9]+-[A-Za-z0-9-]+\\.(jpg|png|webp)$")
 
   val FORMAT_VALUES = arrayOf(
     JPEG_FORMAT,
@@ -174,6 +185,53 @@ internal object ImageCompressionOutput {
     )
     temporaryFile.delete()
     return CompressionOutputTransaction(temporaryFile, outputFile)
+  }
+
+  fun removeOutput(cacheDir: File, uri: String) {
+    val parsedUri = Uri.parse(uri)
+    val path = parsedUri.path
+    if (
+      parsedUri.scheme != "file" ||
+      !parsedUri.authority.isNullOrEmpty() ||
+      parsedUri.query != null ||
+      parsedUri.fragment != null ||
+      path.isNullOrBlank() ||
+      path.split(File.separatorChar).any { it == "." || it == ".." }
+    ) {
+      throw CompressionOutputOwnershipException(OUTPUT_OWNERSHIP_MESSAGE)
+    }
+
+    try {
+      val outputDirectory =
+        File(cacheDir.canonicalFile, OUTPUT_DIRECTORY_NAME).absoluteFile
+      if (File(cacheDir, OUTPUT_DIRECTORY_NAME).canonicalFile != outputDirectory) {
+        throw CompressionOutputOwnershipException(OUTPUT_OWNERSHIP_MESSAGE)
+      }
+      val requestedFile = File(path).absoluteFile
+      val canonicalFile = requestedFile.canonicalFile
+      if (
+        requestedFile.parentFile?.canonicalFile != outputDirectory ||
+        canonicalFile.parentFile != outputDirectory ||
+        requestedFile.name != canonicalFile.name ||
+        !OUTPUT_FILE_NAME.matches(requestedFile.name)
+      ) {
+        throw CompressionOutputOwnershipException(OUTPUT_OWNERSHIP_MESSAGE)
+      }
+
+      if (!canonicalFile.exists()) return
+      if (!canonicalFile.isFile) {
+        throw CompressionOutputOwnershipException(OUTPUT_OWNERSHIP_MESSAGE)
+      }
+      if (!canonicalFile.delete() && canonicalFile.exists()) {
+        throw CompressionOutputRemovalException(OUTPUT_REMOVAL_MESSAGE)
+      }
+    } catch (error: CompressionOutputOwnershipException) {
+      throw error
+    } catch (error: CompressionOutputRemovalException) {
+      throw error
+    } catch (error: Exception) {
+      throw CompressionOutputRemovalException(OUTPUT_REMOVAL_MESSAGE, error)
+    }
   }
 
   fun encodeBitmap(

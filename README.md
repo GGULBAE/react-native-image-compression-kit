@@ -1,7 +1,7 @@
 <h1 align="center">React Native Image Compression Kit</h1>
 
 <p align="center">
-  Native-first image compression, resize, and format conversion for React Native.
+  Control image bytes before upload without giving up native runtime safety.
 </p>
 
 <p align="center">
@@ -10,25 +10,85 @@
   <img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow" />
 </p>
 
-Compress supported local images to JPEG, PNG, or WebP, with optional resize,
-quality, target-size, and metadata controls. Use the runtime capability API to
-handle platform codec differences before compression.
+<p align="center">
+  <a href="https://ggulbae.github.io/react-native-image-compression-kit/guide/byte-economics">📊 Why bytes matter</a>
+  · <a href="#quick-start">⚡ Quick start</a>
+  · <a href="https://ggulbae.github.io/react-native-image-compression-kit/reference/api">🧭 API</a>
+</p>
+
+One native boundary for upload bytes, app-owned image files, resource limits,
+metadata, cancellation, and output ownership.
 
 <!-- package-status:start -->
 ## Current status
 
-- Package version: `0.4.0`
-- Release target: `0.4.0`
+- Package version: `0.4.1`
+- Release target: `0.4.1`
 - Published npm latest: `0.4.0`
-- Release state: `release`
-- Registry checked at: `2026-07-20`
+- Release state: `candidate`
+- Registry checked at: `2026-08-13`
 <!-- package-status:end -->
 
-Version 0.4.0 is the current published release. It moves large image work to
-bounded background workers, downsamples resize requests during decode, rejects
-unsafe work before full decode, supports cancellation, and publishes only
-complete transactional cache files. npm `latest`, immutable tag `v0.4.0`, and
-the GitHub Release all resolve to the verified 0.4.0 artifact and source.
+Version 0.4.1 is a source candidate; npm `latest` remains 0.4.0. The candidate
+fixes an iOS pixel-orientation defect in the ImageIO/CoreGraphics path and adds
+the backward-compatible `removeCompressionOutput(uri)` lifecycle API. The
+published 0.4.0 package can vertically invert orientation-bearing iOS inputs;
+do not treat its iOS walkthrough as successful visual-integrity evidence.
+
+## Why this package
+
+Images create cost twice: **📤 while bytes move** and **📱 while app-owned files
+remain on the device**. Server-side optimization starts too late to recover the
+first upload. Ericsson reports **22 GB/month per active smartphone in 2025**
+and forecasts **328 EB/month of mobile data traffic in 2031**; this is market
+context, not a package savings claim. [Source and forecast limits](https://www.ericsson.com/en/reports-and-papers/mobility-report/dataforecasts/mobile-traffic-forecast).
+
+<picture>
+  <source media="(max-width: 640px)" srcset="https://raw.githubusercontent.com/GGULBAE/react-native-image-compression-kit/master/website/public/byte-economics-mobile.svg" />
+  <img src="https://raw.githubusercontent.com/GGULBAE/react-native-image-compression-kit/master/website/public/byte-economics.svg" alt="Two cost surfaces: bytes moving through upload and app-owned bytes remaining in queues, outputs, caches, and residual files" />
+</picture>
+
+| | Cost surface | Measure |
+| --- | --- | --- |
+| 📤 | First upload, retry, and backend ingress bytes | Accepted `source - output` delta; compare a matched baseline for incremental transfer change |
+| 📱 | App-owned queue, output, cache, and residual files | `queue + outputs + caches + residual` |
+
+> 💡 **Illustrative scale:** 1M accepted images at 4 MB → 500 KB means a
+> **3.5 TB source-to-output delta**. It is fewer first-hop bytes only if the
+> same 4 MB inputs would otherwise have been uploaded. A 200-image app-owned queue changes from
+> **800 MB → 100 MB** only when the host may replace its own staging files.
+
+> 🛡️ **Boundary:** the package does not shrink or delete gallery sources. A new
+> output can temporarily coexist with its source. The figures above are decimal
+> arithmetic examples—not benchmarks or guaranteed savings.
+
+The differentiation is the combined contract: byte budget, runtime capability,
+bounded work, metadata policy, cancellation, transactional output, and narrow
+owned-file cleanup.
+
+<picture>
+  <source media="(max-width: 640px)" srcset="https://raw.githubusercontent.com/GGULBAE/react-native-image-compression-kit/master/website/public/evidence-scorecard-mobile.svg" />
+  <img src="https://raw.githubusercontent.com/GGULBAE/react-native-image-compression-kit/master/website/public/evidence-scorecard.svg" alt="v0.4.0 evidence snapshot: byte-budget, failure-safety, runtime capability, planned pixels, metadata, and packed-build signals" />
+</picture>
+
+<details>
+<summary><strong>🔬 View the evidence behind each contract</strong></summary>
+
+| Concern | Contract | Public evidence |
+| --- | --- | --- |
+| Upload limit | `maxBytes` searches generated JPEG or WebP candidates | Both v0.4.0 fixtures met 8,000 B, but the iOS capture is excluded from combined success because visual orientation failed |
+| Large photos | Decode downsampling, pixel limits, two-operation scheduling | 48 MP → 1.92 MP planned decode; this is not measured peak memory |
+| Cancellation | `ERR_CANCELLED` without publishing partial output | JS and native suites assert zero residual output at representative boundaries |
+| Output lifecycle | Narrow `removeCompressionOutput(uri)` ownership check | 0.4.1 candidate tests owned deletion and foreign/path/directory rejection |
+| Metadata | Explicit `preserve`, `safe`, and `strip` | Android safe retained 0/7 named sensitive fields; iOS safe/strip copy no source metadata |
+| Integration | Packed tarball installed by fresh consumers | 8/8 release-target platform builds passed for v0.4.0 |
+
+</details>
+
+Read the [product evidence metrics](https://ggulbae.github.io/react-native-image-compression-kit/reference/evidence)
+for definitions, decision thresholds, evidence links, and interpretation limits.
+For the system and product measurement model, read
+[why device-side bytes matter](https://ggulbae.github.io/react-native-image-compression-kit/guide/byte-economics).
 
 ## Project direction
 
@@ -75,10 +135,16 @@ steps.
 
 ## Quick start
 
+> The cleanup call in this example belongs to the 0.4.1 source candidate and
+> is not present in npm 0.4.0. The compression and capability calls remain
+> valid in 0.4.0; use the host application's file API to clean accepted outputs
+> until the candidate is released.
+
 ```ts
 import {
   compressImage,
   getImageCompressionCapabilities,
+  removeCompressionOutput,
 } from 'react-native-image-compression-kit';
 
 const capabilities = await getImageCompressionCapabilities();
@@ -95,17 +161,32 @@ const result = await compressImage({
   },
   output: {
     format: canWriteWebP ? 'webp' : 'jpeg',
-    quality: 80,
+    quality: 90,
+    maxBytes: 500_000,
   },
   metadata: 'safe',
 });
 
-console.log(result.uri, result.byteSize, result.width, result.height);
+const sourceToOutputByteDelta = Math.max(
+  0,
+  result.originalByteSize - result.byteSize
+);
+
+try {
+  if (result.byteSize > 500_000) {
+    throw new Error('Image did not meet the upload policy');
+  }
+  await upload(result.uri, { sourceToOutputByteDelta });
+} finally {
+  await removeCompressionOutput(result.uri);
+}
 ```
 
 Input must be a local URI accessible to the native app. Android supports
 `file://` and `content://`; iOS supports `file://` and best-effort local
-`content://` loading.
+`content://` loading. Apply the host application's acceptance policy before
+upload: an unreachable `maxBytes` target returns the smallest generated
+candidate rather than pretending the target was met.
 
 ## Public API
 
@@ -162,6 +243,28 @@ policies, target-size and cancellation support, bounded concurrency,
 decode-downsampling support, and named source/working pixel limits. Check it at
 runtime; codec support is not identical across Android versions, devices, and
 iOS runtimes.
+
+### `removeCompressionOutput(uri)` (0.4.1 source candidate)
+
+Deletes a completed cache output returned by `compressImage`. It accepts only a
+package-generated `file://` URI in the package output directory, never deletes
+recursively, and treats an already-missing valid output as success. A foreign,
+source, traversal, symlink, or directory target rejects with
+`ERR_INVALID_OPTIONS`; a filesystem deletion failure rejects with
+`ERR_FILE_ACCESS`.
+
+```ts
+const result = await compressImage(options);
+
+try {
+  await upload(result.uri);
+} finally {
+  await removeCompressionOutput(result.uri);
+}
+```
+
+Copy or move an output before removal when it must remain available after the
+cache lifecycle.
 
 ### Other exports
 
@@ -258,9 +361,10 @@ Important limitations:
   must provide smaller resize bounds.
 - JPEG output flattens transparency onto white on both platforms. PNG and WebP
   alpha capability reflects decode-back validation.
-- Failed and cancelled operations remove temporary/partial cache files; a
-  successful returned cache file retains the existing application ownership
-  contract.
+- Failed and cancelled operations remove temporary/partial cache files. A
+  successful result remains application-owned; call
+  `removeCompressionOutput(result.uri)` when the package-owned cache output is
+  no longer needed.
 - Capability checks should drive fallbacks for SDK-, device-, and
   runtime-dependent codecs.
 
@@ -270,6 +374,8 @@ Important limitations:
 pnpm test:coverage
 pnpm verify
 pnpm example:typecheck
+pnpm example:android-unit-test
+pnpm example:android-instrumentation-build
 pnpm example:ios:decoder-test
 pnpm example:ios:encoder-test
 pnpm example:ios:output-test
@@ -284,6 +390,13 @@ pnpm fixtures:compatibility:check
 git diff --check
 pnpm pack --dry-run
 ```
+
+`pnpm example:android-instrumentation-build` compiles the device-test APK
+without requiring an emulator. Run `pnpm example:android-instrumentation` with
+an API 34+ device or emulator to execute codec and output-lifecycle tests. When
+Java or the Android SDK is unavailable locally, `pnpm docker:android:ci` runs
+the repository gate, Codegen, unit tests, instrumentation APK compile, and
+example APK build in the pinned container toolchain.
 
 Native demo captures run a deterministic, capture-only walkthrough in the real
 Android and iOS example apps: bundled source, selected options, runtime
@@ -378,6 +491,7 @@ tarball:
 
 - [User guides and native-result demo](https://ggulbae.github.io/react-native-image-compression-kit/)
 - [Product architecture](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/product-architecture.md)
+- [Product evidence metrics](https://ggulbae.github.io/react-native-image-compression-kit/reference/evidence)
 - [Roadmap](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/ROADMAP.md)
 - [Native benchmark evidence](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/benchmarks/README.md)
 

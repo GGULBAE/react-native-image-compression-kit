@@ -102,6 +102,70 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
   }
 
   @Test
+  fun removesCompletedOutputIdempotentlyAndRejectsForeignFiles() {
+    assertTrue(
+      "Output lifecycle instrumentation validation must run on API 34+.",
+      Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+    )
+
+    val instrumentation = InstrumentationRegistry.getInstrumentation()
+    val testContext = instrumentation.context
+    val targetContext = instrumentation.targetContext.applicationContext
+    val module = ImageCompressionKitModule(
+      reactContext = TestReactApplicationContext(targetContext),
+      writableMapFactory = { JavaOnlyMap() },
+      writableArrayFactory = { JavaOnlyArray() }
+    )
+    val sourceFile = copyAssetToCache(
+      testContext,
+      targetContext,
+      "heic-heif/sample.heic"
+    )
+    val foreignFile = File(
+      targetContext.cacheDir,
+      "compressed-${System.nanoTime()}-foreign.jpg"
+    ).apply {
+      writeBytes(byteArrayOf(1, 2, 3))
+    }
+    var outputFile: File? = null
+
+    try {
+      val compressionPromise = RecordingPromise()
+      module.compressImage(
+        compressionOptions(
+          sourceFile = sourceFile,
+          output = JavaOnlyMap.of("format", "jpeg", "quality", 82)
+        ),
+        compressionPromise
+      )
+
+      val result = compressionPromise.resolvedMap()
+      val outputUri = result.getString("uri") ?: error("Output URI is required.")
+      outputFile = result.outputFile()
+
+      val removalPromise = RecordingPromise()
+      module.removeCompressionOutput(outputUri, removalPromise)
+      removalPromise.resolvedNull()
+      assertFalse(outputFile.exists())
+
+      val repeatedRemovalPromise = RecordingPromise()
+      module.removeCompressionOutput(outputUri, repeatedRemovalPromise)
+      repeatedRemovalPromise.resolvedNull()
+      assertFalse(outputFile.exists())
+
+      val foreignRemovalPromise = RecordingPromise()
+      module.removeCompressionOutput(Uri.fromFile(foreignFile).toString(), foreignRemovalPromise)
+      foreignRemovalPromise.rejectedWithCode("ERR_INVALID_OPTIONS")
+      assertTrue(foreignFile.exists())
+      assertEquals(3L, foreignFile.length())
+    } finally {
+      sourceFile.delete()
+      outputFile?.delete()
+      foreignFile.delete()
+    }
+  }
+
+  @Test
   fun probesAndroidAvifOutputEncoderPrototypeRoute() {
     assertTrue(
       "AVIF output prototype route probe must run on API 34+.",
@@ -220,6 +284,21 @@ class ImageCompressionKitHeicHeifInstrumentationTest {
     assertNotNull(resolvedValue)
 
     return resolvedValue as ReadableMap
+  }
+
+  private fun RecordingPromise.resolvedNull() {
+    assertTrue(completion.await(30, TimeUnit.SECONDS))
+    assertNull(rejectionMessage, rejectionCode)
+    assertNull(rejectionMessage)
+    assertNull(rejectionThrowable)
+    assertNull(resolvedValue)
+  }
+
+  private fun RecordingPromise.rejectedWithCode(expectedCode: String) {
+    assertTrue(completion.await(30, TimeUnit.SECONDS))
+    assertEquals(expectedCode, rejectionCode)
+    assertNotNull(rejectionMessage)
+    assertNull(resolvedValue)
   }
 
   private fun ReadableMap.outputFile(): File {

@@ -17,12 +17,15 @@ const COMMANDS = {
   verify: 'pnpm verify',
   'example:typecheck': 'pnpm example:typecheck',
   'example:codegen': 'pnpm example:codegen',
+  'example:android-instrumentation-build':
+    'pnpm example:android-instrumentation-build',
   'example:android-unit-test': 'pnpm example:android-unit-test',
   'example:build': 'pnpm example:build',
   ci: [
     'pnpm verify',
     'pnpm example:typecheck',
     'pnpm example:codegen',
+    'pnpm example:android-instrumentation-build',
     'pnpm example:android-unit-test',
     'pnpm example:build',
   ].join(' && '),
@@ -68,6 +71,8 @@ function runInContainer(command, options = { install: false, interactive: false 
     '/workspace',
     '-e',
     'CI=1',
+    '-e',
+    'RNICK_DOCKER=1',
     '-e',
     'ANDROID_HOME=/opt/android-sdk',
     '-e',
@@ -115,6 +120,8 @@ Modes:
   verify                      Run pnpm verify in Docker.
   example:typecheck           Run pnpm example:typecheck in Docker.
   example:codegen             Run pnpm example:codegen in Docker.
+  example:android-instrumentation-build
+                              Compile the Android instrumentation APK in Docker.
   example:android-unit-test   Run pnpm example:android-unit-test in Docker.
   example:build               Run pnpm example:build in Docker.
   ci                          Run verify, typecheck, codegen, unit test, and build in Docker.

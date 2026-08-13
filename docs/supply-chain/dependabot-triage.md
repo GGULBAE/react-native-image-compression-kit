@@ -10,10 +10,11 @@ ignore majors, and allow at most three open version-update pull requests.
 Bundler and Gradle proposals run monthly with one open pull request per
 ecosystem.
 
-Security updates remain enabled. Queue limits control scheduled version-update
-noise; they are not a substitute for alert review. Required CI, Android, iOS,
-compatibility, and native-demo checks remain unchanged. This reduces concurrent
-runner demand without weakening a protected-branch requirement.
+Dependabot vulnerability alerts and security updates remain enabled. Queue
+limits control scheduled version-update noise; they are not a substitute for
+alert review. Required CI, Android, iOS, compatibility, and native-demo checks
+remain unchanged. This reduces concurrent runner demand without weakening a
+protected-branch requirement.
 
 GitHub Action Dependabot pull requests are proposals, not trusted pin updates.
 The workflow supply-chain gate rejects a changed SHA until workflows and the

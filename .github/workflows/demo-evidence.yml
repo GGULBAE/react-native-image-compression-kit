@@ -16,6 +16,9 @@ on:
       - "scripts/create-benchmark-comparison-evidence.mjs"
       - "scripts/create-benchmark-evidence.mjs"
       - "scripts/create-demo-evidence.mjs"
+      - "scripts/merge-demo-evidence.mjs"
+      - "scripts/demo-visual-agreement-core.mjs"
+      - "scripts/measure-demo-visual-agreement.mjs"
       - "scripts/demo-evidence-core.mjs"
       - "scripts/guided-demo-core.mjs"
       - "scripts/normalize-demo-recording.mjs"
@@ -247,6 +250,13 @@ jobs:
             --log /tmp/rnick-demo-raw/native.log \
             --trim-start-seconds 3 \
             --result-frame /tmp/rnick-demo-raw/screen.png
+          node scripts/measure-demo-visual-agreement.mjs \
+            --source /tmp/rnick-demo-raw/source.jpg \
+            --output /tmp/rnick-demo-raw/output.jpg \
+            --resize-mode contain \
+            --max-width 160 \
+            --max-height 160 \
+            --report /tmp/rnick-demo-raw/visual-agreement.json
           node scripts/create-demo-evidence.mjs \
             --platform ios \
             --package-version "${{ steps.package.outputs.version }}" \
@@ -258,6 +268,7 @@ jobs:
             --screenshot /tmp/rnick-demo-raw/screen.png \
             --recording /tmp/rnick-demo-raw/recording.mp4 \
             --capture-method "ios simctl recordVideo H.264 after a non-capture warm launch; 3-second recorder/startup lead trimmed, timeline normalized, and final native frame held with ffmpeg" \
+            --visual-agreement /tmp/rnick-demo-raw/visual-agreement.json \
             --log /tmp/rnick-demo-raw/native.log \
             --destination demo-evidence/ios \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

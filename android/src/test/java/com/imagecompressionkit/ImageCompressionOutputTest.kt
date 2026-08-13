@@ -2,6 +2,7 @@ package com.imagecompressionkit
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -14,6 +15,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.nio.charset.StandardCharsets
 
 @RunWith(RobolectricTestRunner::class)
@@ -53,6 +55,56 @@ class ImageCompressionOutputTest {
       assertEquals(256L, result.originalByteSize)
       assertEquals(0.5, result.compressionRatio, 0.0001)
     }
+  }
+
+  @Test
+  fun removeOutputDeletesGeneratedFilesAndTreatsMissingOutputsAsSuccess() {
+    val outputFile = ImageCompressionOutput.createOutputFile(
+      cacheDir = temporaryFolder.root,
+      outputFormat = OutputFormat.JPEG
+    )
+    outputFile.writeBytes(byteArrayOf(1, 2, 3))
+    val outputUri = Uri.fromFile(outputFile).toString()
+
+    ImageCompressionOutput.removeOutput(temporaryFolder.root, outputUri)
+    assertFalse(outputFile.exists())
+
+    ImageCompressionOutput.removeOutput(temporaryFolder.root, outputUri)
+    assertFalse(outputFile.exists())
+  }
+
+  @Test
+  fun removeOutputRejectsForeignTraversalContentAndDirectoryTargets() {
+    val foreignFile = temporaryFolder.newFile("compressed-1-foreign.jpg").apply {
+      writeBytes(byteArrayOf(4, 5, 6))
+    }
+    val generatedDirectory = ImageCompressionOutput.createOutputFile(
+      cacheDir = temporaryFolder.root,
+      outputFormat = OutputFormat.PNG
+    ).apply { mkdirs() }
+    val outputDirectory = generatedDirectory.parentFile!!
+    val traversalUri = Uri.fromFile(
+      File(outputDirectory, "../image-compression-kit/${generatedDirectory.name}")
+    ).toString()
+    val rejectedUris = listOf(
+      Uri.fromFile(foreignFile).toString(),
+      traversalUri,
+      "content://media/external/images/1",
+      Uri.fromFile(generatedDirectory).toString(),
+      Uri.fromFile(File(outputDirectory, "not-generated.jpg")).toString()
+    )
+
+    rejectedUris.forEach { uri ->
+      try {
+        ImageCompressionOutput.removeOutput(temporaryFolder.root, uri)
+        throw AssertionError("Expected output ownership rejection for $uri")
+      } catch (error: CompressionOutputOwnershipException) {
+        assertEquals(ImageCompressionOutput.OUTPUT_OWNERSHIP_MESSAGE, error.message)
+      }
+    }
+
+    assertTrue(foreignFile.exists())
+    assertTrue(generatedDirectory.isDirectory)
   }
 
   @Test

@@ -35,6 +35,10 @@ describe('iOS source contract', () => {
     );
     expect(implementation).toContain('RCT_REMAP_METHOD(compressImage,');
     expect(implementation).toContain(
+      'RCT_REMAP_METHOD(removeCompressionOutput,'
+    );
+    expect(implementation).toContain('removeCompressionOutput:(NSString *)uri');
+    expect(implementation).toContain(
       'RCT_REMAP_METHOD(getImageCompressionCapabilities,'
     );
     expect(implementation).toContain('getImageCompressionCapabilities:');
@@ -80,7 +84,7 @@ describe('iOS source contract', () => {
       '- (void)compressImageWithDictionary:'
     );
     const methodEnd = implementation.indexOf(
-      '- (void)getImageCompressionCapabilities:',
+      '- (void)removeCompressionOutputURI:',
       methodStart
     );
     const methodLines = implementation
@@ -155,7 +159,7 @@ describe('iOS source contract', () => {
       '- (void)compressImageWithDictionary:'
     );
     const methodEnd = implementation.indexOf(
-      '- (void)getImageCompressionCapabilities:',
+      '- (void)removeCompressionOutputURI:',
       methodStart
     );
     const methodLines = implementation
@@ -238,7 +242,7 @@ describe('iOS source contract', () => {
       '- (void)compressImageWithDictionary:'
     );
     const methodEnd = implementation.indexOf(
-      '- (void)getImageCompressionCapabilities:',
+      '- (void)removeCompressionOutputURI:',
       methodStart
     );
     const methodLines = implementation
@@ -334,7 +338,7 @@ describe('iOS source contract', () => {
       '- (void)compressImageWithDictionary:'
     );
     const methodEnd = implementation.indexOf(
-      '- (void)getImageCompressionCapabilities:',
+      '- (void)removeCompressionOutputURI:',
       methodStart
     );
     const methodLines = implementation
@@ -391,9 +395,10 @@ describe('iOS source contract', () => {
         'TestRejectsMissingRenderAndSkippedExecutor',
         'TestRetainsImmutableRequestResultAndErrorModels',
         'TestClearsExistingErrorOnSuccess',
+        'TestDefaultRendererPreservesPixelOrientation',
       ])
     );
-    expect(transformerTestNames).toHaveLength(6);
+    expect(transformerTestNames).toHaveLength(7);
     for (const geometryCase of [
       'no-resize-landscape',
       'contain-landscape',
@@ -435,7 +440,7 @@ describe('iOS source contract', () => {
       '- (void)compressImageWithDictionary:'
     );
     const methodEnd = implementation.indexOf(
-      '- (void)getImageCompressionCapabilities:',
+      '- (void)removeCompressionOutputURI:',
       methodStart
     );
     const methodLines = implementation
@@ -526,7 +531,7 @@ describe('iOS source contract', () => {
       '- (void)compressImageWithDictionary:'
     );
     const methodEnd = implementation.indexOf(
-      '- (void)getImageCompressionCapabilities:',
+      '- (void)removeCompressionOutputURI:',
       methodStart
     );
     const methodLines = implementation
@@ -619,7 +624,7 @@ describe('iOS source contract', () => {
       '- (void)compressImageWithDictionary:'
     );
     const methodEnd = implementation.indexOf(
-      '- (void)getImageCompressionCapabilities:',
+      '- (void)removeCompressionOutputURI:',
       methodStart
     );
     const methodLines = implementation
@@ -637,6 +642,8 @@ describe('iOS source contract', () => {
       'RCTImageCompressionOutputClock',
       'RCTImageCompressionOutputUUIDProvider',
       'RCTImageCompressionOutputFileWriter',
+      'RCTImageCompressionOutputPathIsRegularFile',
+      'RCTImageCompressionOutputFileRemover',
     ]) {
       expect(header).toContain(identifier);
     }
@@ -673,9 +680,11 @@ describe('iOS source contract', () => {
         'TestRejectsWriteFailureMatrixWithStableErrors',
         'TestCopiesImmutableRequestResultAndErrorModels',
         'TestClearsExistingErrorOnSuccess',
+        'TestRemovesOwnedOutputAndTreatsMissingAsSuccess',
+        'TestRejectsForeignTraversalAndDirectoryOutputs',
       ])
     );
-    expect(outputTestNames).toHaveLength(7);
+    expect(outputTestNames).toHaveLength(9);
     expect(packageJson.scripts['example:ios:output-test']).toBe(
       'node scripts/ios-validation.mjs output-test'
     );
@@ -703,7 +712,7 @@ describe('iOS source contract', () => {
       '- (void)compressImageWithDictionary:'
     );
     const methodEnd = implementation.indexOf(
-      '- (void)getImageCompressionCapabilities:',
+      '- (void)removeCompressionOutputURI:',
       methodStart
     );
     const methodLines = implementation
@@ -767,7 +776,7 @@ describe('iOS source contract', () => {
       /#import "RCTImageCompression(?:Input|ImageDecoder|ImageTransformer|JpegMetadata|ImageEncoder)\.h"/
     );
     expect(implementation).not.toMatch(
-      /(?:defaultLoader|defaultDecoder|defaultTransformer|defaultMetadata|defaultEncoder|defaultOutput|loadSourceURI:|decodeInput:|transformRequest:|encodeRequest:|persistRequest:|CGImageSource|RNICK_IOS_SMOKE_NATIVE)/
+      /(?:defaultLoader|defaultDecoder|defaultTransformer|defaultMetadata|defaultEncoder|loadSourceURI:|decodeInput:|transformRequest:|encodeRequest:|persistRequest:|CGImageSource|RNICK_IOS_SMOKE_NATIVE)/
     );
     expect(implementation).toContain('maxConcurrentOperationCount = RCTImageCompressionKitMaxConcurrentOperations');
     expect(implementation).toContain('cancelCompression:(NSString *)operationID');

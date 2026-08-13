@@ -1,5 +1,8 @@
 # Compression recipes
 
+> Cleanup examples use `removeCompressionOutput(uri)` from the 0.4.1 source
+> candidate. npm 0.4.0 consumers must use their host file API instead.
+
 ## Resize without upscaling
 
 ```ts
@@ -50,6 +53,26 @@ const result = await compressImage({
 HEIC, HEIF, and AVIF can be runtime-gated inputs, but they are not output
 formats in the current native implementation. Selecting them as output rejects
 with `ERR_NOT_IMPLEMENTED`.
+
+## Upload and release the cache output
+
+```ts
+const result = await compressImage({
+  source: { uri: imageUri },
+  output: { format: 'jpeg', quality: 82 },
+  metadata: 'safe',
+});
+
+try {
+  await upload(result.uri);
+} finally {
+  await removeCompressionOutput(result.uri);
+}
+```
+
+`removeCompressionOutput` accepts the URI returned by this package, is
+idempotent when that valid output is already missing, and refuses arbitrary
+files or directories.
 
 ## Interpret the result
 

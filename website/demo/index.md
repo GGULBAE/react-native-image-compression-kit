@@ -1,9 +1,17 @@
 # Native walkthrough explorer
 
 These are results from the repository's real Android and iOS example apps—not
-browser substitutes. Both captures used package `0.4.0` from exact source
-commit [`11b91af`](https://github.com/GGULBAE/react-native-image-compression-kit/commit/11b91af66322d7b98b46481739c54825b406ef0c)
+browser substitutes. Both captures used repository package version `0.4.0` at
+post-release source commit [`11b91af`](https://github.com/GGULBAE/react-native-image-compression-kit/commit/11b91af66322d7b98b46481739c54825b406ef0c),
+not the immutable v0.4.0 release-source commit,
 in [Native Demo Evidence run 31078379910](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/31078379910).
+
+> **Affected evidence, preserved for traceability:** the v0.4.0 iOS renderer
+> vertically inverted the already auto-oriented source pixels. The iOS video,
+> screenshot, and output below document that defect and are not a passing
+> visual-integrity result. The 0.4.1 source candidate removes the duplicate
+> transform and rejects captures unless upright SSIM is at least 0.90 and beats
+> the vertical-flip control by at least 0.02.
 
 ## Guided walkthroughs
 
@@ -16,7 +24,7 @@ in [Native Demo Evidence run 31078379910](https://github.com/GGULBAE/react-nativ
     </video>
   </article>
   <article class="result-card">
-    <h3>iOS · 26.6 seconds</h3>
+    <h3>iOS · affected v0.4.0 capture · 26.6 seconds</h3>
     <video class="native-demo-video" controls muted playsinline preload="metadata" poster="/demo/ios/screen.png">
       <source src="/demo/ios/recording.mp4" type="video/mp4">
       Download the <a href="/react-native-image-compression-kit/demo/ios/recording.mp4">iOS native walkthrough</a>.
@@ -65,16 +73,16 @@ not claim cross-runtime bit-for-bit determinism.
     <details><summary>SHA-256</summary><dl class="digest-list"><dt>Source</dt><dd><code>5bd83125571f96b575b25f3172630a0a6dd61223ca310b586538c3d5b5f0a830</code></dd><dt>Output</dt><dd><code>1ef3c5b545643617b0cb5449ad1589a7eb6f19b850331fd40e8f47990d9dc0b4</code></dd><dt>Screenshot</dt><dd><code>27b276a47f8972e89b49590b762fcb99137c73798fbde1ab45c1a1c34600908c</code></dd><dt>Recording</dt><dd><code>89c0a7cd3a921bbec9c6a796689048fe525e2dd709b0d8b12211fdb62d739847</code></dd></dl></details>
   </article>
   <article class="result-card">
-    <h3>iOS</h3>
-    <img class="result-screen" src="/demo/ios/screen.png" alt="iOS example app showing JPEG compression before and after images with byte metrics">
+    <h3>iOS · affected orientation</h3>
+    <img class="result-screen" src="/demo/ios/screen.png" alt="Affected v0.4.0 iOS capture showing the compressed output vertically inverted relative to the source">
     <div class="evidence-pair">
       <figure><img src="/demo/ios/source.jpg" alt="iOS source image"><figcaption>3,317 B source</figcaption></figure>
-      <figure><img src="/demo/ios/output.jpg" alt="iOS compressed output"><figcaption>2,353 B output</figcaption></figure>
+      <figure><img src="/demo/ios/output.jpg" alt="Affected iOS compressed output with vertically inverted pixel layout"><figcaption>2,353 B · orientation-affected</figcaption></figure>
     </div>
     <dl>
       <dt>Runtime</dt><dd>iOS 26.4</dd>
       <dt>Device</dt><dd>iPhone 17 Pro simulator</dd>
-      <dt>Output</dt><dd>JPEG · 100 × 160</dd>
+      <dt>Output</dt><dd>JPEG · 100 × 160 · visual integrity failed</dd>
       <dt>Ratio</dt><dd>0.709 · 70.9% of source bytes</dd>
       <dt>Captured</dt><dd>2026-08-06 07:03:57 UTC</dd>
     </dl>

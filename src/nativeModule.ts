@@ -15,6 +15,7 @@ type NativeModuleContractCheck = {
     options: NormalizedCompressionOptions & { operationId: string }
   ): Promise<CompressionResult>;
   cancelCompression(operationId: string): void;
+  removeCompressionOutput(uri: string): Promise<void>;
   getImageCompressionCapabilities(): Promise<ImageCompressionCapabilities>;
 };
 
@@ -127,6 +128,8 @@ function isNativeModule(
       'function' &&
     typeof (value as NativeImageCompressionKitModule).cancelCompression ===
       'function' &&
+    typeof (value as NativeImageCompressionKitModule)
+      .removeCompressionOutput === 'function' &&
     typeof (value as NativeImageCompressionKitModule)
       .getImageCompressionCapabilities === 'function'
   );

@@ -58,6 +58,26 @@ static RCTImageCompressionOutput *RCTOutput(
     clock:clock
     uuidProvider:uuidProvider
     fileWriter:fileWriter
+    pathIsRegularFile:^BOOL(NSString *path) { return YES; }
+    fileRemover:^BOOL(NSString *path, NSError **error) { return YES; }
+  ];
+}
+
+static RCTImageCompressionOutput *RCTOutputWithRemoval(
+  RCTImageCompressionOutputCacheDirectoryProvider cacheDirectoryProvider,
+  RCTImageCompressionOutputPathExists pathExists,
+  RCTImageCompressionOutputPathIsRegularFile pathIsRegularFile,
+  RCTImageCompressionOutputFileRemover fileRemover
+) {
+  return [[RCTImageCompressionOutput alloc]
+    initWithCacheDirectoryProvider:cacheDirectoryProvider
+    pathExists:pathExists
+    directoryCreator:^BOOL(NSString *path, NSError **error) { return YES; }
+    clock:^NSTimeInterval{ return 1.0; }
+    uuidProvider:^NSString *{ return @"removal"; }
+    fileWriter:^BOOL(NSData *data, NSString *path, NSError **error) { return YES; }
+    pathIsRegularFile:pathIsRegularFile
+    fileRemover:fileRemover
   ];
 }
 
@@ -351,6 +371,123 @@ static void TestClearsExistingErrorOnSuccess(void)
   RCTOutputAssert(error == nil, @"successful persistence clears previous error");
 }
 
+static void TestRemovesOwnedOutputAndTreatsMissingAsSuccess(void)
+{
+  NSString *ownedPath = @"/cache/ImageCompressionKit/compressed-123-owned.jpg";
+  __block BOOL outputExists = YES;
+  __block NSUInteger removalCalls = 0;
+  RCTImageCompressionOutput *output = RCTOutputWithRemoval(
+    ^NSString *{ return @"/cache"; },
+    ^BOOL(NSString *path) {
+      return [path isEqualToString:@"/cache/ImageCompressionKit"] ||
+        ([path isEqualToString:ownedPath] && outputExists);
+    },
+    ^BOOL(NSString *path) { return [path isEqualToString:ownedPath]; },
+    ^BOOL(NSString *path, NSError **error) {
+      removalCalls += 1;
+      outputExists = NO;
+      return YES;
+    }
+  );
+  RCTImageCompressionOutputError *error = nil;
+
+  BOOL firstRemoval = [output removeOutputURI:[[NSURL fileURLWithPath:ownedPath] absoluteString]
+                                        error:&error];
+  BOOL missingRemoval = [output removeOutputURI:[[NSURL fileURLWithPath:ownedPath] absoluteString]
+                                          error:&error];
+
+  RCTOutputAssert(firstRemoval, @"owned output removal succeeds");
+  RCTOutputAssert(missingRemoval, @"missing owned output removal is idempotent");
+  RCTOutputAssert(removalCalls == 1, @"missing output is not removed twice");
+  RCTOutputAssert(error == nil, @"idempotent removal leaves no error");
+}
+
+static void TestRejectsForeignTraversalAndDirectoryOutputs(void)
+{
+  __block NSUInteger removalCalls = 0;
+  NSString *directoryPath = @"/cache/ImageCompressionKit/compressed-123-directory.png";
+  RCTImageCompressionOutput *output = RCTOutputWithRemoval(
+    ^NSString *{ return @"/cache"; },
+    ^BOOL(NSString *path) { return YES; },
+    ^BOOL(NSString *path) { return ![path isEqualToString:directoryPath]; },
+    ^BOOL(NSString *path, NSError **error) {
+      removalCalls += 1;
+      return YES;
+    }
+  );
+  NSArray<NSString *> *rejectedURIs = @[
+    @"file:///tmp/compressed-123-foreign.jpg",
+    @"file:///cache/ImageCompressionKit/../ImageCompressionKit/compressed-123-traversal.jpg",
+    @"content://media/external/images/1",
+    @"file:///cache/ImageCompressionKit/not-generated.jpg",
+    [[NSURL fileURLWithPath:directoryPath] absoluteString],
+  ];
+
+  for (NSString *uri in rejectedURIs) {
+    RCTImageCompressionOutputError *error = nil;
+    BOOL removed = [output removeOutputURI:uri error:&error];
+    RCTOutputAssert(!removed, @"foreign traversal content and directory outputs reject");
+    RCTOutputAssertEqualObjects(error.code, @"ERR_INVALID_OPTIONS", @"ownership rejection code is stable");
+  }
+  RCTOutputAssert(removalCalls == 0, @"rejected paths never reach the remover");
+
+  NSString *temporaryRoot = [NSTemporaryDirectory() stringByAppendingPathComponent:
+    [NSString stringWithFormat:@"rnick-output-%@", NSUUID.UUID.UUIDString]
+  ];
+  NSString *temporaryOutputDirectory =
+    [temporaryRoot stringByAppendingPathComponent:@"ImageCompressionKit"];
+  NSString *foreignPath = [temporaryRoot stringByAppendingPathComponent:@"foreign.jpg"];
+  NSString *symlinkPath = [temporaryOutputDirectory
+    stringByAppendingPathComponent:@"compressed-123-symlink.jpg"];
+  NSFileManager *fileManager = [NSFileManager defaultManager];
+  [fileManager
+    createDirectoryAtPath:temporaryOutputDirectory
+    withIntermediateDirectories:YES
+    attributes:nil
+    error:nil
+  ];
+  [@"foreign" writeToFile:foreignPath atomically:YES encoding:NSUTF8StringEncoding error:nil];
+  [fileManager createSymbolicLinkAtPath:symlinkPath withDestinationPath:foreignPath error:nil];
+  RCTImageCompressionOutput *symlinkOutput = RCTOutputWithRemoval(
+    ^NSString *{ return temporaryRoot; },
+    ^BOOL(NSString *path) { return [fileManager fileExistsAtPath:path]; },
+    ^BOOL(NSString *path) { return YES; },
+    ^BOOL(NSString *path, NSError **error) {
+      removalCalls += 1;
+      return [fileManager removeItemAtPath:path error:error];
+    }
+  );
+  RCTImageCompressionOutputError *symlinkError = nil;
+  BOOL removedSymlink = [symlinkOutput
+    removeOutputURI:[[NSURL fileURLWithPath:symlinkPath] absoluteString]
+    error:&symlinkError
+  ];
+  RCTOutputAssert(!removedSymlink, @"symlink output rejects");
+  RCTOutputAssertEqualObjects(symlinkError.code, @"ERR_INVALID_OPTIONS", @"symlink rejection code is stable");
+  RCTOutputAssert([fileManager fileExistsAtPath:foreignPath], @"symlink rejection preserves foreign target");
+  RCTOutputAssert(removalCalls == 0, @"symlink rejection never reaches remover");
+  [fileManager removeItemAtPath:temporaryRoot error:nil];
+
+  NSError *underlying = [NSError errorWithDomain:@"output-test" code:43 userInfo:nil];
+  RCTImageCompressionOutput *failingOutput = RCTOutputWithRemoval(
+    ^NSString *{ return @"/cache"; },
+    ^BOOL(NSString *path) { return YES; },
+    ^BOOL(NSString *path) { return YES; },
+    ^BOOL(NSString *path, NSError **error) {
+      *error = underlying;
+      return NO;
+    }
+  );
+  RCTImageCompressionOutputError *removalError = nil;
+  BOOL removed = [failingOutput
+    removeOutputURI:@"file:///cache/ImageCompressionKit/compressed-123-failure.webp"
+    error:&removalError
+  ];
+  RCTOutputAssert(!removed, @"file removal failure rejects");
+  RCTOutputAssertEqualObjects(removalError.code, @"ERR_FILE_ACCESS", @"file removal failure code is stable");
+  RCTOutputAssert(removalError.underlyingError == underlying, @"file removal retains underlying error");
+}
+
 int main(void)
 {
   @autoreleasepool {
@@ -361,6 +498,8 @@ int main(void)
     TestRejectsWriteFailureMatrixWithStableErrors();
     TestCopiesImmutableRequestResultAndErrorModels();
     TestClearsExistingErrorOnSuccess();
+    TestRemovesOwnedOutputAndTreatsMissingAsSuccess();
+    TestRejectsForeignTraversalAndDirectoryOutputs();
 
     if (RCTOutputFailureCount > 0) {
       fprintf(
@@ -373,7 +512,7 @@ int main(void)
     }
 
     printf(
-      "iOS output native tests passed: %lu assertions across 7 table-driven groups.\n",
+      "iOS output native tests passed: %lu assertions across 9 table-driven groups.\n",
       (unsigned long)RCTOutputAssertionCount
     );
   }

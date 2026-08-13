@@ -15,6 +15,8 @@ const rulesetSummaries = api(`repos/${repository}/rulesets`);
 const environmentSummaries = api(`repos/${repository}/environments`).environments;
 const actual = {
   repository: api(`repos/${repository}`),
+  dependabotAlerts: apiEnabled(`repos/${repository}/vulnerability-alerts`),
+  dependabotSecurityUpdates: api(`repos/${repository}/automated-security-fixes`),
   privateVulnerability: api(`repos/${repository}/private-vulnerability-reporting`, true),
   immutableReleases: api(`repos/${repository}/immutable-releases`, true),
   actions: api(`repos/${repository}/actions/permissions`),
@@ -50,4 +52,16 @@ function api(endpoint, allowNotFound = false) {
   if (result.error) throw result.error;
   if (result.status !== 0) throw new Error(result.stderr || `gh api failed: ${endpoint}`);
   return JSON.parse(result.stdout || '{}');
+}
+
+function apiEnabled(endpoint) {
+  const result = spawnSync(
+    'gh',
+    ['api', endpoint, '-H', 'X-GitHub-Api-Version: 2026-03-10'],
+    { cwd: root, encoding: 'utf8' }
+  );
+  if (result.error) throw result.error;
+  if (result.status === 0) return { enabled: true };
+  if (/HTTP 404|Not Found/.test(result.stderr)) return { enabled: false };
+  throw new Error(result.stderr || `gh api failed: ${endpoint}`);
 }

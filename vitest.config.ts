@@ -8,6 +8,7 @@ import {
 export default defineConfig({
   test: {
     environment: 'node',
+    testTimeout: process.env.RNICK_DOCKER === '1' ? 30_000 : 5_000,
     include: ['test/**/*.test.{ts,mjs}'],
     coverage: {
       provider: 'v8',

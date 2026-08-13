@@ -78,6 +78,23 @@ class ImageCompressionKitModule(
     (workerExecutor as? ThreadPoolExecutor)?.purge()
   }
 
+  override fun removeCompressionOutput(uri: String, promise: Promise) {
+    try {
+      ImageCompressionOutput.removeOutput(reactContext.cacheDir, uri)
+      promise.resolve(null)
+    } catch (error: CompressionOutputOwnershipException) {
+      promise.reject(ERR_INVALID_OPTIONS, error.message, error)
+    } catch (error: CompressionOutputRemovalException) {
+      promise.reject(ERR_FILE_ACCESS, error.message, error)
+    } catch (error: Exception) {
+      promise.reject(
+        ERR_NATIVE_OPERATION_FAILED,
+        "Android could not remove the compression output cache file.",
+        error
+      )
+    }
+  }
+
   override fun invalidate() {
     if (invalidated.compareAndSet(false, true)) {
       operations.values.forEach(CompressionOperation::cancel)

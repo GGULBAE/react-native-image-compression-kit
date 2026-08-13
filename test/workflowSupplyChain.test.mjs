@@ -37,9 +37,9 @@ const WORKFLOW_DIR = path.join(ROOT, '.github', 'workflows');
 const LOCK_FILE = path.join(ROOT, WORKFLOW_ACTION_LOCK_FILE);
 const VERIFIER = path.join(ROOT, 'scripts', 'verify-workflow-supply-chain.mjs');
 const CHECKOUT_SHA = '3d3c42e5aac5ba805825da76410c181273ba90b1';
-const PACKAGE_VERSION = JSON.parse(
-  readFileSync(path.join(ROOT, 'package.json'), 'utf8')
-).version;
+const PUBLISHED_VERSION = JSON.parse(
+  readFileSync(path.join(ROOT, 'docs', 'release-status.json'), 'utf8')
+).publishedNpmLatest;
 
 function copiedRepository(label) {
   const parent = mkdtempSync(path.join(os.tmpdir(), `rnick-workflow-${label}-`));
@@ -434,7 +434,7 @@ describe('GitHub Actions workflow supply-chain gate', () => {
       [
         'version drift',
         (source) =>
-          source.replace(`default: "${PACKAGE_VERSION}"`, 'default: "0.2.55"'),
+          source.replace(`default: "${PUBLISHED_VERSION}"`, 'default: "0.2.55"'),
       ],
       ['tag drift', (source) => source.replace('default: latest', 'default: next')],
       ['write permission', (source) => source.replace('contents: read', 'contents: write')],

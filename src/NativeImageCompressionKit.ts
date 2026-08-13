@@ -84,6 +84,7 @@ export interface Spec extends TurboModule {
     options: NativeCompressionOptions
   ): Promise<NativeCompressionResult>;
   cancelCompression(operationId: string): void;
+  removeCompressionOutput(uri: string): Promise<void>;
   getImageCompressionCapabilities(): Promise<NativeImageCompressionCapabilities>;
 }
 

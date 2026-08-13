@@ -41,8 +41,6 @@ static UIImage *RCTImageCompressionRenderCoreGraphicsImage(
     CGContextClearRect(context, CGRectMake(0, 0, width, height));
   }
   CGContextSetInterpolationQuality(context, kCGInterpolationHigh);
-  CGContextTranslateCTM(context, 0, (CGFloat)height);
-  CGContextScaleCTM(context, 1.0, -1.0);
   CGContextDrawImage(context, geometry.drawRect, source.image);
 
   CGImageRef rendered = CGBitmapContextCreateImage(context);

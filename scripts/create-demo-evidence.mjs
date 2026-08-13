@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { inspectMp4 } from './demo-evidence-core.mjs';
+import { inspectDemoVisualAgreement } from './demo-visual-agreement-core.mjs';
 import {
   inspectGuidedDemoPayload,
   parseGuidedDemoPayload,
@@ -21,6 +22,7 @@ for (const field of [
   'screenshot',
   'recording',
   'captureMethod',
+  'visualAgreement',
   'log',
   'destination',
   'runUrl',
@@ -69,6 +71,32 @@ if (guidedReport.status !== 'passed') {
   throw new Error(guidedReport.error);
 }
 
+const sourceBytes = readFileSync(path.resolve(options.source));
+const outputBytes = readFileSync(path.resolve(options.output));
+const visualAgreement = JSON.parse(
+  readFileSync(path.resolve(options.visualAgreement), 'utf8')
+);
+const visualReport = inspectDemoVisualAgreement(visualAgreement, {
+  sourceBytes,
+  outputBytes,
+  resizeOptions: payload.options?.resize,
+});
+if (
+  visualAgreement.schemaVersion !== 2 ||
+  visualReport.status !== 'passed' ||
+  visualReport.agreementStatus !== 'passed'
+) {
+  throw new Error(
+    `native demo visual agreement failed: ${visualReport.error ?? `outcome ${visualReport.agreementStatus}`}`
+  );
+}
+if (
+  visualAgreement.width !== payload.result.width ||
+  visualAgreement.height !== payload.result.height
+) {
+  throw new Error('native demo visual agreement dimensions do not match the result');
+}
+
 const destination = path.resolve(options.destination);
 mkdirSync(destination, { recursive: true });
 const assetPaths = {
@@ -115,7 +143,7 @@ assets.recording.durationSeconds = roundMilliseconds(recordingReport.durationSec
 assets.recording.captureMethod = options.captureMethod;
 
 const evidence = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   status: 'passed',
   packageVersion: options.packageVersion,
   sourceCommit: options.sourceSha,
@@ -135,6 +163,7 @@ const evidence = {
     compressionRatio: payload.result.compressionRatio,
   },
   walkthrough: guidedPayload,
+  visualAgreement,
   assets,
 };
 writeFileSync(

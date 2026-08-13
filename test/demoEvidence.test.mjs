@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -7,6 +7,7 @@ import {
   inspectDemoEvidence,
   inspectMp4,
 } from '../scripts/demo-evidence-core.mjs';
+import { createDemoVisualAgreementReport } from '../scripts/demo-visual-agreement-core.mjs';
 
 const SHA = 'a'.repeat(40);
 
@@ -91,6 +92,141 @@ describe('native demo evidence', () => {
     expect(report.error).toContain('walkthrough result does not match the native result');
   });
 
+  it('requires visual agreement on every schema-v3 capture', () => {
+    const fixture = createGuidedFixture();
+    fixture.manifest.schemaVersion = 3;
+    for (const evidence of fixture.manifest.cases) evidence.schemaVersion = 3;
+    delete fixture.manifest.cases[0].visualAgreement;
+    const report = inspectDemoEvidence(fixture.root, fixture.manifest);
+    expect(report.status).toBe('failed');
+    expect(report.error).toContain('visual agreement report is required');
+  });
+
+  it('preserves the retained schema-v2 visual-report exception only for its exact source', () => {
+    const fixture = createGuidedFixture();
+    fixture.manifest.sourceCommit =
+      '11b91af66322d7b98b46481739c54825b406ef0c';
+    for (const evidence of fixture.manifest.cases) {
+      evidence.sourceCommit = fixture.manifest.sourceCommit;
+      delete evidence.visualAgreement;
+    }
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest)).toMatchObject({
+      status: 'passed',
+      evidenceStatus: 'passed',
+      error: null,
+    });
+
+    fixture.manifest.sourceCommit = 'd'.repeat(40);
+    for (const evidence of fixture.manifest.cases) {
+      evidence.sourceCommit = fixture.manifest.sourceCommit;
+    }
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest).error).toContain(
+      'visual agreement report is required'
+    );
+  });
+
+  it('accepts an integrity-valid affected case and derives the aggregate outcome', () => {
+    const fixture = createGuidedFixture();
+    fixture.manifest.schemaVersion = 3;
+    for (const evidence of fixture.manifest.cases) evidence.schemaVersion = 3;
+    const ios = fixture.manifest.cases[1];
+    ios.visualAgreement = createDemoVisualAgreementReport({
+      sourceBytes: readFileSync(path.join(fixture.root, ios.assets.source.file)),
+      outputBytes: readFileSync(path.join(fixture.root, ios.assets.output.file)),
+      sourceWidth: 600,
+      sourceHeight: 960,
+      width: ios.result.width,
+      height: ios.result.height,
+      resizeMode: 'contain',
+      maxWidth: 160,
+      maxHeight: 160,
+      uprightSimilarity: 0.75,
+      verticalFlipSimilarity: 0.94,
+    });
+    ios.status = 'affected';
+    fixture.manifest.status = 'affected';
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest)).toMatchObject({
+      status: 'passed',
+      evidenceStatus: 'affected',
+      error: null,
+    });
+
+    fixture.manifest.status = 'passed';
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest).error).toContain(
+      'status does not match the derived case outcomes'
+    );
+  });
+
+  it('validates schema and post-release source provenance disclosure', () => {
+    const fixture = createGuidedFixture();
+    fixture.manifest.schemaVersion = 3;
+    for (const evidence of fixture.manifest.cases) evidence.schemaVersion = 3;
+    fixture.manifest.sourceProvenance = {
+      kind: 'post-release',
+      releaseSourceCommit: 'b'.repeat(40),
+    };
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest)).toMatchObject({
+      status: 'passed',
+      evidenceStatus: 'passed',
+    });
+
+    fixture.manifest.schemaVersion = 9;
+    fixture.manifest.sourceProvenance = {
+      kind: 'exact-candidate',
+      releaseSourceCommit: fixture.manifest.sourceCommit,
+    };
+    const invalid = inspectDemoEvidence(fixture.root, fixture.manifest);
+    expect(invalid.status).toBe('failed');
+    expect(invalid.error).toContain('schemaVersion must be 1, 2, or 3');
+    expect(invalid.error).toContain(
+      'sourceProvenance must disclose a distinct post-release capture source'
+    );
+  });
+
+  it('rejects schema-v3 visual integrity, outcome, schema, and dimension drift', () => {
+    const fixture = createGuidedFixture();
+    fixture.manifest.schemaVersion = 3;
+    for (const evidence of fixture.manifest.cases) evidence.schemaVersion = 3;
+    const android = fixture.manifest.cases[0];
+
+    android.status = 'affected';
+    fixture.manifest.status = 'affected';
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest).error).toContain(
+      'status does not match visual agreement outcome'
+    );
+
+    android.status = 'passed';
+    fixture.manifest.status = 'passed';
+    android.visualAgreement = {
+      ...android.visualAgreement,
+      width: android.visualAgreement.width + 1,
+    };
+    const drift = inspectDemoEvidence(fixture.root, fixture.manifest);
+    expect(drift.error).toContain(
+      'geometry check does not match the measured values'
+    );
+    expect(drift.error).toContain(
+      'visual agreement dimensions do not match the native result'
+    );
+
+    android.visualAgreement = {
+      schemaVersion: 1,
+      status: 'passed',
+      algorithm: 'ffmpeg-auto-oriented-ssim-v1',
+      width: android.result.width,
+      height: android.result.height,
+      uprightSimilarity: 0.95,
+      verticalFlipSimilarity: 0.7,
+      minimumSimilarity: 0.9,
+      minimumOrientationMargin: 0.02,
+      sourceSha256: android.assets.source.sha256,
+      outputSha256: android.assets.output.sha256,
+    };
+    expect(inspectDemoEvidence(fixture.root, fixture.manifest).error).toContain(
+      'schemaVersion 3 requires visual agreement schemaVersion 2'
+    );
+  });
+
   it('rejects truncated and untimed MP4 containers', () => {
     expect(inspectMp4(Buffer.from('not an mp4'))).toMatchObject({
       status: 'failed',
@@ -135,7 +271,7 @@ describe('native demo evidence', () => {
     fixture.manifest.cases[1].assets.source.file = 'ios/missing.jpg';
     const report = inspectDemoEvidence(fixture.root, fixture.manifest);
     expect(report.status).toBe('failed');
-    expect(report.error).toContain('status must be passed');
+    expect(report.error).toContain('status does not match the derived case outcomes');
     expect(report.error).toContain('packageVersion must be an exact semantic version');
     expect(report.error).toContain('sourceCommit must be a lowercase full commit SHA');
     expect(report.error).toContain('schemaVersion does not match the manifest');
@@ -225,6 +361,7 @@ function createGuidedFixture() {
   fixture.manifest.schemaVersion = 2;
   delete fixture.manifest.presentation;
   for (const evidence of fixture.manifest.cases) {
+    evidence.sourceCommit = fixture.manifest.sourceCommit;
     evidence.schemaVersion = 2;
     const recordingPath = path.join(fixture.root, evidence.platform, 'recording.mp4');
     writeFileSync(recordingPath, recording);
@@ -248,6 +385,21 @@ function createGuidedFixture() {
       options: structuredClone(evidence.options),
       result: structuredClone(evidence.result),
     };
+    const sourceBytes = readFileSync(path.join(fixture.root, evidence.assets.source.file));
+    const outputBytes = readFileSync(path.join(fixture.root, evidence.assets.output.file));
+    evidence.visualAgreement = createDemoVisualAgreementReport({
+      sourceBytes,
+      outputBytes,
+      sourceWidth: 600,
+      sourceHeight: 960,
+      width: evidence.result.width,
+      height: evidence.result.height,
+      resizeMode: 'contain',
+      maxWidth: 160,
+      maxHeight: 160,
+      uprightSimilarity: 0.95,
+      verticalFlipSimilarity: 0.7,
+    });
   }
   return { ...fixture, recording };
 }

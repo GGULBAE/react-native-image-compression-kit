@@ -15,6 +15,7 @@ import {
   METADATA_POLICIES,
   compressImage,
   getImageCompressionCapabilities,
+  removeCompressionOutput,
   type CompressionOptions,
   type CompressionResult,
   type ImageCompressionCapabilities,
@@ -77,6 +78,7 @@ export default function App(): React.JSX.Element {
   const [isLoadingSample, setIsLoadingSample] = useState(false);
   const [isPickingImage, setIsPickingImage] = useState(false);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isRemovingOutput, setIsRemovingOutput] = useState(false);
   const [isDemoCaptureMode, setIsDemoCaptureMode] = useState(false);
   const [guidedDemoState, setGuidedDemoState] =
     useState<GuidedDemoState | null>(null);
@@ -331,6 +333,22 @@ export default function App(): React.JSX.Element {
     supportsSelectedTargetSize,
   ]);
 
+  const removeOutput = useCallback(async () => {
+    if (!result) return;
+    setIsRemovingOutput(true);
+    setError(null);
+
+    try {
+      await removeCompressionOutput(result.uri);
+      setResult(null);
+      setResultMetadataPolicy(null);
+    } catch (nativeError) {
+      setError(toErrorState(nativeError));
+    } finally {
+      setIsRemovingOutput(false);
+    }
+  }, [result]);
+
   const jpegCapability = capabilities?.formats.find(
     (capability) => capability.format === 'jpeg'
   );
@@ -522,6 +540,8 @@ export default function App(): React.JSX.Element {
         <ResultPanel
           error={error}
           metadataPolicy={metadataPolicy}
+          isRemovingOutput={isRemovingOutput}
+          onRemoveOutput={removeOutput}
           result={result}
           resultMetadataPolicy={resultMetadataPolicy}
           sourceUri={sourceUri}

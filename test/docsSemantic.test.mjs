@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
   collectMarkdownLinkViolations,
   inspectDocumentation,
+  inspectProductEvidenceContracts,
   inspectProductDirectionContracts,
   inspectStatusContract,
   parseCurrentStatus,
@@ -147,6 +148,31 @@ describe('documentation semantic gate', () => {
       'ROADMAP missing decision contract: No roadmap item is a release promise',
       'product architecture missing decision contract: capability-first',
       'product architecture missing decision contract: ERR_RESOURCE_LIMIT',
+    ]);
+  });
+
+  it('rejects weakened product evidence metrics and interpretation limits', () => {
+    const evidence = readFileSync(
+      path.join(ROOT, 'website/reference/evidence.md'),
+      'utf8'
+    );
+
+    expect(inspectProductEvidenceContracts(evidence)).toEqual([]);
+    expect(
+      inspectProductEvidenceContracts(
+        evidence
+          .replace('### Failure-safe completion', '### Cleanup')
+          .replace('## Evidence charts', '## Observations')
+          .replaceAll('not a peak-memory measurement', 'is memory efficient')
+          .replace('does not establish image-quality superiority', 'proves better quality')
+          .replace('evidence-scorecard.svg', 'summary.svg')
+      )
+    ).toEqual([
+      'product evidence missing heading: Failure-safe completion',
+      'product evidence missing heading: Evidence charts',
+      'product evidence missing decision contract: not a peak-memory measurement',
+      'product evidence missing decision contract: does not establish image-quality superiority',
+      'product evidence missing decision contract: evidence-scorecard.svg',
     ]);
   });
 
