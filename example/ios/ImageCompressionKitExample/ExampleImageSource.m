@@ -1,6 +1,9 @@
 #import <React/RCTBridgeModule.h>
+#import <CommonCrypto/CommonDigest.h>
 #import <ImageIO/ImageIO.h>
 #import <UIKit/UIKit.h>
+#import <errno.h>
+#import <sys/stat.h>
 
 @interface ExampleImageSource : NSObject <RCTBridgeModule>
 @end
@@ -14,6 +17,8 @@ static NSData *ExampleImageSourceUnsupportedData(NSString *format);
 static NSDictionary *ExampleImageSourceReadJpegMetadataSummary(NSData *data);
 static NSString *ExampleImageSourceReadJpegSoftwareMetadata(NSData *data);
 static NSNumber *ExampleImageSourceNumberValue(NSDictionary *properties, NSString *key);
+static NSString *ExampleImageSourceScopedCachePath(NSString *uri);
+static BOOL ExampleImageSourcePathIsRegularNonSymlink(NSString *path);
 
 @implementation ExampleImageSource
 
@@ -70,6 +75,130 @@ RCT_EXPORT_METHOD(copySampleJpegToCache:(RCTPromiseResolveBlock)resolve
                          data:ExampleImageSourceJpegData()
                       resolve:resolve
                        reject:reject];
+}
+
+RCT_EXPORT_METHOD(copyEconomicResilienceJpegToCache:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSString *path = [[NSBundle mainBundle] pathForResource:@"kit-only-12mp-v1" ofType:@"jpg"];
+  NSError *error = nil;
+  NSData *data = path.length > 0
+    ? [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:&error]
+    : nil;
+  if (data.length == 0) {
+    reject(
+      @"ERR_SAMPLE_FILE_ACCESS",
+      @"The bundled 12 MP evidence fixture is missing or empty.",
+      error
+    );
+    return;
+  }
+  [self writeSampleWithFileName:@"kit-only-12mp-v1.jpg"
+                           data:data
+                        resolve:resolve
+                         reject:reject];
+}
+
+RCT_EXPORT_METHOD(inspectEvidenceImage:(NSString *)uri
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSString *path = ExampleImageSourceScopedCachePath(uri);
+  if (path.length == 0) {
+    reject(
+      @"ERR_EVIDENCE_FILE_ACCESS",
+      @"Evidence image URI must reference the app cache.",
+      nil
+    );
+    return;
+  }
+
+  BOOL isDirectory = NO;
+  if (![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
+    resolve(@{ @"exists" : @NO, @"byteSize" : @0 });
+    return;
+  }
+  if (isDirectory || !ExampleImageSourcePathIsRegularNonSymlink(path)) {
+    reject(
+      @"ERR_EVIDENCE_FILE_ACCESS",
+      @"Evidence image must be a decodable JPEG regular file.",
+      nil
+    );
+    return;
+  }
+  NSError *error = nil;
+  NSData *data = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:&error];
+  CGImageSourceRef source = data.length > 0
+    ? CGImageSourceCreateWithData((__bridge CFDataRef)data, nil)
+    : nil;
+  NSString *mediaType = source != nil ? (__bridge NSString *)CGImageSourceGetType(source) : nil;
+  NSDictionary *properties = source != nil && CGImageSourceGetCount(source) == 1
+    ? CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(source, 0, nil))
+    : nil;
+  if (source != nil) CFRelease(source);
+  NSNumber *width = properties[(__bridge NSString *)kCGImagePropertyPixelWidth];
+  NSNumber *height = properties[(__bridge NSString *)kCGImagePropertyPixelHeight];
+  if (
+    data.length == 0 || ![mediaType isEqualToString:@"public.jpeg"] ||
+    ![width isKindOfClass:[NSNumber class]] || width.integerValue <= 0 ||
+    ![height isKindOfClass:[NSNumber class]] || height.integerValue <= 0
+  ) {
+    reject(
+      @"ERR_EVIDENCE_FILE_ACCESS",
+      @"Evidence image must be a decodable JPEG regular file.",
+      error
+    );
+    return;
+  }
+
+  unsigned char digest[CC_SHA256_DIGEST_LENGTH];
+  CC_SHA256(data.bytes, (CC_LONG)data.length, digest);
+  NSMutableString *sha256 = [NSMutableString stringWithCapacity:CC_SHA256_DIGEST_LENGTH * 2];
+  for (NSUInteger index = 0; index < CC_SHA256_DIGEST_LENGTH; index += 1) {
+    [sha256 appendFormat:@"%02x", digest[index]];
+  }
+  resolve(@{
+    @"exists" : @YES,
+    @"byteSize" : @(data.length),
+    @"sha256" : sha256,
+    @"mediaType" : @"image/jpeg",
+    @"width" : width,
+    @"height" : height
+  });
+}
+
+RCT_EXPORT_METHOD(copyEconomicResilienceOutputForEvidence:(NSString *)uri
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  NSString *path = ExampleImageSourceScopedCachePath(uri);
+  BOOL isDirectory = NO;
+  if (
+    path.length == 0 ||
+    ![[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory] ||
+    isDirectory || !ExampleImageSourcePathIsRegularNonSymlink(path)
+  ) {
+    reject(
+      @"ERR_EVIDENCE_FILE_ACCESS",
+      @"Representative output must be a regular file in the app cache.",
+      nil
+    );
+    return;
+  }
+  NSError *error = nil;
+  NSData *data = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:&error];
+  if (data.length == 0) {
+    reject(
+      @"ERR_EVIDENCE_FILE_ACCESS",
+      @"The representative package output is missing or empty.",
+      error
+    );
+    return;
+  }
+  [self writeSampleWithFileName:@"kit-only-12mp-v1-output.jpg"
+                           data:data
+                        resolve:resolve
+                         reject:reject];
 }
 
 RCT_EXPORT_METHOD(copySamplePngToCache:(RCTPromiseResolveBlock)resolve
@@ -187,8 +316,50 @@ RCT_EXPORT_METHOD(readJpegMetadataSummary:(NSString *)uri
   }
 
   NSString *fileName = [NSString stringWithFormat:@"rnick-sample.%@", format];
+  [self writeSampleWithFileName:fileName data:data resolve:resolve reject:reject];
+}
+
+- (void)writeSampleWithFileName:(NSString *)fileName
+                           data:(NSData *)data
+                        resolve:(RCTPromiseResolveBlock)resolve
+                         reject:(RCTPromiseRejectBlock)reject
+{
+  if (data == nil || data.length == 0) {
+    reject(
+      @"ERR_SAMPLE_GENERATION_FAILED",
+      @"The iOS example could not generate the sample image.",
+      nil
+    );
+    return;
+  }
   NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:fileName];
   NSError *error = nil;
+
+  BOOL isDirectory = NO;
+  if ([[NSFileManager defaultManager] fileExistsAtPath:path isDirectory:&isDirectory]) {
+    if (isDirectory || !ExampleImageSourcePathIsRegularNonSymlink(path) ||
+        ![[NSFileManager defaultManager] removeItemAtPath:path error:&error]) {
+      reject(
+        @"ERR_SAMPLE_WRITE_FAILED",
+        @"The iOS example refused an unsafe evidence destination.",
+        error
+      );
+      return;
+    }
+  } else {
+    struct stat destinationStatus;
+    if (
+      lstat(path.fileSystemRepresentation, &destinationStatus) == 0 ||
+      errno != ENOENT
+    ) {
+      reject(
+        @"ERR_SAMPLE_WRITE_FAILED",
+        @"The iOS example refused a linked evidence destination.",
+        nil
+      );
+      return;
+    }
+  }
 
   if (![data writeToFile:path options:NSDataWritingAtomic error:&error]) {
     reject(
@@ -333,6 +504,37 @@ static NSNumber *ExampleImageSourceNumberValue(NSDictionary *properties, NSStrin
 {
   id value = properties[key];
   return [value isKindOfClass:[NSNumber class]] ? value : nil;
+}
+
+static NSString *ExampleImageSourceScopedCachePath(NSString *uri)
+{
+  NSURL *URL = [NSURL URLWithString:uri];
+  if (!URL.isFileURL || URL.host.length > 0 || URL.query.length > 0 || URL.fragment.length > 0) {
+    return nil;
+  }
+  NSString *standardizedPath = URL.path.stringByStandardizingPath;
+  NSString *standardizedParent = standardizedPath.stringByDeletingLastPathComponent;
+  NSString *canonicalParent = standardizedParent.stringByResolvingSymlinksInPath;
+  NSString *path = [canonicalParent stringByAppendingPathComponent:standardizedPath.lastPathComponent];
+  NSString *cachePath = [NSSearchPathForDirectoriesInDomains(
+    NSCachesDirectory,
+    NSUserDomainMask,
+    YES
+  ) firstObject].stringByStandardizingPath.stringByResolvingSymlinksInPath;
+  NSString *temporaryPath = NSTemporaryDirectory().stringByStandardizingPath.stringByResolvingSymlinksInPath;
+  if (
+    ([path hasPrefix:[cachePath stringByAppendingString:@"/"]] ||
+     [path hasPrefix:[temporaryPath stringByAppendingString:@"/"]])
+  ) {
+    return path;
+  }
+  return nil;
+}
+
+static BOOL ExampleImageSourcePathIsRegularNonSymlink(NSString *path)
+{
+  struct stat status;
+  return lstat(path.fileSystemRepresentation, &status) == 0 && S_ISREG(status.st_mode);
 }
 
 static NSData *ExampleImageSourcePngData(void)

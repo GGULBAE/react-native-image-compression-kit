@@ -5,11 +5,37 @@ set -euo pipefail
 : "${RNICK_DEMO_PACKAGE_VERSION:?RNICK_DEMO_PACKAGE_VERSION is required}"
 : "${RNICK_DEMO_SOURCE_SHA:?RNICK_DEMO_SOURCE_SHA is required}"
 : "${RNICK_DEMO_RUN_URL:?RNICK_DEMO_RUN_URL is required}"
+: "${GITHUB_RUN_ID:?GITHUB_RUN_ID is required}"
+: "${GITHUB_RUN_ATTEMPT:?GITHUB_RUN_ATTEMPT is required}"
+: "${RUNNER_OS:?RUNNER_OS is required}"
+: "${RUNNER_ARCH:?RUNNER_ARCH is required}"
+: "${RUNNER_NAME:?RUNNER_NAME is required}"
+: "${ImageOS:?ImageOS is required}"
+: "${ImageVersion:?ImageVersion is required}"
 
 metro_pid=""
 screenrecord_pid=""
+logcat_pid=""
+
+stop_logcat_stream() {
+  if [ -n "$logcat_pid" ]; then
+    kill -TERM "$logcat_pid" 2>/dev/null || true
+    for _attempt in $(seq 1 50); do
+      if ! kill -0 "$logcat_pid" 2>/dev/null; then
+        break
+      fi
+      sleep 0.1
+    done
+    if kill -0 "$logcat_pid" 2>/dev/null; then
+      kill -KILL "$logcat_pid" 2>/dev/null || true
+    fi
+    wait "$logcat_pid" 2>/dev/null || true
+    logcat_pid=""
+  fi
+}
 
 cleanup() {
+  stop_logcat_stream
   if [ -n "$screenrecord_pid" ]; then
     kill "$screenrecord_pid" 2>/dev/null || true
     wait "$screenrecord_pid" 2>/dev/null || true
@@ -77,13 +103,16 @@ for attempt in $(seq 1 60); do
 done
 
 (cd example/android && ./gradlew app:installDebug --no-daemon)
+mkdir -p /tmp/rnick-demo-raw
 adb logcat -c
+adb logcat -v threadtime -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log &
+logcat_pid=$!
+sleep 1
+kill -0 "$logcat_pid"
 adb shell am force-stop com.imagecompressionkit.example
 adb shell am start -n com.imagecompressionkit.example/.MainActivity --ez rnick-demo-capture true
-mkdir -p /tmp/rnick-demo-raw
 
 for attempt in $(seq 1 60); do
-  adb logcat -d -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log
   if grep -q 'RNICK_GUIDED_DEMO_READY' /tmp/rnick-demo-raw/native.log; then
     break
   fi
@@ -101,7 +130,6 @@ adb shell screenrecord \
 screenrecord_pid=$!
 
 for attempt in $(seq 1 60); do
-  adb logcat -d -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log
   if grep -q 'RNICK_GUIDED_DEMO_PASS' /tmp/rnick-demo-raw/native.log; then
     break
   fi
@@ -116,16 +144,29 @@ fi
 screenrecord_pid=""
 adb pull /sdcard/rnick-guided-demo.mp4 /tmp/rnick-demo-raw/recording-raw.mp4 >/dev/null
 
-for attempt in $(seq 1 120); do
-  adb logcat -d -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log
+for attempt in $(seq 1 300); do
   if grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && \
     grep -q 'RNICK_BENCHMARK_PASS' /tmp/rnick-demo-raw/native.log && \
-    grep -q 'RNICK_BENCHMARK_COMPARISON_PASS' /tmp/rnick-demo-raw/native.log; then
+    grep -q 'RNICK_BENCHMARK_COMPARISON_PASS' /tmp/rnick-demo-raw/native.log && \
+    grep -q 'RNICK_ECONOMIC_RESILIENCE_PASS' /tmp/rnick-demo-raw/native.log; then
     break
   fi
-  test "$attempt" != "120"
+  if grep -q 'RNICK_DEMO_FAIL' /tmp/rnick-demo-raw/native.log; then
+    echo 'Native demo reported failure before all evidence markers passed.' >&2
+    tail -n 200 /tmp/rnick-demo-raw/native.log >&2 || true
+    tail -n 200 /tmp/rnick-metro.log >&2 || true
+    exit 1
+  fi
+  if [ "$attempt" = "300" ]; then
+    echo 'Timed out waiting for all native evidence markers.' >&2
+    tail -n 200 /tmp/rnick-demo-raw/native.log >&2 || true
+    tail -n 200 /tmp/rnick-metro.log >&2 || true
+  fi
+  test "$attempt" != "300"
   sleep 1
 done
+
+stop_logcat_stream
 
 sleep 2
 dismiss_system_anr_dialog
@@ -210,3 +251,70 @@ node scripts/create-benchmark-comparison-evidence.mjs \
   --run-url "$RNICK_DEMO_RUN_URL"
 
 node scripts/verify-benchmark-comparison-evidence.mjs demo-evidence/android
+
+mkdir -p /tmp/rnick-economic-raw
+node --input-type=module - /tmp/rnick-demo-raw/native.log > /tmp/rnick-economic-raw/uris.txt <<'NODE'
+import { readFileSync } from 'node:fs';
+import { parseNativeEconomicResiliencePayload } from './scripts/economic-resilience-evidence-core.mjs';
+const payload = parseNativeEconomicResiliencePayload(readFileSync(process.argv[2], 'utf8'));
+console.log(new URL(payload.fixture.sourceUri).pathname);
+console.log(new URL(payload.representative.stagedOutputUri).pathname);
+NODE
+economic_source_path=$(sed -n '1p' /tmp/rnick-economic-raw/uris.txt)
+economic_output_path=$(sed -n '2p' /tmp/rnick-economic-raw/uris.txt)
+adb exec-out run-as com.imagecompressionkit.example cat "$economic_source_path" > /tmp/rnick-economic-raw/source.jpg
+adb exec-out run-as com.imagecompressionkit.example cat "$economic_output_path" > /tmp/rnick-economic-raw/output.jpg
+node scripts/measure-demo-visual-agreement.mjs \
+  --source /tmp/rnick-economic-raw/source.jpg \
+  --output /tmp/rnick-economic-raw/output.jpg \
+  --resize-mode contain \
+  --max-width 1600 \
+  --max-height 1200 \
+  --comparison-profile jpeg-full-range-to-limited-yuv444p-v1 \
+  --report /tmp/rnick-economic-raw/visual-agreement.json
+react_native_version=$(node -e "process.stdout.write(require('./example/package.json').dependencies['react-native'])")
+os_build=$(adb shell getprop ro.build.id | tr -d '\r')
+abi=$(adb shell getprop ro.product.cpu.abi | tr -d '\r')
+node_version=$(node --version)
+ffmpeg_version=$(ffmpeg -version | head -n 1)
+ffprobe_version=$(ffprobe -version | head -n 1)
+java_version=$(java -version 2>&1 | head -n 1)
+node scripts/create-economic-resilience-environment.mjs \
+  --platform android \
+  --runtime "$runtime" \
+  --os-build "$os_build" \
+  --device "$device" \
+  --device-kind emulator \
+  --abi "$abi" \
+  --react-native-version "$react_native_version" \
+  --native-log /tmp/rnick-demo-raw/native.log \
+  --build-type debug \
+  --runner-label ubuntu-latest \
+  --runner-os "$RUNNER_OS" \
+  --runner-arch "$RUNNER_ARCH" \
+  --runner-name "$RUNNER_NAME" \
+  --image-os "$ImageOS" \
+  --image-version "$ImageVersion" \
+  --node "$node_version" \
+  --ffmpeg "$ffmpeg_version" \
+  --ffprobe "$ffprobe_version" \
+  --primary-toolchain "$java_version" \
+  --platform-sdk "Android compile SDK 36; emulator API 35; build-tools 36.0.0; NDK 27.1.12297006" \
+  --output /tmp/rnick-economic-raw/environment.json
+node scripts/create-economic-resilience-evidence.mjs \
+  --platform android \
+  --package-version "$RNICK_DEMO_PACKAGE_VERSION" \
+  --source-sha "$RNICK_DEMO_SOURCE_SHA" \
+  --run-id "$GITHUB_RUN_ID" \
+  --run-attempt "$GITHUB_RUN_ATTEMPT" \
+  --run-url "$RNICK_DEMO_RUN_URL" \
+  --log /tmp/rnick-demo-raw/native.log \
+  --source /tmp/rnick-economic-raw/source.jpg \
+  --output /tmp/rnick-economic-raw/output.jpg \
+  --fixture-manifest example/fixtures/kit-only-12mp-v1.json \
+  --visual-agreement /tmp/rnick-economic-raw/visual-agreement.json \
+  --environment /tmp/rnick-economic-raw/environment.json \
+  --destination demo-evidence/android
+node scripts/verify-economic-resilience-evidence.mjs \
+  --artifact-dir demo-evidence/android/economic-resilience \
+  --report-file /tmp/rnick-economic-raw/verification.json

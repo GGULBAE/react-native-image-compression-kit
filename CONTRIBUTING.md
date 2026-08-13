@@ -21,6 +21,7 @@ Requirements:
 - pnpm 11.8.0 through Corepack
 - Ruby/CocoaPods and Xcode for iOS validation
 - Java 21 and Android SDK 36 for Android executable validation
+- ffmpeg and ffprobe for decode, geometry, and SSIM evidence replay
 
 ```bash
 corepack enable

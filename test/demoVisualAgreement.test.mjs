@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   createDemoVisualAgreementReport,
+  comparePortableDemoVisualAgreement,
   inspectDemoVisualAgreement,
   calculateContainDimensions,
   parseFfmpegFrameDimensions,
   parseFfmpegSsim,
+  PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
 } from '../scripts/demo-visual-agreement-core.mjs';
 
 const sourceBytes = Buffer.from('asymmetric source');
@@ -128,7 +130,7 @@ describe('native demo visual agreement', () => {
     });
     expect(inspection.status).toBe('failed');
     for (const message of [
-      'schemaVersion must be 2',
+      'schemaVersion must be 2 or 3',
       'status must be passed or failed',
       'algorithm is unsupported',
       'resizeMode must be contain',
@@ -151,6 +153,86 @@ describe('native demo visual agreement', () => {
       maxWidth: 0,
       maxHeight: 160,
     })).toEqual({ width: null, height: null });
+  });
+
+  it('binds the portable range contract and allows only narrow score drift', () => {
+    const captured = createDemoVisualAgreementReport({
+      sourceBytes,
+      outputBytes,
+      sourceWidth: 4_000,
+      sourceHeight: 3_000,
+      width: 1_600,
+      height: 1_200,
+      resizeMode: 'contain',
+      maxWidth: 1_600,
+      maxHeight: 1_200,
+      uprightSimilarity: 0.944431,
+      verticalFlipSimilarity: 0.690423,
+      comparisonProfile: PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
+      sourceColorRange: 'pc',
+      outputColorRange: 'pc',
+    });
+    const replayed = {
+      ...captured,
+      uprightSimilarity: 0.944398,
+      verticalFlipSimilarity: 0.690907,
+    };
+
+    expect(captured).toMatchObject({
+      schemaVersion: 3,
+      algorithm: 'ffmpeg-auto-oriented-contain-limited-range-ssim-v3',
+      inputColorRange: 'pc',
+      comparisonColorRange: 'tv',
+      comparisonPixelFormat: 'yuv444p',
+      comparisonScaler: 'lanczos',
+      scoreTolerance: 0.001,
+      sourceColorRange: 'pc',
+      outputColorRange: 'pc',
+    });
+    expect(comparePortableDemoVisualAgreement(captured, replayed)).toMatchObject({
+      status: 'passed',
+      mode: 'portable-tolerance',
+      measurementMatch: true,
+      outcomesPassed: true,
+      exactShapes: true,
+      stableFieldsMatch: true,
+      tolerance: 0.001,
+      uprightSimilarityDelta: 0.000033,
+      verticalFlipSimilarityDelta: 0.000484,
+    });
+    expect(
+      comparePortableDemoVisualAgreement(captured, {
+        ...replayed,
+        uprightSimilarity: 0.943,
+      })
+    ).toMatchObject({ status: 'failed', measurementMatch: false });
+    const failedPair = {
+      ...captured,
+      status: 'failed',
+      checks: { ...captured.checks, minimumSimilarity: false },
+    };
+    expect(comparePortableDemoVisualAgreement(failedPair, failedPair)).toMatchObject({
+      status: 'failed',
+      outcomesPassed: false,
+    });
+    expect(
+      comparePortableDemoVisualAgreement(
+        { ...captured, perceptuallyLossless: true },
+        replayed
+      )
+    ).toMatchObject({ status: 'failed', exactShapes: false });
+    expect(
+      inspectDemoVisualAgreement(
+        { ...captured, checks: { ...captured.checks, extra: true } },
+        { sourceBytes, outputBytes }
+      ).error
+    ).toContain('portable visual agreement check fields drifted');
+    expect(
+      inspectDemoVisualAgreement(
+        { ...captured, comparisonColorRange: 'pc' },
+        { sourceBytes, outputBytes }
+      ).error
+    ).toContain('comparisonColorRange does not match the visual schema');
   });
 
   it('calculates rounded contain geometry and parses auto-oriented dimensions', () => {

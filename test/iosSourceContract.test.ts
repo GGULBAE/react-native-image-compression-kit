@@ -64,6 +64,9 @@ describe('iOS source contract', () => {
     expect(podspec).toContain('"ios/RCTImageCompressionImageEncoder.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionImageTransformer.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionJpegMetadata.h"');
+    expect(podspec).toContain(
+      '"ios/RCTImageCompressionJpegSegmentSanitizer.h"'
+    );
     expect(podspec).toContain('"ios/RCTImageCompressionOutput.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionPipeline.h"');
     expect(podspec).toContain('"ios/RCTImageCompressionInput.h"');
@@ -485,6 +488,8 @@ describe('iOS source contract', () => {
       '@interface RCTImageCompressionJpegMetadataResult : NSObject',
       '@interface RCTImageCompressionJpegMetadata : NSObject',
       'RCTImageCompressionJpegSourcePropertyReader',
+      '@property (nonatomic, copy, readonly) NSString *metadataPolicy;',
+      '@property (nonatomic, readonly) BOOL stripRequested;',
     ]) {
       expect(header).toContain(identifier);
     }
@@ -504,6 +509,12 @@ describe('iOS source contract', () => {
     }
     expect(metadata).not.toMatch(
       /(?:CGImageDestinationCreateWithData|CGImageDestinationAddImage|CGImageDestinationFinalize|UIImage|maxBytes|writeToFile:|RCTPromise)/
+    );
+    expect(metadata).toContain(
+      'initWithMetadataPolicy:request.metadataPolicy'
+    );
+    expect(metadata).toContain(
+      '_stripRequested = [metadataPolicy isEqualToString:RCTImageCompressionKitStripMetadataPolicy]'
     );
     expect(defaultPipeline).toContain(
       '[RCTImageCompressionJpegMetadata defaultMetadata]'
@@ -538,6 +549,98 @@ describe('iOS source contract', () => {
     expect(runner).toContain("if (mode === 'metadata-test')");
     expect(runner).toMatch(
       /if \(mode === 'smoke'\) \{[\s\S]*?runRequestParserTests\(\);\s*runInputTests\(\);\s*runImageDecoderTests\(\);\s*runImageTransformerTests\(\);\s*runJpegMetadataTests\(\);/
+    );
+  });
+
+  it('strictly strips encoder-generated JPEG metadata markers only for strip policy', () => {
+    const header = readProjectFile(
+      'ios/RCTImageCompressionJpegSegmentSanitizer.h'
+    );
+    const sanitizer = readProjectFile(
+      'ios/RCTImageCompressionJpegSegmentSanitizer.mm'
+    );
+    const uiKitEncoder = readProjectFile(
+      'ios/RCTImageCompressionUIKitImageEncoder.mm'
+    );
+    const metadataTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionJpegMetadataTests.mm'
+    );
+    const nativeTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionJpegSegmentSanitizerTests.mm'
+    );
+    const largeImageTests = readProjectFile(
+      'test/ios-native/RCTImageCompressionLargeImageTests.mm'
+    );
+    const runner = readProjectFile('scripts/ios-validation.mjs');
+    const podspec = readProjectFile(
+      'react-native-image-compression-kit.podspec'
+    );
+    const sanitizerTestNames = [
+      ...nativeTests.matchAll(/static void (Test\w+)\(void\)/g),
+    ].map((match) => match[1]);
+    const largeImageRunner = runner.slice(
+      runner.indexOf('function runLargeImageTests()'),
+      runner.indexOf('function runImageTransformerTests()')
+    );
+
+    expect(header).toContain(
+      '@interface RCTImageCompressionJpegSegmentSanitizer : NSObject'
+    );
+    expect(header).toContain('sanitizeJpegData:(NSData *)jpegData');
+    expect(header).toContain('stripRequested:(BOOL)stripRequested');
+    expect(sanitizer).not.toMatch(/#import <(?:UIKit|ImageIO|React)/);
+    expect(sanitizer).toContain('if (!stripRequested) return [jpegData copy]');
+    expect(sanitizer).toContain('bytes[0] != 0xff || bytes[1] != 0xd8');
+    expect(sanitizer).toContain('marker == 0xe1 || marker == 0xed || marker == 0xfe');
+    expect(sanitizer).toContain('marker == 0x00 || marker == 0x01');
+    expect(sanitizer).toContain('marker >= 0xd0 && marker <= 0xd7');
+    expect(sanitizer).toContain('segmentLength < 2 || segmentLength > length - cursor');
+    expect(sanitizer).toContain('segmentLength != 6 + (2 * componentCount)');
+    expect(sanitizer).toContain('componentCount == 0 || componentCount > 4');
+    expect(sanitizer).toContain(
+      '!resumeEntropyAfterSegment || segmentLength != 4'
+    );
+    expect(sanitizer).toContain('if (!sawScan || cursor != length) return nil');
+    expect(sanitizer).toContain('resumeEntropyAfterSegment = marker == 0xdc');
+    expect(uiKitEncoder).toContain(
+      '#import "RCTImageCompressionJpegSegmentSanitizer.h"'
+    );
+    expect(uiKitEncoder).toContain('stripRequested:metadata.stripRequested');
+    expect(metadataTests).toContain(
+      '@"only strip requests marker sanitization"'
+    );
+    expect(sanitizerTestNames).toEqual(
+      expect.arrayContaining([
+        'TestRemovesMetadataBeforeAndBetweenScans',
+        'TestPreservesStuffedRestartAndNonSensitiveSegments',
+        'TestBypassesSafeAndPreserveOutputs',
+        'TestRejectsMalformedHeadersAndSegmentLengths',
+        'TestRejectsMalformedScanTermination',
+      ])
+    );
+    expect(sanitizerTestNames).toHaveLength(5);
+    expect(largeImageTests).toContain(
+      'TestStripSanitizesJpegWithoutChangingGeometry'
+    );
+    expect(largeImageTests).toContain(
+      '@"preserve output retains source TIFF artist metadata"'
+    );
+    expect(packageJson.scripts['example:ios:jpeg-sanitizer-test']).toBe(
+      'node scripts/ios-validation.mjs jpeg-sanitizer-test'
+    );
+    expect(runner).toContain("if (mode === 'jpeg-sanitizer-test')");
+    expect(runner).toContain('function runJpegSegmentSanitizerTests()');
+    expect(runner).toMatch(
+      /runLargeImageTests\(\);\s*runJpegSegmentSanitizerTests\(\);/
+    );
+    expect(largeImageRunner).toContain(
+      'JPEG_SEGMENT_SANITIZER_CORE_SOURCE'
+    );
+    expect(runner).toContain(
+      "'RCTImageCompressionJpegSegmentSanitizer.mm'"
+    );
+    expect(podspec).toContain(
+      '"ios/RCTImageCompressionJpegSegmentSanitizer.h"'
     );
   });
 

@@ -10,8 +10,20 @@ export type IOSJpegMetadataSummary = {
   exifPixelYDimension: number | null;
 };
 
+export type EvidenceImageInspection = {
+  exists: boolean;
+  byteSize: number;
+  sha256?: string;
+  mediaType?: 'image/jpeg';
+  width?: number;
+  height?: number;
+};
+
 export type ExampleImageSourceModule = {
   copySampleJpegToCache: () => Promise<string>;
+  copyEconomicResilienceJpegToCache: () => Promise<string>;
+  copyEconomicResilienceOutputForEvidence: (uri: string) => Promise<string>;
+  inspectEvidenceImage: (uri: string) => Promise<EvidenceImageInspection>;
   getReactNativeArchitecture: () => Promise<'legacy' | 'new'>;
   copySamplePngToCache?: () => Promise<string>;
   copySampleHeicToCache?: () => Promise<string>;

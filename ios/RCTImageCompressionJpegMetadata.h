@@ -30,11 +30,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface RCTImageCompressionJpegMetadataResult : NSObject
 
+@property (nonatomic, copy, readonly) NSString *metadataPolicy;
 @property (nonatomic, readonly) BOOL preservingSourceMetadata;
+@property (nonatomic, readonly) BOOL stripRequested;
 @property (nonatomic, copy, readonly, nullable) NSDictionary *sourceProperties;
 
+- (instancetype)initWithMetadataPolicy:(NSString *)metadataPolicy
+              preservingSourceMetadata:(BOOL)preservingSourceMetadata
+                       sourceProperties:(nullable NSDictionary *)sourceProperties NS_DESIGNATED_INITIALIZER;
 - (instancetype)initWithPreservingSourceMetadata:(BOOL)preservingSourceMetadata
-                                 sourceProperties:(nullable NSDictionary *)sourceProperties NS_DESIGNATED_INITIALIZER;
+                                 sourceProperties:(nullable NSDictionary *)sourceProperties;
 - (instancetype)init NS_UNAVAILABLE;
 
 - (NSDictionary *)destinationPropertiesForQuality:(NSInteger)quality

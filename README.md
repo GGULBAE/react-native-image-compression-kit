@@ -80,7 +80,7 @@ owned-file cleanup.
 | Large photos | Decode downsampling, pixel limits, two-operation scheduling | 48 MP → 1.92 MP planned decode; this is not measured peak memory |
 | Cancellation | `ERR_CANCELLED` without publishing partial output | JS and native suites assert zero residual output at representative boundaries |
 | Output lifecycle | Narrow `removeCompressionOutput(uri)` ownership check | 0.4.1 candidate tests owned deletion and foreign/path/directory rejection |
-| Metadata | Explicit `preserve`, `safe`, and `strip` | Android safe retained 0/7 named sensitive fields; iOS safe/strip copy no source metadata |
+| Metadata | Explicit `preserve`, `safe`, and `strip` | Android safe retained 0/7 named sensitive fields; iOS safe copies no source metadata and JPEG strip also removes APP1/APP13/COM segments |
 | Integration | Packed tarball installed by fresh consumers | 8/8 release-target platform builds passed for v0.4.0 |
 
 </details>
@@ -352,8 +352,9 @@ Important limitations:
 - HEIC, HEIF, and AVIF output reject with `ERR_NOT_IMPLEMENTED`.
 - GIF output and animation preservation for GIF/WebP/AVIF are not implemented.
 - `metadata: 'preserve'` is supported only for JPEG source to JPEG output.
-- Android `safe` copies a privacy-filtered JPEG EXIF allowlist. iOS `safe` and
-  `strip` re-encode without copying source metadata.
+- Android `safe` copies a privacy-filtered JPEG EXIF allowlist. iOS `safe`
+  re-encodes without copying source metadata; for JPEG output, iOS `strip`
+  additionally removes encoder-generated APP1, APP13, and COM segments.
 - The iOS SDK ships a namespaced privacy manifest declaring no tracking or
   collected data and C617.1 for package-cache file metadata validation.
 - JPEG orientation is rendered into pixels before resize/encode; preserved
@@ -372,6 +373,10 @@ Important limitations:
 
 ## Development verification
 
+The full repository gate requires `ffmpeg` and `ffprobe` so retained and
+newly generated native image evidence can be decoded and visually replayed.
+The pinned Docker lane includes both tools.
+
 ```bash
 pnpm test:coverage
 pnpm verify
@@ -384,6 +389,7 @@ pnpm example:ios:output-test
 pnpm example:ios:pipeline-test
 pnpm example:ios:large-image-test
 pnpm example:ios:metadata-test
+pnpm example:ios:jpeg-sanitizer-test
 pnpm example:ios:transformer-test
 pnpm docs:check
 pnpm site:check
@@ -416,6 +422,13 @@ movie header.
 The same runs emit
 versioned baseline and exact-plan comparison evidence with raw samples, fixture
 and plan digests, balanced execution positions, and median/p95 summaries.
+They also create a kit-only 12 MP JPEG source-tree evidence bundle that binds source and
+output bytes, environment, capabilities, latency samples, visual agreement,
+and package-output cleanup. Its visual replay pins the JPEG color-range
+conversion and allows only a 0.001 SSIM implementation tolerance after both
+measurements independently pass the quality and orientation gates. The bundle
+is an environment-specific observation, not a speed ranking, cost-savings
+claim, or real-device benchmark.
 Comparison dependencies remain inside the private example application and
 outside the published package. See the
 [benchmark methodology](docs/benchmarks/README.md) for its timing boundary,

@@ -160,6 +160,12 @@ static void TestReadsSourcePropertiesOnlyForSupportedPreserve(void)
   RCTImageCompressionJpegMetadataResult *preserve = [metadata prepareRequest:preserveRequest error:nil];
 
   RCTMetadataAssert(preserve.preservingSourceMetadata, @"supported preserve marks result as preserving");
+  RCTMetadataAssertEqualObjects(
+    preserve.metadataPolicy,
+    RCTImageCompressionKitPreserveMetadataPolicy,
+    @"supported preserve retains its policy"
+  );
+  RCTMetadataAssert(!preserve.stripRequested, @"supported preserve does not request stripping");
   RCTMetadataAssertEqualObjects(preserve.sourceProperties, expectedProperties, @"supported preserve retains reader properties");
   RCTMetadataAssertEqualObjects(receivedSource, expectedSource, @"reader receives immutable request source bytes");
 
@@ -169,6 +175,11 @@ static void TestReadsSourcePropertiesOnlyForSupportedPreserve(void)
       error:nil
     ];
     RCTMetadataAssert(!result.preservingSourceMetadata, @"safe and strip do not preserve source metadata");
+    RCTMetadataAssertEqualObjects(result.metadataPolicy, policy, @"safe and strip retain the selected policy");
+    RCTMetadataAssert(
+      result.stripRequested == [policy isEqualToString:RCTImageCompressionKitStripMetadataPolicy],
+      @"only strip requests marker sanitization"
+    );
     RCTMetadataAssert(result.sourceProperties == nil, @"safe and strip expose no source properties");
   }
   RCTMetadataAssert(readerCalls == 1, @"only supported preserve reads source properties");
@@ -224,6 +235,12 @@ static void TestNormalizesPreservedMetadataWithoutMutatingSource(void)
     initWithPreservingSourceMetadata:YES
     sourceProperties:source
   ];
+  RCTMetadataAssertEqualObjects(
+    result.metadataPolicy,
+    RCTImageCompressionKitPreserveMetadataPolicy,
+    @"legacy preserving initializer maps to preserve policy"
+  );
+  RCTMetadataAssert(!result.stripRequested, @"legacy preserving initializer does not strip");
   NSDictionary *properties = [result
     destinationPropertiesForQuality:85
     pixelWidth:640

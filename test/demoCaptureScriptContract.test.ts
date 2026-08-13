@@ -23,6 +23,75 @@ describe('Android demo screenshot capture', () => {
     expect(source).toContain('RNICK_BENCHMARK_COMPARISON_PASS');
     expect(source).toContain('create-benchmark-comparison-evidence.mjs');
     expect(source).toContain('verify-benchmark-comparison-evidence.mjs');
+    expect(source).toContain('RNICK_ECONOMIC_RESILIENCE_PASS');
+    expect(source).toContain('create-economic-resilience-environment.mjs');
+    expect(source).toContain('create-economic-resilience-evidence.mjs');
+    expect(source).toContain('verify-economic-resilience-evidence.mjs');
+    expect(source).toContain('--run-id "$GITHUB_RUN_ID"');
+    expect(source).toContain('--run-attempt "$GITHUB_RUN_ATTEMPT"');
+    expect(source).toContain('ffprobe_version=$(ffprobe -version | head -n 1)');
+    expect(source).toContain('--ffprobe "$ffprobe_version"');
+    expect(source).toContain('--max-width 1600');
+    expect(source).toContain('--max-height 1200');
+  });
+
+  it('streams filtered Android logs cumulatively until all evidence markers pass', () => {
+    const streamStart = source.indexOf(
+      "adb logcat -v threadtime -s RNICK_DEMO:I '*:S' > /tmp/rnick-demo-raw/native.log &",
+    );
+    const captureLaunch = source.indexOf(
+      'adb shell am start -n com.imagecompressionkit.example/.MainActivity --ez rnick-demo-capture true',
+    );
+    const completionGate = source.indexOf(
+      "grep -q 'RNICK_ECONOMIC_RESILIENCE_PASS'",
+    );
+    const streamStop = source.indexOf('stop_logcat_stream', captureLaunch);
+    const firstBuilder = source.indexOf('node scripts/normalize-demo-recording.mjs');
+
+    expect(source).toContain('logcat_pid=$!');
+    expect(source).toContain('kill -TERM "$logcat_pid"');
+    expect(source).toContain('kill -KILL "$logcat_pid"');
+    expect(source).toContain('for _attempt in $(seq 1 50)');
+    expect(source).toContain('wait "$logcat_pid"');
+    expect(source).not.toContain('adb logcat -d');
+    expect(source).toContain("grep -q 'RNICK_DEMO_FAIL'");
+    expect(source).toContain('tail -n 200 /tmp/rnick-demo-raw/native.log');
+    expect(source).toContain('tail -n 200 /tmp/rnick-metro.log');
+    expect(streamStart).toBeGreaterThan(-1);
+    expect(streamStart).toBeLessThan(captureLaunch);
+    expect(completionGate).toBeGreaterThan(captureLaunch);
+    expect(streamStop).toBeGreaterThan(completionGate);
+    expect(streamStop).toBeLessThan(firstBuilder);
+  });
+
+  it('pins dispatch source and retains complete platform logs for the 12 MP bundle', () => {
+    expect(workflow).toContain('source_sha:');
+    expect(workflow.match(/Verify exact source checkout/g)?.length).toBe(2);
+    expect(workflow).toContain('test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"');
+    expect(workflow).toContain('RNICK_ECONOMIC_RESILIENCE_');
+    expect(workflow).toContain('RNICK_ECONOMIC_RESILIENCE_PASS');
+    expect(workflow).toContain('log show --style compact --last 15m');
+    expect(workflow).not.toContain('--start "$capture_started_at"');
+    expect(workflow).not.toContain('log show --style compact --last 3m');
+    expect(workflow).toContain('for attempt in $(seq 1 300)');
+    expect(workflow).toContain("grep -q 'RNICK_DEMO_FAIL'");
+    expect(workflow).toContain('tail -n 200 /tmp/rnick-demo-raw/native.log');
+    expect(workflow).toContain('tail -n 200 /tmp/rnick-metro.log');
+    expect(workflow).toContain('create-economic-resilience-environment.mjs');
+    expect(workflow).toContain('create-economic-resilience-evidence.mjs');
+    expect(workflow).toContain('verify-economic-resilience-evidence.mjs');
+    expect(workflow).toContain('--run-id "$GITHUB_RUN_ID"');
+    expect(workflow).toContain('--run-attempt "$GITHUB_RUN_ATTEMPT"');
+    expect(workflow).toContain('ffprobe_version=$(ffprobe -version | head -n 1)');
+    expect(workflow).toContain('--ffprobe "$ffprobe_version"');
+    expect(workflow).toContain('xcrun simctl list runtimes --json');
+    expect(workflow).toContain('inspect-ios-simulator-metadata.mjs');
+    expect(workflow).toContain("require('/tmp/rnick-sim-metadata.json').udid");
+    expect(workflow).not.toContain('simctl spawn "$udid" sw_vers');
+    expect(workflow).not.toContain('simctl spawn "$udid" uname');
+    expect(workflow).toContain('xcrun lipo -archs "$app_executable"');
+    expect(workflow).toContain('--runner-arch "$RUNNER_ARCH"');
+    expect(workflow).toContain("require('/tmp/rnick-sim-metadata.json').abi");
   });
 
   it('records the complete guided walkthrough on both native platforms', () => {

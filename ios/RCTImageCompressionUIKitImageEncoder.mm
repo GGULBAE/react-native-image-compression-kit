@@ -1,6 +1,7 @@
 #import "RCTImageCompressionImageEncoder.h"
 
 #import "RCTImageCompressionCGImage.h"
+#import "RCTImageCompressionJpegSegmentSanitizer.h"
 
 #import <ImageIO/ImageIO.h>
 
@@ -59,7 +60,16 @@ static NSData *RCTImageCompressionEncodeJpeg(
     pixelWidth:CGImageGetWidth(cgImage)
     pixelHeight:CGImageGetHeight(cgImage)
   ];
-  return RCTImageCompressionEncodeImage(image, @"public.jpeg", properties);
+  NSData *encodedData = RCTImageCompressionEncodeImage(
+    image,
+    @"public.jpeg",
+    properties
+  );
+  if (encodedData == nil) return nil;
+  return [RCTImageCompressionJpegSegmentSanitizer
+    sanitizeJpegData:encodedData
+    stripRequested:metadata.stripRequested
+  ];
 }
 
 static NSData *RCTImageCompressionEncodeWebP(UIImage *image, NSInteger quality)
