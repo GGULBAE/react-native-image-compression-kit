@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scenarioId": "kit-only-12mp-jpeg-v1",
+  "sourceCommit": "2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+  "artifactMetadata": {
+    "file": "artifact-metadata.json",
+    "sha256": "e56481b5359ae7062e9873da5b7906352ed841e7f5c3508b26ca28fa10ca6b8b"
+  },
+  "workflow": {
+    "metadataFile": "run-metadata.json",
+    "metadataSha256": "eaf29c17f58ed36fe70a304fe0040fda44e048acd87e9d653d163fbfc2f864de",
+    "file": ".github/workflows/demo-evidence.yml",
+    "workflowName": "Native Demo Evidence",
+    "eventName": "workflow_dispatch",
+    "headBranch": "master",
+    "ref": "refs/heads/master",
+    "headSha": "2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+    "runId": 31701095800,
+    "runAttempt": 1,
+    "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/31701095800"
+  },
+  "platforms": {
+    "android": {
+      "artifactPath": "android",
+      "artifactArchivePath": "artifacts/android.zip",
+      "artifactId": 9181519094,
+      "artifactName": "native-demo-android-2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+      "artifactDigest": "sha256:6aacf829a8b5fd4a15dc45f78825b20d7eb94ac7e0a6ea05df62dd89e8059fb5",
+      "artifactExpired": false,
+      "artifactSizeInBytes": 1734370
+    },
+    "ios": {
+      "artifactPath": "ios",
+      "artifactArchivePath": "artifacts/ios.zip",
+      "artifactId": 9181900101,
+      "artifactName": "native-demo-ios-2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+      "artifactDigest": "sha256:d13366ee4d662486350a671fce64550d0c7b13889ceb2aacac29c070ee601d65",
+      "artifactExpired": false,
+      "artifactSizeInBytes": 1891857
+    }
+  },
+  "claimBoundary": {
+    "observation": "source-to-output-byte-difference",
+    "sourceOwnership": "source-remains",
+    "matchedTransferBaseline": null,
+    "costSavingsClaim": null,
+    "crossPlatformTimingComparison": null
+  }
+}

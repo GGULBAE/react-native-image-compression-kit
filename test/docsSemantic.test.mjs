@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 import {
   collectMarkdownLinkViolations,
   inspectDocumentation,
+  inspectEconomicResiliencePageContracts,
+  inspectEconomicResilienceStateContracts,
   inspectProductEvidenceContracts,
   inspectProductDirectionContracts,
   inspectReleaseLanguageContracts,
@@ -174,6 +176,39 @@ describe('documentation semantic gate', () => {
       'product evidence missing decision contract: not a peak-memory measurement',
       'product evidence missing decision contract: does not establish image-quality superiority',
       'product evidence missing decision contract: evidence-scorecard.svg',
+    ]);
+  });
+
+  it('keeps source-tree economic evidence append-only and inside measured claim boundaries', () => {
+    const evidence = readFileSync(
+      path.join(ROOT, 'website/reference/economic-resilience.md'),
+      'utf8'
+    );
+
+    expect(inspectEconomicResiliencePageContracts(evidence)).toEqual([]);
+    const component = readFileSync(
+      path.join(ROOT, 'website/.vitepress/theme/EconomicResilienceArchive.vue'),
+      'utf8'
+    );
+    expect(inspectEconomicResilienceStateContracts({
+      archiveState: 'empty',
+      componentContents: component,
+    })).toEqual([]);
+    expect(inspectEconomicResilienceStateContracts({
+      archiveState: 'available',
+      componentContents: component,
+    })).toEqual([]);
+    expect(
+      inspectEconomicResiliencePageContracts(
+        evidence
+          .replace('## Economic claim boundary', '## Savings')
+          .replace('matchedTransferBaseline: null', 'baseline measured')
+          .replace('There is no mutable `latest`', 'Use the latest alias')
+      )
+    ).toEqual([
+      'economic resilience evidence missing heading: Economic claim boundary',
+      'economic resilience evidence missing decision contract: matchedTransferBaseline: null',
+      'economic resilience evidence missing decision contract: There is no mutable `latest`',
     ]);
   });
 

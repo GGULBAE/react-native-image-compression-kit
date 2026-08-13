@@ -207,6 +207,11 @@ source remains and no matched baseline is supplied.
 
 See the [benchmark methodology](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/benchmarks/README.md#12-mp-kit-only-economic-resilience)
 for the complete timing boundary, artifact verifier, and interpretation limits.
+The [economic resilience archive](./economic-resilience.md) documents the
+append-only source-tree preservation contract and shows its claim boundaries.
+It renders a methodology preview while the index is empty, then renders only
+archive-derived bytes, visual scores, lifecycle facts, retained assets, and run
+provenance after an exact-master capture is present.
 
 ## Reproduce the evidence
 

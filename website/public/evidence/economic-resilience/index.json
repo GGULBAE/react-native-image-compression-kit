@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "archive": "economic-resilience-source-tree-v1",
+  "captures": [
+    {
+      "sourceCommit": "2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+      "runId": 31701095800,
+      "captureSetPath": "source-tree/2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d/capture-set.json"
+    }
+  ]
+}

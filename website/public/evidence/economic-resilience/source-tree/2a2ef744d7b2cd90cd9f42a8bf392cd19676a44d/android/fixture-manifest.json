@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "kit-only-12mp-v1",
+  "file": "kit-only-12mp-v1.jpg",
+  "provenance": {
+    "kind": "project-generated-synthetic",
+    "containsPersonalData": false,
+    "license": "MIT",
+    "generator": "FFmpeg 8.1.2 and libjpeg-turbo jpegtran 3.1.4.1",
+    "recipe": "testsrc2 4000x3000 with three asymmetric color fields and a 127x113 grid; MJPEG q=2, yuvj444p, bitexact muxing; jpegtran -copy none -optimize removes COM, EXIF, XMP, and IPTC metadata"
+  },
+  "mediaType": "image/jpeg",
+  "width": 4000,
+  "height": 3000,
+  "pixelCount": 12000000,
+  "orientation": 1,
+  "orientationEncoding": "implicit-default-no-exif-orientation",
+  "byteSize": 1721333,
+  "maximumFixtureByteSize": 8000000,
+  "sha256": "bdcf4e083f1860d8829898211e4b1c428a80dfd53dceca697c6f7e4a4901bfcc"
+}

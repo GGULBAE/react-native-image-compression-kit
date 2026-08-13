@@ -1,0 +1,598 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scenarioId": "kit-only-12mp-jpeg-v1",
+  "implementation": {
+    "name": "react-native-image-compression-kit",
+    "version": "0.4.1",
+    "buildSource": "checked-out-source-tree"
+  },
+  "sourceCommit": "2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+  "runId": 31701095800,
+  "runAttempt": 1,
+  "capturedAt": "2026-08-13T12:48:16.822Z",
+  "runUrl": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/31701095800",
+  "environment": {
+    "platform": "android",
+    "runtime": "Android 15 / API 35",
+    "osBuild": "AE3A.240806.043",
+    "device": "Google sdk_gphone64_x86_64",
+    "deviceKind": "emulator",
+    "abi": "x86_64",
+    "reactNativeArchitecture": "new",
+    "reactNativeVersion": "0.86.2",
+    "jsEngine": "hermes",
+    "buildType": "debug",
+    "runner": {
+      "label": "ubuntu-latest",
+      "os": "Linux",
+      "arch": "X64",
+      "name": "GitHub Actions 1000003256",
+      "imageOS": "ubuntu24",
+      "imageVersion": "20260720.247.2"
+    },
+    "toolchain": {
+      "node": "v24.18.0",
+      "ffmpeg": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers",
+      "ffprobe": "ffprobe version 6.1.1-3ubuntu5 Copyright (c) 2007-2023 the FFmpeg developers",
+      "primary": "openjdk version \"21.0.11\" 2026-04-21 LTS",
+      "platformSdk": "Android compile SDK 36; emulator API 35; build-tools 36.0.0; NDK 27.1.12297006"
+    }
+  },
+  "capabilities": {
+    "resourceLimits": {
+      "maxWorkingPixels": 25000000,
+      "maxSourcePixels": 100000000,
+      "maxSourceDimension": 32768
+    },
+    "maxConcurrentOperations": 2,
+    "supportsCancellation": true,
+    "supportsTargetSizeCompression": true,
+    "supportsDecodeDownsampling": true,
+    "formats": [
+      {
+        "notes": [
+          "Android MVP supports JPEG file:// and content:// sources.",
+          "EXIF orientation is applied before resize and selected output encoding.",
+          "Resize supports contain, cover, and stretch modes with maxWidth and maxHeight.",
+          "Target-size compression supports maxBytes by adjusting JPEG quality.",
+          "Metadata preserve copies supported JPEG source EXIF attributes into JPEG output.",
+          "Metadata safe copies privacy-filtered JPEG source EXIF attributes.",
+          "Metadata safe excludes GPS/location, owner/serial, maker note, user comment, and XMP.",
+          "Metadata preserve normalizes output EXIF orientation after pixels are transformed.",
+          "Metadata strip re-encodes JPEG output without preserving source metadata.",
+          "PNG, WebP, GIF, HEIC, HEIF, and AVIF sources are decoded without copying EXIF metadata."
+        ],
+        "supportsAnimation": false,
+        "supportsAlpha": false,
+        "format": "jpeg",
+        "input": true,
+        "output": true
+      },
+      {
+        "notes": [
+          "Android MVP supports PNG file:// and content:// sources.",
+          "Android can encode decoded JPEG, PNG, WebP, or GIF input to PNG output.",
+          "PNG output ignores quality and does not support target-size maxBytes.",
+          "Non-JPEG output does not preserve source EXIF metadata."
+        ],
+        "supportsAnimation": false,
+        "supportsAlpha": true,
+        "format": "png",
+        "input": true,
+        "output": true
+      },
+      {
+        "notes": [
+          "Android MVP supports WebP file:// and content:// sources.",
+          "Android can encode decoded JPEG, PNG, WebP, or GIF input to WebP output.",
+          "WebP target-size compression supports maxBytes by adjusting WebP quality.",
+          "Non-JPEG output does not preserve source EXIF metadata.",
+          "Animated WebP input or output is not implemented."
+        ],
+        "supportsAnimation": false,
+        "supportsAlpha": true,
+        "format": "webp",
+        "input": true,
+        "output": true
+      },
+      {
+        "notes": [
+          "HEIC input is supported on Android 8.0+ when device HEIF decode codecs are present.",
+          "Android API 28+ uses ImageDecoder for HEIC input.",
+          "Android API 26-27 attempts a guarded BitmapFactory HEIF decode fallback.",
+          "HEIC inputs are decoded without copying EXIF metadata.",
+          "HEIC output is not implemented."
+        ],
+        "supportsAnimation": false,
+        "supportsAlpha": false,
+        "format": "heic",
+        "input": true,
+        "output": false
+      },
+      {
+        "notes": [
+          "HEIF input is supported on Android 8.0+ when device HEIF decode codecs are present.",
+          "Android API 28+ uses ImageDecoder for HEIF input.",
+          "Android API 26-27 attempts a guarded BitmapFactory HEIF decode fallback.",
+          "HEIF inputs are decoded without copying EXIF metadata.",
+          "HEIF output is not implemented."
+        ],
+        "supportsAnimation": false,
+        "supportsAlpha": false,
+        "format": "heif",
+        "input": true,
+        "output": false
+      },
+      {
+        "notes": [
+          "AVIF input is supported on Android 14+ for baseline still images.",
+          "Android API 34+ uses ImageDecoder for AVIF input.",
+          "AVIF inputs are decoded without copying EXIF metadata.",
+          "Animated AVIF preservation is not implemented.",
+          "AVIF output is not implemented.",
+          "AVIF capability reports output=false; selecting output.format: 'avif' rejects with ERR_NOT_IMPLEMENTED.",
+          "Android AVIF output production wiring scaffold blocks entry into the extracted encode/decode-back helper while capability output=false.",
+          "Android AVIF output remains disabled until the MediaCodec image/avif encode/decode-back smoke produces a complete AVIF file with ftyp avif/avis signature and ImageDecoder decode-back validation.",
+          "metadata='preserve', output.maxBytes, and animated AVIF preservation remain unsupported for AVIF output until explicitly designed and tested."
+        ],
+        "supportsAnimation": false,
+        "supportsAlpha": false,
+        "format": "avif",
+        "input": true,
+        "output": false
+      },
+      {
+        "notes": [
+          "Android MVP decodes GIF file:// and content:// sources as a static first frame.",
+          "Animated GIF preservation is not implemented.",
+          "GIF output is not implemented.",
+          "GIF sources are decoded without copying EXIF metadata."
+        ],
+        "supportsAnimation": false,
+        "supportsAlpha": true,
+        "format": "gif",
+        "input": true,
+        "output": false
+      }
+    ],
+    "metadataPolicies": [
+      "preserve",
+      "safe",
+      "strip"
+    ],
+    "platform": "android"
+  },
+  "fixture": {
+    "id": "kit-only-12mp-v1",
+    "file": "source.jpg",
+    "manifestFile": "fixture-manifest.json",
+    "byteSize": 1721333,
+    "sha256": "bdcf4e083f1860d8829898211e4b1c428a80dfd53dceca697c6f7e4a4901bfcc",
+    "width": 4000,
+    "height": 3000,
+    "remainsAfterRun": true
+  },
+  "operation": {
+    "resize": {
+      "maxWidth": 1600,
+      "maxHeight": 1200,
+      "mode": "contain"
+    },
+    "output": {
+      "format": "jpeg",
+      "quality": 90,
+      "maxBytes": 500000
+    },
+    "metadata": "strip"
+  },
+  "timing": {
+    "clock": "performance.now",
+    "boundary": "compressImage-call-only",
+    "warmupIterations": 2,
+    "measuredIterations": 10
+  },
+  "samples": [
+    {
+      "phase": "warmup",
+      "iteration": 1,
+      "elapsedMs": 62.19035400002031,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "warmup",
+      "iteration": 2,
+      "elapsedMs": 61.75065199995879,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 1,
+      "elapsedMs": 60.22498800000176,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 2,
+      "elapsedMs": 60.822243999980856,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 3,
+      "elapsedMs": 61.220919999992475,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 4,
+      "elapsedMs": 64.13922299997648,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 5,
+      "elapsedMs": 60.814517999999225,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 6,
+      "elapsedMs": 60.95991899998626,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 7,
+      "elapsedMs": 61.15849000000162,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 8,
+      "elapsedMs": 60.586523000034504,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 9,
+      "elapsedMs": 60.65781699999934,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    },
+    {
+      "phase": "measured",
+      "iteration": 10,
+      "elapsedMs": 66.18564900005003,
+      "result": {
+        "compressionRatio": 0.13195529278762447,
+        "originalByteSize": 1721333,
+        "byteSize": 227139,
+        "height": 1200,
+        "format": "jpeg",
+        "width": 1600
+      },
+      "sourceToOutputByteDifference": 1494194,
+      "outputInspection": {
+        "exists": true,
+        "width": 1600,
+        "mediaType": "image/jpeg",
+        "height": 1200,
+        "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+        "byteSize": 227139
+      },
+      "cleanup": {
+        "packageOutputRemoved": true,
+        "existsAfterRemoval": false,
+        "residualByteSize": 0
+      }
+    }
+  ],
+  "measuredSummary": {
+    "elapsedMs": {
+      "min": 60.225,
+      "median": 60.891,
+      "p95": 66.186,
+      "max": 66.186
+    },
+    "outputBytes": {
+      "min": 227139,
+      "median": 227139,
+      "max": 227139
+    },
+    "dimensions": [
+      {
+        "width": 1600,
+        "height": 1200,
+        "count": 10
+      }
+    ]
+  },
+  "representative": {
+    "measuredIteration": 10,
+    "file": "output.jpg",
+    "byteSize": 227139,
+    "sha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c",
+    "width": 1600,
+    "height": 1200
+  },
+  "economics": {
+    "boundary": "source-to-output-observation",
+    "sourceOwnership": "source-remains",
+    "stagedEvidenceOwnership": "example-owned-copy",
+    "matchedTransferBaseline": null,
+    "sourceBytes": 1721333,
+    "outputBytes": 227139,
+    "sourceToOutputByteDifference": 1494194,
+    "costSavingsClaim": null
+  },
+  "cleanup": {
+    "attemptedPackageOutputs": 12,
+    "removedPackageOutputs": 12,
+    "residualPackageOutputs": 0,
+    "residualPackageOutputBytes": 0
+  },
+  "visualAgreement": {
+    "schemaVersion": 3,
+    "status": "passed",
+    "algorithm": "ffmpeg-auto-oriented-contain-limited-range-ssim-v3",
+    "comparisonProfile": "jpeg-full-range-to-limited-yuv444p-v1",
+    "inputColorRange": "pc",
+    "comparisonColorRange": "tv",
+    "comparisonPixelFormat": "yuv444p",
+    "comparisonScaler": "lanczos",
+    "scoreTolerance": 0.001,
+    "sourceColorRange": "pc",
+    "outputColorRange": "pc",
+    "resizeMode": "contain",
+    "maxWidth": 1600,
+    "maxHeight": 1200,
+    "sourceWidth": 4000,
+    "sourceHeight": 3000,
+    "expectedWidth": 1600,
+    "expectedHeight": 1200,
+    "width": 1600,
+    "height": 1200,
+    "uprightSimilarity": 0.944431,
+    "verticalFlipSimilarity": 0.690423,
+    "minimumSimilarity": 0.9,
+    "minimumOrientationMargin": 0.02,
+    "checks": {
+      "geometry": true,
+      "minimumSimilarity": true,
+      "orientationMargin": true
+    },
+    "sourceSha256": "bdcf4e083f1860d8829898211e4b1c428a80dfd53dceca697c6f7e4a4901bfcc",
+    "outputSha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c"
+  }
+}
