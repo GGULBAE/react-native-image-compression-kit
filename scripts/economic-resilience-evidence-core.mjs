@@ -45,6 +45,16 @@ export const ECONOMIC_RESILIENCE_OPERATION = Object.freeze({
   metadata: 'strip',
 });
 
+const EXIF_APP1_IDENTIFIER = Buffer.from('Exif\0\0', 'latin1');
+const STANDARD_XMP_APP1_IDENTIFIER = Buffer.from(
+  'http://ns.adobe.com/xap/1.0/\0',
+  'latin1'
+);
+const EXTENDED_XMP_APP1_IDENTIFIER = Buffer.from(
+  'http://ns.adobe.com/xmp/extension/\0',
+  'latin1'
+);
+
 const ENVIRONMENT_FIELDS = Object.freeze([
   'platform',
   'runtime',
@@ -307,9 +317,12 @@ export function inspectJpegStructure(bytes) {
     const payload = buffer.subarray(payloadStart, payloadEnd);
     if (marker === 0xe1) {
       app1Count += 1;
-      hasExif ||= payload.subarray(0, 6).equals(Buffer.from('Exif\0\0'));
-      hasXmp ||= payload.toString('latin1').includes('http://ns.adobe.com/xap/1.0/');
-      hasXmp ||= payload.toString('latin1').includes('http://ns.adobe.com/xmp/extension/');
+      hasExif ||= payload.subarray(0, EXIF_APP1_IDENTIFIER.length)
+        .equals(EXIF_APP1_IDENTIFIER);
+      hasXmp ||= payload.subarray(0, STANDARD_XMP_APP1_IDENTIFIER.length)
+        .equals(STANDARD_XMP_APP1_IDENTIFIER);
+      hasXmp ||= payload.subarray(0, EXTENDED_XMP_APP1_IDENTIFIER.length)
+        .equals(EXTENDED_XMP_APP1_IDENTIFIER);
     }
     if (marker === 0xed) {
       app13Count += 1;

@@ -103,6 +103,27 @@ describe('kit-only 12 MP economic resilience evidence', () => {
       app13Count: 1,
     });
 
+    const incidentalXmpText = Buffer.from(
+      'prefix-http://ns.adobe.com/xap/1.0/\0',
+      'latin1'
+    );
+    const withIncidentalXmpText = Buffer.concat([
+      SOURCE.subarray(0, -2),
+      Buffer.from([
+        0xff,
+        0xe1,
+        ((incidentalXmpText.length + 2) >> 8) & 0xff,
+        (incidentalXmpText.length + 2) & 0xff,
+      ]),
+      incidentalXmpText,
+      SOURCE.subarray(-2),
+    ]);
+    expect(inspectJpegStructure(withIncidentalXmpText)).toMatchObject({
+      status: 'passed',
+      hasXmp: false,
+      app1Count: 1,
+    });
+
     const malformedManifest = structuredClone(FIXTURE_MANIFEST);
     delete malformedManifest.schemaVersion;
     delete malformedManifest.provenance.kind;
