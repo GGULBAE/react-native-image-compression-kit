@@ -5,6 +5,8 @@ const CANONICAL_UDID =
 export function inspectBootedIosSimulatorMetadata({
   devices,
   runtimes,
+  appArchitectures,
+  runnerArch,
   udid = null,
 }) {
   const errors = [];
@@ -17,6 +19,7 @@ export function inspectBootedIosSimulatorMetadata({
   if (!Array.isArray(runtimes?.runtimes)) {
     errors.push('runtimes payload must contain a runtimes array');
   }
+  const abi = inspectAppArchitecture(appArchitectures, runnerArch, errors);
 
   const matches = [];
   if (plainObject(devices?.devices)) {
@@ -81,6 +84,7 @@ export function inspectBootedIosSimulatorMetadata({
     runtime: runtime.name,
     osBuild: runtime.buildversion,
     device: match.candidate.name,
+    abi,
     error: null,
   };
 }
@@ -93,8 +97,34 @@ function failed(errors) {
     runtime: null,
     osBuild: null,
     device: null,
+    abi: null,
     error: errors.join(' | '),
   };
+}
+
+function inspectAppArchitecture(appArchitectures, runnerArch, errors) {
+  if (!safeLabel(appArchitectures)) {
+    errors.push('built app architectures must be a safe non-empty label');
+    return null;
+  }
+  const architectures = appArchitectures.split(/\s+/);
+  if (
+    architectures.length !== 1 ||
+    !['arm64', 'x86_64'].includes(architectures[0])
+  ) {
+    errors.push('built simulator app must contain exactly one supported architecture');
+    return null;
+  }
+  const expectedAbi = { ARM64: 'arm64', X64: 'x86_64' }[runnerArch];
+  if (!expectedAbi) {
+    errors.push('runner architecture must be ARM64 or X64');
+    return null;
+  }
+  if (architectures[0] !== expectedAbi) {
+    errors.push('built simulator app architecture must match the runner');
+    return null;
+  }
+  return architectures[0];
 }
 
 function plainObject(value) {

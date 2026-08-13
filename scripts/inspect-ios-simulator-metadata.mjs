@@ -4,12 +4,14 @@ import { readFileSync } from 'node:fs';
 import { inspectBootedIosSimulatorMetadata } from './ios-simulator-metadata-core.mjs';
 
 const options = parseArgs(process.argv.slice(2));
-for (const field of ['devices', 'runtimes']) {
+for (const field of ['devices', 'runtimes', 'appArchitectures', 'runnerArch']) {
   if (!options[field]) throw new Error(`--${field} is required`);
 }
 const report = inspectBootedIosSimulatorMetadata({
   devices: JSON.parse(readFileSync(options.devices, 'utf8')),
   runtimes: JSON.parse(readFileSync(options.runtimes, 'utf8')),
+  appArchitectures: options.appArchitectures,
+  runnerArch: options.runnerArch,
   udid: options.udid ?? null,
 });
 if (report.status !== 'passed') throw new Error(report.error);
@@ -23,7 +25,9 @@ function parseArgs(args) {
     if (!flag?.startsWith('--') || !value) {
       throw new Error(`invalid argument: ${flag ?? ''}`);
     }
-    parsed[flag.slice(2)] = value;
+    parsed[
+      flag.slice(2).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase())
+    ] = value;
   }
   return parsed;
 }

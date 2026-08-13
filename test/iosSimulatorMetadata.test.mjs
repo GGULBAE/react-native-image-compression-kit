@@ -25,6 +25,8 @@ describe('iOS simulator metadata', () => {
             },
           ],
         },
+        appArchitectures: 'arm64',
+        runnerArch: 'ARM64',
         udid: UDID,
       })
     ).toEqual({
@@ -34,6 +36,7 @@ describe('iOS simulator metadata', () => {
       runtime: 'iOS 26.0',
       osBuild: '23A340',
       device: 'iPhone 16 Pro',
+      abi: 'arm64',
       error: null,
     });
   });
@@ -42,6 +45,8 @@ describe('iOS simulator metadata', () => {
     const malformed = inspectBootedIosSimulatorMetadata({
       devices: { devices: {} },
       runtimes: { runtimes: [] },
+      appArchitectures: 'arm64',
+      runnerArch: 'ARM64',
       udid: 'AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEZ',
     });
     expect(malformed.status).toBe('failed');
@@ -66,6 +71,8 @@ describe('iOS simulator metadata', () => {
           },
         ],
       },
+      appArchitectures: 'arm64',
+      runnerArch: 'ARM64',
       udid: UDID,
     });
     expect(ambiguous.status).toBe('failed');
@@ -91,6 +98,8 @@ describe('iOS simulator metadata', () => {
           },
         ],
       },
+      appArchitectures: 'arm64',
+      runnerArch: 'ARM64',
       udid: UDID,
     });
     expect(report.status).toBe('failed');
@@ -105,6 +114,8 @@ describe('iOS simulator metadata', () => {
     const report = inspectBootedIosSimulatorMetadata({
       devices: { devices: { [RUNTIME_ID]: null } },
       runtimes: { runtimes: null },
+      appArchitectures: 'arm64',
+      runnerArch: 'ARM64',
       udid: UDID,
     });
     expect(report.status).toBe('failed');
@@ -134,6 +145,8 @@ describe('iOS simulator metadata', () => {
           },
         ],
       },
+      appArchitectures: 'arm64',
+      runnerArch: 'ARM64',
     });
     expect(report.status).toBe('passed');
     expect(report.runtimeIdentifier).toBe(RUNTIME_ID);
@@ -163,10 +176,52 @@ describe('iOS simulator metadata', () => {
           },
         ],
       },
+      appArchitectures: 'arm64',
+      runnerArch: 'ARM64',
     });
     expect(report.status).toBe('failed');
     expect(report.error).toContain('device must be available');
     expect(report.error).toContain('runtime name must identify iOS');
     expect(report.error).toContain('runtime buildversion is required');
+  });
+
+  it('binds one built-app architecture to the hosted runner', () => {
+    const base = {
+      devices: {
+        devices: {
+          [RUNTIME_ID]: [
+            { state: 'Booted', name: 'iPhone 16 Pro', udid: UDID },
+          ],
+        },
+      },
+      runtimes: {
+        runtimes: [
+          {
+            identifier: RUNTIME_ID,
+            name: 'iOS 26.0',
+            buildversion: '23A340',
+            isAvailable: true,
+          },
+        ],
+      },
+      udid: UDID,
+    };
+    expect(
+      inspectBootedIosSimulatorMetadata({
+        ...base,
+        appArchitectures: 'x86_64',
+        runnerArch: 'X64',
+      }).abi
+    ).toBe('x86_64');
+
+    for (const mutation of [
+      { appArchitectures: 'arm64 x86_64', runnerArch: 'ARM64' },
+      { appArchitectures: 'x86_64', runnerArch: 'ARM64' },
+      { appArchitectures: 'arm64', runnerArch: 'unknown' },
+    ]) {
+      expect(
+        inspectBootedIosSimulatorMetadata({ ...base, ...mutation }).status
+      ).toBe('failed');
+    }
   });
 });

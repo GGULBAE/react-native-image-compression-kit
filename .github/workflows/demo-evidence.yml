@@ -180,17 +180,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          app=example/ios/build/Build/Products/Debug-iphonesimulator/ImageCompressionKitExample.app
+          app_executable="$app/ImageCompressionKitExample"
+          test -f "$app_executable"
+          test ! -L "$app_executable"
+          app_architectures=$(xcrun lipo -archs "$app_executable" | tr -d '\r')
           xcrun simctl list devices booted --json > /tmp/rnick-sim-devices.json
           xcrun simctl list runtimes --json > /tmp/rnick-sim-runtimes.json
           node scripts/inspect-ios-simulator-metadata.mjs \
             --devices /tmp/rnick-sim-devices.json \
-            --runtimes /tmp/rnick-sim-runtimes.json > /tmp/rnick-sim-metadata.json
+            --runtimes /tmp/rnick-sim-runtimes.json \
+            --app-architectures "$app_architectures" \
+            --runner-arch "$RUNNER_ARCH" > /tmp/rnick-sim-metadata.json
           udid=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').udid)")
           runtime=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').runtime)")
           device=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').device)")
           os_build=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').osBuild)")
-          abi=$(xcrun simctl spawn "$udid" uname -m | tr -d '\r')
-          app=example/ios/build/Build/Products/Debug-iphonesimulator/ImageCompressionKitExample.app
+          abi=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').abi)")
           xcrun simctl install "$udid" "$app"
           pnpm --filter image-compression-kit-example exec react-native start --port 8081 > /tmp/rnick-metro.log 2>&1 &
           metro_pid=$!

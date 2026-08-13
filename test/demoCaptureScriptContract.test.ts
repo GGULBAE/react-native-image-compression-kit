@@ -88,6 +88,10 @@ describe('Android demo screenshot capture', () => {
     expect(workflow).toContain('inspect-ios-simulator-metadata.mjs');
     expect(workflow).toContain("require('/tmp/rnick-sim-metadata.json').udid");
     expect(workflow).not.toContain('simctl spawn "$udid" sw_vers');
+    expect(workflow).not.toContain('simctl spawn "$udid" uname');
+    expect(workflow).toContain('xcrun lipo -archs "$app_executable"');
+    expect(workflow).toContain('--runner-arch "$RUNNER_ARCH"');
+    expect(workflow).toContain("require('/tmp/rnick-sim-metadata.json').abi");
   });
 
   it('records the complete guided walkthrough on both native platforms', () => {
