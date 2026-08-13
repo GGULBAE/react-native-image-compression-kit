@@ -494,4 +494,18 @@ describe('documentation semantic gate', () => {
       { text: 'A.B', anchor: 'ab-1' },
     ]);
   });
+
+  it('removes nested heading tags without producing a new tag-shaped substring', () => {
+    const headings = parseHeadings(
+      '# <code>API</code>\n\n## <<script>alert</script>\n\n## Before <em>and</em> after\n\n## Unclosed <script\n\n## <scr<script>ipt>'
+    );
+    expect(headings).toEqual([
+      { text: 'API', anchor: 'api' },
+      { text: 'alert', anchor: 'alert' },
+      { text: 'Before and after', anchor: 'before-and-after' },
+      { text: 'Unclosed', anchor: 'unclosed' },
+      { text: 'ipt', anchor: 'ipt' },
+    ]);
+    expect(headings.every(({ text }) => !/[<>]/u.test(text))).toBe(true);
+  });
 });

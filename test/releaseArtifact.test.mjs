@@ -144,4 +144,49 @@ describe('release artifact contract', () => {
       error: expect.stringContaining('exactly one attestation'),
     });
   });
+
+  it('parses the exact npm attestation URL identity without substring sanitization', () => {
+    const provenance = { predicateType: 'https://slsa.dev/provenance/v1' };
+    expect(
+      inspectNpmAttestations(
+        {
+          url: 'https://registry.npmjs.org/-/npm/v1/attestations/%40scope%2Fpackage@1.2.3',
+          provenance,
+        },
+        { packageName: '@scope/package', version: '1.2.3' }
+      )
+    ).toMatchObject({ status: 'passed' });
+
+    for (const url of [
+      'https://registry.npmjs.org/-/npm/v1/attestations/evil-package@1.2.3',
+      'https://registry.npmjs.org/-/npm/v1/attestations/package@1.2.3?identity=package@1.2.3',
+      'https://registry.npmjs.org/-/npm/v1/attestations/package@1.2.3#package@1.2.3',
+      'https://registry.npmjs.org.evil.example/-/npm/v1/attestations/package@1.2.3',
+      'https://package@registry.npmjs.org/-/npm/v1/attestations/package@1.2.3',
+      'https://registry.npmjs.org/-/npm/v1/attestations/%E0%A4%A',
+    ]) {
+      expect(
+        inspectNpmAttestations(
+          { url, provenance },
+          { packageName: 'package', version: '1.2.3' }
+        )
+      ).toMatchObject({
+        status: 'failed',
+        error: expect.stringContaining('exact package version'),
+      });
+    }
+
+    expect(
+      inspectNpmAttestations(
+        {
+          url: 'https://registry.npmjs.org/-/npm/v1/attestations/%2540scope%252Fpackage@1.2.3',
+          provenance,
+        },
+        { packageName: '@scope/package', version: '1.2.3' }
+      )
+    ).toMatchObject({
+      status: 'failed',
+      error: expect.stringContaining('exact package version'),
+    });
+  });
 });

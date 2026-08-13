@@ -1212,11 +1212,25 @@ function describeValue(value) {
 }
 
 function normalizeHeadingText(value) {
-  return value
+  return stripHeadingTags(value)
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/<[^>]*>/g, '')
     .replace(/[`*_~]/g, '')
     .trim();
+}
+
+function stripHeadingTags(value) {
+  let result = '';
+  let insideTag = false;
+  for (const character of value) {
+    if (character === '<') {
+      insideTag = true;
+    } else if (character === '>') {
+      insideTag = false;
+    } else if (!insideTag) {
+      result += character;
+    }
+  }
+  return result;
 }
 
 function slugifyHeading(value) {
