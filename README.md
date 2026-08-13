@@ -422,8 +422,11 @@ versioned baseline and exact-plan comparison evidence with raw samples, fixture
 and plan digests, balanced execution positions, and median/p95 summaries.
 They also create a kit-only 12 MP JPEG source-tree evidence bundle that binds source and
 output bytes, environment, capabilities, latency samples, visual agreement,
-and package-output cleanup. The bundle is an environment-specific observation,
-not a speed ranking, cost-savings claim, or real-device benchmark.
+and package-output cleanup. Its visual replay pins the JPEG color-range
+conversion and allows only a 0.001 SSIM implementation tolerance after both
+measurements independently pass the quality and orientation gates. The bundle
+is an environment-specific observation, not a speed ranking, cost-savings
+claim, or real-device benchmark.
 Comparison dependencies remain inside the private example application and
 outside the published package. See the
 [benchmark methodology](docs/benchmarks/README.md) for its timing boundary,

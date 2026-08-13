@@ -21,6 +21,10 @@ import {
   ECONOMIC_RESILIENCE_ASSET_FILES,
   inspectEconomicResilienceEvidence,
 } from './economic-resilience-evidence-core.mjs';
+import {
+  comparePortableDemoVisualAgreement,
+  PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
+} from './demo-visual-agreement-core.mjs';
 
 const SCRIPT_DIRECTORY = path.dirname(fileURLToPath(import.meta.url));
 
@@ -46,6 +50,13 @@ let report = {
     capturedFfprobeVersion: evidence?.environment?.toolchain?.ffprobe ?? null,
     ffprobeVersionsMatch: null,
     measurementMatch: null,
+    measurementMode: null,
+    measurementTolerance: null,
+    outcomesPassed: null,
+    exactShapes: null,
+    stableFieldsMatch: null,
+    uprightSimilarityDelta: null,
+    verticalFlipSimilarityDelta: null,
   },
 };
 if (structuralReport.status === 'passed') {
@@ -73,6 +84,13 @@ if (structuralReport.status === 'passed') {
             ? null
             : error.localFfprobeVersion === evidence?.environment?.toolchain?.ffprobe,
         measurementMatch: false,
+        measurementMode: error.measurementMode ?? null,
+        measurementTolerance: error.measurementTolerance ?? null,
+        outcomesPassed: error.outcomesPassed ?? null,
+        exactShapes: error.exactShapes ?? null,
+        stableFieldsMatch: error.stableFieldsMatch ?? null,
+        uprightSimilarityDelta: error.uprightSimilarityDelta ?? null,
+        verticalFlipSimilarityDelta: error.verticalFlipSimilarityDelta ?? null,
       },
       error: `visual replay failed: ${error.message}`,
     };
@@ -115,6 +133,8 @@ function replayVisualAgreement(root, evidence) {
         '1600',
         '--max-height',
         '1200',
+        '--comparison-profile',
+        PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
         '--report',
         replay,
       ],
@@ -122,24 +142,51 @@ function replayVisualAgreement(root, evidence) {
     );
     if (result.error) throw result.error;
     if (result.status !== 0 || !existsSync(replay)) {
-      throw new Error(result.stderr.trim() || result.stdout.trim() || 'measurement failed');
-    }
-    const measured = JSON.parse(readFileSync(replay, 'utf8'));
-    if (JSON.stringify(measured) !== JSON.stringify(evidence.visualAgreement)) {
-      const error = new Error('replayed SSIM, flip control, geometry, or hashes differ');
+      const error = new Error(
+        result.stderr.trim() || result.stdout.trim() || 'measurement failed'
+      );
       error.localFfmpegVersion = versionLine;
       error.localFfprobeVersion = probeVersionLine;
+      throw error;
+    }
+    const measured = JSON.parse(readFileSync(replay, 'utf8'));
+    const ffmpegVersionsMatch =
+      versionLine === evidence.environment.toolchain.ffmpeg;
+    const ffprobeVersionsMatch =
+      probeVersionLine === evidence.environment.toolchain.ffprobe;
+    const comparison = comparePortableDemoVisualAgreement(
+      evidence.visualAgreement,
+      measured
+    );
+    if (comparison.status !== 'passed') {
+      const error = new Error(comparison.error);
+      error.localFfmpegVersion = versionLine;
+      error.localFfprobeVersion = probeVersionLine;
+      error.measurementMode = comparison.mode;
+      error.measurementTolerance = comparison.tolerance;
+      error.outcomesPassed = comparison.outcomesPassed;
+      error.exactShapes = comparison.exactShapes;
+      error.stableFieldsMatch = comparison.stableFieldsMatch;
+      error.uprightSimilarityDelta = comparison.uprightSimilarityDelta;
+      error.verticalFlipSimilarityDelta = comparison.verticalFlipSimilarityDelta;
       throw error;
     }
     return {
       status: 'passed',
       localFfmpegVersion: versionLine,
       capturedFfmpegVersion: evidence.environment.toolchain.ffmpeg,
-      ffmpegVersionsMatch: versionLine === evidence.environment.toolchain.ffmpeg,
+      ffmpegVersionsMatch,
       localFfprobeVersion: probeVersionLine,
       capturedFfprobeVersion: evidence.environment.toolchain.ffprobe,
-      ffprobeVersionsMatch: probeVersionLine === evidence.environment.toolchain.ffprobe,
-      measurementMatch: true,
+      ffprobeVersionsMatch,
+      measurementMatch: comparison.measurementMatch,
+      measurementMode: comparison.mode,
+      measurementTolerance: comparison.tolerance,
+      outcomesPassed: comparison.outcomesPassed,
+      exactShapes: comparison.exactShapes,
+      stableFieldsMatch: comparison.stableFieldsMatch,
+      uprightSimilarityDelta: comparison.uprightSimilarityDelta,
+      verticalFlipSimilarityDelta: comparison.verticalFlipSimilarityDelta,
     };
   } finally {
     rmSync(temporary, { recursive: true, force: true });

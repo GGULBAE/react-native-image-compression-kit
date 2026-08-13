@@ -51,7 +51,10 @@ example-owned staging file before all 12 package-owned outputs are removed.
 Acceptance requires a decodable 1,600 × 1,200 JPEG at or below the byte target,
 exact native/file byte and SHA-256 agreement, no APP1/APP13/comment metadata,
 upright SSIM of at least 0.90, an upright-over-vertical-flip margin of at least
-0.02, the unchanged source, and zero package-output residuals.
+0.02, the unchanged source, and zero package-output residuals. The visual
+profile requires full-range JPEG inputs and explicitly converts both sides to
+limited-range `yuv444p` with Lanczos scaling before comparison, avoiding
+version-dependent implicit YUVJ range negotiation.
 
 The artifact records the exact checked-out source commit, package source-tree
 version, workflow run and attempt, runtime, OS build, simulator/emulator,
@@ -72,8 +75,12 @@ pnpm verify:economic-resilience-evidence -- \
 ```
 
 The replay reports both captured and local ffmpeg versions and gates on the
-recalculated decode, geometry, hashes, SSIM, and flip-control report. Identical
-version strings are not required when the rounded measurements reproduce.
+recalculated decode, geometry, hashes, SSIM, and flip-control report. Both the
+captured and replayed reports must independently pass the 0.90 quality and 0.02
+orientation gates; all profile, geometry, check, and digest fields must match.
+Only the two six-decimal SSIM values may differ, by at most 0.001. That narrow
+tolerance absorbs decoder/scaler implementation drift for this exact bound
+fixture; it is not extra quality slack or a claim about other images.
 
 ## Capture and verify
 

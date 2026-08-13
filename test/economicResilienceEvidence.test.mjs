@@ -23,7 +23,10 @@ import {
   inspectJpegStructure,
   inspectNativeEconomicResiliencePayload,
 } from '../scripts/economic-resilience-evidence-core.mjs';
-import { createDemoVisualAgreementReport } from '../scripts/demo-visual-agreement-core.mjs';
+import {
+  createDemoVisualAgreementReport,
+  PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
+} from '../scripts/demo-visual-agreement-core.mjs';
 import { createChunkedNativeLogMessages } from '../example/src/nativeBenchmarkLog.ts';
 
 const SOURCE = readFileSync('example/fixtures/kit-only-12mp-v1.jpg');
@@ -482,6 +485,33 @@ describe('kit-only 12 MP economic resilience evidence', () => {
     );
     expect(valid.status, valid.stderr).toBe(0);
 
+    const evidencePath = path.join(
+      artifact.root,
+      'economic-resilience.json'
+    );
+    const environmentPath = path.join(artifact.root, 'environment.json');
+    const evidence = JSON.parse(readFileSync(evidencePath, 'utf8'));
+    evidence.environment.toolchain.ffmpeg = 'ffmpeg version different-build';
+    evidence.environment.toolchain.ffprobe = 'ffprobe version different-build';
+    writeFileSync(
+      environmentPath,
+      `${JSON.stringify(evidence.environment, null, 2)}\n`
+    );
+    writeFileSync(evidencePath, `${JSON.stringify(evidence, null, 2)}\n`);
+    const crossVersion = spawnSync(
+      process.execPath,
+      [VERIFIER, '--artifact-dir', artifact.root],
+      { cwd: os.tmpdir(), encoding: 'utf8' }
+    );
+    expect(crossVersion.status, crossVersion.stderr).toBe(0);
+    expect(JSON.parse(crossVersion.stdout).replay).toMatchObject({
+      status: 'passed',
+      ffmpegVersionsMatch: false,
+      ffprobeVersionsMatch: false,
+      measurementMode: 'portable-tolerance',
+      measurementTolerance: 0.001,
+    });
+
     const forgedArtifact = createArtifact();
     const forged = spawnSync(
       process.execPath,
@@ -509,6 +539,10 @@ describe('kit-only 12 MP economic resilience evidence', () => {
     expect(JSON.parse(valid.stdout).replay).toMatchObject({
       status: 'passed',
       measurementMatch: true,
+      measurementMode: 'portable-tolerance',
+      measurementTolerance: 0.001,
+      outcomesPassed: true,
+      stableFieldsMatch: true,
     });
     expect(readFileSync(evidencePath)).toEqual(originalEvidence);
 
@@ -625,6 +659,9 @@ describe('kit-only 12 MP economic resilience evidence', () => {
       maxHeight: 1200,
       uprightSimilarity: 0.95,
       verticalFlipSimilarity: 0.5,
+      comparisonProfile: PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
+      sourceColorRange: 'pc',
+      outputColorRange: 'pc',
     });
     const files = {
       log: 'native.log',
@@ -687,6 +724,9 @@ function createArtifact() {
     maxHeight: 1200,
     uprightSimilarity: 0.95,
     verticalFlipSimilarity: 0.5,
+    comparisonProfile: PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
+    sourceColorRange: 'pc',
+    outputColorRange: 'pc',
   });
   const evidence = buildEconomicResilienceEvidence({
     payload,
@@ -880,6 +920,7 @@ function createReplayableArtifact() {
     '--resize-mode', 'contain',
     '--max-width', '1600',
     '--max-height', '1200',
+    '--comparison-profile', PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
     '--report', visualPath,
   ]);
   const visualAgreement = JSON.parse(readFileSync(visualPath, 'utf8'));

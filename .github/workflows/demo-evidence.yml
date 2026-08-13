@@ -344,6 +344,7 @@ jobs:
             --resize-mode contain \
             --max-width 1600 \
             --max-height 1200 \
+            --comparison-profile jpeg-full-range-to-limited-yuv444p-v1 \
             --report /tmp/rnick-economic-raw/visual-agreement.json
           os_build=$(xcrun simctl spawn "$udid" sw_vers -buildVersion | tr -d '\r')
           abi=$(xcrun simctl spawn "$udid" uname -m | tr -d '\r')

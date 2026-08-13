@@ -1,13 +1,62 @@
 import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
 
 export const DEMO_VISUAL_AGREEMENT_ALGORITHM =
   'ffmpeg-auto-oriented-contain-ssim-v2';
+export const PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT = Object.freeze({
+  profile: 'jpeg-full-range-to-limited-yuv444p-v1',
+  inputColorRange: 'pc',
+  comparisonColorRange: 'tv',
+  pixelFormat: 'yuv444p',
+  scaler: 'lanczos',
+  scoreTolerance: 0.001,
+});
+export const PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE =
+  PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.profile;
+export const PORTABLE_DEMO_VISUAL_AGREEMENT_ALGORITHM =
+  'ffmpeg-auto-oriented-contain-limited-range-ssim-v3';
+export const PORTABLE_DEMO_VISUAL_AGREEMENT_REPLAY_TOLERANCE =
+  PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.scoreTolerance;
 export const DEMO_VISUAL_AGREEMENT_THRESHOLD = 0.9;
 export const DEMO_VISUAL_AGREEMENT_MARGIN = 0.02;
 
 const DEMO_VISUAL_OUTCOMES = new Set(['passed', 'failed']);
 const LEGACY_DEMO_VISUAL_AGREEMENT_ALGORITHM =
   'ffmpeg-auto-oriented-ssim-v1';
+const PORTABLE_DEMO_VISUAL_AGREEMENT_FIELDS = [
+  'schemaVersion',
+  'status',
+  'algorithm',
+  'comparisonProfile',
+  'inputColorRange',
+  'comparisonColorRange',
+  'comparisonPixelFormat',
+  'comparisonScaler',
+  'scoreTolerance',
+  'sourceColorRange',
+  'outputColorRange',
+  'resizeMode',
+  'maxWidth',
+  'maxHeight',
+  'sourceWidth',
+  'sourceHeight',
+  'expectedWidth',
+  'expectedHeight',
+  'width',
+  'height',
+  'uprightSimilarity',
+  'verticalFlipSimilarity',
+  'minimumSimilarity',
+  'minimumOrientationMargin',
+  'checks',
+  'sourceSha256',
+  'outputSha256',
+].sort();
+const DEMO_VISUAL_AGREEMENT_CHECK_FIELDS = [
+  'geometry',
+  'minimumSimilarity',
+  'orientationMargin',
+].sort();
 
 export function calculateContainDimensions({
   sourceWidth,
@@ -46,7 +95,18 @@ export function createDemoVisualAgreementReport({
   maxHeight,
   uprightSimilarity,
   verticalFlipSimilarity,
+  comparisonProfile,
+  sourceColorRange,
+  outputColorRange,
 }) {
+  if (
+    comparisonProfile !== undefined &&
+    comparisonProfile !== PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE
+  ) {
+    throw new Error('comparisonProfile is unsupported');
+  }
+  const portable =
+    comparisonProfile === PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE;
   const expected = calculateContainDimensions({
     sourceWidth,
     sourceHeight,
@@ -64,9 +124,28 @@ export function createDemoVisualAgreementReport({
     verticalFlipSimilarity: roundedVerticalFlipSimilarity,
   });
   return {
-    schemaVersion: 2,
+    schemaVersion: portable ? 3 : 2,
     status: deriveOutcome(checks),
-    algorithm: DEMO_VISUAL_AGREEMENT_ALGORITHM,
+    algorithm: portable
+      ? PORTABLE_DEMO_VISUAL_AGREEMENT_ALGORITHM
+      : DEMO_VISUAL_AGREEMENT_ALGORITHM,
+    ...(portable
+      ? {
+          comparisonProfile,
+          inputColorRange:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.inputColorRange,
+          comparisonColorRange:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.comparisonColorRange,
+          comparisonPixelFormat:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.pixelFormat,
+          comparisonScaler:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.scaler,
+          scoreTolerance:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.scoreTolerance,
+          sourceColorRange,
+          outputColorRange,
+        }
+      : {}),
     resizeMode,
     maxWidth,
     maxHeight,
@@ -94,12 +173,65 @@ export function inspectDemoVisualAgreement(
     return inspectLegacyDemoVisualAgreement(report, { sourceBytes, outputBytes });
   }
   const errors = [];
-  if (report?.schemaVersion !== 2) errors.push('schemaVersion must be 2');
+  if (
+    report?.schemaVersion === 3 &&
+    !exactKeys(report, PORTABLE_DEMO_VISUAL_AGREEMENT_FIELDS)
+  ) {
+    errors.push('portable visual agreement fields drifted');
+  }
+  if (
+    report?.schemaVersion === 3 &&
+    !exactKeys(report?.checks, DEMO_VISUAL_AGREEMENT_CHECK_FIELDS)
+  ) {
+    errors.push('portable visual agreement check fields drifted');
+  }
+  const modernContract = report?.schemaVersion === 2
+    ? {
+        algorithm: DEMO_VISUAL_AGREEMENT_ALGORITHM,
+        comparisonProfile: undefined,
+      }
+    : report?.schemaVersion === 3
+      ? {
+          algorithm: PORTABLE_DEMO_VISUAL_AGREEMENT_ALGORITHM,
+          comparisonProfile: PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
+          inputColorRange:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.inputColorRange,
+          comparisonColorRange:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.comparisonColorRange,
+          comparisonPixelFormat:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.pixelFormat,
+          comparisonScaler:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.scaler,
+          scoreTolerance:
+            PORTABLE_DEMO_VISUAL_AGREEMENT_CONTRACT.scoreTolerance,
+        }
+      : null;
+  if (modernContract === null) errors.push('schemaVersion must be 2 or 3');
   if (!DEMO_VISUAL_OUTCOMES.has(report?.status)) {
     errors.push('status must be passed or failed');
   }
-  if (report?.algorithm !== DEMO_VISUAL_AGREEMENT_ALGORITHM) {
+  if (report?.algorithm !== modernContract?.algorithm) {
     errors.push('algorithm is unsupported');
+  }
+  if (report?.comparisonProfile !== modernContract?.comparisonProfile) {
+    errors.push('comparison profile does not match the visual schema');
+  }
+  for (const field of [
+    'inputColorRange',
+    'comparisonColorRange',
+    'comparisonPixelFormat',
+    'comparisonScaler',
+    'scoreTolerance',
+  ]) {
+    if (report?.[field] !== modernContract?.[field]) {
+      errors.push(`${field} does not match the visual schema`);
+    }
+  }
+  if (
+    report?.schemaVersion === 3 &&
+    (report?.sourceColorRange !== 'pc' || report?.outputColorRange !== 'pc')
+  ) {
+    errors.push('portable visual inputs must be full-range JPEG frames');
   }
   if (report?.resizeMode !== 'contain') {
     errors.push('resizeMode must be contain');
@@ -178,6 +310,99 @@ export function inspectDemoVisualAgreement(
     status: errors.length === 0 ? 'passed' : 'failed',
     agreementStatus: errors.length === 0 ? outcome : null,
     error: errors.length === 0 ? null : errors.join(' | '),
+  };
+}
+
+export function comparePortableDemoVisualAgreement(
+  captured,
+  replayed
+) {
+  const exactFields = [
+    'schemaVersion',
+    'status',
+    'algorithm',
+    'comparisonProfile',
+    'inputColorRange',
+    'comparisonColorRange',
+    'comparisonPixelFormat',
+    'comparisonScaler',
+    'scoreTolerance',
+    'sourceColorRange',
+    'outputColorRange',
+    'resizeMode',
+    'maxWidth',
+    'maxHeight',
+    'sourceWidth',
+    'sourceHeight',
+    'expectedWidth',
+    'expectedHeight',
+    'width',
+    'height',
+    'minimumSimilarity',
+    'minimumOrientationMargin',
+    'checks',
+    'sourceSha256',
+    'outputSha256',
+  ];
+  const stableCaptured = Object.fromEntries(
+    exactFields.map((field) => [field, captured?.[field]])
+  );
+  const stableReplayed = Object.fromEntries(
+    exactFields.map((field) => [field, replayed?.[field]])
+  );
+  const uprightDelta = absoluteDelta(
+    captured?.uprightSimilarity,
+    replayed?.uprightSimilarity
+  );
+  const verticalFlipDelta = absoluteDelta(
+    captured?.verticalFlipSimilarity,
+    replayed?.verticalFlipSimilarity
+  );
+  const outcomesPassed = [captured, replayed].every(
+    (report) =>
+      report?.status === 'passed' &&
+      report?.checks?.geometry === true &&
+      report?.checks?.minimumSimilarity === true &&
+      report?.checks?.orientationMargin === true
+  );
+  const measurementsMatch =
+    uprightDelta !== null &&
+    verticalFlipDelta !== null &&
+    uprightDelta <= PORTABLE_DEMO_VISUAL_AGREEMENT_REPLAY_TOLERANCE &&
+    verticalFlipDelta <= PORTABLE_DEMO_VISUAL_AGREEMENT_REPLAY_TOLERANCE;
+  const stableFieldsMatch = isDeepStrictEqual(stableCaptured, stableReplayed);
+  const portableSchema =
+    captured?.schemaVersion === 3 &&
+    replayed?.schemaVersion === 3 &&
+    captured?.comparisonProfile === PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE &&
+    replayed?.comparisonProfile === PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE;
+  const exactShapes =
+    exactKeys(captured, PORTABLE_DEMO_VISUAL_AGREEMENT_FIELDS) &&
+    exactKeys(replayed, PORTABLE_DEMO_VISUAL_AGREEMENT_FIELDS) &&
+    exactKeys(captured?.checks, DEMO_VISUAL_AGREEMENT_CHECK_FIELDS) &&
+    exactKeys(replayed?.checks, DEMO_VISUAL_AGREEMENT_CHECK_FIELDS);
+  const status =
+    portableSchema &&
+    exactShapes &&
+    outcomesPassed &&
+    stableFieldsMatch &&
+    measurementsMatch
+      ? 'passed'
+      : 'failed';
+  return {
+    status,
+    mode: 'portable-tolerance',
+    measurementMatch: measurementsMatch,
+    outcomesPassed,
+    exactShapes,
+    stableFieldsMatch,
+    tolerance: PORTABLE_DEMO_VISUAL_AGREEMENT_REPLAY_TOLERANCE,
+    uprightSimilarityDelta: uprightDelta,
+    verticalFlipSimilarityDelta: verticalFlipDelta,
+    error:
+      status === 'passed'
+        ? null
+        : 'portable visual replay fields or measurements differ beyond the allowed contract',
   };
 }
 
@@ -299,4 +524,20 @@ function sha256(bytes) {
 
 function roundSix(value) {
   return Math.round(value * 1_000_000) / 1_000_000;
+}
+
+function absoluteDelta(left, right) {
+  if (!unitInterval(left) || !unitInterval(right)) return null;
+  const leftMicrounits = Math.round(left * 1_000_000);
+  const rightMicrounits = Math.round(right * 1_000_000);
+  return Math.abs(leftMicrounits - rightMicrounits) / 1_000_000;
+}
+
+function exactKeys(value, expected) {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    isDeepStrictEqual(Object.keys(value).sort(), expected)
+  );
 }

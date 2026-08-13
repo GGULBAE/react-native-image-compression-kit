@@ -3,7 +3,10 @@ import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { parseChunkedNativePayload, summarizeBenchmarkSamples } from './benchmark-core.mjs';
-import { inspectDemoVisualAgreement } from './demo-visual-agreement-core.mjs';
+import {
+  inspectDemoVisualAgreement,
+  PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE,
+} from './demo-visual-agreement-core.mjs';
 
 export const ECONOMIC_RESILIENCE_SCHEMA_VERSION = 1;
 export const ECONOMIC_RESILIENCE_SCENARIO_ID = 'kit-only-12mp-jpeg-v1';
@@ -578,6 +581,13 @@ export function buildEconomicResilienceEvidence({
     outputBytes,
     resizeOptions: ECONOMIC_RESILIENCE_OPERATION.resize,
   });
+  if (
+    visualAgreement?.schemaVersion !== 3 ||
+    visualAgreement?.comparisonProfile !==
+      PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE
+  ) {
+    errors.push('economic evidence requires the portable visual agreement profile');
+  }
   if (visualReport.status !== 'passed' || visualReport.agreementStatus !== 'passed') {
     errors.push(`visual agreement failed: ${visualReport.error ?? visualAgreement?.status}`);
   }
@@ -807,6 +817,13 @@ export function inspectEconomicResilienceEvidence(root, evidence) {
     });
     if (report.status !== 'passed' || report.agreementStatus !== 'passed') {
       errors.push(`visual agreement asset is invalid: ${report.error}`);
+    }
+    if (
+      visualAgreement?.schemaVersion !== 3 ||
+      visualAgreement?.comparisonProfile !==
+        PORTABLE_DEMO_VISUAL_AGREEMENT_PROFILE
+    ) {
+      errors.push('economic evidence requires the portable visual agreement profile');
     }
     if (!deepEqual(evidence?.visualAgreement, visualAgreement)) {
       errors.push('embedded visual agreement does not match its asset');

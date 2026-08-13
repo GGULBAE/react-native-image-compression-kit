@@ -270,6 +270,7 @@ node scripts/measure-demo-visual-agreement.mjs \
   --resize-mode contain \
   --max-width 1600 \
   --max-height 1200 \
+  --comparison-profile jpeg-full-range-to-limited-yuv444p-v1 \
   --report /tmp/rnick-economic-raw/visual-agreement.json
 react_native_version=$(node -e "process.stdout.write(require('./example/package.json').dependencies['react-native'])")
 os_build=$(adb shell getprop ro.build.id | tr -d '\r')
