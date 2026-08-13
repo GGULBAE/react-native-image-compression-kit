@@ -25,6 +25,9 @@ Pod::Spec.new do |s|
     "ios/RCTImageCompressionRequest.h",
     "ios/RCTImageCompressionResources.h",
   ]
+  s.resource_bundles = {
+    "react-native-image-compression-kit_privacy" => ["ios/PrivacyInfo.xcprivacy"],
+  }
 
   if respond_to?(:install_modules_dependencies, true)
     install_modules_dependencies(s)

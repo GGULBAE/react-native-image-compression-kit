@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   canonicalRegistryReport,
+  requiredPackageFilesForVersion,
   validateRegistryEvidence,
   writeRegistryReportAtomic,
 } from '../scripts/registry-smoke-core.mjs';
@@ -30,6 +31,33 @@ function evidence(overrides = {}) {
 }
 
 describe('registry provenance report', () => {
+  it('requires the SDK privacy manifest beginning with the version that ships it', () => {
+    expect(requiredPackageFilesForVersion('0.4.0')).not.toContain(
+      'ios/PrivacyInfo.xcprivacy'
+    );
+    expect(requiredPackageFilesForVersion('0.4.1')).toContain(
+      'ios/PrivacyInfo.xcprivacy'
+    );
+    expect(requiredPackageFilesForVersion('1.0.0')).toContain(
+      'ios/PrivacyInfo.xcprivacy'
+    );
+
+    const fixture = evidence();
+    fixture.requestedVersion = '0.4.1';
+    fixture.tagVersion = '0.4.1';
+    fixture.registryMetadata.version = '0.4.1';
+    fixture.registryMetadata.time = {
+      '0.4.1': fixture.registryMetadata.time['0.2.47'],
+    };
+    fixture.packInfo.version = '0.4.1';
+    const report = validateRegistryEvidence(fixture);
+
+    expect(report.status).toBe('failed');
+    expect(report.error).toContain(
+      'missing expected files: ios/PrivacyInfo.xcprivacy'
+    );
+  });
+
   it('returns the fixed successful report schema in stable order', () => {
     const report = validateRegistryEvidence(evidence());
 

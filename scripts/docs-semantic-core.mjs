@@ -422,6 +422,90 @@ export function inspectStatusContract({ packageVersion, manifest, documents }) {
   };
 }
 
+export function inspectReleaseLanguageContracts({
+  packageVersion,
+  releaseState,
+  releaseNotes = null,
+  documents = [],
+}) {
+  const errors = [];
+
+  if (!isSemver(packageVersion)) {
+    errors.push(
+      `release language gate expected a semantic package version, received ${describeValue(packageVersion)}`
+    );
+  }
+  if (!isReleaseState(releaseState)) {
+    errors.push(
+      `release language gate expected release state "candidate" or "release", received ${describeValue(releaseState)}`
+    );
+  }
+
+  if (releaseNotes?.contents != null && isSemver(packageVersion)) {
+    const escapedVersion = escapeRegularExpression(packageVersion);
+    const evergreenViolations = [
+      [
+        'candidate self-description',
+        /\bThis\s+(?:backward-compatible\s+)?candidate\b/i,
+      ],
+      [
+        'publication-conditional install heading',
+        /^#{1,6}\s+Install after publication\s*$/im,
+      ],
+      ['publication-conditional timing', /\bUntil publication\b/i],
+      [
+        'current-version source-candidate label',
+        new RegExp(
+          `\\b(?:v|version\\s+)?${escapedVersion}\\s+source candidate\\b`,
+          'i'
+        ),
+      ],
+      ['registry-release negation', /\bnot represented as a registry release\b/i],
+    ];
+
+    for (const [description, pattern] of evergreenViolations) {
+      if (pattern.test(releaseNotes.contents)) {
+        errors.push(
+          `${releaseNotes.documentName}: release notes must remain true after publication; found ${description}`
+        );
+      }
+    }
+  }
+
+  if (releaseState === 'release' && isSemver(packageVersion)) {
+    const escapedVersion = escapeRegularExpression(packageVersion);
+    const currentCandidatePatterns = [
+      [
+        'current-version candidate label',
+        new RegExp(
+          `\\b(?:Version\\s+|v)?${escapedVersion}\\s+(?:is\\s+(?:a\\s+)?)?(?:source|repository|release)\\s+candidate\\b`,
+          'i'
+        ),
+      ],
+      [
+        'current release self-description',
+        /\bThis\s+(?:backward-compatible\s+)?candidate\b/i,
+      ],
+      ['candidate validation heading', /^#{1,6}\s+Candidate validation\s*$/im],
+      ['pending candidate release timing', /\buntil the candidate is released\b/i],
+      ['pending candidate ship timing', /\buntil the candidate ships\b/i],
+      ['pending publication timing', /\bUntil it is published\b/i],
+    ];
+
+    for (const document of documents) {
+      for (const [description, pattern] of currentCandidatePatterns) {
+        if (pattern.test(document.contents)) {
+          errors.push(
+            `${document.documentName}: release-state document still contains ${description} for ${packageVersion}`
+          );
+        }
+      }
+    }
+  }
+
+  return errors;
+}
+
 export function inspectDocumentation(root) {
   const errors = [];
   const missingFiles = REQUIRED_DOCUMENTATION_FILES.filter(
@@ -583,6 +667,21 @@ export function inspectDocumentation(root) {
     packageJson.version,
     statusReport.manifest,
     errors
+  );
+
+  const releaseNotes = existsSync(path.join(root, releaseNotesPath))
+    ? {
+        documentName: releaseNotesPath,
+        contents: readFileSync(path.join(root, releaseNotesPath), 'utf8'),
+      }
+    : null;
+  errors.push(
+    ...inspectReleaseLanguageContracts({
+      packageVersion: packageJson.version,
+      releaseState: statusReport.manifest?.releaseState,
+      releaseNotes,
+      documents: collectReleaseLanguageDocuments(root),
+    })
   );
 
   for (const entry of packageJson.files ?? []) {
@@ -925,6 +1024,55 @@ function collectMarkdownFiles(root) {
   }
 
   return files.filter((filePath) => existsSync(path.join(root, filePath))).sort();
+}
+
+function collectReleaseLanguageDocuments(root) {
+  const documents = [];
+  const activeFiles = [
+    'README.md',
+    'RELEASE.md',
+    'docs/launch/announcement-en.md',
+    'docs/launch/announcement-ko.md',
+  ];
+
+  for (const relativePath of activeFiles) {
+    const fullPath = path.join(root, relativePath);
+    if (existsSync(fullPath)) {
+      documents.push({
+        documentName: relativePath,
+        contents: readFileSync(fullPath, 'utf8'),
+      });
+    }
+  }
+
+  const websiteRoot = path.join(root, 'website');
+  if (existsSync(websiteRoot)) {
+    walkReleaseLanguageDocuments(websiteRoot, root, documents);
+  }
+
+  return documents;
+}
+
+function walkReleaseLanguageDocuments(directory, root, documents) {
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const fullPath = path.join(directory, entry.name);
+    if (entry.isDirectory()) {
+      if (['cache', 'dist', 'node_modules'].includes(entry.name)) continue;
+      walkReleaseLanguageDocuments(fullPath, root, documents);
+    } else if (
+      entry.isFile() &&
+      ['.md', '.svg', '.vue'].includes(path.extname(entry.name))
+    ) {
+      documents.push({
+        documentName: path.relative(root, fullPath),
+        contents: readFileSync(fullPath, 'utf8'),
+      });
+    }
+  }
+}
+
+function escapeRegularExpression(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function walkMarkdown(directory, root, files) {

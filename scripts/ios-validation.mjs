@@ -6,6 +6,7 @@ import http from 'node:http';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
+import { isDeepStrictEqual } from 'node:util';
 import {
   createIOSValidationConfig,
   createSmokeAttemptLifecycle,
@@ -209,6 +210,7 @@ async function main() {
     const simulator = selectSimulator();
     bootSimulator(simulator.udid);
     runXcodeBuild(simulator.udid);
+    verifyBuiltPrivacyManifest();
     return;
   }
 
@@ -235,6 +237,7 @@ async function main() {
       metroProcess = startMetro();
       await waitForMetro(metroProcess);
       runXcodeBuild(simulator.udid);
+      verifyBuiltPrivacyManifest();
       installApp(simulator.udid);
       await runSmoke(simulator.udid, metroProcess, (nextLogProcess) => {
         logProcess = nextLogProcess;
@@ -548,12 +551,20 @@ function ensurePodsInstalled() {
     requiredPodSources.every((sourceFile) =>
       podProjectContents.includes(sourceFile)
     );
+  const podPrivacyBundleIsCurrent =
+    podProjectContents.includes('react-native-image-compression-kit_privacy') &&
+    podProjectContents.includes('PrivacyInfo.xcprivacy');
   const podLocksAreCurrent =
     pathExists(PODFILE_LOCK) &&
     pathExists(PODS_MANIFEST_LOCK) &&
     readFileSync(PODFILE_LOCK, 'utf8') === readFileSync(PODS_MANIFEST_LOCK, 'utf8');
 
-  if (!pathExists(WORKSPACE) || !podSourcesAreCurrent || !podLocksAreCurrent) {
+  if (
+    !pathExists(WORKSPACE) ||
+    !podSourcesAreCurrent ||
+    !podPrivacyBundleIsCurrent ||
+    !podLocksAreCurrent
+  ) {
     runPodInstall();
   }
 }
@@ -609,6 +620,47 @@ function runXcodeBuild(udid) {
     DERIVED_DATA_DIR,
     'build',
   ]);
+}
+
+function verifyBuiltPrivacyManifest() {
+  const manifestPath = path.join(
+    DERIVED_DATA_DIR,
+    'Build',
+    'Products',
+    'Debug-iphonesimulator',
+    `${SCHEME}.app`,
+    'react-native-image-compression-kit_privacy.bundle',
+    'PrivacyInfo.xcprivacy'
+  );
+
+  if (!pathExists(manifestPath)) {
+    throw new Error(
+      `Built app is missing the package privacy manifest: ${manifestPath}`
+    );
+  }
+
+  mustRun('plutil', ['-lint', manifestPath]);
+  const parsed = JSON.parse(
+    mustRun('plutil', ['-convert', 'json', '-o', '-', manifestPath], {
+      capture: true,
+    }).stdout
+  );
+  const expected = {
+    NSPrivacyAccessedAPITypes: [
+      {
+        NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+        NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+      },
+    ],
+    NSPrivacyCollectedDataTypes: [],
+    NSPrivacyTracking: false,
+  };
+
+  if (!isDeepStrictEqual(parsed, expected)) {
+    throw new Error(
+      `Built package privacy manifest does not match the exact SDK contract: ${JSON.stringify(parsed)}`
+    );
+  }
 }
 
 function installApp(udid) {

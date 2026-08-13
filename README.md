@@ -354,6 +354,8 @@ Important limitations:
 - `metadata: 'preserve'` is supported only for JPEG source to JPEG output.
 - Android `safe` copies a privacy-filtered JPEG EXIF allowlist. iOS `safe` and
   `strip` re-encode without copying source metadata.
+- The iOS SDK ships a namespaced privacy manifest declaring no tracking or
+  collected data and C617.1 for package-cache file metadata validation.
 - JPEG orientation is rendered into pixels before resize/encode; preserved
   output orientation and dimensions are normalized.
 - Sources above 32,768 pixels on either axis or 100,000,000 total pixels reject

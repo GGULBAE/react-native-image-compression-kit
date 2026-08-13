@@ -39,6 +39,7 @@ vi.mock('react-native-image-compression-kit', () => ({
     originalByteSize: 1200000,
     compressionRatio: 0.2,
   }),
+  removeCompressionOutput: vi.fn().mockResolvedValue(undefined),
 }));
 ```
 

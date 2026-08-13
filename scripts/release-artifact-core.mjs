@@ -26,6 +26,7 @@ const REQUIRED_FILES = [
   'package/LICENSE',
   'package/lib/index.js',
   'package/lib/index.d.ts',
+  'package/ios/PrivacyInfo.xcprivacy',
   'package/react-native-image-compression-kit.podspec',
 ];
 

@@ -28,6 +28,7 @@ const validArtifact = {
     'package/LICENSE',
     'package/lib/index.js',
     'package/lib/index.d.ts',
+    'package/ios/PrivacyInfo.xcprivacy',
     'package/react-native-image-compression-kit.podspec',
   ],
   worktreeClean: true,
@@ -56,6 +57,15 @@ describe('release artifact contract', () => {
       'forbidden path',
       { inventory: [...validArtifact.inventory, 'package/website/index.md'] },
       'forbidden paths',
+    ],
+    [
+      'missing iOS privacy manifest',
+      {
+        inventory: validArtifact.inventory.filter(
+          (file) => file !== 'package/ios/PrivacyInfo.xcprivacy'
+        ),
+      },
+      'missing required paths: package/ios/PrivacyInfo.xcprivacy',
     ],
   ])('rejects %s', (_label, mutation, message) => {
     const report = inspectReleaseArtifact({ ...validArtifact, ...mutation });

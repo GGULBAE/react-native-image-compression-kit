@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -63,6 +63,7 @@ describe('npm package contract', () => {
     const forbiddenPrefixes = ['docs', 'evidence', 'scripts', 'test', 'tests'];
 
     expect(packageJson.files).toEqual(expect.arrayContaining(requiredEntries));
+    expect(existsSync(path.join(ROOT, 'ios/PrivacyInfo.xcprivacy'))).toBe(true);
     expect(
       packageJson.files.filter((entry) =>
         forbiddenPrefixes.some(
