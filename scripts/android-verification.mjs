@@ -48,6 +48,8 @@ const REQUIRED_FILES = [
   'ios/RCTImageCompressionIOSCapabilities.mm',
   'ios/RCTImageCompressionJpegMetadata.h',
   'ios/RCTImageCompressionJpegMetadata.mm',
+  'ios/RCTImageCompressionJpegSegmentSanitizer.h',
+  'ios/RCTImageCompressionJpegSegmentSanitizer.mm',
   'ios/RCTImageCompressionOutput.h',
   'ios/RCTImageCompressionOutput.mm',
   'ios/RCTImageCompressionPipeline.h',
@@ -145,6 +147,8 @@ const REQUIRED_FILES = [
   'test/ios-native/RCTImageCompressionOutputTests.mm',
   'test/ios-native/RCTImageCompressionPipelineTests.mm',
   'test/ios-native/RCTImageCompressionJpegMetadataTests.mm',
+  'test/ios-native/RCTImageCompressionJpegSegmentSanitizerTests.mm',
+  'test/ios-native/RCTImageCompressionLargeImageTests.mm',
   'test/ios-native/RCTImageCompressionImageTransformerTests.mm',
   'test/verificationArchitecture.test.ts',
   'test/releaseEvidence.test.mjs',
@@ -290,6 +294,7 @@ function runDoctor() {
     checkIOSImageDecoderAuthorities(),
     checkIOSImageTransformerAuthorities(),
     checkIOSJpegMetadataAuthorities(),
+    checkIOSJpegSegmentSanitizerAuthorities(),
     checkIOSImageEncoderAuthorities(),
     checkIOSOutputAuthorities(),
     checkIOSPipelineAuthorities(),
@@ -1467,6 +1472,170 @@ function checkIOSJpegMetadataAuthorities() {
     detail:
       violations.length === 0
         ? 'preserve policy, ImageIO reads, normalized destination properties, bridge limits, and seven native groups are aligned'
+        : `contract violations: ${violations.join(' | ')}`,
+  };
+}
+
+function checkIOSJpegSegmentSanitizerAuthorities() {
+  const sanitizerHeader = readText(
+    'ios/RCTImageCompressionJpegSegmentSanitizer.h'
+  );
+  const sanitizerCore = readText(
+    'ios/RCTImageCompressionJpegSegmentSanitizer.mm'
+  );
+  const metadataHeader = readText('ios/RCTImageCompressionJpegMetadata.h');
+  const metadataCore = readText('ios/RCTImageCompressionJpegMetadata.mm');
+  const uiKitEncoder = readText(
+    'ios/RCTImageCompressionUIKitImageEncoder.mm'
+  );
+  const nativeTests = readText(
+    'test/ios-native/RCTImageCompressionJpegSegmentSanitizerTests.mm'
+  );
+  const largeImageTests = readText(
+    'test/ios-native/RCTImageCompressionLargeImageTests.mm'
+  );
+  const validationRunner = readText('scripts/ios-validation.mjs');
+  const podspec = readText('react-native-image-compression-kit.podspec');
+  const packageJson = readJson('package.json');
+  const nativeTestNames = [
+    ...nativeTests.matchAll(/static void (Test\w+)\(void\)/gu),
+  ].map((match) => match[1]);
+  const requiredNativeTests = [
+    'TestRemovesMetadataBeforeAndBetweenScans',
+    'TestPreservesStuffedRestartAndNonSensitiveSegments',
+    'TestBypassesSafeAndPreserveOutputs',
+    'TestRejectsMalformedHeadersAndSegmentLengths',
+    'TestRejectsMalformedScanTermination',
+  ];
+  const largeImageRunnerStart = validationRunner.indexOf(
+    'function runLargeImageTests()'
+  );
+  const largeImageRunnerEnd = validationRunner.indexOf(
+    'function runImageTransformerTests()',
+    largeImageRunnerStart
+  );
+  const largeImageRunner =
+    largeImageRunnerStart >= 0 && largeImageRunnerEnd > largeImageRunnerStart
+      ? validationRunner.slice(largeImageRunnerStart, largeImageRunnerEnd)
+      : '';
+  const structureChecks = [
+    {
+      ok:
+        sanitizerHeader.includes(
+          '@interface RCTImageCompressionJpegSegmentSanitizer : NSObject'
+        ) &&
+        sanitizerHeader.includes('sanitizeJpegData:(NSData *)jpegData') &&
+        sanitizerHeader.includes('stripRequested:(BOOL)stripRequested'),
+      name: 'Foundation JPEG sanitizer boundary',
+    },
+    {
+      ok:
+        !/#import <(?:UIKit|ImageIO|React)/u.test(sanitizerCore) &&
+        sanitizerCore.includes(
+          'if (!stripRequested) return [jpegData copy]'
+        ),
+      name: 'safe and preserve bypass outside platform codec APIs',
+    },
+    {
+      ok:
+        sanitizerCore.includes(
+          'bytes[0] != 0xff || bytes[1] != 0xd8'
+        ) &&
+        sanitizerCore.includes(
+          'marker == 0xe1 || marker == 0xed || marker == 0xfe'
+        ) &&
+        sanitizerCore.includes(
+          'segmentLength < 2 || segmentLength > length - cursor'
+        ) &&
+        sanitizerCore.includes('if (!sawScan || cursor != length) return nil'),
+      name: 'strict SOI segment EOI and trailing-byte validation',
+    },
+    {
+      ok:
+        sanitizerCore.includes('marker == 0x00 || marker == 0x01') &&
+        sanitizerCore.includes('marker >= 0xd0 && marker <= 0xd7') &&
+        sanitizerCore.includes('resumeEntropyAfterSegment = marker == 0xdc'),
+      name: 'entropy stuffing restart TEM and multi-scan preservation',
+    },
+    {
+      ok:
+        sanitizerCore.includes(
+          'segmentLength != 6 + (2 * componentCount)'
+        ) &&
+        sanitizerCore.includes(
+          'componentCount == 0 || componentCount > 4'
+        ) &&
+        sanitizerCore.includes(
+          '!resumeEntropyAfterSegment || segmentLength != 4'
+        ),
+      name: 'SOS component table and DNL semantic validation',
+    },
+    {
+      ok:
+        metadataHeader.includes(
+          '@property (nonatomic, readonly) BOOL stripRequested;'
+        ) &&
+        metadataCore.includes(
+          'initWithMetadataPolicy:request.metadataPolicy'
+        ) &&
+        uiKitEncoder.includes(
+          '#import "RCTImageCompressionJpegSegmentSanitizer.h"'
+        ) &&
+        uiKitEncoder.includes('stripRequested:metadata.stripRequested'),
+      name: 'metadata policy propagation into default ImageIO encoder',
+    },
+    {
+      ok:
+        nativeTestNames.length === 5 &&
+        requiredNativeTests.every((name) => nativeTestNames.includes(name)),
+      name: 'table-driven native JPEG sanitizer test authority',
+    },
+    {
+      ok:
+        largeImageTests.includes(
+          'TestStripSanitizesJpegWithoutChangingGeometry'
+        ) &&
+        largeImageTests.includes(
+          '@"strip result metrics and persisted bytes use the sanitized JPEG"'
+        ) &&
+        largeImageTests.includes(
+          '@"preserve output retains source TIFF artist metadata"'
+        ),
+      name: 'ImageIO decode geometry persistence and preserve integration',
+    },
+    {
+      ok:
+        packageJson.scripts?.['example:ios:jpeg-sanitizer-test'] ===
+          'node scripts/ios-validation.mjs jpeg-sanitizer-test' &&
+        validationRunner.includes("if (mode === 'jpeg-sanitizer-test')") &&
+        validationRunner.includes('function runJpegSegmentSanitizerTests()') &&
+        /runLargeImageTests\(\);\s*runJpegSegmentSanitizerTests\(\);/u.test(
+          validationRunner
+        ),
+      name: 'sanitizer native tests integrated into iOS smoke',
+    },
+    {
+      ok:
+        largeImageRunner.includes('JPEG_SEGMENT_SANITIZER_CORE_SOURCE') &&
+        validationRunner.includes(
+          "'RCTImageCompressionJpegSegmentSanitizer.mm'"
+        ) &&
+        podspec.includes(
+          '"ios/RCTImageCompressionJpegSegmentSanitizer.h"'
+        ),
+      name: 'native linker CocoaPods and pod-refresh source inventory',
+    },
+  ];
+  const violations = structureChecks
+    .filter((check) => !check.ok)
+    .map((check) => check.name);
+
+  return {
+    ok: violations.length === 0,
+    label: 'iOS JPEG segment sanitizer boundary and native tests are present',
+    detail:
+      violations.length === 0
+        ? 'strip-only APP1/APP13/COM removal, strict marker/SOS/DNL parsing, ImageIO integration, and five native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }

@@ -42,15 +42,30 @@ static NSString *const RCTImageCompressionJpegMetadataUnsupportedMessage =
 
 @implementation RCTImageCompressionJpegMetadataResult
 
-- (instancetype)initWithPreservingSourceMetadata:(BOOL)preservingSourceMetadata
-                                 sourceProperties:(NSDictionary *)sourceProperties
+- (instancetype)initWithMetadataPolicy:(NSString *)metadataPolicy
+              preservingSourceMetadata:(BOOL)preservingSourceMetadata
+                       sourceProperties:(NSDictionary *)sourceProperties
 {
   self = [super init];
   if (self != nil) {
+    _metadataPolicy = [metadataPolicy copy];
     _preservingSourceMetadata = preservingSourceMetadata;
+    _stripRequested = [metadataPolicy isEqualToString:RCTImageCompressionKitStripMetadataPolicy];
     _sourceProperties = [sourceProperties copy];
   }
   return self;
+}
+
+- (instancetype)initWithPreservingSourceMetadata:(BOOL)preservingSourceMetadata
+                                 sourceProperties:(NSDictionary *)sourceProperties
+{
+  return [self
+    initWithMetadataPolicy:preservingSourceMetadata
+      ? RCTImageCompressionKitPreserveMetadataPolicy
+      : RCTImageCompressionKitDefaultMetadataPolicy
+    preservingSourceMetadata:preservingSourceMetadata
+    sourceProperties:sourceProperties
+  ];
 }
 
 - (NSDictionary *)destinationPropertiesForQuality:(NSInteger)quality
@@ -129,7 +144,8 @@ static NSString *const RCTImageCompressionJpegMetadataUnsupportedMessage =
     ? self.sourcePropertyReader(request.sourceData)
     : nil;
   return [[RCTImageCompressionJpegMetadataResult alloc]
-    initWithPreservingSourceMetadata:preserveRequested
+    initWithMetadataPolicy:request.metadataPolicy
+    preservingSourceMetadata:preserveRequested
     sourceProperties:sourceProperties
   ];
 }

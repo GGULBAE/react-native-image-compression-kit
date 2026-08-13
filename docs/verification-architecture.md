@@ -24,12 +24,13 @@ from the npm package.
 | Protected master identity and required source checks | `test/releaseSource.test.mjs` and `scripts/release-source-core.mjs` | `pnpm verify:release-source` and the Trusted Release workflow |
 | Android registration, typed request/source/decode/transform boundaries, build wiring, fixtures, and native-test presence | `test/androidSourceContract.test.ts` | `pnpm test` and `pnpm android:doctor` |
 | Android compression behavior | Kotlin unit and instrumentation tests under `android/src/test` and `android/src/androidTest` | `pnpm example:android-unit-test` and `pnpm example:android-instrumentation` |
-| iOS bridge, immutable request/source/inspection/decoder/transform/JPEG-metadata/output-encoder/output-persistence/pipeline boundaries, pod, workflow, and native-test/smoke-runner wiring | `test/iosSourceContract.test.ts` | `pnpm test` and `pnpm android:doctor` |
+| iOS bridge, immutable request/source/inspection/decoder/transform/JPEG-metadata/JPEG-segment-sanitizer/output-encoder/output-persistence/pipeline boundaries, pod, workflow, and native-test/smoke-runner wiring | `test/iosSourceContract.test.ts` and the structural checks in `scripts/android-verification.mjs` | `pnpm test` and `pnpm android:doctor` |
 | iOS request validation behavior | Foundation-only table-driven native tests under `test/ios-native` | `pnpm example:ios:request-parser-test` and `pnpm example:ios:smoke` |
 | iOS source acquisition and format inspection behavior | Foundation/ImageIO table-driven native tests under `test/ios-native` | `pnpm example:ios:input-test` and `pnpm example:ios:smoke` |
 | iOS decode route, result/error, and executor ownership | Foundation/ImageIO table-driven native tests plus UIKit host smoke | `pnpm example:ios:decoder-test` and `pnpm example:ios:smoke` |
 | iOS resize geometry, render request/result/error, asymmetric pixel order, EXIF orientations 1–8, background policy, and executor ownership | Foundation/CoreGraphics table-driven native tests, default-pipeline ImageIO round trips, plus UIKit host smoke | `pnpm example:ios:transformer-test`, `pnpm example:ios:large-image-test`, and `pnpm example:ios:smoke` |
 | iOS JPEG preserve policy, ImageIO source properties, and destination metadata normalization | Foundation/ImageIO table-driven native tests plus UIKit host smoke | `pnpm example:ios:metadata-test` and `pnpm example:ios:smoke` |
+| iOS strip-only JPEG APP1/APP13/COM removal, strict SOI/segment/SOS/DNL/entropy/EOI parsing, and unchanged safe/preserve behavior | Foundation table-driven marker tests plus default-pipeline ImageIO decode, geometry, metadata, and persisted-byte integration | `pnpm example:ios:jpeg-sanitizer-test`, `pnpm example:ios:large-image-test`, and `pnpm example:ios:smoke` |
 | iOS JPEG/PNG/WebP routing, target-size search, WebP availability, codec defaults, and executor ownership | Foundation-only table-driven native tests plus UIKit/ImageIO host smoke | `pnpm example:ios:encoder-test` and `pnpm example:ios:smoke` |
 | iOS cache path and extension selection, atomic file writes, stable output errors, and result projection | Foundation-only table-driven native tests plus UIKit host smoke | `pnpm example:ios:output-test` and `pnpm example:ios:smoke` |
 | iOS request-to-output stage order, failure forwarding, runtime capability providers, and smoke observation | Foundation-only table-driven pipeline tests plus UIKit host smoke | `pnpm example:ios:pipeline-test` and `pnpm example:ios:smoke` |
@@ -83,9 +84,9 @@ pnpm pack --dry-run
 ```
 
 Platform workflows additionally run Android unit and instrumentation tests and
-the iOS request/input/decoder/transformer/JPEG-metadata/output-encoder,
-output-persistence, and pipeline native
-tests plus host-app smoke test in their supported environments.
+the iOS request/input/decoder/transformer/JPEG-metadata/JPEG-segment-sanitizer,
+output-encoder, output-persistence, and pipeline native tests plus host-app
+smoke test in their supported environments.
 
 ## Change routing
 

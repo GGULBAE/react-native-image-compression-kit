@@ -25,6 +25,10 @@ and patch releases remain backward compatible within the current minor line.
 
 ### Fixed
 
+- iOS `metadata: 'strip'` now removes encoder-generated JPEG APP1, APP13, and
+  COM segments after ImageIO encoding. The marker parser rejects malformed,
+  truncated, or trailing JPEG output through the existing `ERR_ENCODE_FAILED`
+  path while leaving `safe` and `preserve` encoding unchanged.
 - iOS no longer vertically inverts pixels after ImageIO has normalized an
   orientation-bearing input. The default pipeline now verifies EXIF
   orientations 1–8 through decode, transform, and encode, and native demo

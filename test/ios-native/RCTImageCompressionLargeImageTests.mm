@@ -2,6 +2,7 @@
 #import <ImageIO/ImageIO.h>
 
 #import "RCTImageCompressionImageEncoder.h"
+#import "RCTImageCompressionJpegSegmentSanitizer.h"
 #import "RCTImageCompressionOutput.h"
 #import "RCTImageCompressionPipeline.h"
 
@@ -15,6 +16,14 @@ static void RCTLargeAssert(BOOL condition, NSString *message)
     RCTLargeImageFailures += 1;
     fprintf(stderr, "FAIL: %s\n", message.UTF8String);
   }
+}
+
+static void RCTLargeAssertEqualObjects(id actual, id expected, NSString *message)
+{
+  RCTLargeAssert(
+    actual == expected || [actual isEqual:expected],
+    [NSString stringWithFormat:@"%@ (actual=%@ expected=%@)", message, actual, expected]
+  );
 }
 
 static NSData *RCTEncodeImage(CGImageRef image, NSString *type, NSDictionary *properties)
@@ -122,6 +131,9 @@ static NSData *RCTCreateOrientedQuadrantJpeg(NSInteger orientation)
     @{
       (__bridge NSString *)kCGImageDestinationLossyCompressionQuality : @0.92,
       (__bridge NSString *)kCGImagePropertyOrientation : @(orientation),
+      (__bridge NSString *)kCGImagePropertyTIFFDictionary : @{
+        (__bridge NSString *)kCGImagePropertyTIFFArtist : @"metadata-test-artist",
+      },
     }
   );
   CGImageRelease(image);
@@ -198,16 +210,17 @@ static NSString *RCTWriteFixture(NSData *data, NSString *extension)
   return path;
 }
 
-static RCTImageCompressionPipelineResult *RCTCompress(
+static RCTImageCompressionPipelineResult *RCTCompressWithMetadata(
   NSString *sourcePath,
   NSString *format,
   NSDictionary *resize,
+  NSString *metadataPolicy,
   RCTImageCompressionPipelineError **error
 ) {
   NSMutableDictionary *options = [@{
     @"source" : @{ @"uri" : [NSURL fileURLWithPath:sourcePath].absoluteString },
     @"output" : @{ @"format" : format, @"quality" : @82 },
-    @"metadata" : @"safe",
+    @"metadata" : metadataPolicy,
   } mutableCopy];
   if (resize != nil) options[@"resize"] = resize;
   RCTImageCompressionPipeline *pipeline = [RCTImageCompressionPipeline defaultPipeline];
@@ -215,6 +228,21 @@ static RCTImageCompressionPipelineResult *RCTCompress(
     executeRequest:[[RCTImageCompressionPipelineRequest alloc] initWithOptions:options]
     error:error
   ];
+}
+
+static RCTImageCompressionPipelineResult *RCTCompress(
+  NSString *sourcePath,
+  NSString *format,
+  NSDictionary *resize,
+  RCTImageCompressionPipelineError **error
+) {
+  return RCTCompressWithMetadata(
+    sourcePath,
+    format,
+    resize,
+    @"safe",
+    error
+  );
 }
 
 static NSArray<NSNumber *> *RCTCenterPixel(NSString *outputURI)
@@ -378,6 +406,157 @@ static void TestExifOrientationMatrixPreservesDisplayedLayout(void)
   }
 }
 
+static void TestStripSanitizesJpegWithoutChangingGeometry(void)
+{
+  NSData *jpeg = RCTCreateOrientedQuadrantJpeg(6);
+  NSString *sourcePath = RCTWriteFixture(jpeg, @"jpg");
+  CGImageRef expected = RCTCreateUprightThumbnail(jpeg);
+  RCTLargeAssert(expected != nil, @"strip integration creates upright reference");
+
+  RCTImageCompressionPipelineError *stripError = nil;
+  RCTImageCompressionPipelineResult *stripResult = RCTCompressWithMetadata(
+    sourcePath,
+    @"jpeg",
+    nil,
+    @"strip",
+    &stripError
+  );
+  RCTLargeAssert(
+    stripResult != nil && stripError == nil,
+    @"strip integration compresses oriented JPEG"
+  );
+  NSURL *stripURL = stripResult == nil
+    ? nil
+    : [NSURL URLWithString:stripResult.outputResult.uri];
+  NSData *stripData = stripURL == nil ? nil : [NSData dataWithContentsOfURL:stripURL];
+  NSData *resanitizedStripData = stripData == nil
+    ? nil
+    : [RCTImageCompressionJpegSegmentSanitizer
+        sanitizeJpegData:stripData
+        stripRequested:YES
+      ];
+  RCTLargeAssert(
+    stripData.length > 0 && [stripData isEqualToData:resanitizedStripData],
+    @"strip output is a strict JPEG with no remaining APP1, APP13, or COM segments"
+  );
+  RCTLargeAssert(
+    stripResult.outputResult.byteSize == stripData.length,
+    @"strip result metrics and persisted bytes use the sanitized JPEG"
+  );
+
+  CGImageSourceRef stripSource = stripData == nil
+    ? nil
+    : CGImageSourceCreateWithData((__bridge CFDataRef)stripData, nil);
+  CGImageRef stripImage = stripSource == nil
+    ? nil
+    : CGImageSourceCreateImageAtIndex(stripSource, 0, nil);
+  NSDictionary *stripProperties = stripSource == nil
+    ? nil
+    : CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(stripSource, 0, nil));
+  if (stripSource != nil) CFRelease(stripSource);
+  RCTLargeAssert(stripImage != nil, @"strict strip output decodes");
+  NSDictionary *stripTiff = stripProperties[
+    (__bridge NSString *)kCGImagePropertyTIFFDictionary
+  ];
+  RCTLargeAssert(
+    stripTiff[(__bridge NSString *)kCGImagePropertyTIFFArtist] == nil,
+    @"strip output removes source TIFF artist metadata"
+  );
+  NSInteger stripOrientation = [stripProperties[
+    (__bridge NSString *)kCGImagePropertyOrientation
+  ] integerValue];
+  RCTLargeAssert(
+    stripOrientation == 0 || stripOrientation == 1,
+    @"strip output keeps normalized orientation metadata"
+  );
+
+  if (expected != nil && stripImage != nil) {
+    size_t expectedWidth = CGImageGetWidth(expected);
+    size_t expectedHeight = CGImageGetHeight(expected);
+    RCTLargeAssert(
+      CGImageGetWidth(stripImage) == expectedWidth &&
+        CGImageGetHeight(stripImage) == expectedHeight &&
+        stripResult.outputResult.width == expectedWidth &&
+        stripResult.outputResult.height == expectedHeight,
+      @"strip output keeps normalized displayed dimensions"
+    );
+    NSData *expectedPixels = RCTRenderedPixels(
+      expected,
+      expectedWidth,
+      expectedHeight
+    );
+    NSData *stripPixels = RCTRenderedPixels(
+      stripImage,
+      expectedWidth,
+      expectedHeight
+    );
+    RCTLargeAssert(
+      RCTMeanAbsoluteRgbDifference(expectedPixels, stripPixels) < 18.0,
+      @"strip output keeps upright displayed pixels"
+    );
+  }
+
+  RCTImageCompressionPipelineError *preserveError = nil;
+  RCTImageCompressionPipelineResult *preserveResult = RCTCompressWithMetadata(
+    sourcePath,
+    @"jpeg",
+    nil,
+    @"preserve",
+    &preserveError
+  );
+  RCTLargeAssert(
+    preserveResult != nil && preserveError == nil,
+    @"preserve integration compresses oriented JPEG"
+  );
+  NSURL *preserveURL = preserveResult == nil
+    ? nil
+    : [NSURL URLWithString:preserveResult.outputResult.uri];
+  NSData *preserveData = preserveURL == nil
+    ? nil
+    : [NSData dataWithContentsOfURL:preserveURL];
+  NSData *sanitizedPreserveData = preserveData == nil
+    ? nil
+    : [RCTImageCompressionJpegSegmentSanitizer
+        sanitizeJpegData:preserveData
+        stripRequested:YES
+      ];
+  RCTLargeAssert(
+    sanitizedPreserveData != nil &&
+      ![preserveData isEqualToData:sanitizedPreserveData],
+    @"preserve output keeps marker metadata that strip would remove"
+  );
+  CGImageSourceRef preserveSource = preserveData == nil
+    ? nil
+    : CGImageSourceCreateWithData((__bridge CFDataRef)preserveData, nil);
+  NSDictionary *preserveProperties = preserveSource == nil
+    ? nil
+    : CFBridgingRelease(
+        CGImageSourceCopyPropertiesAtIndex(preserveSource, 0, nil)
+      );
+  if (preserveSource != nil) CFRelease(preserveSource);
+  NSDictionary *preserveTiff = preserveProperties[
+    (__bridge NSString *)kCGImagePropertyTIFFDictionary
+  ];
+  RCTLargeAssertEqualObjects(
+    preserveTiff[(__bridge NSString *)kCGImagePropertyTIFFArtist],
+    @"metadata-test-artist",
+    @"preserve output retains source TIFF artist metadata"
+  );
+  NSInteger preserveOrientation = [preserveProperties[
+    (__bridge NSString *)kCGImagePropertyOrientation
+  ] integerValue];
+  RCTLargeAssert(
+    preserveOrientation == 0 || preserveOrientation == 1,
+    @"preserve output keeps normalized orientation metadata"
+  );
+
+  if (expected != nil) CGImageRelease(expected);
+  if (stripImage != nil) CGImageRelease(stripImage);
+  RCTRemoveResult(stripResult);
+  RCTRemoveResult(preserveResult);
+  [[NSFileManager defaultManager] removeItemAtPath:sourcePath error:nil];
+}
+
 static void TestCancellationRemovesPublishedOutput(void)
 {
   NSData *jpeg = RCTCreateSolidImageData(64, 48, YES, @"public.jpeg");
@@ -421,6 +600,7 @@ int main(void)
     TestDownsamples48MPBeforeTransform();
     TestAlphaAndJpegBackgroundDecodeBack();
     TestExifOrientationMatrixPreservesDisplayedLayout();
+    TestStripSanitizesJpegWithoutChangingGeometry();
     TestCancellationRemovesPublishedOutput();
     if (RCTLargeImageFailures > 0) {
       fprintf(stderr, "iOS large-image tests failed: %lu/%lu assertions.\n",

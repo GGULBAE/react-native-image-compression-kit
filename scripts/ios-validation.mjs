@@ -126,6 +126,17 @@ const JPEG_METADATA_TEST_SOURCE = path.join(
   'ios-native',
   'RCTImageCompressionJpegMetadataTests.mm'
 );
+const JPEG_SEGMENT_SANITIZER_CORE_SOURCE = path.join(
+  ROOT,
+  'ios',
+  'RCTImageCompressionJpegSegmentSanitizer.mm'
+);
+const JPEG_SEGMENT_SANITIZER_TEST_SOURCE = path.join(
+  ROOT,
+  'test',
+  'ios-native',
+  'RCTImageCompressionJpegSegmentSanitizerTests.mm'
+);
 const IOS_VALIDATION_CONFIG = createIOSValidationConfig(process.env);
 const METRO_PORT = IOS_VALIDATION_CONFIG.metroPort;
 const METRO_READY_TIMEOUT_MS = IOS_VALIDATION_CONFIG.metroReadyTimeoutMs;
@@ -204,6 +215,11 @@ async function main() {
     return;
   }
 
+  if (mode === 'jpeg-sanitizer-test') {
+    runJpegSegmentSanitizerTests();
+    return;
+  }
+
   if (mode === 'build') {
     checkIOSBuildEnvironment();
     ensurePodsInstalled();
@@ -225,6 +241,7 @@ async function main() {
     runOutputTests();
     runPipelineTests();
     runLargeImageTests();
+    runJpegSegmentSanitizerTests();
     ensurePackageJSBuild();
     ensurePodsInstalled();
     const simulator = selectSimulator();
@@ -355,6 +372,7 @@ function runLargeImageTests() {
       path.join(ROOT, 'ios', 'RCTImageCompressionCGImage.mm'),
       path.join(ROOT, 'ios', 'RCTImageCompressionUIKitImageDecoder.mm'),
       path.join(ROOT, 'ios', 'RCTImageCompressionUIKitImageTransformer.mm'),
+      JPEG_SEGMENT_SANITIZER_CORE_SOURCE,
       path.join(ROOT, 'ios', 'RCTImageCompressionUIKitImageEncoder.mm'),
       path.join(ROOT, 'ios', 'RCTImageCompressionDefaultPipeline.mm'),
       LARGE_IMAGE_TEST_SOURCE,
@@ -385,6 +403,17 @@ function runJpegMetadataTests() {
       JPEG_METADATA_TEST_SOURCE,
     ],
     ['Foundation', 'ImageIO', 'CoreGraphics']
+  );
+}
+
+function runJpegSegmentSanitizerTests() {
+  runNativeTests(
+    'RCTImageCompressionJpegSegmentSanitizerTests',
+    [
+      JPEG_SEGMENT_SANITIZER_CORE_SOURCE,
+      JPEG_SEGMENT_SANITIZER_TEST_SOURCE,
+    ],
+    ['Foundation']
   );
 }
 
@@ -539,6 +568,7 @@ function ensurePodsInstalled() {
     'RCTImageCompressionImageEncoder.mm',
     'RCTImageCompressionImageTransformer.mm',
     'RCTImageCompressionJpegMetadata.mm',
+    'RCTImageCompressionJpegSegmentSanitizer.mm',
     'RCTImageCompressionUIKitImageDecoder.mm',
     'RCTImageCompressionUIKitImageEncoder.mm',
     'RCTImageCompressionUIKitImageTransformer.mm',

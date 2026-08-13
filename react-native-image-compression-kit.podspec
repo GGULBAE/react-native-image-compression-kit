@@ -20,6 +20,7 @@ Pod::Spec.new do |s|
     "ios/RCTImageCompressionInput.h",
     "ios/RCTImageCompressionIOSCapabilities.h",
     "ios/RCTImageCompressionJpegMetadata.h",
+    "ios/RCTImageCompressionJpegSegmentSanitizer.h",
     "ios/RCTImageCompressionOutput.h",
     "ios/RCTImageCompressionPipeline.h",
     "ios/RCTImageCompressionRequest.h",

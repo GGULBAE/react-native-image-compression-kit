@@ -160,6 +160,8 @@ describe('npm package contract', () => {
         'node scripts/ios-validation.mjs encoder-test',
       'example:ios:metadata-test':
         'node scripts/ios-validation.mjs metadata-test',
+      'example:ios:jpeg-sanitizer-test':
+        'node scripts/ios-validation.mjs jpeg-sanitizer-test',
       'example:ios:transformer-test':
         'node scripts/ios-validation.mjs transformer-test',
       'example:ios:input-test': 'node scripts/ios-validation.mjs input-test',
