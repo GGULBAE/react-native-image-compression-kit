@@ -65,6 +65,15 @@ describe('kit-only 12 MP economic resilience evidence', () => {
     });
   });
 
+  it('treats native inspection object key order as non-semantic', () => {
+    const payload = validPayload();
+    payload.representative.inspection = Object.fromEntries(
+      Object.entries(payload.representative.inspection).reverse()
+    );
+
+    expect(inspectNativeEconomicResiliencePayload(payload)).toEqual([]);
+  });
+
   it('fails closed across malformed JPEG markers, scans, segments, and metadata', () => {
     const malformed = [
       Buffer.alloc(0),

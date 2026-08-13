@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { parseChunkedNativePayload, summarizeBenchmarkSamples } from './benchmark-core.mjs';
 import { inspectDemoVisualAgreement } from './demo-visual-agreement-core.mjs';
 
@@ -1121,7 +1122,7 @@ function sha256(value) {
 }
 
 function deepEqual(left, right) {
-  return JSON.stringify(left) === JSON.stringify(right);
+  return isDeepStrictEqual(left, right);
 }
 
 function positiveInteger(value) {
