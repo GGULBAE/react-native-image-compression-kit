@@ -1,8 +1,15 @@
 import { defineConfig } from 'vitepress';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { loadEconomicArchiveSnapshot } from './economicArchiveData';
 
 const repository =
   'https://github.com/GGULBAE/react-native-image-compression-kit';
 const site = 'https://ggulbae.github.io/react-native-image-compression-kit/';
+const websiteRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..'
+);
 
 export default defineConfig({
   title: 'React Native Image Compression Kit',
@@ -44,6 +51,10 @@ export default defineConfig({
       'link',
       { rel: 'canonical', href: new URL(route, site).toString() },
     ]);
+    if (pageData.relativePath === 'reference/economic-resilience.md') {
+      pageData.frontmatter.economicArchive =
+        loadEconomicArchiveSnapshot(websiteRoot);
+    }
   },
   themeConfig: {
     logo: '/logo.svg',
@@ -53,6 +64,7 @@ export default defineConfig({
       { text: 'API', link: '/reference/api' },
       { text: 'Pipeline fit', link: '/guide/choosing-an-image-pipeline' },
       { text: 'Why bytes matter', link: '/guide/byte-economics' },
+      { text: 'Evidence archive', link: '/reference/economic-resilience' },
       { text: 'Compatibility', link: '/reference/compatibility' },
       { text: 'Roadmap', link: '/roadmap' },
       { text: 'Changelog', link: '/changelog' },
@@ -84,6 +96,7 @@ export default defineConfig({
           { text: 'Compatibility matrix', link: '/reference/compatibility' },
           { text: 'Product architecture', link: '/reference/architecture' },
           { text: 'Product evidence', link: '/reference/evidence' },
+          { text: 'Economic resilience', link: '/reference/economic-resilience' },
           { text: 'Roadmap', link: '/roadmap' },
           { text: 'Native result demo', link: '/demo/' },
           { text: 'Changelog', link: '/changelog' },

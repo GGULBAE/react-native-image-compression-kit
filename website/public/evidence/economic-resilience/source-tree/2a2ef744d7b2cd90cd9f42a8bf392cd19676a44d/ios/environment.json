@@ -1,0 +1,27 @@
+{
+  "platform": "ios",
+  "runtime": "iOS 26.4",
+  "osBuild": "23E254a",
+  "device": "iPhone 17 Pro",
+  "deviceKind": "simulator",
+  "abi": "arm64",
+  "reactNativeArchitecture": "legacy",
+  "reactNativeVersion": "0.86.2",
+  "jsEngine": "hermes",
+  "buildType": "debug",
+  "runner": {
+    "label": "macos-latest",
+    "os": "macOS",
+    "arch": "ARM64",
+    "name": "GitHub Actions 1000003255",
+    "imageOS": "macos26",
+    "imageVersion": "20260728.0273.1"
+  },
+  "toolchain": {
+    "node": "v24.18.0",
+    "ffmpeg": "ffmpeg version 8.1.2 Copyright (c) 2000-2026 the FFmpeg developers",
+    "ffprobe": "ffprobe version 8.1.2 Copyright (c) 2007-2026 the FFmpeg developers",
+    "primary": "Xcode 26.6 Build version 17F113",
+    "platformSdk": "iOS Simulator 26.5"
+  }
+}

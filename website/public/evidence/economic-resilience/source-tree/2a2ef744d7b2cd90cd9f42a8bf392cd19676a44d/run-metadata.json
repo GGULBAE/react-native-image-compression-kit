@@ -1,0 +1,11 @@
+{
+  "event": "workflow_dispatch",
+  "headBranch": "master",
+  "headSha": "2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+  "conclusion": "success",
+  "workflowName": "Native Demo Evidence",
+  "path": ".github/workflows/demo-evidence.yml",
+  "runId": 31701095800,
+  "attempt": 1,
+  "url": "https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/31701095800"
+}

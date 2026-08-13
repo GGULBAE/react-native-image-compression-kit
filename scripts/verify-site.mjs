@@ -10,6 +10,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseHeadings, parseMarkdownLinks } from './docs-semantic-core.mjs';
 import { inspectDemoEvidence } from './demo-evidence-core.mjs';
+import {
+  PUBLIC_ECONOMIC_RESILIENCE_ARCHIVE_ROOT,
+  inspectPublicEconomicResilienceArchive,
+} from './public-economic-resilience-evidence-core.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const websiteRoot = path.join(root, 'website');
@@ -20,6 +24,8 @@ const requiredFiles = [
   'website/.vitepress/theme/index.ts',
   'website/.vitepress/theme/OptionBuilder.vue',
   'website/.vitepress/theme/ByteEconomicsCalculator.vue',
+  'website/.vitepress/theme/EconomicResilienceArchive.vue',
+  'website/.vitepress/economicArchiveData.ts',
   'website/.vitepress/theme/byteEconomics.ts',
   'website/.vitepress/theme/custom.css',
   'website/public/logo.svg',
@@ -40,6 +46,8 @@ const requiredFiles = [
   'website/reference/api.md',
   'website/reference/architecture.md',
   'website/reference/compatibility.md',
+  'website/reference/evidence.md',
+  'website/reference/economic-resilience.md',
   'website/demo/index.md',
   'website/roadmap.md',
   'website/changelog.md',
@@ -61,6 +69,7 @@ const siteConfig = readFileSync(
 for (const route of [
   "link: '/reference/architecture'",
   "link: '/guide/choosing-an-image-pipeline'",
+  "link: '/reference/economic-resilience'",
   "link: '/roadmap'",
 ]) {
   if (!siteConfig.includes(route)) {
@@ -137,6 +146,8 @@ const requiredSemanticText = [
   'capability-first',
   'No roadmap item is a release promise',
   'v0.4.0 iOS renderer',
+  'matchedTransferBaseline: null',
+  'costSavingsClaim: null',
 ];
 if (releaseStatus.releaseState === 'candidate') {
   requiredSemanticText.push(`${packageJson.version} source candidate`);
@@ -208,6 +219,39 @@ if (existsSync(demoManifestPath)) {
   }
 } else if (releaseStatus.releaseState === 'release') {
   errors.push('release state requires passed Android and iOS native demo evidence');
+}
+
+const publicEconomicArchive = inspectPublicEconomicResilienceArchive(
+  path.join(root, PUBLIC_ECONOMIC_RESILIENCE_ARCHIVE_ROOT)
+);
+if (publicEconomicArchive.status !== 'passed') {
+  errors.push(`public economic resilience archive: ${publicEconomicArchive.error}`);
+} else {
+  const economicComponent = readFileSync(
+    path.join(websiteRoot, '.vitepress/theme/EconomicResilienceArchive.vue'),
+    'utf8'
+  );
+  const stateContracts = publicEconomicArchive.archiveState === 'available'
+    ? [
+        'Archived source-tree capture',
+        'sourceToOutputByteDifference',
+        'uprightSimilarity',
+        'verticalFlipSimilarity',
+        'removedPackageOutputs',
+        'state.runUrl',
+        'Original artifact ZIP',
+      ]
+    : [
+        'Methodology preview · no archived capture',
+        'not a package release or a measured product result',
+      ];
+  for (const contract of stateContracts) {
+    if (!economicComponent.includes(contract)) {
+      errors.push(
+        `economic resilience ${publicEconomicArchive.archiveState} component missing: ${contract}`
+      );
+    }
+  }
 }
 
 if (errors.length > 0) {

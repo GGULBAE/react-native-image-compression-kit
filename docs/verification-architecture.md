@@ -17,6 +17,7 @@ from the npm package.
 | Native demo result metrics, source/output/screenshot/recording bytes, auto-oriented SSIM and vertical-flip control, ordered walkthrough timing, parsed video-track duration, timestamp normalization, digests, platform provenance, and exact source identity | `test/demoEvidence.test.mjs`, `test/demoVisualAgreement.test.mjs`, `test/guidedDemoCore.test.mjs`, `test/demoCaptureScriptContract.test.ts`, `scripts/demo-evidence-core.mjs`, `scripts/demo-visual-agreement-core.mjs`, and `scripts/guided-demo-core.mjs` | Native Demo Evidence workflow and `pnpm verify:demo-evidence` |
 | Native baseline and exact-plan implementation comparison metrics, balanced sample positions, comparator identity, fixture/plan bytes, digests, and platform provenance | `test/benchmark.test.mjs`, `test/benchmarkComparison.test.mjs`, `scripts/benchmark-core.mjs`, and `scripts/benchmark-comparison-core.mjs` | Native Demo Evidence workflow, `pnpm verify:benchmark-evidence`, and `pnpm verify:benchmark-comparison-evidence` |
 | Kit-only 12 MP source/output bytes, exact environment and capabilities, call-only timing, decode/geometry, a `strip` request with no APP1/APP13/JPEG comments, explicit full-to-limited-range SSIM/flip control with a 0.001 replay tolerance, signed byte difference, and zero package-output residuals | `test/economicResilienceBenchmark.test.mjs`, `test/economicResilienceEvidence.test.mjs`, `test/economicResilienceNativeSourceContract.test.mjs`, and `scripts/economic-resilience-evidence-core.mjs` | Native Demo Evidence workflow and `pnpm verify:economic-resilience-evidence` |
+| Append-only exact-master 12 MP archive topology, GitHub-bound run/artifact identity, retained ZIP-to-file equality, cross-platform source identity, economic claim boundary, crash recovery, revision evolution with live reacquisition for new suffixes, and independent portable visual replay | `test/publicEconomicResilienceEvidence.test.mjs`, `test/publicEconomicResilienceEvolution.test.mjs`, `scripts/public-economic-resilience-evidence-core.mjs`, `scripts/public-economic-resilience-github.mjs`, and `scripts/public-economic-resilience-evolution-core.mjs` | `pnpm import:public-economic-resilience-evidence -- --run-id <id>`, `pnpm verify:public-economic-resilience-evidence`, and `pnpm verify:public-economic-resilience-evolution -- --base <sha>` |
 | Packed-consumer compatibility lane definitions | `test/compatibilityMatrix.test.mjs` and `scripts/compatibility-matrix-core.mjs` | `pnpm fixtures:compatibility:check` and the Compatibility workflow |
 | Built public-site performance, accessibility, and SEO | `scripts/verify-site-quality.mjs` | `pnpm site:build && pnpm site:quality` |
 | Repository metadata, security features, Actions policy, rulesets, environments, and Pages | `test/repositorySettings.test.mjs`, `docs/repository-settings.json`, and `scripts/repository-settings-core.mjs` | `pnpm fixtures:repository-settings:check` and `pnpm audit:repository-settings` |
@@ -72,6 +73,8 @@ pnpm docs:check
 pnpm site:check
 pnpm site:build
 pnpm site:quality
+pnpm verify:public-economic-resilience-evidence
+pnpm verify:public-economic-resilience-evolution -- --base <base-commit-sha>
 pnpm fixtures:compatibility:check
 pnpm fixtures:repository-settings:check
 pnpm audit:repository-settings
@@ -101,6 +104,8 @@ smoke test in their supported environments.
   methodology documentation together.
 - Change workflow actions or pins in the workflow supply-chain verifier.
 - Change release evidence rules in the evidence-specific verifier and fixtures.
+- Change public source-tree evidence in the append-only importer, archive
+  verifier, methodology page, and archive mutation tests together.
 
 ## Non-goals
 

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 3,
+  "status": "passed",
+  "algorithm": "ffmpeg-auto-oriented-contain-limited-range-ssim-v3",
+  "comparisonProfile": "jpeg-full-range-to-limited-yuv444p-v1",
+  "inputColorRange": "pc",
+  "comparisonColorRange": "tv",
+  "comparisonPixelFormat": "yuv444p",
+  "comparisonScaler": "lanczos",
+  "scoreTolerance": 0.001,
+  "sourceColorRange": "pc",
+  "outputColorRange": "pc",
+  "resizeMode": "contain",
+  "maxWidth": 1600,
+  "maxHeight": 1200,
+  "sourceWidth": 4000,
+  "sourceHeight": 3000,
+  "expectedWidth": 1600,
+  "expectedHeight": 1200,
+  "width": 1600,
+  "height": 1200,
+  "uprightSimilarity": 0.944431,
+  "verticalFlipSimilarity": 0.690423,
+  "minimumSimilarity": 0.9,
+  "minimumOrientationMargin": 0.02,
+  "checks": {
+    "geometry": true,
+    "minimumSimilarity": true,
+    "orientationMargin": true
+  },
+  "sourceSha256": "bdcf4e083f1860d8829898211e4b1c428a80dfd53dceca697c6f7e4a4901bfcc",
+  "outputSha256": "af752a5ad998e6030a7bba11fbd6d45f99f495fc7c3ba3173d2ee9ffd0cd918c"
+}

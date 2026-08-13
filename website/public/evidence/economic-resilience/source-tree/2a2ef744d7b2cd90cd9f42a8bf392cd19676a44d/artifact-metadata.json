@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "runId": 31701095800,
+  "artifacts": [
+    {
+      "platform": "android",
+      "id": 9181519094,
+      "name": "native-demo-android-2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+      "digest": "sha256:6aacf829a8b5fd4a15dc45f78825b20d7eb94ac7e0a6ea05df62dd89e8059fb5",
+      "expired": false,
+      "sizeInBytes": 1734370,
+      "archiveDownloadUrl": "https://api.github.com/repos/GGULBAE/react-native-image-compression-kit/actions/artifacts/9181519094/zip"
+    },
+    {
+      "platform": "ios",
+      "id": 9181900101,
+      "name": "native-demo-ios-2a2ef744d7b2cd90cd9f42a8bf392cd19676a44d",
+      "digest": "sha256:d13366ee4d662486350a671fce64550d0c7b13889ceb2aacac29c070ee601d65",
+      "expired": false,
+      "sizeInBytes": 1891857,
+      "archiveDownloadUrl": "https://api.github.com/repos/GGULBAE/react-native-image-compression-kit/actions/artifacts/9181900101/zip"
+    }
+  ]
+}

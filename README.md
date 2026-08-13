@@ -373,8 +373,9 @@ Important limitations:
 
 ## Development verification
 
-The full repository gate requires `ffmpeg` and `ffprobe` so retained and
-newly generated native image evidence can be decoded and visually replayed.
+The full repository gate requires `ffmpeg`, `ffprobe`, `zipinfo`, and `unzip`
+so retained and newly generated native image evidence can be decoded, boundedly
+inspected, and visually replayed.
 The pinned Docker lane includes both tools.
 
 ```bash
@@ -394,6 +395,8 @@ pnpm example:ios:transformer-test
 pnpm docs:check
 pnpm site:check
 pnpm site:build
+pnpm verify:public-economic-resilience-evidence
+pnpm verify:public-economic-resilience-evolution -- --base <base-commit-sha>
 pnpm fixtures:compatibility:check
 git diff --check
 pnpm pack --dry-run
@@ -429,6 +432,21 @@ conversion and allows only a 0.001 SSIM implementation tolerance after both
 measurements independently pass the quality and orientation gates. The bundle
 is an environment-specific observation, not a speed ranking, cost-savings
 claim, or real-device benchmark.
+Exact-master Android and iOS bundles can be retained separately from the
+published-package demo in an append-only, full-SHA-addressed public archive.
+`pnpm import:public-economic-resilience-evidence -- --run-id <id>` queries the
+GitHub run and artifact APIs directly, requires one successful
+`workflow_dispatch` run on `refs/heads/master`, downloads the exact Android and
+iOS artifacts by ID, and retains their digest-bound ZIP bytes. It refuses
+replacement or orphaned index state and binds byte-identical source/fixture
+assets across platforms.
+`pnpm verify:public-economic-resilience-evidence` independently replays the
+portable visual contract and ZIP-to-file equality for every retained bundle.
+The CI evolution gate prevents deletion, reordering, or byte changes to any
+earlier capture. The empty archive state is valid; the
+[economic resilience page](https://ggulbae.github.io/react-native-image-compression-kit/reference/economic-resilience)
+shows a methodology preview while empty and switches to exact archive-derived
+metrics, assets, and workflow provenance after a capture exists.
 Comparison dependencies remain inside the private example application and
 outside the published package. See the
 [benchmark methodology](docs/benchmarks/README.md) for its timing boundary,

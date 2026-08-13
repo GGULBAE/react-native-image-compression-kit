@@ -5,6 +5,10 @@ import {
   statSync,
 } from 'node:fs';
 import path from 'node:path';
+import {
+  PUBLIC_ECONOMIC_RESILIENCE_ARCHIVE_ROOT,
+  inspectPublicEconomicResilienceArchive,
+} from './public-economic-resilience-evidence-core.mjs';
 
 export const STATUS_START = '<!-- package-status:start -->';
 export const STATUS_END = '<!-- package-status:end -->';
@@ -48,6 +52,7 @@ export const REQUIRED_DOCUMENTATION_FILES = [
   'docs/product-architecture.md',
   'docs/verification-architecture.md',
   'website/reference/evidence.md',
+  'website/reference/economic-resilience.md',
   'docs/maintainers/account-recovery.md',
   'docs/maintainers/repository-settings.md',
   'docs/maintainers/trusted-release.md',
@@ -629,6 +634,7 @@ export function inspectDocumentation(root) {
       'pnpm example:typecheck',
       'pnpm docs:check',
       'pnpm site:check',
+      'pnpm verify:public-economic-resilience-evidence',
       'pnpm fixtures:compatibility:check',
       'pnpm fixtures:repository-settings:check',
       'pnpm audit:repository-settings',
@@ -660,6 +666,37 @@ export function inspectDocumentation(root) {
         readFileSync(productEvidencePath, 'utf8')
       )
     );
+  }
+
+  const economicEvidencePath = path.join(
+    root,
+    'website/reference/economic-resilience.md'
+  );
+  if (existsSync(economicEvidencePath)) {
+    errors.push(
+      ...inspectEconomicResiliencePageContracts(
+        readFileSync(economicEvidencePath, 'utf8')
+      )
+    );
+    const publicArchive = inspectPublicEconomicResilienceArchive(
+      path.join(root, PUBLIC_ECONOMIC_RESILIENCE_ARCHIVE_ROOT)
+    );
+    if (publicArchive.status !== 'passed') {
+      errors.push(`public economic resilience archive: ${publicArchive.error}`);
+    } else {
+      const componentPath = path.join(
+        root,
+        'website/.vitepress/theme/EconomicResilienceArchive.vue'
+      );
+      errors.push(
+        ...inspectEconomicResilienceStateContracts({
+          archiveState: publicArchive.archiveState,
+          componentContents: existsSync(componentPath)
+            ? readFileSync(componentPath, 'utf8')
+            : '',
+        })
+      );
+    }
   }
 
   inspectPublicLaunchContracts(
@@ -895,6 +932,61 @@ export function inspectProductEvidenceContracts(contents) {
     ],
     errors,
   });
+  return errors;
+}
+
+export function inspectEconomicResiliencePageContracts(contents) {
+  const errors = [];
+  inspectDecisionDocument({
+    label: 'economic resilience evidence',
+    contents,
+    headings: [
+      'What a capture must prove',
+      'Economic claim boundary',
+      'Append-only archive layout',
+      'Import and verify',
+    ],
+    snippets: [
+      '<EconomicResilienceArchive />',
+      'source-remains',
+      'matchedTransferBaseline: null',
+      'costSavingsClaim: null',
+      'workflow_dispatch',
+      'refs/heads/master',
+      'pnpm verify:public-economic-resilience-evidence',
+      'There is no mutable `latest`',
+    ],
+    errors,
+  });
+  return errors;
+}
+
+export function inspectEconomicResilienceStateContracts({
+  archiveState,
+  componentContents,
+}) {
+  const errors = [];
+  const required = archiveState === 'available'
+    ? [
+        'Archived source-tree capture',
+        'sourceToOutputByteDifference',
+        'uprightSimilarity',
+        'verticalFlipSimilarity',
+        'removedPackageOutputs',
+        'state.runUrl',
+        'Original artifact ZIP',
+      ]
+    : [
+        'Methodology preview · no archived capture',
+        'not a package release or a measured product result',
+      ];
+  for (const snippet of required) {
+    if (!componentContents.includes(snippet)) {
+      errors.push(
+        `economic resilience ${archiveState} state missing component contract: ${snippet}`
+      );
+    }
+  }
   return errors;
 }
 

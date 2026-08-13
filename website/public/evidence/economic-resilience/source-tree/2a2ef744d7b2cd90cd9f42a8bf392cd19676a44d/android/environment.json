@@ -1,0 +1,27 @@
+{
+  "platform": "android",
+  "runtime": "Android 15 / API 35",
+  "osBuild": "AE3A.240806.043",
+  "device": "Google sdk_gphone64_x86_64",
+  "deviceKind": "emulator",
+  "abi": "x86_64",
+  "reactNativeArchitecture": "new",
+  "reactNativeVersion": "0.86.2",
+  "jsEngine": "hermes",
+  "buildType": "debug",
+  "runner": {
+    "label": "ubuntu-latest",
+    "os": "Linux",
+    "arch": "X64",
+    "name": "GitHub Actions 1000003256",
+    "imageOS": "ubuntu24",
+    "imageVersion": "20260720.247.2"
+  },
+  "toolchain": {
+    "node": "v24.18.0",
+    "ffmpeg": "ffmpeg version 6.1.1-3ubuntu5 Copyright (c) 2000-2023 the FFmpeg developers",
+    "ffprobe": "ffprobe version 6.1.1-3ubuntu5 Copyright (c) 2007-2023 the FFmpeg developers",
+    "primary": "openjdk version \"21.0.11\" 2026-04-21 LTS",
+    "platformSdk": "Android compile SDK 36; emulator API 35; build-tools 36.0.0; NDK 27.1.12297006"
+  }
+}
