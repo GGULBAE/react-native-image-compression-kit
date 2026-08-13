@@ -28,9 +28,8 @@ concurrency:
 jobs:
   compatibility:
     name: Full compatibility release gate
+    if: inputs.confirm_publish == true && github.ref == 'refs/heads/master' && github.sha == inputs.source_sha
     uses: ./.github/workflows/compatibility.yml
-    with:
-      source_sha: ${{ inputs.source_sha }}
     permissions:
       contents: read
 
@@ -50,18 +49,20 @@ jobs:
           echo "confirm_publish must be true." >&2
           exit 1
 
-      - name: Checkout exact source
+      - name: Checkout trusted workflow source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Verify protected master identity
+      - name: Verify protected master identity before code execution
         env:
           EXPECTED_SHA: ${{ inputs.source_sha }}
           SOURCE_REF: ${{ github.ref }}
+          WORKFLOW_SHA: ${{ github.sha }}
         run: |
           test "$SOURCE_REF" = "refs/heads/master"
+          test "$WORKFLOW_SHA" = "$EXPECTED_SHA"
           test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
           git fetch --no-tags origin master
           test "$(git rev-parse origin/master)" = "$EXPECTED_SHA"
@@ -88,8 +89,6 @@ jobs:
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: "24"
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install release npm CLI
         run: npm install --global npm@12.0.1
@@ -185,10 +184,23 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout exact source
+      - name: Checkout trusted workflow source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Verify protected master identity before code execution
+        env:
+          EXPECTED_SHA: ${{ inputs.source_sha }}
+          SOURCE_REF: ${{ github.ref }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          test "$SOURCE_REF" = "refs/heads/master"
+          test "$WORKFLOW_SHA" = "$EXPECTED_SHA"
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          git fetch --no-tags origin master
+          test "$(git rev-parse origin/master)" = "$EXPECTED_SHA"
 
       - name: Setup pnpm
         uses: ./.github/actions/setup-pnpm
@@ -197,8 +209,6 @@ jobs:
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: "24"
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install release npm CLI
         run: npm install --global npm@12.0.1

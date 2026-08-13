@@ -581,6 +581,112 @@ describe('GitHub Actions workflow supply-chain gate', () => {
     }
   });
 
+  it('keeps privileged release execution on the trusted event SHA before repository code', () => {
+    const mutations = [
+      {
+        label: 'preflight-input-checkout',
+        workflow: 'release.yml',
+        mutate: (source) =>
+          source.replace(
+            'ref: ${{ github.sha }}',
+            'ref: ${{ inputs.source_sha }}'
+          ),
+      },
+      {
+        label: 'publish-input-checkout',
+        workflow: 'release.yml',
+        mutate: (source) => {
+          const trustedRef = 'ref: ${{ github.sha }}';
+          const first = source.indexOf(trustedRef);
+          const second = source.indexOf(trustedRef, first + trustedRef.length);
+          return (
+            source.slice(0, second) +
+            'ref: ${{ inputs.source_sha }}' +
+            source.slice(second + trustedRef.length)
+          );
+        },
+      },
+      {
+        label: 'forwarded-input',
+        workflow: 'release.yml',
+        mutate: (source) =>
+          source.replace(
+            '    uses: ./.github/workflows/compatibility.yml\n    permissions:',
+            '    uses: ./.github/workflows/compatibility.yml\n    with:\n      source_sha: ${{ inputs.source_sha }}\n    permissions:'
+          ),
+      },
+      {
+        label: 'missing-event-equality',
+        workflow: 'release.yml',
+        mutate: (source) =>
+          source.replace('          test "$WORKFLOW_SHA" = "$EXPECTED_SHA"\n', ''),
+      },
+      {
+        label: 'missing-master-equality',
+        workflow: 'release.yml',
+        mutate: (source) =>
+          source.replace(
+            '          test "$(git rev-parse origin/master)" = "$EXPECTED_SHA"\n',
+            ''
+          ),
+      },
+      {
+        label: 'privileged-cache',
+        workflow: 'release.yml',
+        mutate: (source) =>
+          source.replace(
+            '          node-version: "24"',
+            '          node-version: "24"\n          cache: pnpm\n          cache-dependency-path: pnpm-lock.yaml'
+          ),
+      },
+      {
+        label: 'caller-controlled-compatibility',
+        workflow: 'compatibility.yml',
+        mutate: (source) =>
+          source.replace(
+            'github.sha',
+            'inputs.source_sha || github.event.pull_request.head.sha || github.sha'
+          ),
+      },
+      {
+        label: 'identity-after-repository-code',
+        workflow: 'release.yml',
+        mutate: (source) => {
+          const identityStart = source.indexOf(
+            '      - name: Verify protected master identity before code execution'
+          );
+          const setupStart = source.indexOf('      - name: Setup pnpm', identityStart);
+          const setupEnd = source.indexOf('\n\n', setupStart) + 2;
+          const identityEnd = source.indexOf('\n\n', identityStart) + 2;
+          const identity = source.slice(identityStart, identityEnd);
+          return `${source.slice(0, identityStart)}${source.slice(identityEnd, setupEnd)}${identity}${source.slice(setupEnd)}`;
+        },
+      },
+      {
+        label: 'step-between-checkout-and-identity',
+        workflow: 'release.yml',
+        mutate: (source) =>
+          source.replace(
+            '      - name: Verify protected master identity before code execution',
+            '      - run: node scripts/verify-site.mjs\n\n      - name: Verify protected master identity before code execution'
+          ),
+      },
+    ];
+
+    for (const { label, workflow, mutate } of mutations) {
+      const { parent, rootDir } = copiedRepository(`trusted-release-${label}`);
+      try {
+        mutateWorkflow(rootDir, workflow, mutate);
+        const result = verify(rootDir);
+        expect(result.status).toBe('failed');
+        expect(result.checks.workflows).toBe(false);
+        expect(result.error).toMatch(/Trusted Release|Compatibility/);
+      } finally {
+        rmSync(parent, { recursive: true, force: true });
+      }
+    }
+  });
+
   it('preserves an existing report and removes the temporary file on atomic failure', () => {
     const parent = mkdtempSync(path.join(os.tmpdir(), 'rnick-workflow-atomic-'));
     try {
