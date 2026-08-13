@@ -25,6 +25,8 @@ on:
       - "scripts/economic-resilience-evidence-core.mjs"
       - "scripts/verify-economic-resilience-evidence.mjs"
       - "scripts/guided-demo-core.mjs"
+      - "scripts/inspect-ios-simulator-metadata.mjs"
+      - "scripts/ios-simulator-metadata-core.mjs"
       - "scripts/normalize-demo-recording.mjs"
       - "scripts/verify-benchmark-comparison-evidence.mjs"
   workflow_dispatch:
@@ -178,7 +180,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          udid=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=Object.values(JSON.parse(s).devices).flat()[0];if(!d)process.exit(1);process.stdout.write(d.udid)})")
+          xcrun simctl list devices booted --json > /tmp/rnick-sim-devices.json
+          xcrun simctl list runtimes --json > /tmp/rnick-sim-runtimes.json
+          node scripts/inspect-ios-simulator-metadata.mjs \
+            --devices /tmp/rnick-sim-devices.json \
+            --runtimes /tmp/rnick-sim-runtimes.json > /tmp/rnick-sim-metadata.json
+          udid=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').udid)")
+          runtime=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').runtime)")
+          device=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').device)")
+          os_build=$(node -e "process.stdout.write(require('/tmp/rnick-sim-metadata.json').osBuild)")
+          abi=$(xcrun simctl spawn "$udid" uname -m | tr -d '\r')
           app=example/ios/build/Build/Products/Debug-iphonesimulator/ImageCompressionKitExample.app
           xcrun simctl install "$udid" "$app"
           pnpm --filter image-compression-kit-example exec react-native start --port 8081 > /tmp/rnick-metro.log 2>&1 &
@@ -277,8 +288,6 @@ jobs:
           NODE
           cp "$(sed -n '1p' /tmp/rnick-demo-raw/uris.txt)" /tmp/rnick-demo-raw/source.jpg
           cp "$(sed -n '2p' /tmp/rnick-demo-raw/uris.txt)" /tmp/rnick-demo-raw/output.jpg
-          runtime=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const p=JSON.parse(s);const e=Object.entries(p.devices).find(([,v])=>v.length);process.stdout.write(e[0].replace('com.apple.CoreSimulator.SimRuntime.','').replaceAll('-','.'))})")
-          device=$(xcrun simctl list devices booted --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const d=Object.values(JSON.parse(s).devices).flat()[0];process.stdout.write(d.name)})")
           node scripts/normalize-demo-recording.mjs \
             --input /tmp/rnick-demo-raw/recording-raw.mp4 \
             --output /tmp/rnick-demo-raw/recording.mp4 \
@@ -346,8 +355,6 @@ jobs:
             --max-height 1200 \
             --comparison-profile jpeg-full-range-to-limited-yuv444p-v1 \
             --report /tmp/rnick-economic-raw/visual-agreement.json
-          os_build=$(xcrun simctl spawn "$udid" sw_vers -buildVersion | tr -d '\r')
-          abi=$(xcrun simctl spawn "$udid" uname -m | tr -d '\r')
           react_native_version=$(node -e "process.stdout.write(require('./example/package.json').dependencies['react-native'])")
           node_version=$(node --version)
           ffmpeg_version=$(ffmpeg -version | head -n 1)

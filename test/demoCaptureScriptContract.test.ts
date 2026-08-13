@@ -84,6 +84,10 @@ describe('Android demo screenshot capture', () => {
     expect(workflow).toContain('--run-attempt "$GITHUB_RUN_ATTEMPT"');
     expect(workflow).toContain('ffprobe_version=$(ffprobe -version | head -n 1)');
     expect(workflow).toContain('--ffprobe "$ffprobe_version"');
+    expect(workflow).toContain('xcrun simctl list runtimes --json');
+    expect(workflow).toContain('inspect-ios-simulator-metadata.mjs');
+    expect(workflow).toContain("require('/tmp/rnick-sim-metadata.json').udid");
+    expect(workflow).not.toContain('simctl spawn "$udid" sw_vers');
   });
 
   it('records the complete guided walkthrough on both native platforms', () => {
