@@ -326,7 +326,7 @@ describe('Android source contract', () => {
     expect(workflow).toContain('run: pnpm example:codegen');
     expect(workflow).toContain('api-level: 35');
     expect(workflow).toContain('pnpm example:android-instrumentation');
-    expect(workflow).toContain('Native codec and output lifecycle emulator validation');
+    expect(workflow).toContain('HEIC/HEIF/AVIF emulator validation');
     expectFixtureManifest('android/src/test/assets/avif/manifest.json', ['avif']);
     expectFixtureManifest('android/src/test/assets/heic-heif/manifest.json', [
       'heic',
