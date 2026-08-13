@@ -39,6 +39,9 @@
     "include": ["refs/heads/master"],
     "requiredApprovals": 0,
     "requiredStatusChecks": [
+      "Analyze (actions)",
+      "Analyze (javascript-typescript)",
+      "Analyze (ruby)",
       "HEIC/HEIF/AVIF emulator validation",
       "JS, TypeScript, and Android",
       "iOS host-app smoke"
