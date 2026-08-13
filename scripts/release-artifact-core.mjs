@@ -199,7 +199,14 @@ export function normalizeNpmViewPublicationState(value) {
 }
 
 export function inspectNpmAttestations(value, { packageName, version }) {
-  const expectedSuffix = `${encodeURIComponent(packageName).replace('%40', '@')}@${version}`;
+  const packageNamePattern = /^(?:@[a-z0-9][a-z0-9._~-]*\/[a-z0-9][a-z0-9._~-]*|[a-z0-9][a-z0-9._~-]*)$/;
+  const validPackageName =
+    typeof packageName === 'string' &&
+    packageName.length <= 214 &&
+    packageNamePattern.test(packageName);
+  const validVersion = typeof version === 'string' && /^\d+\.\d+\.\d+$/.test(version);
+  const expectedIdentity =
+    validPackageName && validVersion ? `${packageName}@${version}` : null;
   const entries = Array.isArray(value) ? value : [value];
   const attestation = entries.length === 1 ? entries[0] : null;
   const url = attestation?.url;
@@ -208,11 +215,10 @@ export function inspectNpmAttestations(value, { packageName, version }) {
   if (entries.length !== 1) {
     errors.push(`npm view must return exactly one attestation, received ${entries.length}`);
   }
-  if (
-    typeof url !== 'string' ||
-    !url.startsWith('https://registry.npmjs.org/-/npm/v1/attestations/') ||
-    !decodeURIComponent(url).endsWith(expectedSuffix)
-  ) {
+  if (!validPackageName || !validVersion) {
+    errors.push('npm attestation identity must use an exact package name and semantic version');
+  }
+  if (!isExactNpmAttestationUrl(url, expectedIdentity)) {
     errors.push('npm attestation URL does not identify the exact package version');
   }
   if (predicateType !== 'https://slsa.dev/provenance/v1') {
@@ -224,6 +230,31 @@ export function inspectNpmAttestations(value, { packageName, version }) {
     predicateType: predicateType ?? null,
     error: errors.length > 0 ? errors.join(' | ') : null,
   };
+}
+
+function isExactNpmAttestationUrl(value, expectedIdentity) {
+  if (typeof value !== 'string' || expectedIdentity == null) {
+    return false;
+  }
+  try {
+    const parsed = new URL(value);
+    const pathPrefix = '/-/npm/v1/attestations/';
+    if (
+      parsed.protocol !== 'https:' ||
+      parsed.hostname !== 'registry.npmjs.org' ||
+      parsed.port !== '' ||
+      parsed.username !== '' ||
+      parsed.password !== '' ||
+      parsed.search !== '' ||
+      parsed.hash !== '' ||
+      !parsed.pathname.startsWith(pathPrefix)
+    ) {
+      return false;
+    }
+    return decodeURIComponent(parsed.pathname.slice(pathPrefix.length)) === expectedIdentity;
+  } catch {
+    return false;
+  }
 }
 
 function publicationFailure(
