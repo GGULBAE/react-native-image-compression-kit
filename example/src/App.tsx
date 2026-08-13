@@ -43,7 +43,10 @@ import {
 } from './guidedDemo';
 import { runNativeBenchmark } from './nativeBenchmark';
 import { runNativeComparisonBenchmark } from './nativeComparisonBenchmark';
-import { runEconomicResilienceBenchmark } from './economicResilienceBenchmark';
+import {
+  createEconomicResilienceDependencies,
+  runEconomicResilienceBenchmark,
+} from './economicResilienceBenchmark';
 
 const EXAMPLE_OUTPUT_FORMATS: OutputFormat[] = ['jpeg', 'png', 'webp'];
 const RESIZE_MODES: ResizeMode[] = ['contain', 'cover', 'stretch'];
@@ -204,7 +207,12 @@ export default function App(): React.JSX.Element {
           }
           const economicResilience = await runEconomicResilienceBenchmark(
             SAMPLE_MODULE,
-            Platform.OS === 'ios' ? 'ios' : 'android'
+            Platform.OS === 'ios' ? 'ios' : 'android',
+            createEconomicResilienceDependencies({
+              compress: compressImage,
+              removeOutput: removeCompressionOutput,
+              capabilities: getImageCompressionCapabilities,
+            })
           );
           for (const message of economicResilience.logs) {
             await emitIOSSmokeLog(message);

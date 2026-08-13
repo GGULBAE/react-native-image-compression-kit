@@ -1,10 +1,7 @@
-import {
-  compressImage,
-  getImageCompressionCapabilities,
-  removeCompressionOutput,
-  type CompressionOptions,
-  type CompressionResult,
-  type ImageCompressionCapabilities,
+import type {
+  CompressionOptions,
+  CompressionResult,
+  ImageCompressionCapabilities,
 } from 'react-native-image-compression-kit';
 import type {
   EvidenceImageInspection,
@@ -90,23 +87,13 @@ export type EconomicResiliencePayload = {
   };
 };
 
-type Dependencies = {
-  compress: typeof compressImage;
-  removeOutput: typeof removeCompressionOutput;
-  capabilities: typeof getImageCompressionCapabilities;
+export type EconomicResilienceDependencies = {
+  compress: (options: CompressionOptions) => Promise<CompressionResult>;
+  removeOutput: (uri: string) => Promise<void>;
+  capabilities: () => Promise<ImageCompressionCapabilities>;
   now: () => number;
   clock: 'performance.now' | 'Date.now';
   createCaptureId: () => string;
-};
-
-const DEFAULT_CLOCK = selectEconomicResilienceClock();
-const DEFAULT_DEPENDENCIES: Dependencies = {
-  compress: compressImage,
-  removeOutput: removeCompressionOutput,
-  capabilities: getImageCompressionCapabilities,
-  now: DEFAULT_CLOCK.now,
-  clock: DEFAULT_CLOCK.clock,
-  createCaptureId: defaultCaptureId,
 };
 
 export function selectEconomicResilienceClock(
@@ -117,7 +104,7 @@ export function selectEconomicResilienceClock(
     performance?: { now?: unknown };
     Date?: { now?: unknown };
   }
-): Pick<Dependencies, 'now' | 'clock'> {
+): Pick<EconomicResilienceDependencies, 'now' | 'clock'> {
   if (typeof runtime.performance?.now === 'function') {
     const performanceNow = runtime.performance.now as () => number;
     return {
@@ -132,10 +119,23 @@ export function selectEconomicResilienceClock(
   return { now: () => dateNow.call(runtime.Date), clock: 'Date.now' };
 }
 
+export function createEconomicResilienceDependencies(
+  native: Pick<
+    EconomicResilienceDependencies,
+    'compress' | 'removeOutput' | 'capabilities'
+  >
+): EconomicResilienceDependencies {
+  return {
+    ...native,
+    ...selectEconomicResilienceClock(),
+    createCaptureId: defaultCaptureId,
+  };
+}
+
 export async function runEconomicResilienceBenchmark(
   sampleModule: ExampleImageSourceModule,
   platform: NativePlatform,
-  dependencies: Dependencies = DEFAULT_DEPENDENCIES
+  dependencies: EconomicResilienceDependencies
 ): Promise<{ payload: EconomicResiliencePayload; logs: string[] }> {
   const [sourceUri, architecture, capabilities] = await Promise.all([
     sampleModule.copyEconomicResilienceJpegToCache(),
