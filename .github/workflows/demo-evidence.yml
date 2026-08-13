@@ -250,6 +250,17 @@ jobs:
               grep -q 'RNICK_ECONOMIC_RESILIENCE_PASS' /tmp/rnick-demo-raw/native.log; then
               break
             fi
+            if grep -q 'RNICK_DEMO_FAIL' /tmp/rnick-demo-raw/native.log; then
+              echo 'Native demo reported failure before all evidence markers passed.' >&2
+              tail -n 200 /tmp/rnick-demo-raw/native.log >&2 || true
+              tail -n 200 /tmp/rnick-metro.log >&2 || true
+              exit 1
+            fi
+            if [ "$attempt" = "300" ]; then
+              echo 'Timed out waiting for all native evidence markers.' >&2
+              tail -n 200 /tmp/rnick-demo-raw/native.log >&2 || true
+              tail -n 200 /tmp/rnick-metro.log >&2 || true
+            fi
             test "$attempt" != "300"
             sleep 1
           done

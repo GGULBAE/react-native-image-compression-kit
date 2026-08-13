@@ -54,6 +54,9 @@ describe('Android demo screenshot capture', () => {
     expect(source).toContain('for _attempt in $(seq 1 50)');
     expect(source).toContain('wait "$logcat_pid"');
     expect(source).not.toContain('adb logcat -d');
+    expect(source).toContain("grep -q 'RNICK_DEMO_FAIL'");
+    expect(source).toContain('tail -n 200 /tmp/rnick-demo-raw/native.log');
+    expect(source).toContain('tail -n 200 /tmp/rnick-metro.log');
     expect(streamStart).toBeGreaterThan(-1);
     expect(streamStart).toBeLessThan(captureLaunch);
     expect(completionGate).toBeGreaterThan(captureLaunch);
@@ -71,6 +74,9 @@ describe('Android demo screenshot capture', () => {
     expect(workflow).not.toContain('--start "$capture_started_at"');
     expect(workflow).not.toContain('log show --style compact --last 3m');
     expect(workflow).toContain('for attempt in $(seq 1 300)');
+    expect(workflow).toContain("grep -q 'RNICK_DEMO_FAIL'");
+    expect(workflow).toContain('tail -n 200 /tmp/rnick-demo-raw/native.log');
+    expect(workflow).toContain('tail -n 200 /tmp/rnick-metro.log');
     expect(workflow).toContain('create-economic-resilience-environment.mjs');
     expect(workflow).toContain('create-economic-resilience-evidence.mjs');
     expect(workflow).toContain('verify-economic-resilience-evidence.mjs');
