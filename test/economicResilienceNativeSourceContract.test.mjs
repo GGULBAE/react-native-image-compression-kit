@@ -24,7 +24,10 @@ describe('12 MP example native fixture bridge contract', () => {
   });
 
   it('rejects outside-cache and linked inputs before inspection or staging', () => {
-    expect(android).toContain('requestedFile.path != file.path');
+    expect(android).toContain('val requestedStatus = lstatOrNull(requestedFile)');
+    expect(android).toContain(
+      'requestedStatus != null && !OsConstants.S_ISREG(requestedStatus.st_mode)'
+    );
     expect(android).toContain('!file.path.startsWith(cachePrefix)');
     expect(android).toContain('!uri.authority.isNullOrEmpty()');
     expect(android).toContain('uri.query != null');

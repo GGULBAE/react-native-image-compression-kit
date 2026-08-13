@@ -177,7 +177,11 @@ class ExampleImageSourceModule(
     val requestedFile = File(requireNotNull(uri.path)).absoluteFile
     val file = requestedFile.canonicalFile
     val cachePrefix = cacheRoot.path + File.separator
-    if (requestedFile.path != file.path || !file.path.startsWith(cachePrefix)) {
+    val requestedStatus = lstatOrNull(requestedFile)
+    if (
+      (requestedStatus != null && !OsConstants.S_ISREG(requestedStatus.st_mode)) ||
+      !file.path.startsWith(cachePrefix)
+    ) {
       throw IllegalArgumentException("Evidence image URI must stay inside the app cache.")
     }
     return file
