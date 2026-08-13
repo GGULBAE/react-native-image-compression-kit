@@ -670,6 +670,89 @@ export function validateTrustedReleaseWorkflow(workflowSources) {
   );
   assert(workflow, 'Trusted Release workflow is required.');
 
+  const compatibilityWorkflow = workflowSources.find(
+    ({ workflow: workflowPath }) =>
+      workflowPath === '.github/workflows/compatibility.yml'
+  );
+  assert(compatibilityWorkflow, 'Compatibility workflow is required.');
+
+  const compatibilityJob = extractYamlMappingBlock(
+    workflow.source,
+    2,
+    'compatibility'
+  );
+  assert(
+    !compatibilityJob.includes('source_sha:'),
+    'Trusted Release must not forward a workflow_dispatch input as a reusable-workflow checkout ref.'
+  );
+  assert(
+    compatibilityJob.includes(
+      "if: inputs.confirm_publish == true && github.ref == 'refs/heads/master' && github.sha == inputs.source_sha"
+    ),
+    'Trusted Release compatibility must require confirmation, protected master, and exact event/input SHA equality.'
+  );
+  assert(
+    !compatibilityWorkflow.source.includes('source_sha'),
+    'Compatibility must select pull-request or workflow-event source, never a caller-controlled checkout ref.'
+  );
+  assert(
+    compatibilityWorkflow.source.includes(
+      'ref: ${{ github.sha }}'
+    ),
+    'Compatibility must checkout only the trusted workflow-event SHA.'
+  );
+
+  assert(
+    !/^\s*ref:\s*.*inputs\./m.test(workflow.source),
+    'Trusted Release must never checkout workflow_dispatch input as executable source.'
+  );
+  assert(
+    workflow.source.match(/ref: \$\{\{ github\.sha \}\}/g)?.length === 2,
+    'Trusted Release must checkout the trusted workflow-event SHA in both executable jobs.'
+  );
+  assert(
+    !/^\s*cache(?:-dependency-path)?:/m.test(workflow.source),
+    'Trusted Release must not restore or save dependency caches in the privileged publish workflow.'
+  );
+
+  for (const jobName of ['preflight', 'publish']) {
+    const job = extractYamlMappingBlock(workflow.source, 2, jobName);
+    const checkoutIndex = job.indexOf('- name: Checkout trusted workflow source');
+    const identityIndex = job.indexOf(
+      '- name: Verify protected master identity before code execution'
+    );
+    const firstRepositoryCodeIndex = job.indexOf('- name: Setup pnpm');
+
+    assert(
+      checkoutIndex >= 0 &&
+        identityIndex > checkoutIndex &&
+        firstRepositoryCodeIndex > identityIndex,
+      `Trusted Release ${jobName} must verify trusted source before executing repository code.`
+    );
+    const betweenCheckoutAndIdentity = job.slice(checkoutIndex, identityIndex);
+    assert(
+      !/\n {6}- /.test(betweenCheckoutAndIdentity),
+      `Trusted Release ${jobName} identity verification must immediately follow checkout.`
+    );
+
+    for (const required of [
+      'ref: ${{ github.sha }}',
+      'EXPECTED_SHA: ${{ inputs.source_sha }}',
+      'SOURCE_REF: ${{ github.ref }}',
+      'WORKFLOW_SHA: ${{ github.sha }}',
+      'test "$SOURCE_REF" = "refs/heads/master"',
+      'test "$WORKFLOW_SHA" = "$EXPECTED_SHA"',
+      'test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"',
+      'git fetch --no-tags origin master',
+      'test "$(git rev-parse origin/master)" = "$EXPECTED_SHA"',
+    ]) {
+      assert(
+        job.includes(required),
+        `Trusted Release ${jobName} is missing protected-source contract: ${required}`
+      );
+    }
+  }
+
   for (const required of [
     'release_notes="docs/launch/v${VERSION}-release-notes.md"',
     'test -f "$release_notes"',

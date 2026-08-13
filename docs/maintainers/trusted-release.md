@@ -33,6 +33,13 @@ recovery codes in repository secrets.
 3. Dispatch `.github/workflows/release.yml` with the exact version, source SHA,
    and `confirm_publish=true`. The exact version must have a matching
    `docs/launch/v<version>-release-notes.md` file.
+   The workflow checks out GitHub's immutable event SHA rather than the
+   caller-supplied SHA. The compatibility gate first requires the event ref to
+   be `master` and the event SHA to equal the supplied SHA. In the preflight and
+   publish jobs, before any repository action, dependency installation, build,
+   or publish step, the event ref, event SHA, checked-out HEAD, supplied SHA,
+   and freshly fetched `origin/master` must identify the same protected commit.
+   Release jobs use no dependency cache. A mismatch fails closed.
 4. Review the compatibility and exact-artifact preflight results. Approve the
    `npm-production` deployment only if its version, SHA, tarball SHA-256/SRI,
    inventory, release state, and registry action are correct.
