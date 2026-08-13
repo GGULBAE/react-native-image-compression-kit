@@ -363,8 +363,13 @@ function runLargeImageTests() {
 function runImageTransformerTests() {
   runNativeTests(
     'RCTImageCompressionImageTransformerTests',
-    [IMAGE_TRANSFORMER_CORE_SOURCE, IMAGE_TRANSFORMER_TEST_SOURCE],
-    ['Foundation']
+    [
+      IMAGE_TRANSFORMER_CORE_SOURCE,
+      path.join(ROOT, 'ios', 'RCTImageCompressionCGImage.mm'),
+      path.join(ROOT, 'ios', 'RCTImageCompressionUIKitImageTransformer.mm'),
+      IMAGE_TRANSFORMER_TEST_SOURCE,
+    ],
+    ['Foundation', 'CoreGraphics']
   );
 }
 

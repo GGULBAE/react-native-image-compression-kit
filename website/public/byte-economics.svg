@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="820" viewBox="0 0 1600 820" role="img" aria-labelledby="title desc">
   <title id="title">Device-side image byte economics</title>
-  <desc id="desc">A two-panel diagram showing upload bytes that move and app-owned storage bytes that remain, with illustrative arithmetic and the boundary that gallery sources are not deleted.</desc>
+  <desc id="desc">A two-panel diagram showing the source-to-output byte delta and two distinct storage cases: a gallery source that remains and app-owned staging that may be replaced only when policy permits deletion.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#07151d"/>
@@ -47,35 +47,45 @@
   <rect x="630" y="320" width="110" height="112" rx="18" fill="#f8fafc"/>
   <text x="653" y="377" fill="#0f172a" font-size="24" font-weight="800">upload</text>
 
-  <text x="100" y="512" class="formula" fill="#93c5fd">avoided first-hop bytes = source − accepted output</text>
-  <text x="100" y="566" class="scenario">Illustrative: 1M images · 4 MB → 500 KB</text>
-  <text x="100" y="606" fill="#f8fafc" font-size="31" font-weight="850">≈ 3.5 TB fewer bytes before retries</text>
+  <text x="100" y="505" class="formula" fill="#93c5fd">source-to-output byte delta</text>
+  <text x="100" y="540" class="formula" fill="#93c5fd">= input − accepted output</text>
+  <text x="100" y="580" class="scenario">Illustrative: 1M accepted images · 4 MB → 500 KB</text>
+  <text x="100" y="618" fill="#f8fafc" font-size="29" font-weight="850">3.5 TB source-to-output delta</text>
+  <text x="100" y="646" fill="#cbd5e1" font-size="16">Incremental transfer savings require a matched current-pipeline baseline.</text>
 
   <rect x="820" y="170" width="720" height="500" rx="26" fill="url(#teal)" stroke="#2dd4bf" stroke-opacity="0.45" stroke-width="2"/>
   <text x="860" y="222" class="label" fill="#5eead4">02 · DEVICE STORAGE ECONOMICS</text>
-  <text x="860" y="268" class="panel-title">App-owned bytes at rest</text>
+  <text x="860" y="268" class="panel-title">Ownership changes the outcome</text>
 
-  <rect x="860" y="320" width="140" height="112" rx="18" fill="#0f172a" stroke="#64748b"/>
-  <text x="882" y="361" class="box-title">source</text>
-  <text x="882" y="395" class="box-note">unchanged</text>
-  <line x1="1010" y1="376" x2="1038" y2="376" stroke="#94a3b8" stroke-width="6" marker-end="url(#arrow)"/>
-  <rect x="1052" y="320" width="176" height="112" rx="18" fill="#0f766e" stroke="#5eead4"/>
-  <text x="1074" y="361" class="box-title">verified</text>
-  <text x="1074" y="395" class="box-note">owned output</text>
-  <line x1="1238" y1="376" x2="1266" y2="376" stroke="#94a3b8" stroke-width="6" marker-end="url(#arrow)"/>
-  <rect x="1280" y="320" width="105" height="112" rx="18" fill="#f8fafc"/>
-  <text x="1294" y="377" fill="#0f172a" font-size="23" font-weight="800">upload</text>
-  <line x1="1395" y1="376" x2="1423" y2="376" stroke="#94a3b8" stroke-width="6" marker-end="url(#arrow)"/>
-  <rect x="1437" y="320" width="70" height="112" rx="18" fill="#ccfbf1"/>
-  <text x="1448" y="368" fill="#134e4a" font-size="20" font-weight="850">remove</text>
-  <text x="1450" y="397" fill="#134e4a" font-size="16">owned</text>
+  <rect x="860" y="294" width="640" height="142" rx="18" fill="#071d26" stroke="#2dd4bf" stroke-opacity="0.55"/>
+  <text x="884" y="324" fill="#5eead4" font-size="15" font-weight="850" letter-spacing="1.4">GALLERY / PROVIDER SOURCE</text>
+  <rect x="884" y="339" width="166" height="66" rx="14" fill="#0f172a" stroke="#64748b"/>
+  <text x="901" y="366" fill="#f8fafc" font-size="19" font-weight="800">gallery source</text>
+  <text x="901" y="391" fill="#cbd5e1" font-size="16">remains</text>
+  <text x="1068" y="382" fill="#94a3b8" font-size="28" font-weight="800">+</text>
+  <rect x="1104" y="339" width="180" height="66" rx="14" fill="#0f766e" stroke="#5eead4"/>
+  <text x="1122" y="366" fill="#f8fafc" font-size="19" font-weight="800">owned output</text>
+  <text x="1122" y="391" fill="#ccfbf1" font-size="16">transient</text>
+  <line x1="1298" y1="372" x2="1338" y2="372" stroke="#94a3b8" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="1352" y="339" width="124" height="66" rx="14" fill="#ccfbf1"/>
+  <text x="1367" y="366" fill="#134e4a" font-size="18" font-weight="850">remove only</text>
+  <text x="1371" y="391" fill="#134e4a" font-size="16">the output</text>
+  <text x="884" y="426" fill="#cbd5e1" font-size="15">Peak device storage can rise while source and output coexist.</text>
 
-  <text x="860" y="512" class="formula" fill="#5eead4">app footprint = queue + outputs + cache + residual</text>
-  <text x="860" y="566" class="scenario">Illustrative: 200 app-owned staged images</text>
-  <text x="860" y="606" fill="#f8fafc" font-size="31" font-weight="850">800 MB → 100 MB · 700 MB difference</text>
+  <rect x="860" y="452" width="640" height="174" rx="18" fill="#071d26" stroke="#2dd4bf" stroke-opacity="0.55"/>
+  <text x="884" y="482" fill="#5eead4" font-size="15" font-weight="850" letter-spacing="1.4">APP-OWNED STAGING</text>
+  <rect x="884" y="497" width="214" height="62" rx="14" fill="#0f172a" stroke="#64748b"/>
+  <text x="903" y="524" fill="#f8fafc" font-size="19" font-weight="800">200 × 4 MB staging</text>
+  <text x="903" y="548" fill="#cbd5e1" font-size="15">800 MB app-owned</text>
+  <line x1="1110" y1="528" x2="1145" y2="528" stroke="#94a3b8" stroke-width="5" marker-end="url(#arrow)"/>
+  <rect x="1159" y="497" width="290" height="62" rx="14" fill="#0f766e" stroke="#5eead4"/>
+  <text x="1178" y="524" fill="#f8fafc" font-size="19" font-weight="800">200 × 0.5 MB accepted</text>
+  <text x="1178" y="548" fill="#ccfbf1" font-size="15">100 MB after replacement</text>
+  <text x="884" y="592" fill="#f8fafc" font-size="25" font-weight="850">700 MB lower app-owned queue footprint</text>
+  <text x="884" y="617" fill="#cbd5e1" font-size="15">Only when the app may replace or delete its staging files.</text>
 
   <rect x="60" y="706" width="1480" height="76" rx="20" fill="#fef3c7"/>
   <text x="92" y="742" fill="#92400e" font-size="22" font-weight="850">BOUNDARY</text>
-  <text x="240" y="742" fill="#78350f" font-size="22" font-weight="700">The package does not shrink or delete the gallery source.</text>
-  <text x="240" y="769" fill="#92400e" font-size="17">Transient source + output storage can increase during processing. Scenarios are arithmetic, not measured performance.</text>
+  <text x="240" y="742" fill="#78350f" font-size="22" font-weight="700">Gallery sources stay; staging falls only when the app may replace or delete it.</text>
+  <text x="240" y="769" fill="#92400e" font-size="17">Examples are arithmetic, not incremental savings; compare accepted uploads with a matched baseline.</text>
 </svg>

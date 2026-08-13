@@ -72,6 +72,123 @@ static NSData *RCTCreateSolidImageData(
   return data;
 }
 
+static NSData *RCTCreateOrientedQuadrantJpeg(NSInteger orientation)
+{
+  size_t width = 80;
+  size_t height = 60;
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  CGContextRef context = CGBitmapContextCreate(
+    nil,
+    width,
+    height,
+    8,
+    width * 4,
+    colorSpace,
+    kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big
+  );
+  CGColorSpaceRelease(colorSpace);
+  RCTLargeAssert(context != nil, @"allocates oriented quadrant fixture context");
+  if (context == nil) return nil;
+
+  const CGFloat colors[][4] = {
+    {0.94, 0.08, 0.08, 1.0},
+    {0.08, 0.86, 0.08, 1.0},
+    {0.08, 0.08, 0.94, 1.0},
+    {0.94, 0.86, 0.08, 1.0},
+  };
+  const CGRect quadrants[] = {
+    CGRectMake(0, height / 2, width / 2, height / 2),
+    CGRectMake(width / 2, height / 2, width / 2, height / 2),
+    CGRectMake(0, 0, width / 2, height / 2),
+    CGRectMake(width / 2, 0, width / 2, height / 2),
+  };
+  for (NSUInteger index = 0; index < 4; index += 1) {
+    CGContextSetRGBFillColor(
+      context,
+      colors[index][0],
+      colors[index][1],
+      colors[index][2],
+      colors[index][3]
+    );
+    CGContextFillRect(context, quadrants[index]);
+  }
+  CGImageRef image = CGBitmapContextCreateImage(context);
+  CGContextRelease(context);
+  RCTLargeAssert(image != nil, @"creates oriented quadrant fixture image");
+  if (image == nil) return nil;
+  NSData *data = RCTEncodeImage(
+    image,
+    @"public.jpeg",
+    @{
+      (__bridge NSString *)kCGImageDestinationLossyCompressionQuality : @0.92,
+      (__bridge NSString *)kCGImagePropertyOrientation : @(orientation),
+    }
+  );
+  CGImageRelease(image);
+  return data;
+}
+
+static CGImageRef RCTCreateUprightThumbnail(NSData *data)
+{
+  CGImageSourceRef source = CGImageSourceCreateWithData(
+    (__bridge CFDataRef)data,
+    nil
+  );
+  if (source == nil) return nil;
+  NSDictionary *options = @{
+    (__bridge NSString *)kCGImageSourceCreateThumbnailFromImageAlways : @YES,
+    (__bridge NSString *)kCGImageSourceCreateThumbnailWithTransform : @YES,
+    (__bridge NSString *)kCGImageSourceShouldCacheImmediately : @YES,
+    (__bridge NSString *)kCGImageSourceThumbnailMaxPixelSize : @80,
+  };
+  CGImageRef image = CGImageSourceCreateThumbnailAtIndex(
+    source,
+    0,
+    (__bridge CFDictionaryRef)options
+  );
+  CFRelease(source);
+  return image;
+}
+
+static NSData *RCTRenderedPixels(CGImageRef image, size_t width, size_t height)
+{
+  NSMutableData *pixels = [NSMutableData dataWithLength:width * height * 4];
+  CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+  CGContextRef context = CGBitmapContextCreate(
+    pixels.mutableBytes,
+    width,
+    height,
+    8,
+    width * 4,
+    colorSpace,
+    kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big
+  );
+  CGColorSpaceRelease(colorSpace);
+  if (context == nil) return nil;
+  CGContextSetInterpolationQuality(context, kCGInterpolationNone);
+  CGContextDrawImage(context, CGRectMake(0, 0, width, height), image);
+  CGContextRelease(context);
+  return pixels;
+}
+
+static CGFloat RCTMeanAbsoluteRgbDifference(NSData *left, NSData *right)
+{
+  if (left.length == 0 || left.length != right.length) return CGFLOAT_MAX;
+  const uint8_t *leftBytes = (const uint8_t *)left.bytes;
+  const uint8_t *rightBytes = (const uint8_t *)right.bytes;
+  unsigned long long difference = 0;
+  NSUInteger rgbChannelCount = 0;
+  for (NSUInteger offset = 0; offset < left.length; offset += 4) {
+    for (NSUInteger channel = 0; channel < 3; channel += 1) {
+      difference += (unsigned long long)labs(
+        (long)leftBytes[offset + channel] - (long)rightBytes[offset + channel]
+      );
+      rgbChannelCount += 1;
+    }
+  }
+  return (CGFloat)difference / (CGFloat)rgbChannelCount;
+}
+
 static NSString *RCTWriteFixture(NSData *data, NSString *extension)
 {
   NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:
@@ -188,6 +305,79 @@ static void TestAlphaAndJpegBackgroundDecodeBack(void)
   [[NSFileManager defaultManager] removeItemAtPath:sourcePath error:nil];
 }
 
+static void TestExifOrientationMatrixPreservesDisplayedLayout(void)
+{
+  for (NSInteger orientation = 1; orientation <= 8; orientation += 1) {
+    NSData *jpeg = RCTCreateOrientedQuadrantJpeg(orientation);
+    NSString *sourcePath = RCTWriteFixture(jpeg, @"jpg");
+    CGImageRef expected = RCTCreateUprightThumbnail(jpeg);
+    RCTLargeAssert(
+      expected != nil,
+      [NSString stringWithFormat:@"orientation %ld creates upright reference", (long)orientation]
+    );
+
+    RCTImageCompressionPipelineError *error = nil;
+    RCTImageCompressionPipelineResult *result = RCTCompress(
+      sourcePath,
+      @"jpeg",
+      nil,
+      &error
+    );
+    RCTLargeAssert(
+      result != nil && error == nil,
+      [NSString stringWithFormat:@"orientation %ld compresses", (long)orientation]
+    );
+    NSURL *outputURL = result == nil ? nil : [NSURL URLWithString:result.outputResult.uri];
+    CGImageSourceRef outputSource = outputURL == nil ? nil : CGImageSourceCreateWithURL(
+      (__bridge CFURLRef)outputURL,
+      nil
+    );
+    CGImageRef output = outputSource == nil
+      ? nil
+      : CGImageSourceCreateImageAtIndex(outputSource, 0, nil);
+    NSDictionary *outputProperties = outputSource == nil
+      ? nil
+      : CFBridgingRelease(CGImageSourceCopyPropertiesAtIndex(outputSource, 0, nil));
+    if (outputSource != nil) CFRelease(outputSource);
+    RCTLargeAssert(
+      output != nil,
+      [NSString stringWithFormat:@"orientation %ld decodes output", (long)orientation]
+    );
+
+    if (expected != nil && output != nil) {
+      size_t expectedWidth = CGImageGetWidth(expected);
+      size_t expectedHeight = CGImageGetHeight(expected);
+      RCTLargeAssert(
+        CGImageGetWidth(output) == expectedWidth && CGImageGetHeight(output) == expectedHeight,
+        [NSString stringWithFormat:@"orientation %ld keeps displayed dimensions", (long)orientation]
+      );
+      NSData *expectedPixels = RCTRenderedPixels(expected, expectedWidth, expectedHeight);
+      NSData *outputPixels = RCTRenderedPixels(output, expectedWidth, expectedHeight);
+      CGFloat meanDifference = RCTMeanAbsoluteRgbDifference(expectedPixels, outputPixels);
+      RCTLargeAssert(
+        meanDifference < 18.0,
+        [NSString stringWithFormat:
+          @"orientation %ld keeps displayed pixel layout (mean RGB difference %.2f)",
+          (long)orientation,
+          meanDifference
+        ]
+      );
+    }
+    NSInteger outputOrientation = [outputProperties[
+      (__bridge NSString *)kCGImagePropertyOrientation
+    ] integerValue];
+    RCTLargeAssert(
+      outputOrientation == 0 || outputOrientation == 1,
+      [NSString stringWithFormat:@"orientation %ld is normalized in output metadata", (long)orientation]
+    );
+
+    if (expected != nil) CGImageRelease(expected);
+    if (output != nil) CGImageRelease(output);
+    RCTRemoveResult(result);
+    [[NSFileManager defaultManager] removeItemAtPath:sourcePath error:nil];
+  }
+}
+
 static void TestCancellationRemovesPublishedOutput(void)
 {
   NSData *jpeg = RCTCreateSolidImageData(64, 48, YES, @"public.jpeg");
@@ -230,6 +420,7 @@ int main(void)
   @autoreleasepool {
     TestDownsamples48MPBeforeTransform();
     TestAlphaAndJpegBackgroundDecodeBack();
+    TestExifOrientationMatrixPreservesDisplayedLayout();
     TestCancellationRemovesPublishedOutput();
     if (RCTLargeImageFailures > 0) {
       fprintf(stderr, "iOS large-image tests failed: %lu/%lu assertions.\n",

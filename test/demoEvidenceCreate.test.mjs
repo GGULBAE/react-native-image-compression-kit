@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { createDemoVisualAgreementReport } from '../scripts/demo-visual-agreement-core.mjs';
 
 const SCRIPT = path.resolve('scripts/create-demo-evidence.mjs');
 const SHA = 'c'.repeat(40);
@@ -16,9 +17,14 @@ describe('native demo evidence creation', () => {
       readFileSync(path.join(accepted.destination, 'manifest.json'), 'utf8')
     );
     expect(manifest).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       platform: 'android',
       sourceCommit: SHA,
+      visualAgreement: {
+        status: 'passed',
+        uprightSimilarity: 0.95,
+        verticalFlipSimilarity: 0.7,
+      },
       assets: {
         recording: {
           durationSeconds: 24,
@@ -37,6 +43,41 @@ describe('native demo evidence creation', () => {
     expect(misleading.result.status).toBe(1);
     expect(misleading.result.stderr).toContain(
       'captured walkthrough duration must be between 18 and 30 seconds'
+    );
+
+    const passingVisual = JSON.parse(
+      readFileSync(path.join(fixture, 'visual-agreement.json'), 'utf8')
+    );
+    const affectedVisual = createDemoVisualAgreementReport({
+      sourceBytes: readFileSync(path.join(fixture, 'source.jpg')),
+      outputBytes: readFileSync(path.join(fixture, 'output.jpg')),
+      sourceWidth: 600,
+      sourceHeight: 960,
+      width: 100,
+      height: 160,
+      resizeMode: 'contain',
+      maxWidth: 160,
+      maxHeight: 160,
+      uprightSimilarity: 0.75,
+      verticalFlipSimilarity: 0.94,
+    });
+    writeFileSync(
+      path.join(fixture, 'visual-agreement.json'),
+      `${JSON.stringify(affectedVisual)}\n`
+    );
+    const affected = runCreate(fixture, timedMp4(24), 'affected');
+    expect(affected.result.status).toBe(1);
+    expect(affected.result.stderr).toContain('outcome failed');
+
+    const mismatched = { ...passingVisual, width: 101 };
+    writeFileSync(
+      path.join(fixture, 'visual-agreement.json'),
+      `${JSON.stringify(mismatched)}\n`
+    );
+    const dimensionDrift = runCreate(fixture, timedMp4(24), 'dimension-drift');
+    expect(dimensionDrift.result.status).toBe(1);
+    expect(dimensionDrift.result.stderr).toContain(
+      'geometry check does not match the measured values'
     );
   });
 });
@@ -93,6 +134,22 @@ function createInput() {
       result,
     })}\nRNICK_GUIDED_DEMO_PASS ${JSON.stringify(walkthrough)}\n`
   );
+  writeFileSync(
+    path.join(root, 'visual-agreement.json'),
+    `${JSON.stringify(createDemoVisualAgreementReport({
+      sourceBytes: source,
+      outputBytes: output,
+      sourceWidth: 600,
+      sourceHeight: 960,
+      width: 100,
+      height: 160,
+      resizeMode: 'contain',
+      maxWidth: 160,
+      maxHeight: 160,
+      uprightSimilarity: 0.95,
+      verticalFlipSimilarity: 0.7,
+    }))}\n`
+  );
   return root;
 }
 
@@ -114,6 +171,7 @@ function runCreate(root, recording, label) {
       '--screenshot', path.join(root, 'screen.png'),
       '--recording', recordingPath,
       '--capture-method', 'android fixture capture',
+      '--visual-agreement', path.join(root, 'visual-agreement.json'),
       '--log', path.join(root, 'native.log'),
       '--destination', destination,
       '--run-url', 'https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/42',

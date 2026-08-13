@@ -32,6 +32,8 @@ export function validateRepositorySettingsContract(contract) {
   for (const [field, expected] of Object.entries({
     discussions: true,
     wiki: false,
+    dependabotAlerts: true,
+    dependabotSecurityUpdates: true,
     privateVulnerabilityReporting: true,
     immutableReleases: true,
     deleteBranchOnMerge: true,
@@ -107,6 +109,19 @@ export function auditRepositorySettings(contract, actual) {
   compare(errors, 'delete branch on merge', actual.repository?.delete_branch_on_merge, true);
   const actualTopics = [...(actual.repository?.topics ?? [])].sort();
   compare(errors, 'topics', actualTopics, contract.topics);
+  compare(errors, 'Dependabot vulnerability alerts', actual.dependabotAlerts?.enabled, true);
+  compare(
+    errors,
+    'Dependabot security updates',
+    actual.dependabotSecurityUpdates?.enabled,
+    true
+  );
+  compare(
+    errors,
+    'Dependabot security updates paused',
+    actual.dependabotSecurityUpdates?.paused,
+    false
+  );
   compare(errors, 'private vulnerability reporting', actual.privateVulnerability?.enabled, true);
   compare(errors, 'immutable releases', actual.immutableReleases?.enabled, true);
   compare(errors, 'Actions allowed_actions', actual.actions?.allowed_actions, 'selected');
@@ -211,7 +226,7 @@ export function auditRepositorySettings(contract, actual) {
     checks: {
       metadata: !errors.some((error) => /homepage|description|topics/.test(error)),
       community: !errors.some((error) => /discussions|wiki|community/.test(error)),
-      security: !errors.some((error) => /vulnerability|immutable/.test(error)),
+      security: !errors.some((error) => /vulnerability|immutable|dependabot/i.test(error)),
       actions: !errors.some((error) => /Actions|workflow permissions/.test(error)),
       rulesets: !errors.some((error) => /ruleset|Protected master|Immutable version/.test(error)),
       environments: !errors.some((error) => /environment/.test(error)),

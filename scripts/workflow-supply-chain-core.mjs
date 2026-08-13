@@ -291,7 +291,10 @@ export function verifyWorkflowSupplyChain(
     );
     validatePnpmSetupAction(setupPnpmActionSource, packageMetadata);
     validateWorkflowPnpmSetup(workflowSources);
-    validateRegistryValidationWorkflow(workflowSources, packageMetadata.version);
+    validateRegistryValidationWorkflow(
+      workflowSources,
+      releaseStatus.publishedNpmLatest
+    );
     validateRegistryHealthWorkflow(
       workflowSources,
       releaseStatus.publishedNpmLatest
@@ -483,10 +486,10 @@ export function validateWorkflowPnpmSetup(workflowSources) {
   }
 }
 
-export function validateRegistryValidationWorkflow(workflowSources, packageVersion) {
+export function validateRegistryValidationWorkflow(workflowSources, publishedVersion) {
   assert(
-    typeof packageVersion === 'string' && packageVersion.length > 0,
-    'Package metadata must declare a version.'
+    typeof publishedVersion === 'string' && publishedVersion.length > 0,
+    'Release status must declare publishedNpmLatest.'
   );
   const workflow = workflowSources.find(
     ({ workflow: workflowPath }) =>
@@ -518,8 +521,8 @@ export function validateRegistryValidationWorkflow(workflowSources, packageVersi
   const versionBlock = extractYamlMappingBlock(inputsBlock, 6, 'version');
   const tagBlock = extractYamlMappingBlock(inputsBlock, 6, 'expected_tag');
   assert(
-    readYamlScalar(versionBlock, 8, 'default') === packageVersion,
-    `Registry Validation default version must match package.json (${packageVersion}).`
+    readYamlScalar(versionBlock, 8, 'default') === publishedVersion,
+    `Registry Validation default version must match publishedNpmLatest (${publishedVersion}).`
   );
   assert(
     readYamlScalar(tagBlock, 8, 'default') === 'latest',

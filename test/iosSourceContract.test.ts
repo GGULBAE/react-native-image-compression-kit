@@ -395,9 +395,10 @@ describe('iOS source contract', () => {
         'TestRejectsMissingRenderAndSkippedExecutor',
         'TestRetainsImmutableRequestResultAndErrorModels',
         'TestClearsExistingErrorOnSuccess',
+        'TestDefaultRendererPreservesPixelOrientation',
       ])
     );
-    expect(transformerTestNames).toHaveLength(6);
+    expect(transformerTestNames).toHaveLength(7);
     for (const geometryCase of [
       'no-resize-landscape',
       'contain-landscape',

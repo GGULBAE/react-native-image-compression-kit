@@ -26,7 +26,7 @@
     {
       "id": "react-native-image-compression-kit",
       "package": "react-native-image-compression-kit",
-      "version": "0.4.0",
+      "version": "0.4.1",
       "repository": "https://github.com/GGULBAE/react-native-image-compression-kit",
       "sourceCommit": "workspace",
       "license": "MIT",

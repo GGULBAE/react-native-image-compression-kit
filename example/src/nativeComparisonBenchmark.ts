@@ -16,7 +16,7 @@ import {
 } from './nativeComparisonBenchmarkCore';
 
 export const NATIVE_COMPARISON_IMPLEMENTATION_VERSIONS = {
-  'react-native-image-compression-kit': '0.4.0',
+  'react-native-image-compression-kit': '0.4.1',
   'react-native-compressor': '1.19.4',
   'bam-image-resizer': '3.0.11',
 } as const;

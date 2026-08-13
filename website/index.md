@@ -88,11 +88,17 @@ files that remain in queues, outputs, caches, and residual storage.
 > GitHub Release, registry provenance, and retained evidence all bind the same
 > verified artifact and source.
 
+> **Known iOS issue:** v0.4.0 can vertically invert pixels after ImageIO
+> normalizes an orientation-bearing input. The 0.4.1 source candidate fixes the
+> renderer and adds EXIF 1–8 plus capture-time visual-agreement gates. The old
+> iOS capture is retained as affected evidence, not presented as a passing
+> visual result.
+
 ## Evidence, not adjectives
 
 <picture class="evidence-scorecard-picture">
   <source media="(max-width: 640px)" srcset="/evidence-scorecard-mobile.svg" />
-  <img class="evidence-scorecard-image" src="/evidence-scorecard.svg" alt="v0.4.0 evidence snapshot: two of two byte-budget fixtures passed, zero residual-output target, two recorded runtime capability captures, 96 percent fewer planned decoded pixels, zero of seven named sensitive fields retained, and eight of eight packed-consumer platform builds passed." />
+  <img class="evidence-scorecard-image" src="/evidence-scorecard.svg" alt="v0.4.0 evidence snapshot: one of two native captures passes the combined byte-budget and visual-integrity gate because the retained iOS capture is orientation-affected; zero residual-output target, two capability captures, 96 percent fewer planned decoded pixels, zero of seven named sensitive fields retained, and eight of eight packed-consumer platform builds passed." />
 </picture>
 
 The scorecard separates measured fixture and release evidence from broader
@@ -109,7 +115,6 @@ npm install react-native-image-compression-kit
 import {
   compressImage,
   getImageCompressionCapabilities,
-  removeCompressionOutput,
 } from 'react-native-image-compression-kit';
 
 const capabilities = await getImageCompressionCapabilities();
@@ -128,14 +133,14 @@ const result = await compressImage({
   metadata: 'safe',
 });
 
-try {
-  const accepted = result.byteSize <= 500_000;
-  if (!accepted) throw new Error('Image did not meet the upload policy');
-  await upload(result.uri);
-} finally {
-  await removeCompressionOutput(result.uri);
-}
+const accepted = result.byteSize <= 500_000;
+if (!accepted) throw new Error('Image did not meet the upload policy');
+await upload(result.uri);
 ```
+
+`removeCompressionOutput(result.uri)` is available in the 0.4.1 repository
+candidate, not npm 0.4.0. Until it is published, clean successful outputs with
+the host application's file API after upload or copy.
 
 The source must be a local URI available to native code. Remote URLs and data
 URIs are intentionally outside the package scope.

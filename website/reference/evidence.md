@@ -6,7 +6,7 @@ an integration and help maintainers detect a weakened contract.
 
 <picture class="evidence-scorecard-picture">
   <source media="(max-width: 640px)" srcset="/evidence-scorecard-mobile.svg" />
-  <img class="evidence-scorecard-image" src="/evidence-scorecard.svg" alt="v0.4.0 evidence snapshot: two of two byte-budget fixtures passed, zero residual-output target, two recorded runtime capability captures, 96 percent fewer planned decoded pixels, zero of seven named sensitive fields retained, and eight of eight packed-consumer platform builds passed." />
+  <img class="evidence-scorecard-image" src="/evidence-scorecard.svg" alt="v0.4.0 evidence snapshot: one of two captures passes the combined byte-budget and visual-integrity gate because the retained iOS capture is orientation-affected; other safety and build signals remain separately reported." />
 </picture>
 
 ## Purpose and claim boundary
@@ -19,6 +19,12 @@ The primary question is narrower: does a supported request behave according to
 its declared byte-budget, failure-safety, and runtime-capability contracts?
 Current figures are a v0.4.0 evidence snapshot, not production adoption or
 incident-rate statistics.
+
+> **Known v0.4.0 defect:** the retained iOS capture has a vertically inverted
+> output. It remains public so the provenance record is not silently rewritten,
+> but it does not count as successful visual-integrity evidence. The 0.4.1
+> source candidate fixes the renderer and gates future captures with
+> auto-oriented SSIM plus a vertical-flip control.
 
 ## Primary metrics
 
@@ -39,8 +45,9 @@ dimensions, decode-back validity, and metadata policy are guardrails; reducing
 bytes by returning the wrong geometry or an unreadable file does not count.
 
 The current native walkthrough snapshot contains two supported cases and both
-meet an 8,000-byte target. That 2 / 2 result is useful pipeline evidence but is
-too small to estimate a general success rate.
+meet an 8,000-byte target. The retained v0.4.0 iOS result is vertically
+inverted, however, so only 1 / 2 captures currently passes the combined byte
+and visual-integrity guardrail. Neither count estimates a general success rate.
 
 ### Failure-safe completion
 
@@ -133,7 +140,7 @@ or application dependency graph was exercised.
       <div class="evidence-bar__track" aria-hidden="true"><span class="evidence-bar__fill evidence-bar__fill--android"></span></div>
     </div>
     <div class="evidence-bar">
-      <div class="evidence-bar__header"><span>iOS</span><strong>2,353 B · 29.4%</strong></div>
+      <div class="evidence-bar__header"><span>iOS · affected</span><strong>2,353 B · 29.4%</strong></div>
       <div class="evidence-bar__track" aria-hidden="true"><span class="evidence-bar__fill evidence-bar__fill--ios"></span></div>
     </div>
     <div class="evidence-bar__axis" aria-hidden="true"><span>0 B</span><span>8,000 B ceiling</span></div>
@@ -157,9 +164,9 @@ or application dependency graph was exercised.
 
 | Signal | v0.4.0 observation | Source |
 | --- | --- | --- |
-| Native byte-budget cases | 2 / 2 under 8,000 B | [Native walkthrough](../demo/index.md) |
+| Native byte + visual-integrity cases | 1 / 2 valid; both are under 8,000 B, but v0.4.0 iOS is vertically inverted | [Native walkthrough](../demo/index.md) |
 | Android output | 2,264 B, 28.3% budget utilization, 16.7% of source bytes | <a href="/react-native-image-compression-kit/demo/manifest.json">Demo manifest</a> |
-| iOS output | 2,353 B, 29.4% budget utilization, 70.9% of source bytes | <a href="/react-native-image-compression-kit/demo/manifest.json">Demo manifest</a> |
+| iOS output | 2,353 B and under budget, but visual integrity failed because the pixel layout is vertically inverted | <a href="/react-native-image-compression-kit/demo/manifest.json">Demo manifest</a> |
 | 48 MP resize plan | 1.92 MP planned decode, 96% planned-pixel reduction | [Android resource-policy test](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/android/src/test/java/com/imagecompressionkit/AndroidImageResourcePolicyTest.kt) |
 | Cancellation cleanup | Zero residual output is the asserted invariant; JavaScript, Android, and iOS cleanup tests pass | [Verification architecture](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/verification-architecture.md) |
 | Sensitive metadata fixture | Android `safe`: 0 of 7 named sensitive fields retained; iOS `safe`/`strip`: no source metadata copied | [Android metadata test](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/android/src/test/java/com/imagecompressionkit/JpegExifMetadataTest.kt) |
@@ -177,6 +184,8 @@ mean better visual quality.
 - Deterministic cleanup tests are not production incident telemetry.
 - Compatibility builds are not a device-codec census.
 - Byte size without a perceptual metric such as SSIM or DSSIM does not establish image-quality superiority.
+- The retained v0.4.0 iOS capture is defect evidence, not a valid quality or
+  byte-budget success once visual integrity is included.
 - The exact-plan timing benchmark is an environment-bound observation and is
   documented separately from these product-contract metrics.
 

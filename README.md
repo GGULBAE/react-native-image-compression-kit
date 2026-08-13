@@ -22,18 +22,18 @@ metadata, cancellation, and output ownership.
 <!-- package-status:start -->
 ## Current status
 
-- Package version: `0.4.0`
-- Release target: `0.4.0`
+- Package version: `0.4.1`
+- Release target: `0.4.1`
 - Published npm latest: `0.4.0`
-- Release state: `release`
-- Registry checked at: `2026-07-20`
+- Release state: `candidate`
+- Registry checked at: `2026-08-13`
 <!-- package-status:end -->
 
-Version 0.4.0 is the current published release. It moves large image work to
-bounded background workers, downsamples resize requests during decode, rejects
-unsafe work before full decode, supports cancellation, and publishes only
-complete transactional cache files. npm `latest`, immutable tag `v0.4.0`, and
-the GitHub Release all resolve to the verified 0.4.0 artifact and source.
+Version 0.4.1 is a source candidate; npm `latest` remains 0.4.0. The candidate
+fixes an iOS pixel-orientation defect in the ImageIO/CoreGraphics path and adds
+the backward-compatible `removeCompressionOutput(uri)` lifecycle API. The
+published 0.4.0 package can vertically invert orientation-bearing iOS inputs;
+do not treat its iOS walkthrough as successful visual-integrity evidence.
 
 ## Why this package
 
@@ -50,11 +50,12 @@ context, not a package savings claim. [Source and forecast limits](https://www.e
 
 | | Cost surface | Measure |
 | --- | --- | --- |
-| 📤 | First upload, retry, and backend ingress bytes | `source - accepted output` |
+| 📤 | First upload, retry, and backend ingress bytes | Accepted `source - output` delta; compare a matched baseline for incremental transfer change |
 | 📱 | App-owned queue, output, cache, and residual files | `queue + outputs + caches + residual` |
 
-> 💡 **Illustrative scale:** 1M accepted images at 4 MB → 500 KB means about
-> **3.5 TB fewer first-hop bytes**. A 200-image app-owned queue changes from
+> 💡 **Illustrative scale:** 1M accepted images at 4 MB → 500 KB means a
+> **3.5 TB source-to-output delta**. It is fewer first-hop bytes only if the
+> same 4 MB inputs would otherwise have been uploaded. A 200-image app-owned queue changes from
 > **800 MB → 100 MB** only when the host may replace its own staging files.
 
 > 🛡️ **Boundary:** the package does not shrink or delete gallery sources. A new
@@ -75,10 +76,10 @@ owned-file cleanup.
 
 | Concern | Contract | Public evidence |
 | --- | --- | --- |
-| Upload limit | `maxBytes` searches generated JPEG or WebP candidates | Both native walkthrough fixtures met 8,000 B; their different inputs are not compared |
+| Upload limit | `maxBytes` searches generated JPEG or WebP candidates | Both v0.4.0 fixtures met 8,000 B, but the iOS capture is excluded from combined success because visual orientation failed |
 | Large photos | Decode downsampling, pixel limits, two-operation scheduling | 48 MP → 1.92 MP planned decode; this is not measured peak memory |
 | Cancellation | `ERR_CANCELLED` without publishing partial output | JS and native suites assert zero residual output at representative boundaries |
-| Output lifecycle | Narrow `removeCompressionOutput(uri)` ownership check | Owned deletion and foreign/path/directory rejection are tested |
+| Output lifecycle | Narrow `removeCompressionOutput(uri)` ownership check | 0.4.1 candidate tests owned deletion and foreign/path/directory rejection |
 | Metadata | Explicit `preserve`, `safe`, and `strip` | Android safe retained 0/7 named sensitive fields; iOS safe/strip copy no source metadata |
 | Integration | Packed tarball installed by fresh consumers | 8/8 release-target platform builds passed for v0.4.0 |
 
@@ -134,6 +135,11 @@ steps.
 
 ## Quick start
 
+> The cleanup call in this example belongs to the 0.4.1 source candidate and
+> is not present in npm 0.4.0. The compression and capability calls remain
+> valid in 0.4.0; use the host application's file API to clean accepted outputs
+> until the candidate is released.
+
 ```ts
 import {
   compressImage,
@@ -161,7 +167,7 @@ const result = await compressImage({
   metadata: 'safe',
 });
 
-const preventedUploadBytes = Math.max(
+const sourceToOutputByteDelta = Math.max(
   0,
   result.originalByteSize - result.byteSize
 );
@@ -170,7 +176,7 @@ try {
   if (result.byteSize > 500_000) {
     throw new Error('Image did not meet the upload policy');
   }
-  await upload(result.uri, { preventedUploadBytes });
+  await upload(result.uri, { sourceToOutputByteDelta });
 } finally {
   await removeCompressionOutput(result.uri);
 }
@@ -238,7 +244,7 @@ decode-downsampling support, and named source/working pixel limits. Check it at
 runtime; codec support is not identical across Android versions, devices, and
 iOS runtimes.
 
-### `removeCompressionOutput(uri)`
+### `removeCompressionOutput(uri)` (0.4.1 source candidate)
 
 Deletes a completed cache output returned by `compressImage`. It accepts only a
 package-generated `file://` URI in the package output directory, never deletes

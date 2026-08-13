@@ -163,6 +163,14 @@ node scripts/normalize-demo-recording.mjs \
   --log /tmp/rnick-demo-raw/native.log \
   --result-frame /tmp/rnick-demo-raw/screen.png
 
+node scripts/measure-demo-visual-agreement.mjs \
+  --source /tmp/rnick-demo-raw/source.jpg \
+  --output /tmp/rnick-demo-raw/output.jpg \
+  --resize-mode contain \
+  --max-width 160 \
+  --max-height 160 \
+  --report /tmp/rnick-demo-raw/visual-agreement.json
+
 node scripts/create-demo-evidence.mjs \
   --platform android \
   --package-version "$RNICK_DEMO_PACKAGE_VERSION" \
@@ -174,6 +182,7 @@ node scripts/create-demo-evidence.mjs \
   --screenshot /tmp/rnick-demo-raw/screen.png \
   --recording /tmp/rnick-demo-raw/recording.mp4 \
   --capture-method "android adb screenrecord H.264; timeline normalized and final native frame held with ffmpeg" \
+  --visual-agreement /tmp/rnick-demo-raw/visual-agreement.json \
   --log /tmp/rnick-demo-raw/native.log \
   --destination demo-evidence/android \
   --run-url "$RNICK_DEMO_RUN_URL"

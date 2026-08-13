@@ -1208,6 +1208,7 @@ function checkIOSImageTransformerAuthorities() {
     'TestRejectsMissingRenderAndSkippedExecutor',
     'TestRetainsImmutableRequestResultAndErrorModels',
     'TestClearsExistingErrorOnSuccess',
+    'TestDefaultRendererPreservesPixelOrientation',
   ];
   const requiredGeometryCases = [
     'no-resize-landscape',
@@ -1304,7 +1305,7 @@ function checkIOSImageTransformerAuthorities() {
     },
     {
       ok:
-        nativeTestNames.length === 6 &&
+        nativeTestNames.length === 7 &&
         requiredNativeTests.every((name) => nativeTestNames.includes(name)) &&
         requiredGeometryCases.every((name) =>
           nativeTests.includes(`"${name}"`)
@@ -1335,7 +1336,7 @@ function checkIOSImageTransformerAuthorities() {
     label: 'iOS image transformer boundary and native tests are present',
     detail:
       violations.length === 0
-        ? 'geometry, renderer background, main-thread execution, immutable models, bridge limits, and six native groups are aligned'
+        ? 'geometry, pixel orientation, renderer background, main-thread execution, immutable models, bridge limits, and seven native groups are aligned'
         : `contract violations: ${violations.join(' | ')}`,
   };
 }

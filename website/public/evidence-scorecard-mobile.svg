@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="720" height="940" viewBox="0 0 720 940" role="img" aria-labelledby="title description">
   <title id="title">React Native Image Compression Kit v0.4.0 evidence snapshot</title>
-  <desc id="description">Two of two byte-budget fixtures passed, cancellation has a zero residual-output target, two runtimes record capabilities before compression, planned decoded pixels are reduced by 96 percent in the large-image fixture, zero of seven named sensitive metadata fields remain in the Android safe fixture, and eight of eight packed-consumer platform builds passed.</desc>
+  <desc id="description">One of two native captures passes the combined byte-budget and visual-integrity gate because the retained v0.4.0 iOS capture is orientation-affected. Other safety, metadata, capability, and build signals remain separately reported.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#07151d" />
@@ -39,10 +39,10 @@
 
   <rect x="40" y="236" width="310" height="176" rx="18" class="card" />
   <rect x="370" y="236" width="310" height="176" rx="18" class="card" />
-  <text x="64" y="270" class="card-label">BYTE-BUDGET</text>
-  <text x="64" y="289" class="card-label">ATTAINMENT</text>
-  <text x="64" y="348" class="card-value">2 / 2</text>
-  <text x="64" y="384" class="card-copy">fixtures ≤ 8,000 B</text>
+  <text x="64" y="270" class="card-label">BYTE + VISUAL</text>
+  <text x="64" y="289" class="card-label">INTEGRITY</text>
+  <text x="64" y="348" class="card-value">1 / 2</text>
+  <text x="64" y="384" class="card-copy">iOS capture affected</text>
   <rect x="64" y="397" width="108" height="4" rx="2" fill="url(#accent)" />
   <text x="394" y="270" class="card-label">FAILURE-SAFE</text>
   <text x="394" y="289" class="card-label">COMPLETION</text>
@@ -67,5 +67,5 @@
   <text x="64" y="848" class="guardrail-value">8 / 8</text>
   <text x="158" y="845" class="guardrail-copy">packed-consumer platform builds</text>
 
-  <text x="40" y="910" class="footer">v0.4.0 fixtures and release evidence · definitions and limits on the evidence page</text>
+  <text x="40" y="910" class="footer">v0.4.0 snapshot · iOS defect disclosed · 0.4.1 candidate fixes and gates capture</text>
 </svg>

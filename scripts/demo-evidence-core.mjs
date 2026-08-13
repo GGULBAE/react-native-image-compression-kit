@@ -2,24 +2,45 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { inspectGuidedDemoPayload } from './guided-demo-core.mjs';
+import { inspectDemoVisualAgreement } from './demo-visual-agreement-core.mjs';
 
 export function inspectDemoEvidence(root, manifest) {
   const errors = [];
   const schemaVersion = manifest?.schemaVersion;
-  if (schemaVersion !== 1 && schemaVersion !== 2) {
-    errors.push('schemaVersion must be 1 or 2');
+  if (schemaVersion !== 1 && schemaVersion !== 2 && schemaVersion !== 3) {
+    errors.push('schemaVersion must be 1, 2, or 3');
   }
-  if (manifest?.status !== 'passed') errors.push('status must be passed');
   if (!/^\d+\.\d+\.\d+$/.test(manifest?.packageVersion ?? '')) {
     errors.push('packageVersion must be an exact semantic version');
   }
   if (!/^[0-9a-f]{40}$/.test(manifest?.sourceCommit ?? '')) {
     errors.push('sourceCommit must be a lowercase full commit SHA');
   }
+  if (manifest?.sourceProvenance !== undefined) {
+    if (
+      manifest.sourceProvenance?.kind !== 'post-release' ||
+      !/^[0-9a-f]{40}$/.test(
+        manifest.sourceProvenance?.releaseSourceCommit ?? ''
+      ) ||
+      manifest.sourceProvenance.releaseSourceCommit === manifest.sourceCommit
+    ) {
+      errors.push('sourceProvenance must disclose a distinct post-release capture source');
+    }
+  }
   const cases = Array.isArray(manifest?.cases) ? manifest.cases : [];
   const platforms = cases.map(({ platform }) => platform).sort();
   if (JSON.stringify(platforms) !== JSON.stringify(['android', 'ios'])) {
     errors.push('evidence must contain exactly one Android and one iOS case');
+  }
+  const derivedEvidenceStatus = schemaVersion === 3
+    ? deriveEvidenceStatus(cases)
+    : 'passed';
+  if (
+    !['passed', 'affected'].includes(manifest?.status) ||
+    (schemaVersion === 3 && manifest?.status !== derivedEvidenceStatus) ||
+    (schemaVersion !== 3 && manifest?.status !== 'passed')
+  ) {
+    errors.push('status does not match the derived case outcomes');
   }
 
   for (const evidence of cases) {
@@ -27,7 +48,12 @@ export function inspectDemoEvidence(root, manifest) {
     if (evidence?.schemaVersion !== schemaVersion) {
       errors.push(`${label}: schemaVersion does not match the manifest`);
     }
-    if (evidence?.status !== 'passed') errors.push(`${label}: status must be passed`);
+    const allowedStatuses = schemaVersion === 3
+      ? ['passed', 'affected']
+      : ['passed'];
+    if (!allowedStatuses.includes(evidence?.status)) {
+      errors.push(`${label}: status must be ${allowedStatuses.join(' or ')}`);
+    }
     if (evidence?.packageVersion !== manifest.packageVersion) {
       errors.push(`${label}: packageVersion does not match the manifest`);
     }
@@ -72,7 +98,7 @@ export function inspectDemoEvidence(root, manifest) {
       ['source', 'jpeg'],
       ['output', 'jpeg'],
       ['screenshot', 'png'],
-      ...(schemaVersion === 2 ? [['recording', 'mp4']] : []),
+      ...(schemaVersion >= 2 ? [['recording', 'mp4']] : []),
     ];
     for (const [assetName, magic] of expectedAssets) {
       const asset = evidence?.assets?.[assetName];
@@ -135,7 +161,7 @@ export function inspectDemoEvidence(root, manifest) {
     if (evidence?.assets?.output?.byteSize !== evidence?.result?.byteSize) {
       errors.push(`${label}: output bytes do not match byteSize`);
     }
-    if (schemaVersion === 2) {
+    if (schemaVersion >= 2) {
       const walkthrough = inspectGuidedDemoPayload(evidence?.walkthrough, {
         platform: label,
         options: evidence?.options,
@@ -143,6 +169,49 @@ export function inspectDemoEvidence(root, manifest) {
       });
       if (walkthrough.status !== 'passed') {
         errors.push(`${label}: ${walkthrough.error}`);
+      }
+      const visualAgreementRequired =
+        schemaVersion === 3 ||
+        evidence?.sourceCommit !== '11b91af66322d7b98b46481739c54825b406ef0c';
+      if (evidence?.visualAgreement !== undefined) {
+        const sourcePath = path.resolve(
+          root,
+          evidence?.assets?.source?.file ?? ''
+        );
+        const outputPath = path.resolve(
+          root,
+          evidence?.assets?.output?.file ?? ''
+        );
+        if (existsSync(sourcePath) && existsSync(outputPath)) {
+          const visual = inspectDemoVisualAgreement(evidence.visualAgreement, {
+            sourceBytes: readFileSync(sourcePath),
+            outputBytes: readFileSync(outputPath),
+            resizeOptions: evidence?.options?.resize,
+          });
+          if (visual.status !== 'passed') {
+            errors.push(`${label}: ${visual.error}`);
+          }
+          if (
+            schemaVersion === 3 &&
+            evidence.visualAgreement?.schemaVersion !== 2
+          ) {
+            errors.push(`${label}: schemaVersion 3 requires visual agreement schemaVersion 2`);
+          }
+          if (
+            visual.status === 'passed' &&
+            visualOutcomeToEvidenceStatus(visual.agreementStatus) !== evidence?.status
+          ) {
+            errors.push(`${label}: status does not match visual agreement outcome`);
+          }
+          if (
+            evidence.visualAgreement.width !== evidence?.result?.width ||
+            evidence.visualAgreement.height !== evidence?.result?.height
+          ) {
+            errors.push(`${label}: visual agreement dimensions do not match the native result`);
+          }
+        }
+      } else if (visualAgreementRequired) {
+        errors.push(`${label}: visual agreement report is required`);
       }
     }
   }
@@ -183,17 +252,37 @@ export function inspectDemoEvidence(root, manifest) {
       errors.push('presentation video must record its ffmpeg generator');
     }
   } else if (manifest?.presentation !== undefined) {
-    errors.push('schemaVersion 2 stores recordings with their native cases');
+    errors.push('schemaVersion 2 or 3 stores recordings with their native cases');
   }
 
   return {
     schemaVersion: 1,
     status: errors.length === 0 ? 'passed' : 'failed',
+    evidenceStatus: errors.length === 0 ? derivedEvidenceStatus : null,
     packageVersion: manifest?.packageVersion ?? null,
     sourceCommit: manifest?.sourceCommit ?? null,
     platforms,
     error: errors.length > 0 ? errors.join(' | ') : null,
   };
+}
+
+function deriveEvidenceStatus(cases) {
+  if (!Array.isArray(cases) || cases.length === 0) return null;
+  const statuses = cases.map(({ status }) => status);
+  if (statuses.every((status) => status === 'passed')) return 'passed';
+  if (
+    statuses.every((status) => status === 'passed' || status === 'affected') &&
+    statuses.some((status) => status === 'affected')
+  ) {
+    return 'affected';
+  }
+  return null;
+}
+
+function visualOutcomeToEvidenceStatus(outcome) {
+  if (outcome === 'passed') return 'passed';
+  if (outcome === 'failed') return 'affected';
+  return null;
 }
 
 export function inspectMp4(bytes) {

@@ -41,6 +41,9 @@ picker source while compression is running. After preserving or uploading the
 result, release its package-owned cache file with
 `removeCompressionOutput(result.uri)`.
 
+That cleanup method is part of the 0.4.1 source candidate; npm 0.4.0 consumers
+must use their host file API for successful-output cleanup.
+
 ## Camera and privacy
 
 Camera assets can contain location and device metadata. The default `safe`

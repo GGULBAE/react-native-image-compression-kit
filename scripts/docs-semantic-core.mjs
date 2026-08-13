@@ -785,7 +785,8 @@ export function inspectProductEvidenceContracts(contents) {
       'Reproduce the evidence',
     ],
     snippets: [
-      '2 / 2',
+      '1 / 2',
+      'orientation-affected',
       '8 / 8',
       '96%',
       '0 of 7',

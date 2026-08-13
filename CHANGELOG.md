@@ -18,6 +18,13 @@ and patch releases remain backward compatible within the current minor line.
   GitHub CLI and compiles the instrumentation APK so the full non-emulator
   repository verification lane can run in the container.
 
+### Fixed
+
+- iOS no longer vertically inverts pixels after ImageIO has normalized an
+  orientation-bearing input. The default pipeline now verifies EXIF
+  orientations 1–8 through decode, transform, and encode, and native demo
+  capture fails when the upright output does not beat a vertical-flip control.
+
 ## 0.4.0 - 2026-07-20
 
 ### Added

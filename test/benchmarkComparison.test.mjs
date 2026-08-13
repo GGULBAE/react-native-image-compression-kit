@@ -30,7 +30,7 @@ describe('native comparison benchmark evidence', () => {
     expect(plan.implementations).toMatchObject([
       {
         id: 'react-native-image-compression-kit',
-        version: '0.4.0',
+        version: '0.4.1',
         sourceCommit: 'workspace',
         license: 'MIT',
       },

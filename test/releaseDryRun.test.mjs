@@ -84,8 +84,13 @@ describe('release dry-run packed README current-status guard', () => {
   });
 
   it('allows a manifest-aligned release and ignores historical candidate prose', () => {
-    const releaseManifest = { ...MANIFEST, releaseState: 'release' };
+    const releaseManifest = {
+      ...MANIFEST,
+      publishedNpmLatest: PACKAGE_VERSION,
+      releaseState: 'release',
+    };
     const packedReadme = readmeWithStatus({
+      publishedNpmLatest: PACKAGE_VERSION,
       releaseState: 'release',
       before: 'Status: an old version was a candidate',
       after: 'Historical review candidate notes remain archived.',

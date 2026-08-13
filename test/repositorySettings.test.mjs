@@ -13,6 +13,8 @@ const contract = {
   features: {
     discussions: true,
     wiki: false,
+    dependabotAlerts: true,
+    dependabotSecurityUpdates: true,
     privateVulnerabilityReporting: true,
     immutableReleases: true,
     deleteBranchOnMerge: true,
@@ -65,6 +67,8 @@ describe('repository settings contract', () => {
         has_wiki: false,
         delete_branch_on_merge: true,
       },
+      dependabotAlerts: { enabled: true },
+      dependabotSecurityUpdates: { enabled: true, paused: false },
       privateVulnerability: { enabled: true },
       immutableReleases: { enabled: true },
       actions: { allowed_actions: 'selected', sha_pinning_required: true },
@@ -134,6 +138,8 @@ describe('repository settings contract', () => {
   it('reports unsafe drift without mutating external settings', () => {
     const report = auditRepositorySettings(contract, {
       repository: { homepage: null, topics: [], has_discussions: false, has_wiki: true },
+      dependabotAlerts: { enabled: false },
+      dependabotSecurityUpdates: { enabled: false, paused: false },
       privateVulnerability: { enabled: false },
       immutableReleases: { enabled: false },
       actions: { allowed_actions: 'all', sha_pinning_required: false },
@@ -145,7 +151,44 @@ describe('repository settings contract', () => {
       pages: { build_type: null },
     });
     expect(report.status).toBe('failed');
+    expect(report.error).toContain('Dependabot vulnerability alerts');
+    expect(report.error).toContain('Dependabot security updates');
     expect(report.error).toContain('private vulnerability reporting');
     expect(report.error).toContain('Protected master');
+  });
+
+  it('reports paused Dependabot security updates as unsafe drift', () => {
+    const actual = {
+      repository: {
+        homepage: contract.homepage,
+        description: contract.description,
+        topics: contract.topics,
+        has_discussions: true,
+        has_wiki: false,
+        delete_branch_on_merge: true,
+      },
+      dependabotAlerts: { enabled: true },
+      dependabotSecurityUpdates: { enabled: true, paused: true },
+      privateVulnerability: { enabled: true },
+      immutableReleases: { enabled: true },
+      actions: { allowed_actions: 'selected', sha_pinning_required: true },
+      selectedActions: {
+        github_owned_allowed: true,
+        verified_allowed: false,
+        patterns_allowed: contract.actions.allowedPatterns,
+      },
+      workflowPermissions: {
+        default_workflow_permissions: 'read',
+        can_approve_pull_request_reviews: false,
+      },
+      rulesets: [],
+      environments: [],
+      community: { health_percentage: 100 },
+      pages: { build_type: 'workflow' },
+    };
+    const report = auditRepositorySettings(contract, actual);
+    expect(report.status).toBe('failed');
+    expect(report.checks.security).toBe(false);
+    expect(report.error).toContain('Dependabot security updates paused');
   });
 });

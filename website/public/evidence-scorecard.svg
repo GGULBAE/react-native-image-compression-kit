@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title description">
   <title id="title">React Native Image Compression Kit v0.4.0 evidence snapshot</title>
-  <desc id="description">Two of two byte-budget fixtures passed, cancellation has a zero residual-output target, two runtimes record capabilities before compression, planned decoded pixels are reduced by 96 percent in the large-image fixture, zero of seven named sensitive metadata fields remain in the Android safe fixture, and eight of eight packed-consumer platform builds passed.</desc>
+  <desc id="description">One of two native captures passes the combined byte-budget and visual-integrity gate because the retained v0.4.0 iOS capture is orientation-affected. Cancellation has a zero residual-output target, two runtimes record capabilities, planned decoded pixels are reduced by 96 percent, zero of seven named sensitive metadata fields remain in the Android safe fixture, and eight of eight packed-consumer platform builds passed.</desc>
   <defs>
     <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#07151d" />
@@ -41,9 +41,9 @@
     <rect x="794" y="178" width="346" height="172" rx="18" class="card" />
   </g>
 
-  <text x="86" y="211" class="card-label">BYTE-BUDGET ATTAINMENT</text>
-  <text x="86" y="276" class="card-value">2 / 2</text>
-  <text x="86" y="311" class="card-copy">native fixtures ≤ 8,000 B</text>
+  <text x="86" y="211" class="card-label">BYTE + VISUAL INTEGRITY</text>
+  <text x="86" y="276" class="card-value">1 / 2</text>
+  <text x="86" y="311" class="card-copy">v0.4.0 iOS capture affected</text>
   <rect x="86" y="328" width="116" height="4" rx="2" fill="url(#accent)" />
 
   <text x="453" y="211" class="card-label">FAILURE-SAFE COMPLETION</text>
@@ -69,5 +69,5 @@
   <text x="820" y="422" class="guardrail-value">8 / 8</text>
   <text x="820" y="451" class="guardrail-copy">packed-consumer platform builds</text>
 
-  <text x="60" y="526" class="footer">Snapshot scope: deterministic fixtures and v0.4.0 release evidence · See the evidence page for definitions and limits.</text>
+  <text x="60" y="526" class="footer">v0.4.0 snapshot · retained iOS defect disclosed · 0.4.1 source candidate adds orientation and capture gates.</text>
 </svg>

@@ -4,6 +4,11 @@ This API is intentionally small because it controls one system boundary: the
 bytes, native work, metadata, cancellation state, and file ownership of an
 image before the host application uploads or retains it.
 
+> These reference pages track the 0.4.1 source candidate. npm `latest` is
+> 0.4.0 and does not yet include `removeCompressionOutput(uri)`; v0.4.0 also has
+> the disclosed iOS orientation defect described on the
+> [native evidence page](./evidence.md).
+
 ## 🧭 Problem → API contract
 
 | Product problem | API boundary | Result the host can observe |
@@ -16,14 +21,18 @@ image before the host application uploads or retains it.
 The economic model has two separate quantities:
 
 ```text
-prevented upload bytes = source bytes − accepted output bytes
+source-to-output byte delta = source bytes − accepted output bytes
+incremental transferred-byte reduction
+  = matched current-pipeline bytes − matched new-pipeline bytes
 app-owned image footprint = upload queue + outputs + caches + residual files
 ```
 
 Only count an output after the host application's size, dimensions, format, and
 quality policy accepts it. The package does not shrink or delete gallery
 sources, and a source plus its new output can temporarily increase device
-storage. See [why device-side bytes matter](../guide/byte-economics.md) for
+storage. Call the delta "prevented upload bytes" only after a matched baseline
+shows those source bytes would otherwise have been transferred. See
+[why device-side bytes matter](../guide/byte-economics.md) for
 worked arithmetic, lifecycle boundaries, and a measurement plan.
 
 ## `compressImage(options, control?)`
@@ -91,7 +100,7 @@ format-specific input/output flags, alpha/animation flags, metadata policies,
 target-size support, cancellation support, `maxConcurrentOperations`,
 `supportsDecodeDownsampling`, named `resourceLimits`, and explanatory notes.
 
-## `removeCompressionOutput(uri)`
+## `removeCompressionOutput(uri)` (0.4.1 source candidate)
 
 Returns `Promise<void>` and removes only a completed package-owned cache output
 returned by `compressImage`.

@@ -1,5 +1,8 @@
 # Output files and metadata
 
+> This page tracks the 0.4.1 source candidate.
+> `removeCompressionOutput(uri)` is not present in npm 0.4.0.
+
 ## Cache-file ownership
 
 Successful compression creates a new local cache file and returns its URI. The

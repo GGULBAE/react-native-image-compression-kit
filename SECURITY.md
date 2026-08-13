@@ -6,8 +6,9 @@ Security fixes are provided for the latest published minor release line.
 
 | Version | Supported |
 | --- | --- |
-| 0.3.x | Candidate; not yet published |
-| 0.2.x | Yes |
+| 0.4.x | Yes |
+| 0.3.x | No |
+| 0.2.x | No |
 | 0.1.x | No |
 | < 0.1.0 | No |
 

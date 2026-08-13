@@ -56,6 +56,14 @@ describe('Android demo screenshot capture', () => {
     expect(source.indexOf('normalize-demo-recording.mjs')).toBeLessThan(
       source.indexOf('create-demo-evidence.mjs')
     );
+    expect(source).toContain('measure-demo-visual-agreement.mjs');
+    expect(source.indexOf('measure-demo-visual-agreement.mjs')).toBeLessThan(
+      source.indexOf('create-demo-evidence.mjs')
+    );
+    expect(source).toContain('--visual-agreement /tmp/rnick-demo-raw/visual-agreement.json');
+    expect(source).toContain('--resize-mode contain');
+    expect(source).toContain('--max-width 160');
+    expect(source).toContain('--max-height 160');
     expect(source).toContain(
       '--capture-method "android adb screenrecord H.264; timeline normalized and final native frame held with ffmpeg"'
     );
@@ -100,6 +108,17 @@ describe('Android demo screenshot capture', () => {
     expect(workflow.indexOf('node scripts/normalize-demo-recording.mjs')).toBeLessThan(
       workflow.indexOf('node scripts/create-demo-evidence.mjs')
     );
+    expect(workflow).toContain('node scripts/measure-demo-visual-agreement.mjs');
+    expect(
+      workflow.indexOf('node scripts/measure-demo-visual-agreement.mjs')
+    ).toBeLessThan(workflow.indexOf('node scripts/create-demo-evidence.mjs'));
+    expect(workflow).toContain(
+      '--visual-agreement /tmp/rnick-demo-raw/visual-agreement.json'
+    );
+    expect(workflow).toContain('"scripts/merge-demo-evidence.mjs"');
+    expect(workflow).toContain('--resize-mode contain');
+    expect(workflow).toContain('--max-width 160');
+    expect(workflow).toContain('--max-height 160');
     expect(workflow).toContain(
       '--capture-method "ios simctl recordVideo H.264 after a non-capture warm launch; 3-second recorder/startup lead trimmed, timeline normalized, and final native frame held with ffmpeg"'
     );

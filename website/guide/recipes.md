@@ -1,5 +1,8 @@
 # Compression recipes
 
+> Cleanup examples use `removeCompressionOutput(uri)` from the 0.4.1 source
+> candidate. npm 0.4.0 consumers must use their host file API instead.
+
 ## Resize without upscaling
 
 ```ts

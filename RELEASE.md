@@ -3,15 +3,51 @@
 This file keeps the current release work and the most recent release evidence.
 Complete prior notes are preserved in [0.2 release history](docs/releases/0.2-history.md).
 
-## v0.4.0
+## v0.4.1
 
 <!-- release-status:start -->
-- Package version: `0.4.0`
-- Release target: `0.4.0`
+- Package version: `0.4.1`
+- Release target: `0.4.1`
 - Published npm latest: `0.4.0`
-- Release state: `release`
-- Registry checked at: `2026-07-20`
+- Release state: `candidate`
+- Registry checked at: `2026-08-13`
 <!-- release-status:end -->
+
+- Scope: correct iOS orientation rendering, verify visual agreement in native
+  captures, and add explicit package-owned output cleanup.
+
+This candidate fixes a real v0.4.0 iOS rendering defect: ImageIO had already
+normalized orientation-bearing input pixels before the Core Graphics renderer
+applied an unnecessary second vertical transform. It also adds the
+backward-compatible `removeCompressionOutput(uri)` API so applications can
+release one validated package-owned cache output after upload, copy, or
+abandonment. npm `latest` remains 0.4.0; no publication, tag, or release asset
+has been created for 0.4.1.
+
+### Included
+
+- EXIF orientation 1–8 regression coverage across the real default iOS
+  decoder, transformer, and encoder.
+- A capture-time SSIM gate that compares the auto-oriented source with the
+  output and rejects the observed vertical-flip signature.
+- Idempotent package-owned output deletion with foreign path, traversal,
+  symlink, and directory rejection.
+- Dependabot alert and security-update settings enforced by the repository
+  settings contract.
+
+### Candidate validation
+
+```bash
+pnpm verify
+pnpm example:typecheck
+pnpm example:ios:transformer-test
+pnpm example:ios:large-image-test
+pnpm site:build
+git diff --check
+pnpm pack --dry-run
+```
+
+## v0.4.0
 
 - Scope: large-image resilience, non-blocking native work, bounded concurrency,
   decode-time downsampling, resource limits, cancellation, transactional
@@ -72,10 +108,12 @@ GitHub Release now identify the published 0.4.0 artifact.
   and tag resolve to source commit
   `6841a887b2d8b6c9e4823d2708233feeecaa77ea`.
 - Native Demo Evidence run
-  [29738858393](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/29738858393)
-  captured fresh Android and iOS 0.4.0 results from that exact release source;
-  the checked manifest binds every source/output/screenshot byte and the
-  presentation video by SHA-256.
+  [31078379910](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/31078379910)
+  captured Android and iOS observations at post-release source commit
+  `11b91af66322d7b98b46481739c54825b406ef0c` while the repository package
+  version remained 0.4.0. This is not the immutable release-source commit;
+  the checked manifest binds every source/output/screenshot/recording byte and
+  records the affected iOS visual result separately.
 
 ### Release validation
 
