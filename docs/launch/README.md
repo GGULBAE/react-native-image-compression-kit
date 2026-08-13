@@ -68,6 +68,15 @@ then replace `website/public/demo` in a focused pull request. Run
 publishing. Never synthesize a missing platform recording or relabel a local
 capture as hosted evidence.
 
+Each platform artifact may also contain the independently scoped
+`economic-resilience/` bundle. Verify that directory with
+`pnpm verify:economic-resilience-evidence -- --artifact-dir <path>` before any
+reviewed import. If it is later exposed publicly, copy both platforms into a
+new versioned evidence directory; do not place the large-photo files inside
+the current `/demo` snapshot or overwrite older evidence. A public import is a
+separate focused change and must preserve the bundle's source-tree,
+environment, cleanup, and no-cost-claim boundaries.
+
 The hosted screen recorders can omit repeated frames during static stages. The
 workflow therefore rescales the real captured frames to the independently
 logged walkthrough duration, caps or pads that moving timeline to the logged

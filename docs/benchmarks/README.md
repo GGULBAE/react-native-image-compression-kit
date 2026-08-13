@@ -34,12 +34,54 @@ Do not compare Android measurements with iOS measurements. Native codecs,
 device classes, simulator behavior, filesystem caches, thermals, and runner
 load differ. A result describes only its captured environment.
 
+## 12 MP kit-only economic resilience
+
+The same hosted workflow runs a separate large-photo case for this package
+only. Its repository-generated, non-personal JPEG is exactly 4,000 × 3,000,
+1,721,333 bytes, and SHA-256
+`bdcf4e083f1860d8829898211e4b1c428a80dfd53dceca697c6f7e4a4901bfcc`.
+Android and iOS bundle those same fixture bytes. The request is fixed to
+`contain` within 1,600 × 1,200, JPEG quality 90, `maxBytes: 500_000`, and
+`metadata: "strip"`.
+
+Each platform runs two warmups and ten sequential measured calls. The timer
+surrounds only `compressImage(options)`; option construction, inspection,
+staging, and cleanup are outside it. Measured iteration 10 is copied to an
+example-owned staging file before all 12 package-owned outputs are removed.
+Acceptance requires a decodable 1,600 × 1,200 JPEG at or below the byte target,
+exact native/file byte and SHA-256 agreement, no APP1/APP13/comment metadata,
+upright SSIM of at least 0.90, an upright-over-vertical-flip margin of at least
+0.02, the unchanged source, and zero package-output residuals.
+
+The artifact records the exact checked-out source commit, package source-tree
+version, workflow run and attempt, runtime, OS build, simulator/emulator,
+architecture, JS engine, React Native version, runner image, toolchains,
+capabilities, raw warmup/measured samples, and signed source-minus-output byte
+difference. `sourceToOutputByteDifference` is an observation, not avoided
+transfer or storage. The source remains, no matched transfer baseline exists,
+and no cost-savings claim is made.
+
+This case is not a competitor comparison, speed ranking, production workload,
+physical-device benchmark, peak-RSS measurement, or universal resilience
+rate. Verify a downloaded platform bundle with the locally installed ffmpeg
+and ffprobe tools:
+
+```bash
+pnpm verify:economic-resilience-evidence -- \
+  --artifact-dir path/to/native-demo-platform-artifact/economic-resilience
+```
+
+The replay reports both captured and local ffmpeg versions and gates on the
+recalculated decode, geometry, hashes, SSIM, and flip-control report. Identical
+version strings are not required when the rounded measurements reproduce.
+
 ## Capture and verify
 
 The [Native Demo Evidence workflow](https://github.com/GGULBAE/react-native-image-compression-kit/actions/workflows/demo-evidence.yml)
 runs the benchmark after the visible demo result on both platforms. Each
 platform artifact contains `benchmark.json`, the exact source fixture, the demo
-manifest, input/output images, screenshot, and native log.
+manifest, input/output images, screenshot, native log, and an independently
+scoped `economic-resilience/` directory.
 
 After downloading one platform artifact, verify it without network access:
 

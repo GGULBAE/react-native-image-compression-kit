@@ -78,6 +78,8 @@
     "verify:benchmark-evidence": "node scripts/verify-benchmark-evidence.mjs",
     "benchmark:comparison:evidence": "node scripts/create-benchmark-comparison-evidence.mjs",
     "verify:benchmark-comparison-evidence": "node scripts/verify-benchmark-comparison-evidence.mjs",
+    "economic-resilience:evidence": "node scripts/create-economic-resilience-evidence.mjs",
+    "verify:economic-resilience-evidence": "node scripts/verify-economic-resilience-evidence.mjs",
     "merge:demo-evidence": "node scripts/merge-demo-evidence.mjs",
     "release:dry-run": "node scripts/release-dry-run.mjs",
     "smoke:consumer": "pnpm build && node scripts/consumer-smoke-test.mjs",

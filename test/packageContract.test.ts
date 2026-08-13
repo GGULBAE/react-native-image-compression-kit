@@ -139,6 +139,10 @@ describe('npm package contract', () => {
         'node scripts/create-benchmark-comparison-evidence.mjs',
       'verify:benchmark-comparison-evidence':
         'node scripts/verify-benchmark-comparison-evidence.mjs',
+      'economic-resilience:evidence':
+        'node scripts/create-economic-resilience-evidence.mjs',
+      'verify:economic-resilience-evidence':
+        'node scripts/verify-economic-resilience-evidence.mjs',
       'release:dry-run': 'node scripts/release-dry-run.mjs',
       'android:doctor': 'node scripts/android-verification.mjs doctor',
       'android:codegen': 'node scripts/android-verification.mjs codegen',
@@ -237,6 +241,10 @@ describe('npm package contract', () => {
     expect(readProjectFile('scripts/docker-android.mjs')).toContain(
       "'RNICK_DOCKER=1'"
     );
+    const dockerfile = readProjectFile('Dockerfile');
+    expect(dockerfile).toContain('ffmpeg \\');
+    expect(dockerfile).toContain('ffmpeg -version | head -n 1');
+    expect(dockerfile).toContain('ffprobe -version | head -n 1');
   });
 
   it('keeps Vitest and its V8 coverage provider on one exact version', () => {

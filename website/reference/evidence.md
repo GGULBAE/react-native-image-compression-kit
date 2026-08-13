@@ -189,6 +189,25 @@ mean better visual quality.
 - The exact-plan timing benchmark is an environment-bound observation and is
   documented separately from these product-contract metrics.
 
+## Large-photo source-tree capture contract
+
+The Native Demo Evidence workflow also captures a separate, kit-only 12 MP
+JPEG scenario from the checked-out source tree. It uses one project-generated,
+non-personal 4,000 × 3,000 fixture, a 1,600 × 1,200 contain request, JPEG
+quality 90, a 500,000-byte ceiling, a `strip` metadata policy, two warmups, and ten
+measured calls. Iteration 10 is the representative output.
+
+This source-tree bundle is intentionally separate from the current v0.4.0 site
+snapshot. A result is accepted only when source/output bytes and hashes,
+decoded geometry, the exact environment and capabilities, SSIM ≥ 0.90, an
+upright-over-vertical-flip margin ≥ 0.02, source retention, and cleanup of all
+12 package-owned outputs agree. The source-to-output byte difference is signed;
+it is not an avoided-transfer, storage-savings, or cost claim because the
+source remains and no matched baseline is supplied.
+
+See the [benchmark methodology](https://github.com/GGULBAE/react-native-image-compression-kit/blob/master/docs/benchmarks/README.md#12-mp-kit-only-economic-resilience)
+for the complete timing boundary, artifact verifier, and interpretation limits.
+
 ## Reproduce the evidence
 
 ```bash

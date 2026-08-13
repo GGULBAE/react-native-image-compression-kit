@@ -372,6 +372,10 @@ Important limitations:
 
 ## Development verification
 
+The full repository gate requires `ffmpeg` and `ffprobe` so retained and
+newly generated native image evidence can be decoded and visually replayed.
+The pinned Docker lane includes both tools.
+
 ```bash
 pnpm test:coverage
 pnpm verify
@@ -416,6 +420,10 @@ movie header.
 The same runs emit
 versioned baseline and exact-plan comparison evidence with raw samples, fixture
 and plan digests, balanced execution positions, and median/p95 summaries.
+They also create a kit-only 12 MP JPEG source-tree evidence bundle that binds source and
+output bytes, environment, capabilities, latency samples, visual agreement,
+and package-output cleanup. The bundle is an environment-specific observation,
+not a speed ranking, cost-savings claim, or real-device benchmark.
 Comparison dependencies remain inside the private example application and
 outside the published package. See the
 [benchmark methodology](docs/benchmarks/README.md) for its timing boundary,

@@ -11,6 +11,8 @@ on:
       - "src/**"
       - "package.json"
       - "scripts/capture-android-demo.sh"
+      - "scripts/create-economic-resilience-environment.mjs"
+      - "scripts/create-economic-resilience-evidence.mjs"
       - "scripts/benchmark-core.mjs"
       - "scripts/benchmark-comparison-core.mjs"
       - "scripts/create-benchmark-comparison-evidence.mjs"
@@ -20,6 +22,8 @@ on:
       - "scripts/demo-visual-agreement-core.mjs"
       - "scripts/measure-demo-visual-agreement.mjs"
       - "scripts/demo-evidence-core.mjs"
+      - "scripts/economic-resilience-evidence-core.mjs"
+      - "scripts/verify-economic-resilience-evidence.mjs"
       - "scripts/guided-demo-core.mjs"
       - "scripts/normalize-demo-recording.mjs"
       - "scripts/verify-benchmark-comparison-evidence.mjs"
@@ -47,6 +51,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+
+      - name: Verify exact source checkout
+        env:
+          EXPECTED_SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"
 
       - name: Setup Java
         uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5
@@ -127,6 +139,14 @@ jobs:
         with:
           ref: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
 
+      - name: Verify exact source checkout
+        env:
+          EXPECTED_SOURCE_SHA: ${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"
+
       - name: Setup pnpm
         uses: ./.github/actions/setup-pnpm
 
@@ -187,9 +207,10 @@ jobs:
           xcrun simctl io "$udid" recordVideo --codec=h264 --force /tmp/rnick-demo-raw/recording-raw.mp4 > /tmp/rnick-demo-raw/record-video.log 2>&1 &
           video_pid=$!
           sleep 2
+          capture_started_at=$(xcrun simctl spawn "$udid" date '+%Y-%m-%d %H:%M:%S' | tr -d '\r')
           SIMCTL_CHILD_RNICK_DEMO_CAPTURE=1 xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example --rnick-demo-capture
           capture_native_log() {
-            xcrun simctl spawn "$udid" log show --style compact --last 3m --predicate 'eventMessage CONTAINS "RNICK_DEMO_" OR eventMessage CONTAINS "RNICK_GUIDED_DEMO_" OR eventMessage CONTAINS "RNICK_BENCHMARK_"' > /tmp/rnick-demo-raw/native.log
+            xcrun simctl spawn "$udid" log show --style compact --start "$capture_started_at" --predicate 'eventMessage CONTAINS "RNICK_DEMO_" OR eventMessage CONTAINS "RNICK_GUIDED_DEMO_" OR eventMessage CONTAINS "RNICK_BENCHMARK_" OR eventMessage CONTAINS "RNICK_ECONOMIC_RESILIENCE_"' > /tmp/rnick-demo-raw/native.log
           }
           for attempt in $(seq 1 60); do
             capture_native_log
@@ -219,14 +240,15 @@ jobs:
             test "$attempt" != "60"
             sleep 1
           done
-          for attempt in $(seq 1 120); do
+          for attempt in $(seq 1 300); do
             capture_native_log
             if grep -q 'RNICK_DEMO_PASS' /tmp/rnick-demo-raw/native.log && \
               grep -q 'RNICK_BENCHMARK_PASS' /tmp/rnick-demo-raw/native.log && \
-              grep -q 'RNICK_BENCHMARK_COMPARISON_PASS' /tmp/rnick-demo-raw/native.log; then
+              grep -q 'RNICK_BENCHMARK_COMPARISON_PASS' /tmp/rnick-demo-raw/native.log && \
+              grep -q 'RNICK_ECONOMIC_RESILIENCE_PASS' /tmp/rnick-demo-raw/native.log; then
               break
             fi
-            test "$attempt" != "120"
+            test "$attempt" != "300"
             sleep 1
           done
           sleep 2
@@ -293,6 +315,70 @@ jobs:
             --destination demo-evidence/ios \
             --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           node scripts/verify-benchmark-comparison-evidence.mjs demo-evidence/ios
+          mkdir -p /tmp/rnick-economic-raw
+          node --input-type=module - /tmp/rnick-demo-raw/native.log > /tmp/rnick-economic-raw/uris.txt <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { parseNativeEconomicResiliencePayload } from './scripts/economic-resilience-evidence-core.mjs';
+          const payload = parseNativeEconomicResiliencePayload(readFileSync(process.argv[2], 'utf8'));
+          console.log(new URL(payload.fixture.sourceUri).pathname);
+          console.log(new URL(payload.representative.stagedOutputUri).pathname);
+          NODE
+          cp "$(sed -n '1p' /tmp/rnick-economic-raw/uris.txt)" /tmp/rnick-economic-raw/source.jpg
+          cp "$(sed -n '2p' /tmp/rnick-economic-raw/uris.txt)" /tmp/rnick-economic-raw/output.jpg
+          node scripts/measure-demo-visual-agreement.mjs \
+            --source /tmp/rnick-economic-raw/source.jpg \
+            --output /tmp/rnick-economic-raw/output.jpg \
+            --resize-mode contain \
+            --max-width 1600 \
+            --max-height 1200 \
+            --report /tmp/rnick-economic-raw/visual-agreement.json
+          os_build=$(xcrun simctl spawn "$udid" sw_vers -buildVersion | tr -d '\r')
+          abi=$(xcrun simctl spawn "$udid" uname -m | tr -d '\r')
+          react_native_version=$(node -e "process.stdout.write(require('./example/package.json').dependencies['react-native'])")
+          node_version=$(node --version)
+          ffmpeg_version=$(ffmpeg -version | head -n 1)
+          ffprobe_version=$(ffprobe -version | head -n 1)
+          xcode_version=$(xcodebuild -version | tr '\n' ' ' | sed 's/[[:space:]]*$//')
+          simulator_sdk=$(xcrun --sdk iphonesimulator --show-sdk-version)
+          node scripts/create-economic-resilience-environment.mjs \
+            --platform ios \
+            --runtime "$runtime" \
+            --os-build "$os_build" \
+            --device "$device" \
+            --device-kind simulator \
+            --abi "$abi" \
+            --react-native-version "$react_native_version" \
+            --native-log /tmp/rnick-demo-raw/native.log \
+            --build-type debug \
+            --runner-label macos-latest \
+            --runner-os "$RUNNER_OS" \
+            --runner-arch "$RUNNER_ARCH" \
+            --runner-name "$RUNNER_NAME" \
+            --image-os "$ImageOS" \
+            --image-version "$ImageVersion" \
+            --node "$node_version" \
+            --ffmpeg "$ffmpeg_version" \
+            --ffprobe "$ffprobe_version" \
+            --primary-toolchain "$xcode_version" \
+            --platform-sdk "iOS Simulator $simulator_sdk" \
+            --output /tmp/rnick-economic-raw/environment.json
+          node scripts/create-economic-resilience-evidence.mjs \
+            --platform ios \
+            --package-version "${{ steps.package.outputs.version }}" \
+            --source-sha "${{ inputs.source_sha || github.event.pull_request.head.sha || github.sha }}" \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+            --log /tmp/rnick-demo-raw/native.log \
+            --source /tmp/rnick-economic-raw/source.jpg \
+            --output /tmp/rnick-economic-raw/output.jpg \
+            --fixture-manifest example/fixtures/kit-only-12mp-v1.json \
+            --visual-agreement /tmp/rnick-economic-raw/visual-agreement.json \
+            --environment /tmp/rnick-economic-raw/environment.json \
+            --destination demo-evidence/ios
+          node scripts/verify-economic-resilience-evidence.mjs \
+            --artifact-dir demo-evidence/ios/economic-resilience \
+            --report-file /tmp/rnick-economic-raw/verification.json
 
       - name: Upload iOS evidence
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

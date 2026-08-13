@@ -24,6 +24,7 @@ RUN set -eux; \
   apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    ffmpeg \
     git \
     make \
     openssh-client \
@@ -31,6 +32,8 @@ RUN set -eux; \
     unzip \
     xz-utils \
     g++; \
+  ffmpeg -version | head -n 1; \
+  ffprobe -version | head -n 1; \
   rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \

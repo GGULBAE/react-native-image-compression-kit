@@ -43,6 +43,7 @@ import {
 } from './guidedDemo';
 import { runNativeBenchmark } from './nativeBenchmark';
 import { runNativeComparisonBenchmark } from './nativeComparisonBenchmark';
+import { runEconomicResilienceBenchmark } from './economicResilienceBenchmark';
 
 const EXAMPLE_OUTPUT_FORMATS: OutputFormat[] = ['jpeg', 'png', 'webp'];
 const RESIZE_MODES: ResizeMode[] = ['contain', 'cover', 'stretch'];
@@ -199,6 +200,13 @@ export default function App(): React.JSX.Element {
             Platform.OS === 'ios' ? 'ios' : 'android'
           );
           for (const message of comparison.logs) {
+            await emitIOSSmokeLog(message);
+          }
+          const economicResilience = await runEconomicResilienceBenchmark(
+            SAMPLE_MODULE,
+            Platform.OS === 'ios' ? 'ios' : 'android'
+          );
+          for (const message of economicResilience.logs) {
             await emitIOSSmokeLog(message);
           }
           setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: false }), 500);

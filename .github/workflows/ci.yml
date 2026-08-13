@@ -56,6 +56,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install evidence replay tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends ffmpeg
+          ffmpeg -version | head -n 1
+
       - name: Verify package
         run: pnpm verify
 
