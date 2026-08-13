@@ -207,10 +207,12 @@ jobs:
           xcrun simctl io "$udid" recordVideo --codec=h264 --force /tmp/rnick-demo-raw/recording-raw.mp4 > /tmp/rnick-demo-raw/record-video.log 2>&1 &
           video_pid=$!
           sleep 2
-          capture_started_at=$(xcrun simctl spawn "$udid" date '+%Y-%m-%d %H:%M:%S' | tr -d '\r')
           SIMCTL_CHILD_RNICK_DEMO_CAPTURE=1 xcrun simctl launch --terminate-running-process "$udid" com.imagecompressionkit.example --rnick-demo-capture
           capture_native_log() {
-            xcrun simctl spawn "$udid" log show --style compact --start "$capture_started_at" --predicate 'eventMessage CONTAINS "RNICK_DEMO_" OR eventMessage CONTAINS "RNICK_GUIDED_DEMO_" OR eventMessage CONTAINS "RNICK_BENCHMARK_" OR eventMessage CONTAINS "RNICK_ECONOMIC_RESILIENCE_"' > /tmp/rnick-demo-raw/native.log
+            # The simulator is fresh for this job. A 15-minute window exceeds
+            # every bounded capture poll while avoiding fragile device-local
+            # date parsing in `log show --start`.
+            xcrun simctl spawn "$udid" log show --style compact --last 15m --predicate 'eventMessage CONTAINS "RNICK_DEMO_" OR eventMessage CONTAINS "RNICK_GUIDED_DEMO_" OR eventMessage CONTAINS "RNICK_BENCHMARK_" OR eventMessage CONTAINS "RNICK_ECONOMIC_RESILIENCE_"' > /tmp/rnick-demo-raw/native.log
           }
           for attempt in $(seq 1 60); do
             capture_native_log

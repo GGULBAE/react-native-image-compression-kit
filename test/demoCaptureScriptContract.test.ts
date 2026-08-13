@@ -49,7 +49,9 @@ describe('Android demo screenshot capture', () => {
     const firstBuilder = source.indexOf('node scripts/normalize-demo-recording.mjs');
 
     expect(source).toContain('logcat_pid=$!');
-    expect(source).toContain('kill -INT "$logcat_pid"');
+    expect(source).toContain('kill -TERM "$logcat_pid"');
+    expect(source).toContain('kill -KILL "$logcat_pid"');
+    expect(source).toContain('for _attempt in $(seq 1 50)');
     expect(source).toContain('wait "$logcat_pid"');
     expect(source).not.toContain('adb logcat -d');
     expect(streamStart).toBeGreaterThan(-1);
@@ -65,10 +67,8 @@ describe('Android demo screenshot capture', () => {
     expect(workflow).toContain('test "$(git rev-parse HEAD)" = "$EXPECTED_SOURCE_SHA"');
     expect(workflow).toContain('RNICK_ECONOMIC_RESILIENCE_');
     expect(workflow).toContain('RNICK_ECONOMIC_RESILIENCE_PASS');
-    expect(workflow).toContain(
-      'capture_started_at=$(xcrun simctl spawn "$udid" date',
-    );
-    expect(workflow).toContain('--start "$capture_started_at"');
+    expect(workflow).toContain('log show --style compact --last 15m');
+    expect(workflow).not.toContain('--start "$capture_started_at"');
     expect(workflow).not.toContain('log show --style compact --last 3m');
     expect(workflow).toContain('for attempt in $(seq 1 300)');
     expect(workflow).toContain('create-economic-resilience-environment.mjs');

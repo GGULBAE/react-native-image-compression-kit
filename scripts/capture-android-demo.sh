@@ -19,7 +19,16 @@ logcat_pid=""
 
 stop_logcat_stream() {
   if [ -n "$logcat_pid" ]; then
-    kill -INT "$logcat_pid" 2>/dev/null || true
+    kill -TERM "$logcat_pid" 2>/dev/null || true
+    for _attempt in $(seq 1 50); do
+      if ! kill -0 "$logcat_pid" 2>/dev/null; then
+        break
+      fi
+      sleep 0.1
+    done
+    if kill -0 "$logcat_pid" 2>/dev/null; then
+      kill -KILL "$logcat_pid" 2>/dev/null || true
+    fi
     wait "$logcat_pid" 2>/dev/null || true
     logcat_pid=""
   fi
