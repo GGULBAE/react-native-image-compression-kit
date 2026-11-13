@@ -222,14 +222,16 @@ function buildNative(app, lane, platform) {
   if (existsSync(gemfilePath)) {
     const gemfile = readFileSync(gemfilePath, 'utf8');
     // Ruby 3.4 moved these stdlib features to bundled gems; older RN CocoaPods locks require them.
-    const ruby34CompatibilityGems = [
+    const compatibilityGems = [
       ['base64', '0.3.0'],
       ['nkf', '0.3.0'],
+      // RN 0.73's ActiveSupport passes quirks_mode, rejected by json 3.
+      ...(lane.id === 'rn-floor-legacy' ? [['json', '~> 2.21.2']] : []),
     ].filter(([name]) => !new RegExp(`gem ['\"]${name}['\"]`).test(gemfile));
-    if (ruby34CompatibilityGems.length > 0) {
+    if (compatibilityGems.length > 0) {
       writeFileSync(
         gemfilePath,
-        `${gemfile.trimEnd()}\n${ruby34CompatibilityGems
+        `${gemfile.trimEnd()}\n${compatibilityGems
           .map(([name, version]) => `gem '${name}', '${version}'`)
           .join('\n')}\n`
       );

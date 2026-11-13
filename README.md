@@ -393,6 +393,11 @@ Java or the Android SDK is unavailable locally, `pnpm docker:android:ci` runs
 the repository gate, Codegen, unit tests, instrumentation APK compile, and
 example APK build in the pinned container toolchain.
 
+Hosted Android checks bootstrap `platform-tools` before installing the declared
+SDK components. The React Native 0.73 compatibility consumer constrains the
+`json` gem to the 2.21 patch series because its ActiveSupport still passes the
+`quirks_mode` option rejected by json 3.
+
 The iOS build and smoke runner selects an available iPhone simulator matching
 the selected Xcode's iOS Simulator SDK major/minor version. Install a matching
 runtime in Xcode if none is available; validation fails before boot or build
