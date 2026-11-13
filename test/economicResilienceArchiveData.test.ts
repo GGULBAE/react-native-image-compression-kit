@@ -41,6 +41,9 @@ describe('economic resilience page archive data', () => {
       const platformRoot = path.join(root, platform);
       mkdirSync(platformRoot);
       writeJson(path.join(platformRoot, 'economic-resilience.json'), {
+        fixture: { width: 4000, height: 3000 },
+        representative: { width: 1600, height: 1200 },
+        operation: { output: { quality: 90, maxBytes: 500_000 } },
         economics: {
           sourceBytes: 1_721_333,
           outputBytes: 400_000 + offset,
@@ -75,6 +78,12 @@ describe('economic resilience page archive data', () => {
           root: `source-tree/${SHA}`,
           sourceBytes: 1_721_333,
           outputBytes: 400_000,
+          sourceWidth: 4000,
+          sourceHeight: 3000,
+          outputWidth: 1600,
+          outputHeight: 1200,
+          qualityLimit: 90,
+          targetBytes: 500_000,
           sourceToOutputByteDifference: 1_321_333,
           uprightSimilarity: 0.98,
           verticalFlipSimilarity: 0.5,

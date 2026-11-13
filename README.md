@@ -36,6 +36,13 @@ the backward-compatible `removeCompressionOutput(uri)` lifecycle API. The
 published 0.4.0 package can vertically invert orientation-bearing iOS inputs;
 do not treat its iOS walkthrough as successful visual-integrity evidence.
 
+The [native demo](https://ggulbae.github.io/react-native-image-compression-kit/demo/)
+shows file sizes and pixel dimensions together: its recorded reduction includes
+resizing and JPEG encoding. The synthetic test pattern checks orientation and
+detail; it is not a photo-quality benchmark. Repository contributors use the
+pinned pnpm 11.28.9 toolchain, including the registry-cache recovery needed by
+Dependabot.
+
 ## Installation
 
 ```bash
@@ -385,6 +392,11 @@ an API 34+ device or emulator to execute codec and output-lifecycle tests. When
 Java or the Android SDK is unavailable locally, `pnpm docker:android:ci` runs
 the repository gate, Codegen, unit tests, instrumentation APK compile, and
 example APK build in the pinned container toolchain.
+
+Hosted Android checks bootstrap `platform-tools` before installing the declared
+SDK components. The React Native 0.73 compatibility consumer constrains the
+`json` gem to the 2.21 patch series because its ActiveSupport still passes the
+`quirks_mode` option rejected by json 3.
 
 The iOS build and smoke runner selects an available iPhone simulator matching
 the selected Xcode's iOS Simulator SDK major/minor version. Install a matching

@@ -17,6 +17,6 @@ import NativeComparison from './NativeComparison.vue';
       <ul class="project-intro__platforms" aria-label="Supported targets"><li>Android 23+</li><li>iOS 13.4+</li><li>Expo development builds</li></ul>
       <p class="project-intro__license">MIT licensed · TypeScript API · Native codecs</p>
     </div>
-    <NativeComparison />
+    <NativeComparison summary />
   </section>
 </template>

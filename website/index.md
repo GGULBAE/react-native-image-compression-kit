@@ -9,7 +9,7 @@ titleTemplate: false
 ::: warning Release status
 **npm latest: 0.4.0 · source candidate: 0.4.1.** The published iOS renderer can
 vertically invert output pixels. The candidate fixes orientation and adds
-package-owned output cleanup. The comparison above is a recorded source-tree
+package-owned output cleanup. The example above is a recorded source-tree
 result, not a claim that those fixes are in npm. [Review the release notes](./changelog.md).
 :::
 

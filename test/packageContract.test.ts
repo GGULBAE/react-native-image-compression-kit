@@ -44,7 +44,7 @@ describe('npm package contract', () => {
       peerDependencies: { 'react-native': '>=0.73 <1.0' },
     });
     expect(packageJson.version).toMatch(/^\d+\.\d+\.\d+$/);
-    expect(packageJson.packageManager).toBe('pnpm@11.8.0');
+    expect(packageJson.packageManager).toBe('pnpm@11.28.9');
   });
 
   it('keeps the publish allowlist runtime-only', () => {
@@ -200,7 +200,7 @@ describe('npm package contract', () => {
   it('keeps the reproducible Android container toolchain explicit', () => {
     expect(parseDockerArgs(readProjectFile('Dockerfile'))).toEqual({
       NODE_VERSION: '24.11.1',
-      PNPM_VERSION: '11.8.0',
+      PNPM_VERSION: '11.28.9',
       GH_VERSION: '2.95.0',
       GH_LINUX_AMD64_SHA256:
         '25d1e4729e8808c9ed3d613e96ebd3f3e44446f2d368c89d878a71a36ddb3d8c',
