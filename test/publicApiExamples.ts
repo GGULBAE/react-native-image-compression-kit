@@ -10,6 +10,15 @@ import {
 
 declare const imageUri: string;
 
+export async function compressLocalImage(localImageUri: string): Promise<CompressionResult> {
+  return compressImage({
+    source: { uri: localImageUri },
+    resize: { maxWidth: 1600, maxHeight: 1600, mode: 'contain' },
+    output: { format: 'jpeg', quality: 82 },
+    metadata: 'safe',
+  });
+}
+
 export async function publicQuickStart(): Promise<CompressionResult> {
   const capabilities = await getImageCompressionCapabilities();
   const canWriteWebP = capabilities.formats.some(

@@ -11,8 +11,9 @@
 </p>
 
 <p align="center">
-  <a href="https://ggulbae.github.io/react-native-image-compression-kit/guide/byte-economics">📊 Why bytes matter</a>
-  · <a href="#quick-start">⚡ Quick start</a>
+  <a href="https://ggulbae.github.io/react-native-image-compression-kit/guide/quick-start">Quick start</a>
+  · <a href="https://ggulbae.github.io/react-native-image-compression-kit/demo/">Native demo</a>
+  · <a href="#installation">Install</a>
   · <a href="https://ggulbae.github.io/react-native-image-compression-kit/reference/api">🧭 API</a>
 </p>
 
@@ -34,6 +35,68 @@ fixes an iOS pixel-orientation defect in the ImageIO/CoreGraphics path and adds
 the backward-compatible `removeCompressionOutput(uri)` lifecycle API. The
 published 0.4.0 package can vertically invert orientation-bearing iOS inputs;
 do not treat its iOS walkthrough as successful visual-integrity evidence.
+
+## Installation
+
+```bash
+npm install react-native-image-compression-kit
+```
+
+Or with pnpm:
+
+```bash
+pnpm add react-native-image-compression-kit
+```
+
+For iOS, install pods after adding the package:
+
+```bash
+cd ios && pod install
+```
+
+Android 23+ and iOS 13.4+ are supported. The package declares React Native
+`>=0.73 <1.0`. The v0.4.0 release-target matrix verifies React Native 0.73.11 Legacy,
+React Native 0.86.0 Legacy and New Architecture, and Expo 57.0.7 with React
+Native 0.86.0 New Architecture on both platforms. Versions between the tested
+endpoints are accepted by the peer range but are not individually release
+tested. Expo requires a development build or prebuild; Expo Go and Snack
+cannot load this custom native module. See the
+[exact compatibility evidence](https://ggulbae.github.io/react-native-image-compression-kit/reference/compatibility).
+
+See the [installation guide](https://ggulbae.github.io/react-native-image-compression-kit/guide/installation)
+for Bare React Native, Expo development-build, rebuild, and URI integration
+steps.
+
+## Quick start
+
+```ts
+import { compressImage } from 'react-native-image-compression-kit';
+
+async function compressLocalImage(localImageUri: string) {
+  return compressImage({
+    source: { uri: localImageUri },
+    resize: { maxWidth: 1600, maxHeight: 1600, mode: 'contain' },
+    output: { format: 'jpeg', quality: 82 },
+    metadata: 'safe',
+  });
+}
+```
+
+The result is a new cache file with its URI, dimensions, and byte counts.
+The source stays unchanged. Upload or preserve the output, then remove the
+temporary cache file with the host application's file API.
+`removeCompressionOutput` is available in the 0.4.1 source candidate, not npm
+0.4.0; see the lifecycle API below for candidate integrations.
+
+Input must be a local URI accessible to the native app. Android supports
+`file://` and `content://`; iOS supports `file://` and best-effort local
+`content://` loading. Apply the host application's acceptance policy before
+upload: an unreachable `maxBytes` target returns the smallest generated
+candidate rather than pretending the target was met.
+
+Follow the [first-image guide](https://ggulbae.github.io/react-native-image-compression-kit/guide/quick-start)
+for installation and native rebuild steps, or explore the
+[recorded native comparison and code builder](https://ggulbae.github.io/react-native-image-compression-kit/demo/).
 
 ## Why this package
 
@@ -101,92 +164,6 @@ metadata, and transactional-output decisions that changes must preserve. For a
 shorter user-facing view, see the
 [hosted architecture guide](https://ggulbae.github.io/react-native-image-compression-kit/reference/architecture)
 and [hosted roadmap](https://ggulbae.github.io/react-native-image-compression-kit/roadmap).
-
-## Installation
-
-```bash
-npm install react-native-image-compression-kit
-```
-
-Or with pnpm:
-
-```bash
-pnpm add react-native-image-compression-kit
-```
-
-For iOS, install pods after adding the package:
-
-```bash
-cd ios && pod install
-```
-
-Android 23+ and iOS 13.4+ are supported. The package declares React Native
-`>=0.73 <1.0`. The v0.4.0 release-target matrix verifies React Native 0.73.11 Legacy,
-React Native 0.86.0 Legacy and New Architecture, and Expo 57.0.7 with React
-Native 0.86.0 New Architecture on both platforms. Versions between the tested
-endpoints are accepted by the peer range but are not individually release
-tested. Expo requires a development build or prebuild; Expo Go and Snack
-cannot load this custom native module. See the
-[exact compatibility evidence](https://ggulbae.github.io/react-native-image-compression-kit/reference/compatibility).
-
-See the [installation guide](https://ggulbae.github.io/react-native-image-compression-kit/guide/installation)
-for Bare React Native, Expo development-build, rebuild, and URI integration
-steps.
-
-## Quick start
-
-> The cleanup call in this example belongs to the 0.4.1 source candidate and
-> is not present in npm 0.4.0. The compression and capability calls remain
-> valid in 0.4.0; use the host application's file API to clean accepted outputs
-> until the candidate is released.
-
-```ts
-import {
-  compressImage,
-  getImageCompressionCapabilities,
-  removeCompressionOutput,
-} from 'react-native-image-compression-kit';
-
-const capabilities = await getImageCompressionCapabilities();
-const canWriteWebP = capabilities.formats.some(
-  ({ format, output }) => format === 'webp' && output
-);
-
-const result = await compressImage({
-  source: { uri: imageUri },
-  resize: {
-    maxWidth: 2048,
-    maxHeight: 2048,
-    mode: 'contain',
-  },
-  output: {
-    format: canWriteWebP ? 'webp' : 'jpeg',
-    quality: 90,
-    maxBytes: 500_000,
-  },
-  metadata: 'safe',
-});
-
-const sourceToOutputByteDelta = Math.max(
-  0,
-  result.originalByteSize - result.byteSize
-);
-
-try {
-  if (result.byteSize > 500_000) {
-    throw new Error('Image did not meet the upload policy');
-  }
-  await upload(result.uri, { sourceToOutputByteDelta });
-} finally {
-  await removeCompressionOutput(result.uri);
-}
-```
-
-Input must be a local URI accessible to the native app. Android supports
-`file://` and `content://`; iOS supports `file://` and best-effort local
-`content://` loading. Apply the host application's acceptance policy before
-upload: an unreachable `maxBytes` target returns the smallest generated
-candidate rather than pretending the target was met.
 
 ## Public API
 
