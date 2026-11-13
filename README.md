@@ -36,6 +36,13 @@ the backward-compatible `removeCompressionOutput(uri)` lifecycle API. The
 published 0.4.0 package can vertically invert orientation-bearing iOS inputs;
 do not treat its iOS walkthrough as successful visual-integrity evidence.
 
+The [native demo](https://ggulbae.github.io/react-native-image-compression-kit/demo/)
+shows file sizes and pixel dimensions together: its recorded reduction includes
+resizing and JPEG encoding. The synthetic test pattern checks orientation and
+detail; it is not a photo-quality benchmark. Repository contributors use the
+pinned pnpm 11.28.9 toolchain, including the registry-cache recovery needed by
+Dependabot.
+
 ## Installation
 
 ```bash

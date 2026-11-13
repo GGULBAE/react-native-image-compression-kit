@@ -87,10 +87,20 @@ patchedDependencies:
 ```
 
 The repository, Docker image, contributor setup, and example setup pin pnpm
-11.8.0. Every active workflow installs that exact package with npm into a
+11.28.9. Every active workflow installs that exact package with npm into a
 runner-temporary prefix, disables package lifecycle scripts, adds only its
 `bin` directory to the job path, and asserts the resulting version. This avoids
 the vulnerable pnpm 11.7.0 bootstrap embedded in `pnpm/action-setup@v6`.
+The 11.28.9 pin also includes the metadata resolver recovery for a registry or
+proxy returning `304 Not Modified` without a readable local cache. Dependabot
+previously stopped with `ERR_PNPM_CACHE_MISSING_AFTER_304` while resolving the
+example workspace. Upstream added a bounded unconditional retry in
+[pnpm#12888](https://github.com/pnpm/pnpm/pull/12888) and
+[pnpm#13014](https://github.com/pnpm/pnpm/pull/13014); both fixes are ancestors
+of the reviewed [11.28.9 release](https://github.com/pnpm/pnpm/releases/tag/v11.28.9).
+This updates the updater tool, without relaxing the dependency graph checks,
+audit exceptions, or lifecycle-script policy.
+
 Historical release evidence, legacy snapshots, and signed action-review
 fixtures retain the pnpm version captured when they were produced. The
 resulting dependency graphs are VitePress 1.6.4 to Vite
@@ -150,6 +160,32 @@ bootstrap, and requires the reproducible Android container to use the same CLI
 version.
 `pnpm audit` is the separate networked registry cross-check and must expose no
 unreviewed advisory before merge.
+
+## Updater-only review, 2026-11-13
+
+The pnpm 11.28.9 change keeps `pnpm-lock.yaml` and all dependency overrides
+unchanged. A cold-cache registry probe that first answers `304` and then `200`
+reproduces the updater failure with 11.8.0 (one request, exit 1). With 11.28.9,
+the same probe retries once and writes its lockfile successfully (exit 0).
+Frozen installation and the offline semantic gate also pass with the new CLI.
+
+The registry audit was reviewed separately: it currently reports **38 findings**
+(1 critical, 16 high, 15 moderate, 6 low). These remain open; the CLI upgrade
+does not resolve or suppress them. Their importer paths are the example app's
+React Native development tools and the repository's Vitest, VitePress/Vue,
+and Lighthouse tools. The library's production dependency surface is unchanged.
+The critical finding affects `shell-quote` below 1.11.0; the previously reviewed
+1.10.0 floor is no longer sufficient for the new advisory. Other findings affect
+`nanoid`, `browserslist`, `qs`, `joi`, `vitest`/`@vitest/mocker`, `js-yaml`,
+`source-map-js`, `compression`, `@vue/server-renderer`, `vite`/`launch-editor`,
+`zod`, `body-parser`, `deepmerge`, and `fast-xml-parser`. The `deepmerge`
+prototype-poisoning advisory currently has no published patched version.
+
+A separate dependency patch review must raise the relevant floors, refresh the
+lock and validate the example/native and website toolchains. It must explicitly
+address the unpatched `deepmerge` path. No new audit ignore or weaker gate was
+added for this updater fix; `pnpm audit` continues to return non-zero for these
+findings.
 
 ## Override exit criteria
 

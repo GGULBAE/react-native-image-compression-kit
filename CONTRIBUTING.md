@@ -18,7 +18,7 @@ fail-closed release evidence.
 Requirements:
 
 - Node.js 22.13 or newer
-- pnpm 11.8.0 through Corepack
+- pnpm 11.28.9 through Corepack
 - Ruby/CocoaPods and Xcode for iOS validation
 - Java 21 and Android SDK 36 for Android executable validation
 - ffmpeg and ffprobe for decode, geometry, and SSIM evidence replay

@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 export const DEPENDENCY_SECURITY_SCHEMA_VERSION = 4;
-export const PNPM_REVIEWED_VERSION = '11.8.0';
+export const PNPM_REVIEWED_VERSION = '11.28.9';
 export const VITE_MINIMUM_SAFE_VERSION = '6.4.3';
 export const ESBUILD_MINIMUM_SAFE_VERSION = '0.25.0';
 export const OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION = '2.8.0';

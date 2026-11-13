@@ -6,6 +6,12 @@ export interface EconomicArchivePlatformSnapshot {
   root: string;
   sourceBytes: number;
   outputBytes: number;
+  sourceWidth: number;
+  sourceHeight: number;
+  outputWidth: number;
+  outputHeight: number;
+  qualityLimit: number;
+  targetBytes: number;
   sourceToOutputByteDifference: number;
   uprightSimilarity: number;
   verticalFlipSimilarity: number;
@@ -86,6 +92,12 @@ export function loadEconomicArchiveSnapshot(
       root,
       sourceBytes: evidence.economics?.sourceBytes,
       outputBytes: evidence.economics?.outputBytes,
+      sourceWidth: evidence.fixture?.width,
+      sourceHeight: evidence.fixture?.height,
+      outputWidth: evidence.representative?.width,
+      outputHeight: evidence.representative?.height,
+      qualityLimit: evidence.operation?.output?.quality,
+      targetBytes: evidence.operation?.output?.maxBytes,
       sourceToOutputByteDifference:
         evidence.economics?.sourceToOutputByteDifference,
       uprightSimilarity: visual.uprightSimilarity,

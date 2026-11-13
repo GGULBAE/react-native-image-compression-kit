@@ -1,9 +1,13 @@
 # Explore native compression
 
-Compare the original synthetic JPEG with outputs recorded on Android and iOS.
-Switch platforms, then move the slider to inspect the images at the same
-display size. This is an archived native result, not browser compression or a
-cross-platform speed or quality ranking.
+See how a local JPEG changes in **file size and pixel dimensions** after native
+resizing and compression. Choose Android or iOS to see that runtime's recorded
+output. The reduction includes resizing; it does not measure compression alone.
+
+The colored image is a synthetic test pattern for checking orientation and
+detail. It is not a real-photo quality comparison. Move the slider to reveal
+the original over the output at the same display size. These are archived native
+results; the website does not run compression on your files.
 
 <NativeComparison />
 
