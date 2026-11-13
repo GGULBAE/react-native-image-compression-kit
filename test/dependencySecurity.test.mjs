@@ -7,6 +7,7 @@ import {
   DEPENDENCY_SECURITY_CHECK_FIELDS,
   DEPENDENCY_SECURITY_REPORT_FIELDS,
   ESBUILD_MINIMUM_SAFE_VERSION,
+  FAST_XML_PARSER_REVIEWED_VERSION,
   IMAGE_SIZE_AUDIT_IGNORES,
   IMAGE_SIZE_PATCH_FILE,
   IMAGE_SIZE_PATCH_SHA256,
@@ -138,6 +139,26 @@ describe('dependency security gate', () => {
         );
       },
       'cosmiconfig@9.0.2>js-yaml',
+    ],
+    [
+      'missing fast-xml-parser override',
+      (inputs) => {
+        inputs.workspaceContents = inputs.workspaceContents.replace(
+          /^  "fast-xml-parser": "5\.12\.0"\n/m,
+          ''
+        );
+      },
+      'Expected pnpm override fast-xml-parser=' + FAST_XML_PARSER_REVIEWED_VERSION,
+    ],
+    [
+      'vulnerable fast-xml-parser resolution',
+      (inputs) => {
+        inputs.lockfileContents = inputs.lockfileContents.replaceAll(
+          'fast-xml-parser@5.12.0',
+          'fast-xml-parser@5.11.2'
+        );
+      },
+      'must resolve only reviewed fast-xml-parser',
     ],
     [
       'missing image-size audit ignore',

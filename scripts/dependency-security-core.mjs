@@ -12,6 +12,7 @@ export const SENTRY_NODE_REVIEWED_VERSION = '10.66.0';
 export const SHELL_QUOTE_MINIMUM_SAFE_VERSION = '1.9.0';
 export const SHELL_QUOTE_REVIEWED_VERSION = '1.10.0';
 export const JS_YAML_MINIMUM_SAFE_VERSION = '4.3.1';
+export const FAST_XML_PARSER_REVIEWED_VERSION = '5.12.0';
 export const IMAGE_SIZE_REVIEWED_VERSION = '1.2.1';
 export const IMAGE_SIZE_PATCH_SELECTOR =
   'image-size@' + IMAGE_SIZE_REVIEWED_VERSION;
@@ -85,6 +86,7 @@ const TOOLING_PACKAGES = new Set([
   'postcss',
   'js-yaml',
   'image-size',
+  'fast-xml-parser',
 ]);
 
 export function verifyDependencySecurity(
@@ -230,6 +232,13 @@ export function verifyDependencySecurity(
         JS_YAML_MINIMUM_SAFE_VERSION +
         ', received ' +
         describe(state.jsYamlOverride) +
+        '.'
+    );
+    assert(
+      readWorkspaceOverride(workspaceContents, 'fast-xml-parser') ===
+        FAST_XML_PARSER_REVIEWED_VERSION,
+      'Expected pnpm override fast-xml-parser=' +
+        FAST_XML_PARSER_REVIEWED_VERSION +
         '.'
     );
     state.checks.override = true;
@@ -398,6 +407,19 @@ export function verifyDependencySecurity(
       state.postcssVersions.includes(POSTCSS_MINIMUM_SAFE_VERSION),
       'pnpm-lock.yaml must resolve the reviewed PostCSS override ' +
         POSTCSS_MINIMUM_SAFE_VERSION +
+        '.'
+    );
+    const fastXmlParserVersions = extractLockedVersions(
+      lockfileContents,
+      'fast-xml-parser'
+    );
+    assert(
+      fastXmlParserVersions.length === 1 &&
+        fastXmlParserVersions[0] === FAST_XML_PARSER_REVIEWED_VERSION,
+      'pnpm-lock.yaml must resolve only reviewed fast-xml-parser ' +
+        FAST_XML_PARSER_REVIEWED_VERSION +
+        ', received ' +
+        fastXmlParserVersions.join(', ') +
         '.'
     );
     state.checks.ranges = true;

@@ -46,6 +46,7 @@ retaining a vulnerable repository lock resolution.
 
 | Advisory | Severity | Affected lock | First patched | Affected condition | Disposition |
 | --- | --- | --- | --- | --- | --- |
+| [GHSA-474x-hrwr-fgx4](https://github.com/advisories/GHSA-474x-hrwr-fgx4) | Low | `fast-xml-parser` 5.10.1 | 5.12.0 | Unterminated stop-node input can cause excessive CPU use | Resolved by reviewed 5.12.0 override |
 | [GHSA-v6wh-96g9-6wx3](https://github.com/advisories/GHSA-v6wh-96g9-6wx3) / CVE-2026-53632 | Medium | Vite 5.4.21 | 6.4.3 | Windows UNC/NTLM behavior in the development server | Resolved by Vite 6.4.3 |
 | [GHSA-fx2h-pf6j-xcff](https://github.com/advisories/GHSA-fx2h-pf6j-xcff) / CVE-2026-53571 | High | Vite 5.4.21 | 6.4.3 | Network-exposed development server `server.fs.deny` bypass | Resolved by Vite 6.4.3 |
 | [GHSA-4w7w-66w2-5vf9](https://github.com/advisories/GHSA-4w7w-66w2-5vf9) / CVE-2026-39365 | Medium | Vite 5.4.21 | 6.4.2 | Network-exposed development server source-map traversal | Resolved by Vite 6.4.3 |
@@ -76,6 +77,7 @@ auditConfig:
     - GHSA-w3rx-r6r6-pgpr
 
 overrides:
+  "fast-xml-parser": "5.12.0"
   "cosmiconfig@9.0.2>js-yaml": "4.3.1"
   "lighthouse@13.4.0>@sentry/node": "10.66.0"
   "postcss": "8.5.23"
@@ -169,9 +171,9 @@ reproduces the updater failure with 11.8.0 (one request, exit 1). With 11.28.9,
 the same probe retries once and writes its lockfile successfully (exit 0).
 Frozen installation and the offline semantic gate also pass with the new CLI.
 
-The registry audit was reviewed separately: it currently reports **38 findings**
-(1 critical, 16 high, 15 moderate, 6 low). These remain open; the CLI upgrade
-does not resolve or suppress them. Their importer paths are the example app's
+The registry audit at this stage reported **38 findings**
+(1 critical, 16 high, 15 moderate, 6 low). These were open after the CLI upgrade, which
+did not resolve or suppress them. The XML follow-up below resolves one finding. Their importer paths are the example app's
 React Native development tools and the repository's Vitest, VitePress/Vue,
 and Lighthouse tools. The library's production dependency surface is unchanged.
 The critical finding affects `shell-quote` below 1.11.0; the previously reviewed
@@ -186,6 +188,27 @@ lock and validate the example/native and website toolchains. It must explicitly
 address the unpatched `deepmerge` path. No new audit ignore or weaker gate was
 added for this updater fix; `pnpm audit` continues to return non-zero for these
 findings.
+
+## Security updater version alignment
+
+After the pnpm cache fix, security update run
+[43411472779](https://github.com/GGULBAE/react-native-image-compression-kit/actions/runs/43411472779)
+created several update PRs but stopped on a separate indirect-dependency error:
+Dependabot requested `fast-xml-parser` 5.12.0, while pnpm's fresh resolution
+selected newly published 5.12.1. The updater rejected the higher result.
+
+Pin the already patched 5.12.0 release, matching the updater's selected security
+target. Refresh only the XML parser and its required dependency closure;
+unrelated versions and peer snapshots stay as committed. The offline gate now
+requires that workspace override and a single matching lock resolution. Mutation
+tests reject a removed override and a downgrade to affected 5.11.2. Release-age
+checks, lifecycle rules, and the two existing audit exceptions remain in force.
+
+The follow-up registry audit reports 37 remaining findings (1 critical, 16 high,
+15 moderate, 5 low); the XML parser advisory is absent. The other findings in the
+earlier baseline still require their own patch review. Review this exact pin and
+its semantic guard together when upstream tooling can handle a newer indirect
+resolution reliably.
 
 ## Override exit criteria
 

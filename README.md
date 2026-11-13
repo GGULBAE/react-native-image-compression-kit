@@ -41,7 +41,8 @@ shows file sizes and pixel dimensions together: its recorded reduction includes
 resizing and JPEG encoding. The synthetic test pattern checks orientation and
 detail; it is not a photo-quality benchmark. Repository contributors use the
 pinned pnpm 11.28.9 toolchain, including the registry-cache recovery needed by
-Dependabot.
+Dependabot. The React Native CLI's XML parser is pinned to patched 5.12.0;
+the dependency gate rejects a missing pin or a vulnerable lock resolution.
 
 ## Installation
 
