@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { isDeepStrictEqual } from 'node:util';
+import { selectIOSSimulatorForSDK } from './ios-simulator-selection-core.mjs';
 import {
   createIOSValidationConfig,
   createSmokeAttemptLifecycle,
@@ -600,21 +601,15 @@ function ensurePodsInstalled() {
 }
 
 function selectSimulator() {
+  const sdkVersion = mustRun(
+    'xcrun', ['--sdk', 'iphonesimulator', '--show-sdk-version'], { capture: true }
+  ).stdout.trim();
   const result = mustRun('xcrun', ['simctl', 'list', 'devices', 'available', '--json'], {
     capture: true,
   });
   const parsed = JSON.parse(result.stdout);
-  const devices = Object.entries(parsed.devices ?? {}).flatMap(([runtime, entries]) =>
-    entries.map((entry) => ({ ...entry, runtime }))
-  );
-  const simulator = devices.find(
-    (device) => device.name.includes('iPhone') && device.runtime.includes('iOS')
-  );
-
-  if (!simulator) {
-    throw new Error('No available iPhone simulator was found.');
-  }
-
+  const simulator = selectIOSSimulatorForSDK(parsed.devices, sdkVersion);
+  console.log(`Selected iOS simulator: ${simulator.name} (${simulator.udid}) runtime=${simulator.runtime} SDK=${sdkVersion}`);
   return simulator;
 }
 

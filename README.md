@@ -386,6 +386,11 @@ Java or the Android SDK is unavailable locally, `pnpm docker:android:ci` runs
 the repository gate, Codegen, unit tests, instrumentation APK compile, and
 example APK build in the pinned container toolchain.
 
+The iOS build and smoke runner selects an available iPhone simulator matching
+the selected Xcode's iOS Simulator SDK major/minor version. Install a matching
+runtime in Xcode if none is available; validation fails before boot or build
+instead of choosing an unrelated installed runtime.
+
 Native demo captures run a deterministic, capture-only walkthrough in the real
 Android and iOS example apps: bundled source, selected options, runtime
 capabilities, active compression, and the native before/after result. The
