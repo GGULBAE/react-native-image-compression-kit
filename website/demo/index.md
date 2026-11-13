@@ -1,4 +1,31 @@
-# Native walkthrough explorer
+# Explore native compression
+
+Compare the original synthetic JPEG with outputs recorded on Android and iOS.
+Switch platforms, then move the slider to inspect the images at the same
+display size. This is an archived native result, not browser compression or a
+cross-platform speed or quality ranking.
+
+<NativeComparison />
+
+The source-tree capture shown above uses the corrected iOS renderer. It does
+not describe the published npm 0.4.0 artifact. Open the capture link for its
+exact commit and workflow, or inspect the
+[full evidence archive](../reference/economic-resilience.md) for options,
+cleanup observations, visual checks, and original artifacts.
+
+## Build your own request
+
+These controls generate React Native code for your app. They do not change
+the recorded comparison. Start with the [quick start](../guide/quick-start.md)
+for installation and cache-file ownership.
+
+<OptionBuilder />
+
+## Earlier native walkthroughs
+
+The videos below preserve an earlier capture, including the known iOS defect.
+They remain available so an integration can distinguish published behavior
+from subsequent source fixes.
 
 These are results from the repository's real Android and iOS example apps—not
 browser substitutes. Both captures used repository package version `0.4.0` at
@@ -13,7 +40,7 @@ in [Native Demo Evidence run 31078379910](https://github.com/GGULBAE/react-nativ
 > transform and rejects captures unless upright SSIM is at least 0.90 and beats
 > the vertical-flip control by at least 0.02.
 
-## Guided walkthroughs
+### Guided walkthroughs
 
 <div class="result-grid">
   <article class="result-card">

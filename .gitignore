@@ -13,6 +13,7 @@ build/
 dist/
 lib/
 coverage/
+website/.vitepress/cache/
 *.tsbuildinfo
 
 # React Native and Metro

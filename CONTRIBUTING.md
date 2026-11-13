@@ -48,6 +48,27 @@ Codegen, Android JVM unit tests, instrumentation APK compilation, and the
 example Debug APK build. Executing instrumentation tests still requires a
 connected Android device or emulator.
 
+## Documentation and demo changes
+
+Documentation lives in `website/` and uses VitePress. After installing the
+repository dependencies, preview it locally:
+
+```bash
+pnpm site:dev
+```
+
+Start with the homepage, quick start, or demo page. The before/after explorer
+reads the existing native evidence archive at build time; its slider changes
+only the displayed comparison. It does not run compression in the browser.
+Keep source-candidate observations distinct from the published npm artifact,
+and preserve the provenance of earlier affected captures.
+
+For documentation work, run `pnpm typecheck`, `pnpm docs:check`,
+`pnpm site:check`, and `pnpm site:build`. `pnpm site:quality` checks the built
+site with Lighthouse and axe when Chrome is available. Check the changed
+pages at desktop and mobile widths, including keyboard controls. Follow the
+full verification section below before merging.
+
 ## Change expectations
 
 - Add or update tests for observable behavior.

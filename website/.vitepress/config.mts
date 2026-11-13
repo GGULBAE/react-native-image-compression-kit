@@ -51,7 +51,7 @@ export default defineConfig({
       'link',
       { rel: 'canonical', href: new URL(route, site).toString() },
     ]);
-    if (pageData.relativePath === 'reference/economic-resilience.md') {
+    if (['index.md', 'demo/index.md', 'reference/economic-resilience.md'].includes(pageData.relativePath)) {
       pageData.frontmatter.economicArchive =
         loadEconomicArchiveSnapshot(websiteRoot);
     }
@@ -60,24 +60,28 @@ export default defineConfig({
     logo: '/logo.svg',
     siteTitle: 'Image Compression Kit',
     nav: [
-      { text: 'Guide', link: '/guide/installation' },
+      { text: 'Start here', link: '/guide/quick-start' },
+      { text: 'Demo', link: '/demo/' },
       { text: 'API', link: '/reference/api' },
-      { text: 'Pipeline fit', link: '/guide/choosing-an-image-pipeline' },
-      { text: 'Why bytes matter', link: '/guide/byte-economics' },
-      { text: 'Evidence archive', link: '/reference/economic-resilience' },
-      { text: 'Compatibility', link: '/reference/compatibility' },
-      { text: 'Roadmap', link: '/roadmap' },
-      { text: 'Changelog', link: '/changelog' },
+      { text: 'Resources', items: [
+        { text: 'Pipeline fit', link: '/guide/choosing-an-image-pipeline' },
+        { text: 'Why bytes matter', link: '/guide/byte-economics' },
+        { text: 'Evidence archive', link: '/reference/economic-resilience' },
+        { text: 'Compatibility', link: '/reference/compatibility' },
+        { text: 'Roadmap', link: '/roadmap' },
+        { text: 'Changelog', link: '/changelog' },
+      ] },
     ],
     sidebar: [
       {
         text: 'Get started',
         items: [
-          { text: 'Why device-side bytes matter', link: '/guide/byte-economics' },
-          { text: 'Choosing an image pipeline', link: '/guide/choosing-an-image-pipeline' },
+          { text: 'Quick start', link: '/guide/quick-start' },
           { text: 'Installation', link: '/guide/installation' },
           { text: 'Image picker integration', link: '/guide/integration' },
           { text: 'Compression recipes', link: '/guide/recipes' },
+          { text: 'Choosing an image pipeline', link: '/guide/choosing-an-image-pipeline' },
+          { text: 'Why device-side bytes matter', link: '/guide/byte-economics' },
         ],
       },
       {

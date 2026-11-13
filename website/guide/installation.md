@@ -66,5 +66,5 @@ const capabilities = await getImageCompressionCapabilities();
 console.log(capabilities.platform, capabilities.formats);
 ```
 
-Continue with [image picker integration](./integration.md) or the
+Continue with the [first-image quick start](./quick-start.md), [image picker integration](./integration.md), or the
 [compression recipes](./recipes.md).
