@@ -9,8 +9,8 @@ export const ESBUILD_MINIMUM_SAFE_VERSION = '0.25.0';
 export const OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION = '2.8.0';
 export const POSTCSS_MINIMUM_SAFE_VERSION = '8.5.23';
 export const SENTRY_NODE_REVIEWED_VERSION = '10.66.0';
-export const SHELL_QUOTE_MINIMUM_SAFE_VERSION = '1.9.0';
-export const SHELL_QUOTE_REVIEWED_VERSION = '1.10.0';
+export const SHELL_QUOTE_MINIMUM_SAFE_VERSION = '1.11.0';
+export const SHELL_QUOTE_REVIEWED_VERSION = '1.12.0';
 export const JS_YAML_MINIMUM_SAFE_VERSION = '4.3.1';
 export const FAST_XML_PARSER_REVIEWED_VERSION = '5.12.0';
 export const IMAGE_SIZE_REVIEWED_VERSION = '1.2.1';
@@ -27,8 +27,7 @@ export const VITEPRESS_OVERRIDE_SELECTOR = 'vitepress@1.6.4>vite';
 export const SENTRY_NODE_OVERRIDE_SELECTOR =
   'lighthouse@13.4.0>@sentry/node';
 export const POSTCSS_OVERRIDE_SELECTOR = 'postcss';
-export const SHELL_QUOTE_OVERRIDE_SELECTOR =
-  'react-devtools-core@6.1.5>shell-quote';
+export const SHELL_QUOTE_OVERRIDE_SELECTOR = 'shell-quote';
 export const JS_YAML_OVERRIDE_SELECTOR = 'cosmiconfig@9.0.2>js-yaml';
 
 export const DEPENDENCY_SECURITY_CHECK_FIELDS = Object.freeze([

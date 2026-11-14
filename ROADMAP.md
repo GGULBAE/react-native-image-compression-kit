@@ -1,5 +1,8 @@
 # Roadmap
 
+> **Development paused — 2026-11-14.** The items below preserve earlier plans;
+> no further development is scheduled. The repository remains available.
+
 This roadmap describes the user problems the project intends to work on and the
 evidence required before behavior or compatibility claims change. It is not a
 release calendar. No roadmap item is a release promise, and priorities may

@@ -1,5 +1,10 @@
 # Roadmap
 
+::: info Development paused
+Active development is paused as of 2026-11-14. The items below preserve earlier
+plans, with no further development scheduled. The repository remains available.
+:::
+
 The roadmap is organized around user problems and acceptance evidence, not
 dates. No roadmap item is a release promise.
 

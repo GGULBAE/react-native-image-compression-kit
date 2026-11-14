@@ -114,11 +114,11 @@ describe('dependency security gate', () => {
       'missing shell-quote override',
       (inputs) => {
         inputs.workspaceContents = inputs.workspaceContents.replace(
-          /^  "react-devtools-core@6\.1\.5>shell-quote": "1\.10\.0"\n/m,
+          /^  "shell-quote": "1\.12\.0"\n/m,
           ''
         );
       },
-      'react-devtools-core@6.1.5>shell-quote',
+      'shell-quote',
     ],
     [
       'missing postcss override',
@@ -228,11 +228,11 @@ describe('dependency security gate', () => {
       'minimum is ' + OPENTELEMETRY_CORE_MINIMUM_SAFE_VERSION,
     ],
     [
-      'vulnerable shell-quote',
+      'critical shell-quote regression',
       (inputs) => {
         inputs.lockfileContents = inputs.lockfileContents.replaceAll(
-          'shell-quote@1.10.0',
-          'shell-quote@1.8.4'
+          'shell-quote@1.12.0',
+          'shell-quote@1.10.0'
         );
       },
       'minimum is ' + SHELL_QUOTE_MINIMUM_SAFE_VERSION,
