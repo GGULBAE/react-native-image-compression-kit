@@ -46,6 +46,7 @@ retaining a vulnerable repository lock resolution.
 
 | Advisory | Severity | Affected lock | First patched | Affected condition | Disposition |
 | --- | --- | --- | --- | --- | --- |
+| [GHSA-pqg4-j6r4-53mv](https://github.com/advisories/GHSA-pqg4-j6r4-53mv) / CVE-2026-102422 | Critical | `shell-quote` 1.10.0 | 1.11.0 | Line terminator in a string after a comment can inject shell input | Resolved by global 1.12.0 override |
 | [GHSA-474x-hrwr-fgx4](https://github.com/advisories/GHSA-474x-hrwr-fgx4) | Low | `fast-xml-parser` 5.10.1 | 5.12.0 | Unterminated stop-node input can cause excessive CPU use | Resolved by reviewed 5.12.0 override |
 | [GHSA-v6wh-96g9-6wx3](https://github.com/advisories/GHSA-v6wh-96g9-6wx3) / CVE-2026-53632 | Medium | Vite 5.4.21 | 6.4.3 | Windows UNC/NTLM behavior in the development server | Resolved by Vite 6.4.3 |
 | [GHSA-fx2h-pf6j-xcff](https://github.com/advisories/GHSA-fx2h-pf6j-xcff) / CVE-2026-53571 | High | Vite 5.4.21 | 6.4.3 | Network-exposed development server `server.fs.deny` bypass | Resolved by Vite 6.4.3 |
@@ -67,8 +68,8 @@ VitePress remains on the latest reviewed stable 1.6.4 release. A root pnpm
 override applies only to its Vite edge. Lighthouse remains on stable 13.4.0;
 its Sentry edge uses 10.66.0, matching the Sentry 10 dependency family already
 adopted by Lighthouse's upstream prerelease line. React Native remains on
-0.86.2 while only the vulnerable `react-devtools-core` shell parser edge is
-overridden:
+0.86.2. The `shell-quote` override now covers both React DevTools and the
+React Native CLI's launch-editor path:
 
 ```yaml
 auditConfig:
@@ -81,7 +82,7 @@ overrides:
   "cosmiconfig@9.0.2>js-yaml": "4.3.1"
   "lighthouse@13.4.0>@sentry/node": "10.66.0"
   "postcss": "8.5.23"
-  "react-devtools-core@6.1.5>shell-quote": "1.10.0"
+  "shell-quote": "1.12.0"
   "vitepress@1.6.4>vite": "6.4.3"
 
 patchedDependencies:
@@ -108,7 +109,8 @@ fixtures retain the pnpm version captured when they were produced. The
 resulting dependency graphs are VitePress 1.6.4 to Vite
 6.4.3 to esbuild 0.25.12,
 Lighthouse 13.4.0 to Sentry 10.66.0 to `@opentelemetry/core` 2.9.0, and
-React DevTools Core 6.1.5 to `shell-quote` 1.10.0. Vitest keeps its independent
+React DevTools Core 6.1.5 and launch-editor 2.14.1 to `shell-quote` 1.12.0.
+Vitest keeps its independent
 Vite 8 resolution. The React Native CLI configuration edge resolves
 `js-yaml` 4.3.1. Metro retains `image-size` 1.2.1 with a repository-owned patch
 that rejects ICNS entries shorter than their eight-byte header. Its existing
@@ -209,6 +211,25 @@ The follow-up registry audit reports 37 remaining findings (1 critical, 16 high,
 earlier baseline still require their own patch review. Review this exact pin and
 its semantic guard together when upstream tooling can handle a newer indirect
 resolution reliably.
+
+## Critical shell argument review, 2026-11-14
+
+The critical advisory GHSA-pqg4-j6r4-53mv affects the previous 1.10.0 resolution.
+The first fix is 1.11.0; the reviewed stable 1.12.0 release includes it and adds
+no dependencies or engine changes. Replace the React DevTools-only override
+with a global pin so launch-editor resolves the same patched version. The lock
+changes only this package's integrity, version, and two consumer edges.
+
+The semantic gate now requires the global 1.12.0 pin and rejects every locked
+version below 1.11.0. Executable regression tests load the actual dependency
+from both consumers. Eight malicious comment/string cases failed before the
+upgrade and pass afterward: LF, CR, U+2028, and U+2029 are rejected. Ordinary
+quoted arguments still round-trip. The tests never execute a generated command.
+
+The registry audit now reports **zero critical findings** and no shell-quote
+advisory. It still reports 36 other findings (16 high, 15 moderate, 5 low).
+No new audit exception or weaker check was introduced. Active development is
+paused after this patch; the repository and its documentation remain available.
 
 ## Override exit criteria
 

@@ -20,6 +20,11 @@
 One native boundary for upload bytes, app-owned image files, resource limits,
 metadata, cancellation, and output ownership.
 
+## Development status
+
+Active development is paused as of 2026-11-14. The repository, existing source,
+and documentation remain available.
+
 <!-- package-status:start -->
 ## Current status
 
@@ -43,6 +48,8 @@ detail; it is not a photo-quality benchmark. Repository contributors use the
 pinned pnpm 11.28.9 toolchain, including the registry-cache recovery needed by
 Dependabot. The React Native CLI's XML parser is pinned to patched 5.12.0;
 the dependency gate rejects a missing pin or a vulnerable lock resolution.
+Both React DevTools and launch-editor resolve patched `shell-quote` 1.12.0,
+with regression checks for the critical comment/line-terminator injection issue.
 
 ## Installation
 
